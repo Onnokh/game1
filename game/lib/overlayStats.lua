@@ -45,7 +45,7 @@ local overlayStats = {
     cornerSize = 80, -- Size of the activation area in pixels
     lastTapTime = 0, -- Time of the last tap
     doubleTapThreshold = 0.5, -- Maximum time between taps to register as double-tap
-    overlayArea = {x = 10, y = 10, width = 280, height = 340}, -- Will be updated in draw
+    overlayArea = { x = 10, y = 10, width = 280, height = 340 }, -- Will be updated in draw
   },
 }
 
@@ -132,8 +132,7 @@ end
 ---@return boolean insideOverlay True if touch is inside the overlay area
 local function isTouchInsideOverlay(x, y)
   local area = overlayStats.touch.overlayArea
-  return x >= area.x and x <= area.x + area.width and
-         y >= area.y and y <= area.y + area.height
+  return x >= area.x and x <= area.x + area.width and y >= area.y and y <= area.y + area.height
 end
 
 ---Processes touch input for the overlay toggle
@@ -182,9 +181,132 @@ function overlayStats.load()
   overlayStats.supportedFeatures.pixelShaderHighp = supported.pixelshaderhighp
 end
 
----Draws the performance overlay when active
+---Draws 16x16 pixel gridlines in world space
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
 ---@return nil
-function overlayStats.draw()
+function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
+  local width, height = love.graphics.getDimensions()
+  local gridSize = 16
+  local scale = cameraScale or 1.0
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform (same as game world)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-cameraX, -cameraY)
+
+  -- Set gridline color (semi-transparent white)
+  love.graphics.setColor(1, 1, 1, 0.3)
+  love.graphics.setLineWidth(1)
+
+  -- Calculate world bounds based on camera position
+  local startX = math.floor(cameraX / gridSize) * gridSize
+  local startY = math.floor(cameraY / gridSize) * gridSize
+  local endX = startX + width + gridSize
+  local endY = startY + height + gridSize
+
+  -- Draw vertical lines
+  for x = startX, endX, gridSize do
+    love.graphics.line(x, startY, x, endY)
+  end
+
+  -- Draw horizontal lines
+  for y = startY, endY, gridSize do
+    love.graphics.line(startX, y, endX, y)
+  end
+
+  -- Draw coordinate labels
+  love.graphics.setColor(1, 0, 0, 1) -- Bright red color for coordinates (more visible)
+  local font = love.graphics.getFont()
+  local fontSize = 1 / scale -- Larger font size
+
+  for x = startX, endX, gridSize do
+    for y = startY, endY, gridSize do
+      -- Convert pixel coordinates to tile coordinates (1-based)
+      local tileX = math.floor(x / gridSize) + 1
+      local tileY = math.floor(y / gridSize) + 1
+
+      -- Only show coordinates for tiles within world bounds
+      if tileX >= 1 and tileX <= 50 and tileY >= 1 and tileY <= 30 then
+        local coordText = string.format("%d,%d", tileX, tileY)
+
+        -- Position text in top-left corner of tile
+        love.graphics.print(coordText, x + 2, y + 2, 0, fontSize, fontSize)
+      end
+    end
+  end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
+
+  -- Restore graphics state
+  love.graphics.pop()
+end
+
+---Draws physics colliders in world space
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
+  -- Try to access the game scene's physics world
+  local gameState = require("src.gameState")
+  if not gameState or not gameState.scenes or not gameState.scenes.game then
+    return
+  end
+
+  -- Access the physics world from the game scene
+  local gameScene = gameState.scenes.game
+  if not gameScene.physicsWorld then
+    return
+  end
+
+  local scale = cameraScale or 1.0
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform (same as game world)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-cameraX, -cameraY)
+
+  -- Set collider outline color (bright green for visibility)
+  love.graphics.setColor(0, 1, 0, 0.8)
+  love.graphics.setLineWidth(2)
+
+  -- Draw border colliders (static walls)
+  if gameScene.borderColliders then
+    for _, collider in ipairs(gameScene.borderColliders) do
+      if collider and collider.body and collider.shape then
+        -- Use Breezefield's built-in drawing method
+        collider:__draw__()
+      end
+    end
+  end
+
+  -- Draw player collider (dynamic)
+  if gameScene.playerCollider then
+    -- Draw player collider in red
+    love.graphics.setColor(1, 0, 0, 0.8)
+    gameScene.playerCollider:__draw__()
+  end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
+
+  -- Restore graphics state
+  love.graphics.pop()
+end
+
+---Draws the performance overlay when active
+---@param cameraX number Camera X position (optional)
+---@param cameraY number Camera Y position (optional)
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.draw(cameraX, cameraY, cameraScale)
   if not overlayStats.isActive then
     return
   end
@@ -195,15 +317,22 @@ function overlayStats.draw()
   love.graphics.push("all")
   local font = love.graphics.setNewFont(16)
 
+  if cameraX and cameraY then
+    -- Draw 16x16 gridlines in world space
+    overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
+  -- Draw physics colliders in world space
+    overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
+  end
+
+
   -- Calculate dynamic width based on renderer version and other content
-  local padding = 20    -- 10px padding on each side
+  local padding = 20 -- 10px padding on each side
   local baseWidth = 280 -- Minimum width
 
   -- Check width needed for the renderer version text
   local versionTextWidth = font:getWidth(string.format("%s", overlayStats.renderInfo.version))
-  local rendererInfoWidth = font:getWidth(
-    string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor)
-  )
+  local rendererInfoWidth =
+    font:getWidth(string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor))
   local systemInfoWidth = font:getWidth(
     overlayStats.sysInfo.os .. " " .. overlayStats.sysInfo.arch .. ": " .. overlayStats.sysInfo.cpuCount .. "x CPU"
   )
@@ -217,7 +346,7 @@ function overlayStats.draw()
     x = 10,
     y = 10,
     width = rectangleWidth,
-    height = 340
+    height = 340,
   }
 
   -- Draw background rectangle with dynamic width
@@ -298,7 +427,11 @@ function overlayStats.draw()
 
   -- Add pixel shader highp support indicator
   love.graphics.setColor(overlayStats.supportedFeatures.pixelShaderHighp and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
-  love.graphics.print(string.format("Pixel Shader highp: %s", overlayStats.supportedFeatures.pixelShaderHighp and "Yes" or "No"), 20, y)
+  love.graphics.print(
+    string.format("Pixel Shader highp: %s", overlayStats.supportedFeatures.pixelShaderHighp and "Yes" or "No"),
+    20,
+    y
+  )
   y = y + 20
 
   -- Add VSync status with color indication

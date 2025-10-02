@@ -27,7 +27,7 @@ function love.conf(t)
   t.version               = product_config["LOVE_VERSION"]
 
   -- If t.console is set to true, then the debugger won't work.
-  t.console               = false
+  t.console               = true
   t.accelerometerjoystick = false
   t.externalstorage       = false
   t.gammacorrect          = false
