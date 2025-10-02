@@ -29,7 +29,8 @@ function Player.create(x, y, world, physicsWorld)
     player:addComponent("Movement", movement)
 
     -- Add SpriteRenderer component
-    local spriteRenderer = SpriteRenderer.new(nil, 16, 24) -- width, height
+    local spriteRenderer = SpriteRenderer.new(nil, 24, 24) -- width, height (24x24 sprite)
+    spriteRenderer.facingMouse = true -- Enable mouse-facing
     player:addComponent("SpriteRenderer", spriteRenderer)
 
     -- Animator for character animations
@@ -47,7 +48,7 @@ function Player.create(x, y, world, physicsWorld)
     player:addComponent("AnimationController", animationController)
 
     -- Add Collision component
-    local collision = Collision.new(16, 24, "dynamic") -- width, height, type
+    local collision = Collision.new(24, 24, "dynamic") -- width, height, type (24x24 sprite)
     collision.restitution = 0.1 -- Slight bounce
     collision.friction = 0.3 -- Low friction for smooth movement
     collision.linearDamping = 0 -- No damping for direct velocity control

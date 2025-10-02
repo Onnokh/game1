@@ -18,6 +18,7 @@ local MovementSystem = require("src.ecs.systems.MovementSystem")
 local RenderSystem = require("src.ecs.systems.RenderSystem")
 local AnimationSystem = require("src.ecs.systems.AnimationSystem")
 local AnimationControllerSystem = require("src.ecs.systems.AnimationControllerSystem")
+local MouseFacingSystem = require("src.ecs.systems.MouseFacingSystem")
 local InputSystem = require("src.ecs.systems.InputSystem")
 local Player = require("src.ecs.actors.Player")
 
@@ -139,6 +140,9 @@ function GameScene.update(dt, gameState)
     -- Create input system with gameState input
     local inputSystem = InputSystem.new(gameState.input)
     ecsWorld:addSystem(inputSystem)
+
+    -- Add mouse facing system (needs gameState)
+    ecsWorld:addSystem(MouseFacingSystem.new(gameState))
   end
 
   -- Update ECS world (handles movement, collision, rendering)

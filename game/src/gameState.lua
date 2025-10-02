@@ -14,7 +14,9 @@ local GameState = {
     left = false,
     right = false,
     action = false,
-    cancel = false
+    cancel = false,
+    mouseX = 0,
+    mouseY = 0
   },
   camera = {
     x = 0,
@@ -59,6 +61,16 @@ function GameState.load()
   if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].load then
     GameState.scenes[GameState.currentScene].load()
   end
+end
+
+---Update mouse position in world coordinates
+function GameState.updateMousePosition()
+  local mouseX, mouseY = love.mouse.getPosition()
+  local scale = GameState.camera.scale
+
+  -- Convert screen coordinates to world coordinates
+  GameState.input.mouseX = (mouseX / scale) + GameState.camera.x
+  GameState.input.mouseY = (mouseY / scale) + GameState.camera.y
 end
 
 ---Update the game state

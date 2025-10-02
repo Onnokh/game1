@@ -43,13 +43,36 @@ function RenderSystem:draw()
                 if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
                     -- Use the sprite renderer's color settings
                     love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
-                    love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], x, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+
+                    -- Get the actual sprite frame dimensions from Iffy tileset
+                    local frameWidth = 24 -- Default to 24x24 for character sprites
+                    if iffy.tilesets[animator.sheet] then
+                        frameWidth = iffy.tilesets[animator.sheet][1] -- tile width
+                    end
+
+                    -- Adjust position for horizontal flipping to keep sprite centered
+                    local drawX = x
+                    if spriteRenderer.scaleX < 0 then
+                        drawX = x + frameWidth
+                    end
+
+                    love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+
                 else
-                    love.graphics.rectangle("fill", x, y, spriteRenderer.width, spriteRenderer.height)
+                    -- Adjust rectangle position for horizontal flipping
+                    local drawX = x
+                    if spriteRenderer.scaleX < 0 then
+                        drawX = x + spriteRenderer.width
+                    end
+                    love.graphics.rectangle("fill", drawX, y, spriteRenderer.width, spriteRenderer.height)
                 end
             else
-                -- Draw a colored rectangle as fallback
-                love.graphics.rectangle("fill", x, y, spriteRenderer.width, spriteRenderer.height)
+                -- Adjust rectangle position for horizontal flipping
+                local drawX = x
+                if spriteRenderer.scaleX < 0 then
+                    drawX = x + spriteRenderer.width
+                end
+                love.graphics.rectangle("fill", drawX, y, spriteRenderer.width, spriteRenderer.height)
             end
 
             -- Reset color

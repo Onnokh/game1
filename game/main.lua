@@ -35,6 +35,9 @@ function love.draw()
 end
 
 function love.update(dt)
+  -- Update mouse position
+  gameState.updateMousePosition()
+
   -- Update game state
   local success, err = pcall(function()
     gameState.update(dt)
@@ -66,4 +69,8 @@ end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
   overlayStats.handleTouch(id, x, y, dx, dy, pressure) -- Should always be called last
+end
+
+function love.mousemoved(x, y, dx, dy, istouch)
+  -- Mouse movement is handled in update() via updateMousePosition()
 end

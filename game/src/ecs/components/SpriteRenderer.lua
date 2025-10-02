@@ -9,6 +9,7 @@
 ---@field rotation number Rotation in radians
 ---@field offsetX number X offset from entity position
 ---@field offsetY number Y offset from entity position
+---@field facingMouse boolean Whether the sprite should face the mouse
 local SpriteRenderer = {}
 SpriteRenderer.__index = SpriteRenderer
 
@@ -31,6 +32,7 @@ function SpriteRenderer.new(sprite, width, height)
     self.rotation = 0
     self.offsetX = 0
     self.offsetY = 0
+    self.facingMouse = false
 
     return self
 end

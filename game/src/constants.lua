@@ -22,7 +22,7 @@ GameConstants.WORLD_WIDTH_PIXELS = GameConstants.WORLD_WIDTH * GameConstants.TIL
 GameConstants.WORLD_HEIGHT_PIXELS = GameConstants.WORLD_HEIGHT * GameConstants.TILE_SIZE
 
 -- Player constants
-GameConstants.PLAYER_WIDTH = 16
+GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 100
 
