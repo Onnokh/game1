@@ -23,8 +23,8 @@ local GameState = {
   },
   camera = nil, -- Will be initialized with gamera
   player = {
-    x = 100,
-    y = 100,
+    x = 144,  -- Tile (10, 10) = (9 * 16, 9 * 16) = (144, 144)
+    y = 144,  -- Tile (10, 10) = (9 * 16, 9 * 16) = (144, 144)
     width = 16,
     height = 24,
     speed = 300,
@@ -43,12 +43,12 @@ function GameState.load()
   GameState.player.height = playerHeight
   GameState.player.speed = playerSpeed
 
-  -- Initialize gamera camera (match working implementation bounds)
+  -- Initialize gamera camera with proper bounds starting at (0,0)
   GameState.camera = gamera.new(
-    -love.graphics.getWidth(),
-    -love.graphics.getHeight(),
-    60*32+love.graphics.getWidth(),
-    60*32+love.graphics.getHeight()
+    0,  -- left
+    0,  -- top
+    GameConstants.WORLD_WIDTH_PIXELS,  -- width
+    GameConstants.WORLD_HEIGHT_PIXELS  -- height
   )
 
   -- Initialize scenes

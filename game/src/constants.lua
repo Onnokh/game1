@@ -12,9 +12,9 @@
 local GameConstants = {}
 
 -- World dimensions
-GameConstants.TILE_SIZE = 16
-GameConstants.WORLD_WIDTH = 20  -- tiles
-GameConstants.WORLD_HEIGHT = 48 -- tiles
+GameConstants.TILE_SIZE = 16  -- Larger tiles
+GameConstants.WORLD_WIDTH = 50  -- Much wider world
+GameConstants.WORLD_HEIGHT = 50 -- Square world for easier navigation
 
 -- Calculate pixel dimensions
 GameConstants.WORLD_WIDTH_PIXELS = GameConstants.WORLD_WIDTH * GameConstants.TILE_SIZE
@@ -26,6 +26,6 @@ GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 175 -- Match working implementation
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 4 -- No scaling
+GameConstants.CAMERA_SCALE = 2 -- Zoomed out to see more of the world
 
 return GameConstants

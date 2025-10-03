@@ -2,6 +2,10 @@ https = nil
 local overlayStats = require("lib.overlayStats")
 local runtimeLoader = require("runtime.loader")
 local gameState = require("src.gameState")
+_G.gameState = gameState
+
+-- Load Lovebird for debugging
+local lovebird = require("lovebird")
 
 function love.load()
   -- Initialize game state
@@ -35,6 +39,9 @@ function love.draw()
 end
 
 function love.update(dt)
+  -- Update Lovebird debug console
+  lovebird.update()
+
   -- Update mouse position
   gameState.updateMousePosition()
 
@@ -73,4 +80,11 @@ end
 
 function love.mousemoved(x, y, dx, dy, istouch)
   -- Mouse movement is handled in update() via updateMousePosition()
+end
+
+function love.mousepressed(x, y, button)
+  -- Pass mouse events to current scene
+  if gameState.scenes[gameState.currentScene] and gameState.scenes[gameState.currentScene].mousepressed then
+    gameState.scenes[gameState.currentScene].mousepressed(x, y, button, gameState)
+  end
 end
