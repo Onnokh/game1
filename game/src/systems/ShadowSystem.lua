@@ -7,12 +7,12 @@ ShadowSystem.__index = ShadowSystem
 
 ---Create a new ShadowSystem
 ---@param lightWorld any The Shädows LightWorld instance
----@return ShadowSystem|System
+---@return ShadowSystem
 function ShadowSystem.new(lightWorld)
+	---@class ShadowSystem
 	local self = System.new({"Position", "CastableShadow"})
 	setmetatable(self, ShadowSystem)
 	-- Store LightWorld reference on the instance
-	---@type any
 	self.lightWorld = lightWorld
 	return self
 end
