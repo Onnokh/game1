@@ -8,6 +8,7 @@
 ---@field body any|nil Shädows Body instance
 ---@field shapeRefs any[]|nil References to created shadow shapes
 ---@field enabled boolean Whether shadow is active
+---@field selfShadow boolean Whether this object casts a shadow on itself
 local CastableShadow = {}
 CastableShadow.__index = CastableShadow
 
@@ -28,6 +29,7 @@ function CastableShadow.new(opts)
 	self.body = nil
 	self.shapeRefs = nil
 	self.enabled = opts.enabled ~= false
+	self.selfShadow = opts.selfShadow ~= false -- Default to true (cast shadow on self)
 
 	return self
 end

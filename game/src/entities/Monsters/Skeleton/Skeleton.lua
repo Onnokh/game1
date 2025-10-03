@@ -55,6 +55,7 @@ function Skeleton.create(x, y, world, physicsWorld)
       height = SkeletonConfig.COLLIDER_HEIGHT -4,
       offsetX = offsetX,
       offsetY = offsetY + 4,
+      selfShadow = false,
     })
     skeleton:addComponent("CastableShadow", shadow)
 
