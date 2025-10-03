@@ -24,6 +24,18 @@ end
 ---@param component table The component data
 function Entity:addComponent(componentType, component)
     self.components[componentType] = component
+
+    -- Notify the world that this entity has changed (if world is available)
+    -- This allows systems to re-scan the entity for new components
+    if self._world then
+        self._world:notifySystemsOfEntityChange(self)
+    end
+end
+
+---Set the world reference for this entity (called by World:addEntity)
+---@param world World The world this entity belongs to
+function Entity:setWorld(world)
+    self._world = world
 end
 
 ---Get a component from this entity

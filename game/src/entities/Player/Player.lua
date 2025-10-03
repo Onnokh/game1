@@ -6,48 +6,29 @@ local Player = {}
 ---@param y number Y position
 ---@param world World The ECS world to add the player to
 ---@param physicsWorld table|nil The physics world for collision
+---@param gameState table|nil The game state for input access
 ---@return Entity The created player entity
-function Player.create(x, y, world, physicsWorld)
+function Player.create(x, y, world, physicsWorld, gameState)
     local Entity = require("src.core.Entity")
     local Position = require("src.components.Position")
     local Movement = require("src.components.Movement")
     local SpriteRenderer = require("src.components.SpriteRenderer")
-    local Animator = require("src.components.Animator")
-    local AnimationController = require("src.components.AnimationController")
     local Collision = require("src.components.Collision")
+    local StateMachine = require("src.components.StateMachine")
     local GameConstants = require("src.constants")
 
     -- Create the player entity
     local player = Entity.new()
 
-    -- Add Position component
+    -- Create components
     local position = Position.new(x, y, 0)
-    player:addComponent("Position", position)
-
-    -- Add Movement component
     local movement = Movement.new(GameConstants.PLAYER_SPEED, 3000, 1) -- maxSpeed, acceleration, friction
-    player:addComponent("Movement", movement)
 
-    -- Add SpriteRenderer component
     local spriteRenderer = SpriteRenderer.new(nil, 24, 24) -- width, height (24x24 sprite)
     spriteRenderer.facingMouse = true -- Enable mouse-facing
-    player:addComponent("SpriteRenderer", spriteRenderer)
 
-    -- Animator for character animations
-    local animator = Animator.new("character", {1, 2}, 4, true) -- Start with idle
-    player:addComponent("Animator", animator)
 
-    -- AnimationController to switch between idle and walking
-    -- Idle: frames 1-2 (row 1, cols 1-2), Walk: frames 9-12 (row 2, cols 1-4)
-    local animationController = AnimationController.new(
-        {1, 2},      -- idle frames
-        {9, 10, 11, 12}, -- run frames (row 2, columns 1-4)
-        4,           -- idle fps
-        8            -- walk fps
-    )
-    player:addComponent("AnimationController", animationController)
-
-    -- Add Collision component
+    -- Collision component
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
     local colliderWidth, colliderHeight = 12, 12
     local offsetX = (spriteRenderer.width - colliderWidth) / 2
@@ -62,7 +43,41 @@ function Player.create(x, y, world, physicsWorld)
         collision:createCollider(physicsWorld, x, y)
     end
 
+    -- State machine setup
+    local stateMachine = StateMachine.new("idle")
+    local Idle = require("src.entities.Player.states.Idle")
+    local Moving = require("src.entities.Player.states.Moving")
+
+    stateMachine:addState("idle", Idle.new())
+    stateMachine:addState("moving", Moving.new())
+
+    -- State transitions
+    stateMachine:addTransition("idle", "moving", function(self, entity, dt)
+        local GameState = require("src.core.State")
+        if not GameState or not GameState.input then return false end
+
+        local hasInput = GameState.input.left or GameState.input.right or
+                        GameState.input.up or GameState.input.down
+
+        return hasInput
+    end)
+
+    stateMachine:addTransition("moving", "idle", function(self, entity, dt)
+        local GameState = require("src.core.State")
+        if not GameState or not GameState.input then return false end
+
+        local hasInput = GameState.input.left or GameState.input.right or
+                        GameState.input.up or GameState.input.down
+
+        return not hasInput
+    end)
+
+    -- Add all components to the player
+    player:addComponent("Position", position)
+    player:addComponent("Movement", movement)
+    player:addComponent("SpriteRenderer", spriteRenderer)
     player:addComponent("Collision", collision)
+    player:addComponent("StateMachine", stateMachine)
 
     -- Add the player to the world
     if world then

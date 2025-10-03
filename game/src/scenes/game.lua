@@ -19,12 +19,11 @@ local World = require("src.core.World")
 local MovementSystem = require("src.systems.MovementSystem")
 local RenderSystem = require("src.systems.RenderSystem")
 local AnimationSystem = require("src.systems.AnimationSystem")
-local AnimationControllerSystem = require("src.systems.AnimationControllerSystem")
 local ShadowSystem = require("src.systems.ShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
-local InputSystem = require("src.systems.InputSystem")
-local Player = require("src.entities.Player")
+local StateMachineSystem = require("src.systems.StateMachineSystem")
+local Player = require("src.entities.Player.Player")
 local Entity = require("src.core.Entity")
 local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
@@ -73,11 +72,11 @@ function GameScene.load()
 
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
-  ecsWorld:addSystem(MovementSystem.new())              -- Second: handle movement and collision
-  ecsWorld:addSystem(AnimationControllerSystem.new()) -- Second: control animations based on movement
-  ecsWorld:addSystem(AnimationSystem.new())           -- Third: advance animations
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fourth: update shadow bodies
-  ecsWorld:addSystem(RenderSystem.new())              -- Fifth: render everything
+  ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
+  ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
+  ecsWorld:addSystem(AnimationSystem.new())           -- Fourth: advance animations
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fifth: update shadow bodies
+  ecsWorld:addSystem(RenderSystem.new())              -- Sixth: render everything
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -153,20 +152,16 @@ function GameScene.update(dt, gameState)
   if not ecsWorld then
     ecsWorld = World.new()
     ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
-    ecsWorld:addSystem(MovementSystem.new())              -- Second: handle movement and collision
-    ecsWorld:addSystem(AnimationControllerSystem.new()) -- Second: control animations based on movement
-    ecsWorld:addSystem(AnimationSystem.new())           -- Third: advance animations
-    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fourth: update shadow bodies
-    ecsWorld:addSystem(RenderSystem.new())              -- Fifth: render everything
+    ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
+    ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
+    ecsWorld:addSystem(AnimationSystem.new())           -- Fourth: advance animations
+    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fifth: update shadow bodies
+    ecsWorld:addSystem(RenderSystem.new())              -- Sixth: render everything
   end
 
   -- Create player entity if it doesn't exist
   if not playerEntity and ecsWorld then
-    playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld)
-
-    -- Create input system with gameState input
-    local inputSystem = InputSystem.new(gameState.input)
-    ecsWorld:addSystem(inputSystem)
+    playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld, gameState)
 
     -- Add mouse facing system (needs gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))

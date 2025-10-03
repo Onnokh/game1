@@ -27,7 +27,16 @@ end
 ---@param entity Entity The entity to add
 function World:addEntity(entity)
     table.insert(self.entities, entity)
+    -- Set world reference on entity so it can notify systems when components are added
+    entity:setWorld(self)
     -- Notify all systems about the new entity
+    for _, system in ipairs(self.systems) do
+        system:addEntity(entity)
+    end
+end
+
+---Notify all systems to re-scan entities (useful when components are added dynamically)
+function World:notifySystemsOfEntityChange(entity)
     for _, system in ipairs(self.systems) do
         system:addEntity(entity)
     end
