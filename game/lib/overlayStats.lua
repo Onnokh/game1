@@ -368,6 +368,137 @@ function overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
   love.graphics.pop()
 end
 
+---Draws pathfinding debug information in world space using ECS component system
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
+  -- Try to access the game scene's ECS world
+  local gameState = require("src.core.GameState")
+  if not gameState or not gameState.scenes or not gameState.scenes.game then
+    return
+  end
+
+  -- Access the ECS world from the game scene
+  local gameScene = gameState.scenes.game
+  if not gameScene.ecsWorld then
+    return
+  end
+
+  local scale = cameraScale or 1.0
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform aligned with gamera (use top-left world position)
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-topLeftX, -topLeftY)
+
+  -- Query all entities with Pathfinding components using the ECS system
+  local entitiesWithPathfinding = gameScene.ecsWorld:getEntitiesWith({"Pathfinding"})
+
+  -- Draw pathfinding debug for each entity
+  for _, entity in ipairs(entitiesWithPathfinding) do
+    local pathfinding = entity:getComponent("Pathfinding")
+    local position = entity:getComponent("Position")
+
+    if pathfinding and position then
+      -- Draw current path
+      if pathfinding.currentPath and not pathfinding:isPathComplete() then
+        -- Draw the complete path from skeleton to destination
+        love.graphics.setColor(0, 1, 0, 0.8) -- Green
+
+        -- Start from skeleton position (center of sprite)
+        local prevX, prevY = position.x + 8, position.y + 8
+
+        -- Draw line from skeleton to first waypoint
+        if pathfinding.pathIndex <= #pathfinding.currentPath._nodes then
+          local firstNode = pathfinding.currentPath._nodes[pathfinding.pathIndex]
+          local firstWorldX = (firstNode._x - 1) * 16 + 8
+          local firstWorldY = (firstNode._y - 1) * 16 + 8
+          love.graphics.line(prevX, prevY, firstWorldX, firstWorldY)
+          prevX, prevY = firstWorldX, firstWorldY
+        end
+
+        -- Draw remaining path segments
+        for i = pathfinding.pathIndex + 1, #pathfinding.currentPath._nodes do
+          local node = pathfinding.currentPath._nodes[i]
+          local worldX = (node._x - 1) * 16 + 8
+          local worldY = (node._y - 1) * 16 + 8
+
+          love.graphics.line(prevX, prevY, worldX, worldY)
+          prevX, prevY = worldX, worldY
+        end
+
+        -- Draw coordinate labels along the path
+        love.graphics.setColor(1, 1, 1, 0.9) -- White text
+        local font = love.graphics.newFont(8)
+        love.graphics.setFont(font)
+
+        for i = pathfinding.pathIndex, #pathfinding.currentPath._nodes do
+          local node = pathfinding.currentPath._nodes[i]
+          local worldX = (node._x - 1) * 16 + 8
+          local worldY = (node._y - 1) * 16 + 8
+
+          -- Draw coordinate text slightly offset from the waypoint
+          local coordText = string.format("%d,%d", node._x, node._y)
+          love.graphics.print(coordText, worldX + 2, worldY - 10)
+        end
+
+        -- Draw target destination
+        if pathfinding.targetX and pathfinding.targetY then
+          love.graphics.setColor(1, 0, 0, 0.8) -- Red
+          love.graphics.circle("fill", pathfinding.targetX, pathfinding.targetY, 6)
+        end
+      end
+    end
+  end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
+
+  -- Restore graphics state
+  love.graphics.pop()
+end
+
+---Draws blocked pathfinding tiles in world space
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
+  -- Try to access the game scene's ECS world
+  local gameState = require("src.core.GameState")
+  if not gameState or not gameState.scenes or not gameState.scenes.game then
+    return
+  end
+
+  -- Access the ECS world from the game scene
+  local gameScene = gameState.scenes.game
+  if not gameScene.ecsWorld then
+    return
+  end
+
+  local scale = cameraScale or 1.0
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform aligned with gamera (use top-left world position)
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-topLeftX, -topLeftY)
+
+  -- Restore graphics state
+  love.graphics.pop()
+end
+
 ---Draws the performance overlay when active
 ---@param cameraX number Camera X position (optional)
 ---@param cameraY number Camera Y position (optional)
@@ -387,10 +518,14 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   if cameraX and cameraY then
     -- Draw 16x16 gridlines in world space
     overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
+    -- Draw blocked pathfinding tiles in world space
+    overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
     -- Draw physics colliders in world space
     overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
     -- Draw sprite outlines in world space
     overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
+    -- Draw pathfinding debug in world space
+    overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   end
 
 

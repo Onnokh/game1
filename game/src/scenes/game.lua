@@ -17,6 +17,7 @@ local worldHeight = GameConstants.WORLD_HEIGHT
 -- ECS System
 local World = require("src.core.World")
 local MovementSystem = require("src.systems.MovementSystem")
+local PathfindingSystem = require("src.systems.PathfindingSystem")
 local RenderSystem = require("src.systems.RenderSystem")
 local AnimationSystem = require("src.systems.AnimationSystem")
 local ShadowSystem = require("src.systems.ShadowSystem")
@@ -119,6 +120,37 @@ function GameScene.load()
   -- Create physics colliders for world borders
   GameScene.createBorderColliders()
   GameScene.borderColliders = borderColliders
+
+  -- Create a test wall entity with collision (1 tile high, 15 tiles wide) BEFORE pathfinding system
+  local testWallX = 192 -- Fixed position instead of relative to player
+  local testWallY = 192
+  local wallWidth = 16 * 15 -- 15 tiles wide
+  local wallHeight = 16 -- 1 tile high
+
+  local testWall = Entity.new()
+  testWall:addComponent("Position", Position.new(testWallX, testWallY, 0))
+  local sr = SpriteRenderer.new(nil, wallWidth, wallHeight)
+  testWall:addComponent("SpriteRenderer", sr)
+  local shadow = CastableShadow.new({
+    shape = "rectangle",
+    width = wallWidth,
+    height = wallHeight,
+    offsetX = 0,
+    offsetY = 0,
+  })
+  local collision = Collision.new(wallWidth, wallHeight, "static", 0, 0)
+  testWall:addComponent("CastableShadow", shadow)
+  testWall:addComponent("Collision", collision)
+
+  -- Create the collider in the physics world
+  collision:createCollider(physicsWorld, testWallX, testWallY)
+
+  -- Add the wall entity to ECS world BEFORE initializing pathfinding
+  ecsWorld:addEntity(testWall)
+  testBoxEntity = testWall
+
+  -- Add pathfinding system after static collision objects are added
+  ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize)) -- Pathfinding system
 end
 
 -- Create static colliders for world border tiles
@@ -160,6 +192,7 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(AnimationSystem.new())           -- Fourth: advance animations
     ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fifth: update shadow bodies
     ecsWorld:addSystem(RenderSystem.new())              -- Sixth: render everything
+
   end
 
   -- Create player entity if it doesn't exist
@@ -174,8 +207,8 @@ function GameScene.update(dt, gameState)
   if #monsters == 0 and ecsWorld then
       -- Create multiple skeletons at different positions
       local monsterPositions = {
-          {x = 244, y = 244}, -- Original position
-          {x = 300, y = 200}, -- Top right
+          {x = 244, y = 260}, -- Original position
+          {x = 300, y = 240}, -- Top right
           {x = 180, y = 300}, -- Bottom left
           {x = 350, y = 350}, -- Bottom right
       }
@@ -186,30 +219,6 @@ function GameScene.update(dt, gameState)
       end
   end
 
-  -- Create a test box entity with a castable shadow near the player (once)
-  if playerEntity and ecsWorld and not testBoxEntity then
-    local px, py = gameState.player.x, gameState.player.y
-    local boxX, boxY = px + 96, py
-
-    local e = Entity.new()
-    e:addComponent("Position", Position.new(boxX, boxY, 0))
-    local sr = SpriteRenderer.new(nil, 32, 32)
-    sr:setColor(0.8, 0.2, 0.2, 1)
-    e:addComponent("SpriteRenderer", sr)
-    local shadow = CastableShadow.new({
-      shape = "rectangle",
-      width = 32,
-      height = 32,
-      offsetX = 0,
-      offsetY = 0,
-    })
-    local collision = Collision.new(32, 32, "static", 0, 0)
-    e:addComponent("CastableShadow", shadow)
-    e:addComponent("Collision", collision)
-
-    ecsWorld:addEntity(e)
-    testBoxEntity = e
-  end
 
   -- Update ECS world (handles movement, collision, rendering)
   if ecsWorld then
@@ -223,7 +232,7 @@ function GameScene.update(dt, gameState)
     physicsWorld:update(dt)
   end
 
-  -- Register test box collider into debug overlay once created by CollisionSystem
+  -- Register test wall collider into debug overlay once created by CollisionSystem
   if not testBoxOverlayRegistered and testBoxEntity then
     local c = testBoxEntity:getComponent("Collision")
     if c and c:hasCollider() then

@@ -40,6 +40,11 @@ end
 function Idle:onUpdate(stateMachine, entity, dt)
     local idleTime = stateMachine:getStateData("idleTime") or 0
     stateMachine:setStateData("idleTime", idleTime + dt)
+
+    -- After 2 seconds of idling, start wandering
+    if idleTime > 1.0 then
+        stateMachine:changeState("wandering", entity)
+    end
 end
 
 return Idle

@@ -93,6 +93,8 @@ function RenderSystem:draw()
             love.graphics.setColor(1, 1, 1, 1)
         end
     end
+
 end
+
 
 return RenderSystem

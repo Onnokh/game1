@@ -4,6 +4,7 @@ local SkeletonConfig = {}
 
 -- Movement speeds (multipliers of base speed)
 SkeletonConfig.WALKING_SPEED = 0.4        -- Slower than player
+SkeletonConfig.WANDER_RADIUS = 8 -- 1 tile wander radius
 
 -- Animation settings
 SkeletonConfig.IDLE_ANIMATION = {

@@ -14,6 +14,7 @@ function Skeleton.create(x, y, world, physicsWorld)
     local SpriteRenderer = require("src.components.SpriteRenderer")
     local Collision = require("src.components.Collision")
     local StateMachine = require("src.components.StateMachine")
+    local Pathfinding = require("src.components.Pathfinding")
     local GameConstants = require("src.constants")
     local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
     local CastableShadow = require("src.components.CastableShadow")
@@ -42,18 +43,24 @@ function Skeleton.create(x, y, world, physicsWorld)
         collision:createCollider(physicsWorld, x, y)
     end
 
+    -- Create pathfinding component
+    local pathfinding = Pathfinding.new(x, y, SkeletonConfig.WANDER_RADIUS) -- 8 tile wander radius
+
     -- Create state machine first
     local stateMachine = StateMachine.new("idle")
 
     local Idle = require("src.entities.Monsters.Skeleton.states.Idle")
+    local Wandering = require("src.entities.Monsters.Skeleton.states.Wandering")
 
     stateMachine:addState("idle", Idle.new())
+    stateMachine:addState("wandering", Wandering.new())
 
 
     skeleton:addComponent("Position", position)
     skeleton:addComponent("Movement", movement)
     skeleton:addComponent("SpriteRenderer", spriteRenderer)
     skeleton:addComponent("Collision", collision)
+    skeleton:addComponent("Pathfinding", pathfinding)
     skeleton:addComponent("StateMachine", stateMachine)
 
     if world then
