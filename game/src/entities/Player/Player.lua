@@ -46,29 +46,61 @@ function Player.create(x, y, world, physicsWorld)
     local stateMachine = StateMachine.new("idle")
     local Idle = require("src.entities.Player.states.Idle")
     local Moving = require("src.entities.Player.states.Moving")
+    local Running = require("src.entities.Player.states.Running")
 
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("moving", Moving.new())
+    stateMachine:addState("running", Running.new())
 
-    -- State transitions
+    -- Priority-based state system (like modern engines!)
+    local InputHelpers = require("src.utils.input")
+
+    local function getPlayerState(input)
+        if InputHelpers.hasMovementInput(input) and InputHelpers.isRunningInput(input) then
+            return "running"
+        elseif InputHelpers.hasMovementInput(input) then
+            return "moving"
+        else
+            return "idle"
+        end
+    end
+
+    -- Priority-based transitions - much cleaner!
+    -- Each state checks if it should transition to a higher priority state
     stateMachine:addTransition("idle", "moving", function(self, entity, dt)
         local GameState = require("src.core.GameState")
         if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "moving"
+    end)
 
-        local hasInput = GameState.input.left or GameState.input.right or
-                        GameState.input.up or GameState.input.down
+    stateMachine:addTransition("idle", "running", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "running"
+    end)
 
-        return hasInput
+    stateMachine:addTransition("moving", "running", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "running"
     end)
 
     stateMachine:addTransition("moving", "idle", function(self, entity, dt)
         local GameState = require("src.core.GameState")
         if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "idle"
+    end)
 
-        local hasInput = GameState.input.left or GameState.input.right or
-                        GameState.input.up or GameState.input.down
+    stateMachine:addTransition("running", "moving", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "moving"
+    end)
 
-        return not hasInput
+    stateMachine:addTransition("running", "idle", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "idle"
     end)
 
     -- Add all components to the player

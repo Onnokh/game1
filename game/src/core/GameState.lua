@@ -18,13 +18,14 @@ local GameState = {
     right = false,
     action = false,
     cancel = false,
+    shift = false,
     mouseX = 0,
     mouseY = 0
   },
   camera = nil, -- Will be initialized with gamera
   player = {
-    x = 144,  -- Tile (10, 10) = (9 * 16, 9 * 16) = (144, 144)
-    y = 144,  -- Tile (10, 10) = (9 * 16, 9 * 16) = (144, 144)
+    x = 144,  -- Tile (10, 10)
+    y = 144,  -- Tile (10, 10)
     width = 16,
     height = 24,
     speed = 300,
@@ -103,6 +104,8 @@ function GameState.handleKeyPressed(key)
     GameState.input.action = true
   elseif key == "escape" then
     GameState.input.cancel = true
+  elseif key == "lshift" or key == "rshift" then
+    GameState.input.shift = true
   end
 
   -- Pass to current scene
@@ -126,6 +129,8 @@ function GameState.handleKeyReleased(key)
     GameState.input.action = false
   elseif key == "escape" then
     GameState.input.cancel = false
+  elseif key == "lshift" or key == "rshift" then
+    GameState.input.shift = false
   end
 end
 

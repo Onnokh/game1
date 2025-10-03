@@ -5,7 +5,7 @@ local GameScene = {}
 local world = {}
 local tileVariants = {} -- Store sprite variants for each tile
 local GameConstants = require("src.constants")
-local sprites = require("src.core.sprites")
+local sprites = require("src.utils.sprites")
 local LightWorld = require "shadows.LightWorld"
 local Light = require "shadows.Light"
 
@@ -161,7 +161,7 @@ function GameScene.update(dt, gameState)
 
   -- Create player entity if it doesn't exist
   if not playerEntity and ecsWorld then
-    playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld, gameState)
+    playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld)
 
     -- Add mouse facing system (needs gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
