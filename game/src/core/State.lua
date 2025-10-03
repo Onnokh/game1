@@ -1,143 +1,35 @@
-local GameConstants = require("src.constants")
-local gamera = require("lib.gamera")
+---@class State
+---Base class for all states in the state machine
+local State = {}
+State.__index = State
 
----@class GameState
----@field currentScene string The current active scene
----@field scenes table Table of all available scenes
----@field input table Input state tracking
----@field camera table Camera system
----@field player table Player character data
-
-local GameState = {
-  currentScene = "game",
-  scenes = {},
-  input = {
-    up = false,
-    down = false,
-    left = false,
-    right = false,
-    action = false,
-    cancel = false,
-    mouseX = 0,
-    mouseY = 0
-  },
-  camera = nil, -- Will be initialized with gamera
-  player = {
-    x = 144,  -- Tile (10, 10) = (9 * 16, 9 * 16) = (144, 144)
-    y = 144,  -- Tile (10, 10) = (9 * 16, 9 * 16) = (144, 144)
-    width = 16,
-    height = 24,
-    speed = 300,
-    direction = "down"
-  }
-}
-
----Initialize the game state
-function GameState.load()
-  -- Set values from constants (using local variables to avoid linter issues)
-  local playerWidth = GameConstants.PLAYER_WIDTH
-  local playerHeight = GameConstants.PLAYER_HEIGHT
-  local playerSpeed = GameConstants.PLAYER_SPEED
-
-  GameState.player.width = playerWidth
-  GameState.player.height = playerHeight
-  GameState.player.speed = playerSpeed
-
-  -- Initialize gamera camera with proper bounds starting at (0,0)
-  GameState.camera = gamera.new(
-    0,  -- left
-    0,  -- top
-    GameConstants.WORLD_WIDTH_PIXELS,  -- width
-    GameConstants.WORLD_HEIGHT_PIXELS  -- height
-  )
-
-  -- Initialize scenes
-  GameState.scenes = {
-    game = require("src.scenes.game"),
-    menu = require("src.scenes.menu")
-  }
-
-  -- Load the current scene
-  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].load then
-    GameState.scenes[GameState.currentScene].load()
-  end
+---Create a new state
+---@return State
+function State.new()
+    local self = setmetatable({}, State)
+    return self
 end
 
----Update mouse position in world coordinates
-function GameState.updateMousePosition()
-  local mouseX, mouseY = love.mouse.getPosition()
-
-  -- Convert screen coordinates to world coordinates using gamera
-  GameState.input.mouseX, GameState.input.mouseY = GameState.camera:toWorld(mouseX, mouseY)
+---Called when entering this state
+---@param stateMachine StateMachine The state machine
+---@param entity Entity The entity this state belongs to
+function State:onEnter(stateMachine, entity)
+    -- Override in subclasses
 end
 
----Update the game state
+---Called every frame while in this state
+---@param stateMachine StateMachine The state machine
+---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
-function GameState.update(dt)
-  -- Update current scene
-  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].update then
-    GameState.scenes[GameState.currentScene].update(dt, GameState)
-  end
+function State:onUpdate(stateMachine, entity, dt)
+    -- Override in subclasses
 end
 
----Draw the game state
-function GameState.draw()
-  -- Draw current scene
-  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].draw then
-    GameState.scenes[GameState.currentScene].draw(GameState)
-  end
+---Called when exiting this state
+---@param stateMachine StateMachine The state machine
+---@param entity Entity The entity this state belongs to
+function State:onExit(stateMachine, entity)
+    -- Override in subclasses
 end
 
----Handle input events
----@param key string Key pressed
-function GameState.handleKeyPressed(key)
-  if key == "w" or key == "up" then
-    GameState.input.up = true
-  elseif key == "s" or key == "down" then
-    GameState.input.down = true
-  elseif key == "a" or key == "left" then
-    GameState.input.left = true
-  elseif key == "d" or key == "right" then
-    GameState.input.right = true
-  elseif key == "space" or key == "return" then
-    GameState.input.action = true
-  elseif key == "escape" then
-    GameState.input.cancel = true
-  end
-
-  -- Pass to current scene
-  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].handleKeyPressed then
-    GameState.scenes[GameState.currentScene].handleKeyPressed(key, GameState)
-  end
-end
-
----Handle key release events
----@param key string Key released
-function GameState.handleKeyReleased(key)
-  if key == "w" or key == "up" then
-    GameState.input.up = false
-  elseif key == "s" or key == "down" then
-    GameState.input.down = false
-  elseif key == "a" or key == "left" then
-    GameState.input.left = false
-  elseif key == "d" or key == "right" then
-    GameState.input.right = false
-  elseif key == "space" or key == "return" then
-    GameState.input.action = false
-  elseif key == "escape" then
-    GameState.input.cancel = false
-  end
-end
-
----Change to a different scene
----@param sceneName string Name of the scene to change to
-function GameState.changeScene(sceneName)
-  if GameState.scenes[sceneName] then
-    GameState.currentScene = sceneName
-    if GameState.scenes[sceneName].load then
-      GameState.scenes[sceneName].load()
-    end
-  end
-end
-
-return GameState
+return State

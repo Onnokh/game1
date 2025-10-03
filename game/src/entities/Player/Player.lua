@@ -6,9 +6,8 @@ local Player = {}
 ---@param y number Y position
 ---@param world World The ECS world to add the player to
 ---@param physicsWorld table|nil The physics world for collision
----@param gameState table|nil The game state for input access
 ---@return Entity The created player entity
-function Player.create(x, y, world, physicsWorld, gameState)
+function Player.create(x, y, world, physicsWorld)
     local Entity = require("src.core.Entity")
     local Position = require("src.components.Position")
     local Movement = require("src.components.Movement")
@@ -53,7 +52,7 @@ function Player.create(x, y, world, physicsWorld, gameState)
 
     -- State transitions
     stateMachine:addTransition("idle", "moving", function(self, entity, dt)
-        local GameState = require("src.core.State")
+        local GameState = require("src.core.GameState")
         if not GameState or not GameState.input then return false end
 
         local hasInput = GameState.input.left or GameState.input.right or
@@ -63,7 +62,7 @@ function Player.create(x, y, world, physicsWorld, gameState)
     end)
 
     stateMachine:addTransition("moving", "idle", function(self, entity, dt)
-        local GameState = require("src.core.State")
+        local GameState = require("src.core.GameState")
         if not GameState or not GameState.input then return false end
 
         local hasInput = GameState.input.left or GameState.input.right or

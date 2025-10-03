@@ -1,5 +1,5 @@
 local overlayStats = require("lib.overlayStats")
-local gameState = require("src.core.State")
+local gameState = require("src.core.GameState")
 _G.gameState = gameState
 
 -- Load Lovebird for debugging

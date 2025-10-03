@@ -256,7 +256,7 @@ end
 ---@return nil
 function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   -- Try to access the game scene's ECS world
-  local gameState = require("src.core.State")
+  local gameState = require("src.core.GameState")
   if not gameState or not gameState.scenes or not gameState.scenes.game then
     return
   end
@@ -435,7 +435,7 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   -- Display collider count using ECS system
   local colliderCount = 0
   if cameraX and cameraY then
-    local gameState = require("src.core.State")
+    local gameState = require("src.core.GameState")
     if gameState and gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
       local entitiesWithCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"Collision"})
       colliderCount = #entitiesWithCollision

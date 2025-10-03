@@ -26,12 +26,10 @@ end
 
 ---Add a state to the state machine
 ---@param stateName string Name of the state
----@param stateConfig table State configuration with onEnter, onUpdate, onExit
-function StateMachine:addState(stateName, stateConfig)
+---@param stateInstance State The state instance
+function StateMachine:addState(stateName, stateInstance)
     self.states[stateName] = {
-        onEnter = stateConfig.onEnter or function() end,
-        onUpdate = stateConfig.onUpdate or function() end,
-        onExit = stateConfig.onExit or function() end,
+        instance = stateInstance,
         transitions = {}
     }
 
@@ -78,8 +76,8 @@ function StateMachine:changeState(newState, entity)
 
     -- Call onExit for current state
     local currentStateConfig = self.states[self.currentState]
-    if currentStateConfig and currentStateConfig.onExit then
-        currentStateConfig.onExit(self, entity)
+    if currentStateConfig and currentStateConfig.instance and currentStateConfig.instance.onExit then
+        currentStateConfig.instance:onExit(self, entity)
     end
 
     -- Change state
@@ -88,8 +86,8 @@ function StateMachine:changeState(newState, entity)
 
     -- Call onEnter for new state
     local newStateConfig = self.states[newState]
-    if newStateConfig and newStateConfig.onEnter then
-        newStateConfig.onEnter(self, entity)
+    if newStateConfig and newStateConfig.instance and newStateConfig.instance.onEnter then
+        newStateConfig.instance:onEnter(self, entity)
     end
 end
 
@@ -104,8 +102,8 @@ function StateMachine:update(dt, entity)
 
     -- Call onEnter for initial state if not yet initialized
     if not self.initialized then
-        if currentStateConfig.onEnter then
-            currentStateConfig.onEnter(self, entity)
+        if currentStateConfig.instance and currentStateConfig.instance.onEnter then
+            currentStateConfig.instance:onEnter(self, entity)
         end
         self.initialized = true
     end
@@ -119,8 +117,8 @@ function StateMachine:update(dt, entity)
     end
 
     -- Update current state
-    if currentStateConfig.onUpdate then
-        currentStateConfig.onUpdate(self, entity, dt)
+    if currentStateConfig.instance and currentStateConfig.instance.onUpdate then
+        currentStateConfig.instance:onUpdate(self, entity, dt)
     end
 end
 
