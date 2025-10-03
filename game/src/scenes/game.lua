@@ -24,6 +24,7 @@ local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local Player = require("src.entities.Player.Player")
+local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
 local Entity = require("src.core.Entity")
 local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
@@ -32,6 +33,7 @@ local Collision = require("src.components.Collision")
 
 local ecsWorld = nil
 local playerEntity = nil
+local skeletonEntity = nil
 local playerCollider = nil
 local lightWorld = nil
 local playerLight = nil
@@ -165,6 +167,12 @@ function GameScene.update(dt, gameState)
 
     -- Add mouse facing system (needs gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
+  end
+
+  -- Create skeleton entity if it doesn't exist
+  if not skeletonEntity and ecsWorld then
+      -- Place skeleton 64 pixels to the right of the player
+      skeletonEntity = Skeleton.create(244, 244, ecsWorld, physicsWorld)
   end
 
   -- Create a test box entity with a castable shadow near the player (once)

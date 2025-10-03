@@ -313,6 +313,61 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   love.graphics.pop()
 end
 
+---Draws sprite outlines in world space using ECS component system
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
+  -- Try to access the game scene's ECS world
+  local gameState = require("src.core.GameState")
+  if not gameState or not gameState.scenes or not gameState.scenes.game then
+    return
+  end
+
+  -- Access the ECS world from the game scene
+  local gameScene = gameState.scenes.game
+  if not gameScene.ecsWorld then
+    return
+  end
+
+  local scale = cameraScale or 1.0
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform aligned with gamera (use top-left world position)
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-topLeftX, -topLeftY)
+
+  -- Query all entities with SpriteRenderer components using the ECS system
+  local entitiesWithSprites = gameScene.ecsWorld:getEntitiesWith({"SpriteRenderer"})
+
+  -- Draw sprite outlines for each entity
+  for _, entity in ipairs(entitiesWithSprites) do
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    local position = entity:getComponent("Position")
+
+    if spriteRenderer and position then
+      -- Set color for sprite outline (cyan)
+      love.graphics.setColor(0, 1, 1, 0.8)
+      love.graphics.setLineWidth(1)
+
+      -- Draw rectangle outline around sprite
+      love.graphics.rectangle("line", position.x, position.y, spriteRenderer.width, spriteRenderer.height)
+    end
+  end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
+
+  -- Restore graphics state
+  love.graphics.pop()
+end
+
 ---Draws the performance overlay when active
 ---@param cameraX number Camera X position (optional)
 ---@param cameraY number Camera Y position (optional)
@@ -332,8 +387,10 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   if cameraX and cameraY then
     -- Draw 16x16 gridlines in world space
     overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
-  -- Draw physics colliders in world space
+    -- Draw physics colliders in world space
     overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
+    -- Draw sprite outlines in world space
+    overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
   end
 
 

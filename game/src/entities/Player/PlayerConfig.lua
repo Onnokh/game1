@@ -50,8 +50,6 @@ PlayerConfig.SPRITE_HEIGHT = 24
 -- Future expansion - you can add more attributes here:
 -- PlayerConfig.HEALTH = 100
 -- PlayerConfig.MAX_HEALTH = 100
--- PlayerConfig.JUMP_FORCE = 300
--- PlayerConfig.JUMP_DURATION = 0.2
 -- PlayerConfig.ATTACK_DAMAGE = 10
 -- PlayerConfig.ATTACK_RANGE = 32
 

@@ -1,0 +1,39 @@
+---@class SkeletonConfig
+---Centralized skeleton enemy attributes and constants
+local SkeletonConfig = {}
+
+-- Movement speeds (multipliers of base speed)
+SkeletonConfig.WALKING_SPEED = 0.4        -- Slower than player
+
+-- Animation settings
+SkeletonConfig.IDLE_ANIMATION = {
+    frames = {1, 2, 3, 4, 5, 6},
+    fps = 3,
+    loop = true
+}
+
+SkeletonConfig.WALKING_ANIMATION = {
+    frames = {3, 4, 5, 6},
+    fps = 6,
+    loop = true
+}
+
+-- Physics settings
+SkeletonConfig.COLLIDER_WIDTH = 12
+SkeletonConfig.COLLIDER_HEIGHT = 18
+SkeletonConfig.COLLIDER_RESTITUTION = 0.1
+SkeletonConfig.COLLIDER_FRICTION = 0.3
+SkeletonConfig.COLLIDER_DAMPING = 0.2
+
+-- Sprite settings
+SkeletonConfig.SPRITE_WIDTH = 32
+SkeletonConfig.SPRITE_HEIGHT = 32
+
+-- Combat settings (for future expansion)
+-- SkeletonConfig.HEALTH = 50
+-- SkeletonConfig.MAX_HEALTH = 50
+-- SkeletonConfig.ATTACK_DAMAGE = 15
+-- SkeletonConfig.ATTACK_RANGE = 20
+-- SkeletonConfig.ATTACK_COOLDOWN = 2
+
+return SkeletonConfig

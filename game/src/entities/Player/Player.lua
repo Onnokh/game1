@@ -43,8 +43,32 @@ function Player.create(x, y, world, physicsWorld)
         collision:createCollider(physicsWorld, x, y)
     end
 
-    -- State machine setup
+    -- Create state machine first
     local stateMachine = StateMachine.new("idle")
+
+    -- Set up the state selector function (automatically enables auto transitions)
+    stateMachine:setStateSelector(function(entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return "idle" end
+
+        -- Priority-based state system (like modern engines!)
+        local InputHelpers = require("src.utils.input")
+
+        -- Check dash cooldown before allowing dash
+        local dashCooldown = stateMachine:getGlobalData("dashCooldown") or 0
+        local canDash = dashCooldown <= 0
+
+        if InputHelpers.hasMovementInput(GameState.input) and InputHelpers.isActionInput(GameState.input) and canDash then
+            return "dash"      -- Highest priority - dash when space is pressed and cooldown is ready
+        elseif InputHelpers.hasMovementInput(GameState.input) and InputHelpers.isRunningInput(GameState.input) then
+            return "running"   -- Second priority - running when shift + movement
+        elseif InputHelpers.hasMovementInput(GameState.input) then
+            return "moving"    -- Third priority - moving when movement input
+        else
+            return "idle"      -- Lowest priority - idle when no input
+        end
+    end)
+
     local Idle = require("src.entities.Player.states.Idle")
     local Moving = require("src.entities.Player.states.Moving")
     local Running = require("src.entities.Player.states.Running")
@@ -54,114 +78,6 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("moving", Moving.new())
     stateMachine:addState("running", Running.new())
     stateMachine:addState("dash", Dash.new())
-
-    -- Priority-based state system (like modern engines!)
-    local InputHelpers = require("src.utils.input")
-
-    local function getPlayerState(input)
-        -- Check dash cooldown before allowing dash
-        local dashCooldown = stateMachine:getGlobalData("dashCooldown") or 0
-        local canDash = dashCooldown <= 0
-
-        if InputHelpers.hasMovementInput(input) and InputHelpers.isActionInput(input) and canDash then
-            return "dash"      -- Highest priority - dash when space is pressed and cooldown is ready
-        elseif InputHelpers.hasMovementInput(input) and InputHelpers.isRunningInput(input) then
-            return "running"   -- Second priority - running when shift + movement
-        elseif InputHelpers.hasMovementInput(input) then
-            return "moving"    -- Third priority - moving when movement input
-        else
-            return "idle"      -- Lowest priority - idle when no input
-        end
-    end
-
-    -- Priority-based transitions - much cleaner!
-    -- Each state checks if it should transition to a higher priority state
-    stateMachine:addTransition("idle", "moving", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "moving"
-    end)
-
-    stateMachine:addTransition("idle", "running", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "running"
-    end)
-
-    stateMachine:addTransition("moving", "running", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "running"
-    end)
-
-    stateMachine:addTransition("moving", "idle", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "idle"
-    end)
-
-    stateMachine:addTransition("running", "moving", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "moving"
-    end)
-
-    stateMachine:addTransition("running", "idle", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "idle"
-    end)
-
-    -- Dash transitions - dash has highest priority
-    stateMachine:addTransition("idle", "dash", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "dash"
-    end)
-
-    stateMachine:addTransition("moving", "dash", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "dash"
-    end)
-
-    stateMachine:addTransition("running", "dash", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "dash"
-    end)
-
-    stateMachine:addTransition("dash", "idle", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "idle"
-    end)
-
-    stateMachine:addTransition("dash", "moving", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "moving"
-    end)
-
-    stateMachine:addTransition("dash", "running", function(self, entity, dt)
-        local GameState = require("src.core.GameState")
-        if not GameState or not GameState.input then return false end
-        return getPlayerState(GameState.input) == "running"
-    end)
-
-    -- Add cooldown update logic to state machine
-    local originalUpdate = stateMachine.update
-    stateMachine.update = function(self, dt, entity)
-        -- Update cooldowns
-        local dashCooldown = self:getGlobalData("dashCooldown") or 0
-        if dashCooldown > 0 then
-            dashCooldown = dashCooldown - dt
-            self:setGlobalData("dashCooldown", dashCooldown)
-        end
-
-        -- Call original update
-        originalUpdate(self, dt, entity)
-    end
 
     -- Add all components to the player
     player:addComponent("Position", position)
