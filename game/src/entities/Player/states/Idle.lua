@@ -4,6 +4,8 @@ local Idle = {}
 Idle.__index = Idle
 setmetatable(Idle, {__index = require("src.core.State")})
 
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
+
 ---@return Idle The created idle state
 function Idle.new()
     local self = setmetatable({}, Idle)
@@ -23,11 +25,10 @@ function Idle:onEnter(stateMachine, entity)
 
         if not animator then
             -- Create animator if it doesn't exist
-            animator = Animator.new("character", {1, 2}, 4, true)
+            animator = Animator.new("character", PlayerConfig.IDLE_ANIMATION.frames, PlayerConfig.IDLE_ANIMATION.fps, PlayerConfig.IDLE_ANIMATION.loop)
             entity:addComponent("Animator", animator)
         else
-            -- Set idle animation: frames 1-2, 4 fps
-            animator:setAnimation({1, 2}, 4, true)
+            animator:setAnimation(PlayerConfig.IDLE_ANIMATION.frames, PlayerConfig.IDLE_ANIMATION.fps, PlayerConfig.IDLE_ANIMATION.loop)
         end
     end
 end

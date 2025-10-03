@@ -15,6 +15,7 @@ function Player.create(x, y, world, physicsWorld)
     local Collision = require("src.components.Collision")
     local StateMachine = require("src.components.StateMachine")
     local GameConstants = require("src.constants")
+    local PlayerConfig = require("src.entities.Player.PlayerConfig")
 
     -- Create the player entity
     local player = Entity.new()
@@ -23,19 +24,19 @@ function Player.create(x, y, world, physicsWorld)
     local position = Position.new(x, y, 0)
     local movement = Movement.new(GameConstants.PLAYER_SPEED, 3000, 1) -- maxSpeed, acceleration, friction
 
-    local spriteRenderer = SpriteRenderer.new(nil, 24, 24) -- width, height (24x24 sprite)
+    local spriteRenderer = SpriteRenderer.new(nil, PlayerConfig.SPRITE_WIDTH, PlayerConfig.SPRITE_HEIGHT)
     spriteRenderer.facingMouse = true -- Enable mouse-facing
 
 
     -- Collision component
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
-    local colliderWidth, colliderHeight = 12, 12
+    local colliderWidth, colliderHeight = PlayerConfig.COLLIDER_WIDTH, PlayerConfig.COLLIDER_HEIGHT
     local offsetX = (spriteRenderer.width - colliderWidth) / 2
     local offsetY = spriteRenderer.height - colliderHeight
     local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY)
-    collision.restitution = 0.1 -- Slight bounce
-    collision.friction = 0.3 -- Low friction for smooth movement
-    collision.linearDamping = 0 -- No damping for direct velocity control
+    collision.restitution = PlayerConfig.COLLIDER_RESTITUTION
+    collision.friction = PlayerConfig.COLLIDER_FRICTION
+    collision.linearDamping = PlayerConfig.COLLIDER_DAMPING
 
     -- Create collider if physics world is available
     if physicsWorld then
@@ -58,8 +59,12 @@ function Player.create(x, y, world, physicsWorld)
     local InputHelpers = require("src.utils.input")
 
     local function getPlayerState(input)
-        if InputHelpers.isActionInput(input) then
-            return "dash"      -- Highest priority - dash when space is pressed
+        -- Check dash cooldown before allowing dash
+        local dashCooldown = stateMachine:getGlobalData("dashCooldown") or 0
+        local canDash = dashCooldown <= 0
+
+        if InputHelpers.hasMovementInput(input) and InputHelpers.isActionInput(input) and canDash then
+            return "dash"      -- Highest priority - dash when space is pressed and cooldown is ready
         elseif InputHelpers.hasMovementInput(input) and InputHelpers.isRunningInput(input) then
             return "running"   -- Second priority - running when shift + movement
         elseif InputHelpers.hasMovementInput(input) then
@@ -143,6 +148,20 @@ function Player.create(x, y, world, physicsWorld)
         if not GameState or not GameState.input then return false end
         return getPlayerState(GameState.input) == "running"
     end)
+
+    -- Add cooldown update logic to state machine
+    local originalUpdate = stateMachine.update
+    stateMachine.update = function(self, dt, entity)
+        -- Update cooldowns
+        local dashCooldown = self:getGlobalData("dashCooldown") or 0
+        if dashCooldown > 0 then
+            dashCooldown = dashCooldown - dt
+            self:setGlobalData("dashCooldown", dashCooldown)
+        end
+
+        -- Call original update
+        originalUpdate(self, dt, entity)
+    end
 
     -- Add all components to the player
     player:addComponent("Position", position)

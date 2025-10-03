@@ -20,6 +20,7 @@ function StateMachine.new(initialState)
     self.stateData = {}
     self.enabled = true
     self.initialized = false -- Track if we've called onEnter for initial state
+    self.locked = false -- Prevent transitions when locked
 
     return self
 end
@@ -108,11 +109,13 @@ function StateMachine:update(dt, entity)
         self.initialized = true
     end
 
-    -- Check for state transitions
-    for _, transition in ipairs(currentStateConfig.transitions) do
-        if transition.condition(self, entity, dt) then
-            self:changeState(transition.toState, entity)
-            break -- Only transition once per update
+    -- Check for state transitions (only if not locked)
+    if not self.locked then
+        for _, transition in ipairs(currentStateConfig.transitions) do
+            if transition.condition(self, entity, dt) then
+                self:changeState(transition.toState, entity)
+                break -- Only transition once per update
+            end
         end
     end
 
@@ -171,6 +174,22 @@ end
 ---@return string Current state name
 function StateMachine:getCurrentState()
     return self.currentState
+end
+
+---Lock the state machine to prevent transitions
+function StateMachine:lock()
+    self.locked = true
+end
+
+---Unlock the state machine to allow transitions
+function StateMachine:unlock()
+    self.locked = false
+end
+
+---Check if the state machine is locked
+---@return boolean True if locked
+function StateMachine:isLocked()
+    return self.locked
 end
 
 return StateMachine

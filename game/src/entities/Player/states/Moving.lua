@@ -4,6 +4,8 @@ local Moving = {}
 Moving.__index = Moving
 setmetatable(Moving, {__index = require("src.core.State")})
 
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
+
 ---@return Moving The created moving state
 function Moving.new()
     local self = setmetatable({}, Moving)
@@ -23,11 +25,10 @@ function Moving:onEnter(stateMachine, entity)
 
         if not animator then
             -- Create animator if it doesn't exist
-            animator = Animator.new("character", {9, 10, 11, 12}, 8, true)
+            animator = Animator.new("character", PlayerConfig.WALKING_ANIMATION.frames, PlayerConfig.WALKING_ANIMATION.fps, PlayerConfig.WALKING_ANIMATION.loop)
             entity:addComponent("Animator", animator)
         else
-            -- Set walking animation: frames 9-12, 8 fps
-            animator:setAnimation({9, 10, 11, 12}, 8, true)
+            animator:setAnimation(PlayerConfig.WALKING_ANIMATION.frames, PlayerConfig.WALKING_ANIMATION.fps, PlayerConfig.WALKING_ANIMATION.loop)
         end
     end
 end

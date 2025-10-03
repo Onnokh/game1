@@ -4,6 +4,8 @@ local Running = {}
 Running.__index = Running
 setmetatable(Running, {__index = require("src.core.State")})
 
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
+
 ---@return Running The created running state
 function Running.new()
     local self = setmetatable({}, Running)
@@ -23,11 +25,10 @@ function Running:onEnter(stateMachine, entity)
 
         if not animator then
             -- Create animator if it doesn't exist
-            animator = Animator.new("character", {13, 14, 15, 16}, 8, true)
+            animator = Animator.new("character", PlayerConfig.RUNNING_ANIMATION.frames, PlayerConfig.RUNNING_ANIMATION.fps, PlayerConfig.RUNNING_ANIMATION.loop)
             entity:addComponent("Animator", animator)
         else
-            -- Set running animation: frames 13-16, 8 fps
-            animator:setAnimation({13, 14, 15, 16}, 8, true)
+            animator:setAnimation(PlayerConfig.RUNNING_ANIMATION.frames, PlayerConfig.RUNNING_ANIMATION.fps, PlayerConfig.RUNNING_ANIMATION.loop)
         end
     end
 end
@@ -47,7 +48,7 @@ function Running:onUpdate(stateMachine, entity, dt)
     local GameState = require("src.core.GameState")
     if GameState and GameState.input and movement then
         local velocityX, velocityY = 0, 0
-        local runSpeed = movement.maxSpeed * 1.5 -- 50% faster when running
+        local runSpeed = movement.maxSpeed * PlayerConfig.RUNNING_SPEED
 
         if GameState.input.left then velocityX = -runSpeed end
         if GameState.input.right then velocityX = runSpeed end
