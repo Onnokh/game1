@@ -15,7 +15,7 @@ CastableShadow.__index = CastableShadow
 ---@param opts table
 ---@return Component|CastableShadow
 function CastableShadow.new(opts)
-	local Component = require("src.Component")
+	local Component = require("src.core.Component")
 	local self = setmetatable(Component.new("CastableShadow"), CastableShadow)
 
 	opts = opts or {}

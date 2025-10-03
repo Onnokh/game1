@@ -17,7 +17,7 @@ end
 ---Create a new entity and add it to the world
 ---@return Entity
 function World:createEntity()
-    local Entity = require("src.Entity")
+    local Entity = require("src.core.Entity")
     local entity = Entity.new()
     table.insert(self.entities, entity)
     return entity

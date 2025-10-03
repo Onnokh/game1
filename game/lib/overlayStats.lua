@@ -2,7 +2,7 @@
 ---A performance monitoring overlay module for LÖVE games
 ---@field isActive boolean Whether the overlay is currently visible
 ---@field sampleSize number Maximum number of samples to keep for metrics
----@field vsyncEnabled boolean Current VSync state
+---@field vsyncEnabled boolean|nil Current VSync state
 local name, version, vendor, device = love.graphics.getRendererInfo()
 local overlayStats = {
   isActive = false,
@@ -84,10 +84,10 @@ local function handleController()
   for _, joystick in ipairs(joysticks) do
     if joystick:isGamepadDown("back") then
       if joystick:isGamepadDown("a") then
-        toggleOverlay()
+        overlayStats.toggleOverlay()
         overlayStats.lastControllerCheck = currentTime
       elseif joystick:isGamepadDown("b") then
-        toggleVSync()
+        overlayStats.toggleVSync()
         overlayStats.lastControllerCheck = currentTime
       end
     end
@@ -96,7 +96,7 @@ end
 
 ---Toggles the visibility of the overlay
 ---Resets all metrics on activation
-local function toggleOverlay()
+function overlayStats.toggleOverlay()
   overlayStats.isActive = not overlayStats.isActive
   -- Reset metrics when toggling
   for k, _ in pairs(overlayStats.metrics) do
@@ -108,7 +108,7 @@ end
 
 ---Toggles the VSync state in LÖVE
 ---Only functions when the overlay is active
-local function toggleVSync()
+function overlayStats.toggleVSync()
   if not overlayStats.isActive then
     return
   end
@@ -147,7 +147,7 @@ local function handleTouch(x, y)
     -- Handle touches inside the active overlay
     if timeSinceLastTap <= overlayStats.touch.doubleTapThreshold then
       -- Double tap inside overlay - toggle VSync
-      toggleVSync()
+      overlayStats.toggleVSync()
       overlayStats.touch.lastTapTime = 0
     else
       overlayStats.touch.lastTapTime = currentTime
@@ -155,7 +155,7 @@ local function handleTouch(x, y)
   elseif isTouchInCorner(x, y) then
     -- Original behavior for corner taps to toggle overlay
     if timeSinceLastTap <= overlayStats.touch.doubleTapThreshold then
-      toggleOverlay()
+      overlayStats.toggleOverlay()
       overlayStats.touch.lastTapTime = 0
     else
       overlayStats.touch.lastTapTime = currentTime
@@ -249,21 +249,21 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
   love.graphics.pop()
 end
 
----Draws physics colliders in world space
+---Draws physics colliders in world space using ECS component system
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
 ---@param cameraScale number Camera scale factor (optional)
 ---@return nil
 function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
-  -- Try to access the game scene's physics world
-  local gameState = require("src.gameState")
+  -- Try to access the game scene's ECS world
+  local gameState = require("src.core.State")
   if not gameState or not gameState.scenes or not gameState.scenes.game then
     return
   end
 
-  -- Access the physics world from the game scene
+  -- Access the ECS world from the game scene
   local gameScene = gameState.scenes.game
-  if not gameScene.physicsWorld then
+  if not gameScene.ecsWorld then
     return
   end
 
@@ -279,25 +279,31 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   love.graphics.scale(scale, scale)
   love.graphics.translate(-topLeftX, -topLeftY)
 
-  -- Set collider outline color (bright green for visibility)
-  love.graphics.setColor(0, 1, 0, 0.8)
-  love.graphics.setLineWidth(2)
+  -- Query all entities with Collision components using the ECS system
+  local entitiesWithCollision = gameScene.ecsWorld:getEntitiesWith({"Collision"})
 
-  -- Draw border colliders (static walls)
-  if gameScene.borderColliders then
-    for _, collider in ipairs(gameScene.borderColliders) do
-      if collider and collider.body and collider.shape then
-        -- Use Breezefield's built-in drawing method
-        collider:__draw__()
+  -- Draw colliders for each entity
+  for _, entity in ipairs(entitiesWithCollision) do
+    local collision = entity:getComponent("Collision")
+    local position = entity:getComponent("Position")
+
+    if collision and collision:hasCollider() and position then
+      -- Set color based on collider type
+      if collision.type == "static" then
+        love.graphics.setColor(0, 1, 0, 0.8) -- Green for static colliders
+      elseif collision.type == "dynamic" then
+        love.graphics.setColor(1, 0, 0, 0.8) -- Red for dynamic colliders
+      elseif collision.type == "kinematic" then
+        love.graphics.setColor(0, 0, 1, 0.8) -- Blue for kinematic colliders
+      else
+        love.graphics.setColor(1, 1, 0, 0.8) -- Yellow for unknown types
       end
-    end
-  end
 
-  -- Draw player collider (dynamic)
-  if gameScene.playerCollider then
-    -- Draw player collider in red
-    love.graphics.setColor(1, 0, 0, 0.8)
-    gameScene.playerCollider:__draw__()
+      love.graphics.setLineWidth(2)
+
+      -- Use Breezefield's built-in drawing method
+      collision.collider:__draw__()
+    end
   end
 
   -- Reset color
@@ -426,6 +432,18 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   love.graphics.print(string.format("Particles: %d", math.floor(currentParticleCount)), 20, y)
   y = y + 20
 
+  -- Display collider count using ECS system
+  local colliderCount = 0
+  if cameraX and cameraY then
+    local gameState = require("src.core.State")
+    if gameState and gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
+      local entitiesWithCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"Collision"})
+      colliderCount = #entitiesWithCollision
+    end
+  end
+  love.graphics.print(string.format("Colliders: %d", colliderCount), 20, y)
+  y = y + 20
+
   -- Add GLSL 3 support indicator
   love.graphics.setColor(overlayStats.supportedFeatures.glsl3 and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
   love.graphics.print(string.format("GLSL 3: %s", overlayStats.supportedFeatures.glsl3 and "Yes" or "No"), 20, y)
@@ -463,7 +481,7 @@ function overlayStats.update(dt)
 
   -- Get draw call stats before any drawing occurs
   local stats = love.graphics.getStats()
-  overlayStats.metrics.canvases[overlayStats.currentSample] = stats.canvasses
+  overlayStats.metrics.canvases[overlayStats.currentSample] = stats.canvases
   overlayStats.metrics.canvasSwitches[overlayStats.currentSample] = stats.canvasswitches
   overlayStats.metrics.drawCalls[overlayStats.currentSample] = stats.drawcalls
   overlayStats.metrics.drawCallsBatched[overlayStats.currentSample] = stats.drawcallsbatched
@@ -487,10 +505,10 @@ end
 ---@param key string The key that was pressed
 ---@return nil
 function overlayStats.handleKeyboard(key)
-  if key == "f3" then
-    toggleOverlay()
+  if key == "f3" or key == "`" then
+    overlayStats.toggleOverlay()
   elseif key == "f5" then
-    toggleVSync()
+    overlayStats.toggleVSync()
   end
 end
 

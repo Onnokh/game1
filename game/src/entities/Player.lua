@@ -8,13 +8,12 @@ local Player = {}
 ---@param physicsWorld table|nil The physics world for collision
 ---@return Entity The created player entity
 function Player.create(x, y, world, physicsWorld)
-    local Entity = require("src.Entity")
+    local Entity = require("src.core.Entity")
     local Position = require("src.components.Position")
     local Movement = require("src.components.Movement")
     local SpriteRenderer = require("src.components.SpriteRenderer")
     local Animator = require("src.components.Animator")
     local AnimationController = require("src.components.AnimationController")
-    local CastableShadow = require("src.components.CastableShadow")
     local Collision = require("src.components.Collision")
     local GameConstants = require("src.constants")
 
@@ -35,7 +34,7 @@ function Player.create(x, y, world, physicsWorld)
     player:addComponent("SpriteRenderer", spriteRenderer)
 
     -- Animator for character animations
-    local animator = Animator.new("character", {1, 2}, 6, true) -- Start with idle
+    local animator = Animator.new("character", {1, 2}, 4, true) -- Start with idle
     player:addComponent("Animator", animator)
 
     -- AnimationController to switch between idle and walking

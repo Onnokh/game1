@@ -12,6 +12,10 @@
         "game/",
         "debug"
       ],
+      "env": {
+        "LOVE_WINDOW_X": "-1920", // Second screen on the left
+        "LOVE_WINDOW_Y": "50" // Second screen on the top
+      }
     },
     {
       "type": "lua-local",

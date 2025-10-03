@@ -9,7 +9,7 @@ end
 
 -- Read product configuration
 -- Shared between the game and CI
-product_config = {}
+local product_config = {}
 for line in love.filesystem.lines("product.env") do
   -- Skip comment lines and blank lines
   if not (line:match("^%s*#") or line:match("^%s*$")) then
@@ -26,8 +26,7 @@ function love.conf(t)
   t.appendidentity        = false
   t.version               = product_config["LOVE_VERSION"]
 
-  -- If t.console is set to true, then the debugger won't work.
-  t.console               = true
+  t.console               = false -- Set this to true to enable lovebird debugger
   t.accelerometerjoystick = false
   t.externalstorage       = false
   t.gammacorrect          = false
@@ -43,7 +42,7 @@ function love.conf(t)
   t.window.resizable      = false
   t.window.minwidth       = 1
   t.window.minheight      = 1
-  t.window.fullscreen     = false
+  t.window.fullscreen     = true
   t.window.fullscreentype = "desktop"
   t.window.vsync          = 1
   t.window.msaa           = 0
@@ -52,8 +51,8 @@ function love.conf(t)
   t.window.display        = 1
   t.window.highdpi        = false
   t.window.usedpiscale    = true
-  t.window.x              = nil
-  t.window.y              = nil
+  t.window.x              = tonumber(os.getenv("LOVE_WINDOW_X")) or 1920  -- Set LOVE_WINDOW_X env var or default to 1920
+  t.window.y              = tonumber(os.getenv("LOVE_WINDOW_Y")) or 50     -- Set LOVE_WINDOW_Y env var or default to 0
 
   t.modules.audio         = true
   t.modules.data          = true

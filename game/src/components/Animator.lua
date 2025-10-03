@@ -15,7 +15,7 @@ Animator.__index = Animator
 ---@param loop boolean|nil Loop animation
 ---@return Component|Animator
 function Animator.new(sheet, frames, fps, loop)
-    local Component = require("src.Component")
+    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Animator"), Animator)
 
     self.sheet = sheet

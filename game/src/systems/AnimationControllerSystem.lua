@@ -1,4 +1,4 @@
-local System = require("src.System")
+local System = require("src.core.System")
 
 ---@class AnimationControllerSystem : System
 local AnimationControllerSystem = setmetatable({}, {__index = System})

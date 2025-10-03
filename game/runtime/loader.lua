@@ -4,11 +4,6 @@ local M = {}
 
 ---Gets system architecture information
 ---@return table systemInfo Table containing OS and architecture details
----@return string systemInfo.os Operating system name in lowercase
----@return string systemInfo.arch Architecture name
----@return boolean systemInfo.is64bit Whether the system is 64-bit
----@return boolean systemInfo.isArm Whether the system uses ARM architecture
----@return boolean systemInfo.isX86 Whether the system uses x86 architecture
 local function getSystemInfo()
   local os = love.system.getOS():lower():gsub("%s+", "")
   local ffi = require("ffi")

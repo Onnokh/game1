@@ -5,11 +5,9 @@ local GameScene = {}
 local world = {}
 local tileVariants = {} -- Store sprite variants for each tile
 local GameConstants = require("src.constants")
-local sprites = require("src.sprites")
+local sprites = require("src.core.sprites")
 local LightWorld = require "shadows.LightWorld"
 local Light = require "shadows.Light"
-local Body = require("shadows.Body")
-local PolygonShadow = require("shadows.ShadowShapes.PolygonShadow")
 
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -17,7 +15,7 @@ local worldWidth = GameConstants.WORLD_WIDTH
 local worldHeight = GameConstants.WORLD_HEIGHT
 
 -- ECS System
-local World = require("src.World")
+local World = require("src.core.World")
 local MovementSystem = require("src.systems.MovementSystem")
 local RenderSystem = require("src.systems.RenderSystem")
 local AnimationSystem = require("src.systems.AnimationSystem")
@@ -26,8 +24,8 @@ local ShadowSystem = require("src.systems.ShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local InputSystem = require("src.systems.InputSystem")
-local Player = require("src.actors.Player")
-local Entity = require("src.Entity")
+local Player = require("src.entities.Player")
+local Entity = require("src.core.Entity")
 local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local CastableShadow = require("src.components.CastableShadow")
@@ -38,9 +36,6 @@ local playerEntity = nil
 local playerCollider = nil
 local lightWorld = nil
 local playerLight = nil
-local debugWallBody = nil
-local debugWallWidth, debugWallHeight = 32, 64
-local debugWallCollider = nil
 local testBoxEntity = nil
 local testBoxOverlayRegistered = false
 
@@ -53,6 +48,7 @@ local borderColliders = {}
 GameScene.physicsWorld = physicsWorld
 GameScene.playerCollider = playerCollider
 GameScene.borderColliders = borderColliders
+GameScene.ecsWorld = ecsWorld
 
 -- Initialize the game scene
 function GameScene.load()
@@ -176,30 +172,6 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
   end
 
-  -- Create a debug shadow-casting wall next to the player (once)
-  if playerEntity and lightWorld and not debugWallBody then
-    debugWallBody = Body:new(lightWorld)
-    -- Position slightly to the right of the player
-    local px, py = gameState.player.x, gameState.player.y
-    debugWallBody:SetPosition(px + 64, py, 1)
-    -- Rectangle 32x64 (origin at body's local 0,0)
-    PolygonShadow:new(debugWallBody, 0, 0, 32, 0, 32, 64, 0, 64)
-
-    -- Create a matching static physics collider for the debug wall
-    if physicsWorld then
-      local wx, wy = px + 64, py
-      debugWallCollider = physicsWorld:newCollider("Rectangle", {
-        wx + debugWallWidth / 2, wy + debugWallHeight / 2, debugWallWidth, debugWallHeight
-      })
-      debugWallCollider:setType("static")
-      debugWallCollider:setRestitution(0.1)
-      debugWallCollider:setFriction(0.8)
-
-      -- Expose via borderColliders so it renders in the F3 overlay
-      table.insert(borderColliders, debugWallCollider)
-    end
-  end
-
   -- Create a test box entity with a castable shadow near the player (once)
   if playerEntity and ecsWorld and not testBoxEntity then
     local px, py = gameState.player.x, gameState.player.y
@@ -228,6 +200,8 @@ function GameScene.update(dt, gameState)
   -- Update ECS world (handles movement, collision, rendering)
   if ecsWorld then
     ecsWorld:update(dt)
+    -- Update the exposed reference
+    GameScene.ecsWorld = ecsWorld
   end
 
   -- Update physics world for collision detection only
@@ -266,12 +240,9 @@ function GameScene.update(dt, gameState)
     end
   end
 
-  -- Update camera and lightworld (match working implementation exactly)
-  local scale = GameConstants.CAMERA_SCALE
-
-  -- Set camera position directly (like the working implementation)
+  -- Set camera position directly
   gameState.camera:setPosition(gameState.player.x, gameState.player.y)
-  gameState.camera:setScale(scale)
+  gameState.camera:setScale(GameConstants.CAMERA_SCALE)
 
   -- Update light position to follow player
   if playerLight and gameState.player then
@@ -313,14 +284,6 @@ function GameScene.draw(gameState)
       ecsWorld:draw()
     end
 
-    -- Draw a red border around the debug wall
-    if debugWallBody then
-      local wx, wy = debugWallBody:GetPosition()
-      love.graphics.setColor(0, 0, 0, 1)
-      love.graphics.setLineWidth(1)
-      love.graphics.rectangle("line", wx, wy, debugWallWidth, debugWallHeight)
-      love.graphics.setColor(1, 1, 1, 1)
-    end
   end)
   -- Render Shädows lighting (outside camera transform to avoid double transforms)
   if lightWorld then

@@ -15,7 +15,7 @@ AnimationController.__index = AnimationController
 ---@return Component|AnimationController
 ---@
 function AnimationController.new(idleFrames, walkFrames, idleFps, walkFps)
-    local Component = require("src.Component")
+    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("AnimationController"), AnimationController)
 
     self.idleFrames = idleFrames or {1, 2}

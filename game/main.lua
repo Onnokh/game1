@@ -1,7 +1,5 @@
-https = nil
 local overlayStats = require("lib.overlayStats")
-local runtimeLoader = require("runtime.loader")
-local gameState = require("src.gameState")
+local gameState = require("src.core.State")
 _G.gameState = gameState
 
 -- Load Lovebird for debugging
@@ -33,14 +31,12 @@ function love.draw()
     error(err)
   end
 
-  -- Your game draw here
   -- Pass camera position and scale for world space gridlines
-  overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale) -- Should always be called last
+  overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale)
 end
 
 function love.update(dt)
-  -- Update Lovebird debug console
-  lovebird.update()
+  -- lovebird.update()
 
   -- Update mouse position
   gameState.updateMousePosition()

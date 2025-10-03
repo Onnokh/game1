@@ -53,8 +53,8 @@ function GameState.load()
 
   -- Initialize scenes
   GameState.scenes = {
-    game = require("src.scenes.gameScene"),
-    menu = require("src.scenes.menuScene")
+    game = require("src.scenes.game"),
+    menu = require("src.scenes.menu")
   }
 
   -- Load the current scene

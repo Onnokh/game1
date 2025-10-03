@@ -21,7 +21,7 @@ Collision.__index = Collision
 ---@param offsetY number|nil Vertical offset from entity top-left
 ---@return Component|Collision
 function Collision.new(width, height, type, offsetX, offsetY)
-    local Component = require("src.Component")
+    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Collision"), Collision)
 
     self.collider = nil

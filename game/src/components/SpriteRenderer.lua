@@ -19,7 +19,7 @@ SpriteRenderer.__index = SpriteRenderer
 ---@param height number Height of the sprite
 ---@return Component|SpriteRenderer
 function SpriteRenderer.new(sprite, width, height)
-    local Component = require("src.Component")
+    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("SpriteRenderer"), SpriteRenderer)
 
     self.sprite = sprite
