@@ -22,7 +22,7 @@ function Skeleton.create(x, y, world, physicsWorld)
     local skeleton = Entity.new()
 
     -- Create components
-    local position = Position.new(x, y, 0)
+    local position = Position.new(x, y, 0.5) -- Skeleton behind player but above ground
     local movement = Movement.new(GameConstants.PLAYER_SPEED, 2000, 1) -- maxSpeed, acceleration, friction
 
     local spriteRenderer = SpriteRenderer.new(nil, SkeletonConfig.SPRITE_WIDTH, SkeletonConfig.SPRITE_HEIGHT)
@@ -49,24 +49,13 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     stateMachine:addState("idle", Idle.new())
 
-    local shadow = CastableShadow.new({
-      shape = "rectangle",
-      width = SkeletonConfig.COLLIDER_WIDTH,
-      height = SkeletonConfig.COLLIDER_HEIGHT -4,
-      offsetX = offsetX,
-      offsetY = offsetY + 4,
-      selfShadow = false,
-    })
-    skeleton:addComponent("CastableShadow", shadow)
 
-    -- Add all components to the skeleton
     skeleton:addComponent("Position", position)
     skeleton:addComponent("Movement", movement)
     skeleton:addComponent("SpriteRenderer", spriteRenderer)
     skeleton:addComponent("Collision", collision)
     skeleton:addComponent("StateMachine", stateMachine)
 
-    -- Add the skeleton to the world
     if world then
         world:addEntity(skeleton)
     end

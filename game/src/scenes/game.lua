@@ -33,7 +33,7 @@ local Collision = require("src.components.Collision")
 
 local ecsWorld = nil
 local playerEntity = nil
-local skeletonEntity = nil
+local monsters = {} -- Array of monster entities
 local playerCollider = nil
 local lightWorld = nil
 local playerLight = nil
@@ -50,6 +50,7 @@ GameScene.physicsWorld = physicsWorld
 GameScene.playerCollider = playerCollider
 GameScene.borderColliders = borderColliders
 GameScene.ecsWorld = ecsWorld
+GameScene.monsters = monsters
 
 -- Initialize the game scene
 function GameScene.load()
@@ -169,10 +170,20 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
   end
 
-  -- Create skeleton entity if it doesn't exist
-  if not skeletonEntity and ecsWorld then
-      -- Place skeleton 64 pixels to the right of the player
-      skeletonEntity = Skeleton.create(244, 244, ecsWorld, physicsWorld)
+  -- Create monsters if they don't exist
+  if #monsters == 0 and ecsWorld then
+      -- Create multiple skeletons at different positions
+      local monsterPositions = {
+          {x = 244, y = 244}, -- Original position
+          {x = 300, y = 200}, -- Top right
+          {x = 180, y = 300}, -- Bottom left
+          {x = 350, y = 350}, -- Bottom right
+      }
+
+      for _, pos in ipairs(monsterPositions) do
+          local skeleton = Skeleton.create(pos.x, pos.y, ecsWorld, physicsWorld)
+          table.insert(monsters, skeleton)
+      end
   end
 
   -- Create a test box entity with a castable shadow near the player (once)
@@ -268,10 +279,23 @@ function GameScene.update(dt, gameState)
   end
 end
 
+-- Add a new monster at the specified position
+function GameScene.addMonster(x, y)
+  if ecsWorld and physicsWorld then
+    local skeleton = Skeleton.create(x, y, ecsWorld, physicsWorld)
+    table.insert(monsters, skeleton)
+    print("Added monster at:", x, y, "Total monsters:", #monsters)
+  end
+end
+
 -- Handle mouse clicks for debugging
 function GameScene.mousepressed(x, y, button, gameState)
   if button == 1 then -- Left click
     print("Left click at:", x, y)
+    -- Add a monster at click position (convert screen to world coordinates)
+    local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
+    local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
+    GameScene.addMonster(worldX, worldY)
   end
 end
 
@@ -287,11 +311,14 @@ function GameScene.draw(gameState)
       ecsWorld:draw()
     end
 
+    -- Render Shädows lighting (outside camera transform to avoid double transforms)
+    if lightWorld then
+      lightWorld:Draw()
+    end
+
   end)
-  -- Render Shädows lighting (outside camera transform to avoid double transforms)
-  if lightWorld then
-    lightWorld:Draw()
-  end
+
+
 end
 
 return GameScene

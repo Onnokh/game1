@@ -21,7 +21,7 @@ function Player.create(x, y, world, physicsWorld)
     local player = Entity.new()
 
     -- Create components
-    local position = Position.new(x, y, 0)
+    local position = Position.new(x, y, 1) -- Player in front of monsters
     local movement = Movement.new(GameConstants.PLAYER_SPEED, 3000, 1) -- maxSpeed, acceleration, friction
 
     local spriteRenderer = SpriteRenderer.new(nil, PlayerConfig.SPRITE_WIDTH, PlayerConfig.SPRITE_HEIGHT)
