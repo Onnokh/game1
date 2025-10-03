@@ -1,12 +1,15 @@
+local GameConstants = require("src.constants")
+local gamera = require("lib.gamera")
+
 ---@class GameState
 ---@field currentScene string The current active scene
 ---@field scenes table Table of all available scenes
 ---@field input table Input state tracking
 ---@field camera table Camera system
 ---@field player table Player character data
-local GameConstants = require("src.constants")
+
 local GameState = {
-  currentScene = "menu",
+  currentScene = "game",
   scenes = {},
   input = {
     up = false,
@@ -18,14 +21,7 @@ local GameState = {
     mouseX = 0,
     mouseY = 0
   },
-  camera = {
-    x = 0,
-    y = 0,
-    targetX = 0,
-    targetY = 0,
-    followSpeed = 5,
-    scale = GameConstants.CAMERA_SCALE
-  },
+  camera = nil, -- Will be initialized with gamera
   player = {
     x = 100,
     y = 100,
@@ -39,17 +35,21 @@ local GameState = {
 ---Initialize the game state
 function GameState.load()
   -- Set values from constants (using local variables to avoid linter issues)
-  local camFollowSpeed = GameConstants.CAMERA_FOLLOW_SPEED
-  local camScale = GameConstants.CAMERA_SCALE
   local playerWidth = GameConstants.PLAYER_WIDTH
   local playerHeight = GameConstants.PLAYER_HEIGHT
   local playerSpeed = GameConstants.PLAYER_SPEED
 
-  GameState.camera.followSpeed = camFollowSpeed
-  GameState.camera.scale = camScale
   GameState.player.width = playerWidth
   GameState.player.height = playerHeight
   GameState.player.speed = playerSpeed
+
+  -- Initialize gamera camera (match working implementation bounds)
+  GameState.camera = gamera.new(
+    -love.graphics.getWidth(),
+    -love.graphics.getHeight(),
+    60*32+love.graphics.getWidth(),
+    60*32+love.graphics.getHeight()
+  )
 
   -- Initialize scenes
   GameState.scenes = {
@@ -66,11 +66,9 @@ end
 ---Update mouse position in world coordinates
 function GameState.updateMousePosition()
   local mouseX, mouseY = love.mouse.getPosition()
-  local scale = GameState.camera.scale
 
-  -- Convert screen coordinates to world coordinates
-  GameState.input.mouseX = (mouseX / scale) + GameState.camera.x
-  GameState.input.mouseY = (mouseY / scale) + GameState.camera.y
+  -- Convert screen coordinates to world coordinates using gamera
+  GameState.input.mouseX, GameState.input.mouseY = GameState.camera:toWorld(mouseX, mouseY)
 end
 
 ---Update the game state
@@ -80,9 +78,6 @@ function GameState.update(dt)
   if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].update then
     GameState.scenes[GameState.currentScene].update(dt, GameState)
   end
-
-  -- Update camera
-  GameState.updateCamera(dt)
 end
 
 ---Draw the game state
@@ -91,36 +86,6 @@ function GameState.draw()
   if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].draw then
     GameState.scenes[GameState.currentScene].draw(GameState)
   end
-end
-
----Update camera position to follow player
----@param dt number Delta time
-function GameState.updateCamera(dt)
-  -- Use actual world dimensions from constants
-  -- World is WORLD_WIDTH tiles × WORLD_HEIGHT tiles at TILE_SIZE pixels each
-  local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
-  local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
-
-  -- Set camera target to player position (account for camera scale)
-  local scale = GameState.camera.scale
-  local screenWidth = love.graphics.getWidth() / scale
-  local screenHeight = love.graphics.getHeight() / scale
-
-  GameState.camera.targetX = GameState.player.x - screenWidth / 2
-  GameState.camera.targetY = GameState.player.y - screenHeight / 2
-
-  -- Clamp camera target to world bounds
-  -- Allow camera to go slightly negative to show first tile fully
-  -- Allow camera to go to worldWidthPixels - screenWidth to show last tile fully
-  GameState.camera.targetX = math.max(0, math.min(GameState.camera.targetX, worldWidthPixels - screenWidth))
-  GameState.camera.targetY = math.max(0, math.min(GameState.camera.targetY, worldHeightPixels - screenHeight))
-
-  -- Smoothly move camera towards target
-  local dx = GameState.camera.targetX - GameState.camera.x
-  local dy = GameState.camera.targetY - GameState.camera.y
-
-  GameState.camera.x = GameState.camera.x + dx * GameState.camera.followSpeed * dt
-  GameState.camera.y = GameState.camera.y + dy * GameState.camera.followSpeed * dt
 end
 
 ---Handle input events

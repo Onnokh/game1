@@ -9,7 +9,6 @@
 ---@field PLAYER_HEIGHT number
 ---@field PLAYER_SPEED number
 ---@field CAMERA_SCALE number
----@field CAMERA_FOLLOW_SPEED number
 local GameConstants = {}
 
 -- World dimensions
@@ -24,10 +23,9 @@ GameConstants.WORLD_HEIGHT_PIXELS = GameConstants.WORLD_HEIGHT * GameConstants.T
 -- Player constants
 GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24
-GameConstants.PLAYER_SPEED = 100
+GameConstants.PLAYER_SPEED = 175 -- Match working implementation
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 4.0
-GameConstants.CAMERA_FOLLOW_SPEED = 5
+GameConstants.CAMERA_SCALE = 4 -- No scaling
 
 return GameConstants
