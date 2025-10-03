@@ -22,9 +22,16 @@ local MovementSystem = require("src.ecs.systems.MovementSystem")
 local RenderSystem = require("src.ecs.systems.RenderSystem")
 local AnimationSystem = require("src.ecs.systems.AnimationSystem")
 local AnimationControllerSystem = require("src.ecs.systems.AnimationControllerSystem")
+local ShadowSystem = require("src.ecs.systems.ShadowSystem")
+local CollisionSystem = require("src.ecs.systems.CollisionSystem")
 local MouseFacingSystem = require("src.ecs.systems.MouseFacingSystem")
 local InputSystem = require("src.ecs.systems.InputSystem")
 local Player = require("src.ecs.actors.Player")
+local Entity = require("src.ecs.Entity")
+local Position = require("src.ecs.components.Position")
+local SpriteRenderer = require("src.ecs.components.SpriteRenderer")
+local CastableShadow = require("src.ecs.components.CastableShadow")
+local Collision = require("src.ecs.components.Collision")
 
 local ecsWorld = nil
 local playerEntity = nil
@@ -34,6 +41,8 @@ local playerLight = nil
 local debugWallBody = nil
 local debugWallWidth, debugWallHeight = 32, 64
 local debugWallCollider = nil
+local testBoxEntity = nil
+local testBoxOverlayRegistered = false
 
 -- Physics
 local bf = require("lib.breezefield")
@@ -63,14 +72,16 @@ function GameScene.load()
   GameScene.lightWorld = lightWorld
 
   -- Add a player light
-  playerLight = Light:new(lightWorld, 160)
+  playerLight = Light:new(lightWorld, 400)
   playerLight:SetColor(255, 255, 255, 80)
 
   -- Add systems to the ECS world (order matters!)
-  ecsWorld:addSystem(MovementSystem.new())            -- First: handle movement and collision
+  ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
+  ecsWorld:addSystem(MovementSystem.new())              -- Second: handle movement and collision
   ecsWorld:addSystem(AnimationControllerSystem.new()) -- Second: control animations based on movement
   ecsWorld:addSystem(AnimationSystem.new())           -- Third: advance animations
-  ecsWorld:addSystem(RenderSystem.new())              -- Fourth: render everything
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fourth: update shadow bodies
+  ecsWorld:addSystem(RenderSystem.new())              -- Fifth: render everything
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -145,10 +156,12 @@ function GameScene.update(dt, gameState)
   -- Ensure ECS world is initialized
   if not ecsWorld then
     ecsWorld = World.new()
-    ecsWorld:addSystem(MovementSystem.new())            -- First: handle movement and collision
+    ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
+    ecsWorld:addSystem(MovementSystem.new())              -- Second: handle movement and collision
     ecsWorld:addSystem(AnimationControllerSystem.new()) -- Second: control animations based on movement
     ecsWorld:addSystem(AnimationSystem.new())           -- Third: advance animations
-    ecsWorld:addSystem(RenderSystem.new())              -- Fourth: render everything
+    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fourth: update shadow bodies
+    ecsWorld:addSystem(RenderSystem.new())              -- Fifth: render everything
   end
 
   -- Create player entity if it doesn't exist
@@ -187,6 +200,31 @@ function GameScene.update(dt, gameState)
     end
   end
 
+  -- Create a test box entity with a castable shadow near the player (once)
+  if playerEntity and ecsWorld and not testBoxEntity then
+    local px, py = gameState.player.x, gameState.player.y
+    local boxX, boxY = px + 96, py
+
+    local e = Entity.new()
+    e:addComponent("Position", Position.new(boxX, boxY, 0))
+    local sr = SpriteRenderer.new(nil, 32, 32)
+    sr:setColor(0.8, 0.2, 0.2, 1)
+    e:addComponent("SpriteRenderer", sr)
+    local shadow = CastableShadow.new({
+      shape = "rectangle",
+      width = 32,
+      height = 32,
+      offsetX = 0,
+      offsetY = 0,
+    })
+    local collision = Collision.new(32, 32, "static", 0, 0)
+    e:addComponent("CastableShadow", shadow)
+    e:addComponent("Collision", collision)
+
+    ecsWorld:addEntity(e)
+    testBoxEntity = e
+  end
+
   -- Update ECS world (handles movement, collision, rendering)
   if ecsWorld then
     ecsWorld:update(dt)
@@ -195,6 +233,15 @@ function GameScene.update(dt, gameState)
   -- Update physics world for collision detection only
   if physicsWorld then
     physicsWorld:update(dt)
+  end
+
+  -- Register test box collider into debug overlay once created by CollisionSystem
+  if not testBoxOverlayRegistered and testBoxEntity then
+    local c = testBoxEntity:getComponent("Collision")
+    if c and c:hasCollider() then
+      table.insert(borderColliders, c.collider)
+      testBoxOverlayRegistered = true
+    end
   end
 
   -- Update gameState for camera and other systems

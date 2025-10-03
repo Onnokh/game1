@@ -14,6 +14,7 @@ function Player.create(x, y, world, physicsWorld)
     local SpriteRenderer = require("src.ecs.components.SpriteRenderer")
     local Animator = require("src.ecs.components.Animator")
     local AnimationController = require("src.ecs.components.AnimationController")
+    local CastableShadow = require("src.ecs.components.CastableShadow")
     local Collision = require("src.ecs.components.Collision")
     local GameConstants = require("src.constants")
 
