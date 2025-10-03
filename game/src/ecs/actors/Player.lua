@@ -48,7 +48,11 @@ function Player.create(x, y, world, physicsWorld)
     player:addComponent("AnimationController", animationController)
 
     -- Add Collision component
-    local collision = Collision.new(24, 24, "dynamic") -- width, height, type (24x24 sprite)
+    -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
+    local colliderWidth, colliderHeight = 12, 12
+    local offsetX = (spriteRenderer.width - colliderWidth) / 2
+    local offsetY = spriteRenderer.height - colliderHeight
+    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY)
     collision.restitution = 0.1 -- Slight bounce
     collision.friction = 0.3 -- Low friction for smooth movement
     collision.linearDamping = 0 -- No damping for direct velocity control

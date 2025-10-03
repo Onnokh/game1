@@ -194,17 +194,20 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
   -- Save current graphics state
   love.graphics.push("all")
 
-  -- Apply camera transform (same as game world)
+  -- Apply camera transform aligned with gamera (use top-left world position)
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
   love.graphics.scale(scale, scale)
-  love.graphics.translate(-cameraX, -cameraY)
+  love.graphics.translate(-topLeftX, -topLeftY)
 
   -- Set gridline color (semi-transparent white)
   love.graphics.setColor(1, 1, 1, 0.3)
   love.graphics.setLineWidth(1)
 
   -- Calculate world bounds based on camera position
-  local startX = math.floor(cameraX / gridSize) * gridSize
-  local startY = math.floor(cameraY / gridSize) * gridSize
+  local startX = math.floor(topLeftX / gridSize) * gridSize
+  local startY = math.floor(topLeftY / gridSize) * gridSize
   local endX = startX + width + gridSize
   local endY = startY + height + gridSize
 
@@ -269,9 +272,12 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   -- Save current graphics state
   love.graphics.push("all")
 
-  -- Apply camera transform (same as game world)
+  -- Apply camera transform aligned with gamera (use top-left world position)
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
   love.graphics.scale(scale, scale)
-  love.graphics.translate(-cameraX, -cameraY)
+  love.graphics.translate(-topLeftX, -topLeftY)
 
   -- Set collider outline color (bright green for visibility)
   love.graphics.setColor(0, 1, 0, 0.8)

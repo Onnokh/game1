@@ -2,6 +2,8 @@
 ---@field collider table|nil The physics collider object
 ---@field width number Width of the collision box
 ---@field height number Height of the collision box
+---@field offsetX number Horizontal offset from entity top-left
+---@field offsetY number Vertical offset from entity top-left
 ---@field type string Type of collider ("dynamic", "static", "kinematic")
 ---@field restitution number Bounce factor (0-1)
 ---@field friction number Friction factor (0-1)
@@ -15,8 +17,10 @@ Collision.__index = Collision
 ---@param width number Width of the collision box
 ---@param height number Height of the collision box
 ---@param type string|nil Type of collider, defaults to "dynamic"
+---@param offsetX number|nil Horizontal offset from entity top-left
+---@param offsetY number|nil Vertical offset from entity top-left
 ---@return Component|Collision
-function Collision.new(width, height, type)
+function Collision.new(width, height, type, offsetX, offsetY)
     local Component = require("src.ecs.Component")
     local self = setmetatable(Component.new("Collision"), Collision)
 
@@ -29,6 +33,8 @@ function Collision.new(width, height, type)
     self.linearDamping = 0
     self.enabled = true
     self.physicsWorld = nil
+    self.offsetX = offsetX or 0
+    self.offsetY = offsetY or 0
 
     return self
 end
@@ -44,8 +50,8 @@ function Collision:createCollider(physicsWorld, x, y)
 
     self.physicsWorld = physicsWorld
     self.collider = physicsWorld:newCollider("Rectangle", {
-        x + self.width/2,
-        y + self.height/2,
+        x + self.offsetX + self.width/2,
+        y + self.offsetY + self.height/2,
         self.width, self.height
     })
 
@@ -62,7 +68,7 @@ end
 ---@param y number Y position
 function Collision:setPosition(x, y)
     if self.collider then
-        self.collider:setPosition(x + self.width/2, y + self.height/2)
+        self.collider:setPosition(x + self.offsetX + self.width/2, y + self.offsetY + self.height/2)
     end
 end
 
@@ -70,7 +76,7 @@ end
 ---@return number, number X and Y position
 function Collision:getPosition()
     if self.collider then
-        return self.collider:getX() - self.width/2, self.collider:getY() - self.height/2
+        return self.collider:getX() - self.width/2 - self.offsetX, self.collider:getY() - self.height/2 - self.offsetY
     end
     return 0, 0
 end

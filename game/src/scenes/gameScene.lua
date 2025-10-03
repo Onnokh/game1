@@ -33,6 +33,7 @@ local lightWorld = nil
 local playerLight = nil
 local debugWallBody = nil
 local debugWallWidth, debugWallHeight = 32, 64
+local debugWallCollider = nil
 
 -- Physics
 local bf = require("lib.breezefield")
@@ -170,6 +171,20 @@ function GameScene.update(dt, gameState)
     debugWallBody:SetPosition(px + 64, py, 1)
     -- Rectangle 32x64 (origin at body's local 0,0)
     PolygonShadow:new(debugWallBody, 0, 0, 32, 0, 32, 64, 0, 64)
+
+    -- Create a matching static physics collider for the debug wall
+    if physicsWorld then
+      local wx, wy = px + 64, py
+      debugWallCollider = physicsWorld:newCollider("Rectangle", {
+        wx + debugWallWidth / 2, wy + debugWallHeight / 2, debugWallWidth, debugWallHeight
+      })
+      debugWallCollider:setType("static")
+      debugWallCollider:setRestitution(0.1)
+      debugWallCollider:setFriction(0.8)
+
+      -- Expose via borderColliders so it renders in the F3 overlay
+      table.insert(borderColliders, debugWallCollider)
+    end
   end
 
   -- Update ECS world (handles movement, collision, rendering)
