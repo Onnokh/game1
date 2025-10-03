@@ -47,21 +47,25 @@ function Player.create(x, y, world, physicsWorld)
     local Idle = require("src.entities.Player.states.Idle")
     local Moving = require("src.entities.Player.states.Moving")
     local Running = require("src.entities.Player.states.Running")
+    local Dash = require("src.entities.Player.states.Dash")
 
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("moving", Moving.new())
     stateMachine:addState("running", Running.new())
+    stateMachine:addState("dash", Dash.new())
 
     -- Priority-based state system (like modern engines!)
     local InputHelpers = require("src.utils.input")
 
     local function getPlayerState(input)
-        if InputHelpers.hasMovementInput(input) and InputHelpers.isRunningInput(input) then
-            return "running"
+        if InputHelpers.isActionInput(input) then
+            return "dash"      -- Highest priority - dash when space is pressed
+        elseif InputHelpers.hasMovementInput(input) and InputHelpers.isRunningInput(input) then
+            return "running"   -- Second priority - running when shift + movement
         elseif InputHelpers.hasMovementInput(input) then
-            return "moving"
+            return "moving"    -- Third priority - moving when movement input
         else
-            return "idle"
+            return "idle"      -- Lowest priority - idle when no input
         end
     end
 
@@ -101,6 +105,43 @@ function Player.create(x, y, world, physicsWorld)
         local GameState = require("src.core.GameState")
         if not GameState or not GameState.input then return false end
         return getPlayerState(GameState.input) == "idle"
+    end)
+
+    -- Dash transitions - dash has highest priority
+    stateMachine:addTransition("idle", "dash", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "dash"
+    end)
+
+    stateMachine:addTransition("moving", "dash", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "dash"
+    end)
+
+    stateMachine:addTransition("running", "dash", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "dash"
+    end)
+
+    stateMachine:addTransition("dash", "idle", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "idle"
+    end)
+
+    stateMachine:addTransition("dash", "moving", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "moving"
+    end)
+
+    stateMachine:addTransition("dash", "running", function(self, entity, dt)
+        local GameState = require("src.core.GameState")
+        if not GameState or not GameState.input then return false end
+        return getPlayerState(GameState.input) == "running"
     end)
 
     -- Add all components to the player
