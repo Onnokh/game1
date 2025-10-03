@@ -1,5 +1,5 @@
 -- Import System base class
-local System = require("src.ecs.System")
+local System = require("src.System")
 
 ---@class MovementSystem : System
 local MovementSystem = setmetatable({}, {__index = System})

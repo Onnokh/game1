@@ -17,21 +17,21 @@ local worldWidth = GameConstants.WORLD_WIDTH
 local worldHeight = GameConstants.WORLD_HEIGHT
 
 -- ECS System
-local World = require("src.ecs.World")
-local MovementSystem = require("src.ecs.systems.MovementSystem")
-local RenderSystem = require("src.ecs.systems.RenderSystem")
-local AnimationSystem = require("src.ecs.systems.AnimationSystem")
-local AnimationControllerSystem = require("src.ecs.systems.AnimationControllerSystem")
-local ShadowSystem = require("src.ecs.systems.ShadowSystem")
-local CollisionSystem = require("src.ecs.systems.CollisionSystem")
-local MouseFacingSystem = require("src.ecs.systems.MouseFacingSystem")
-local InputSystem = require("src.ecs.systems.InputSystem")
-local Player = require("src.ecs.actors.Player")
-local Entity = require("src.ecs.Entity")
-local Position = require("src.ecs.components.Position")
-local SpriteRenderer = require("src.ecs.components.SpriteRenderer")
-local CastableShadow = require("src.ecs.components.CastableShadow")
-local Collision = require("src.ecs.components.Collision")
+local World = require("src.World")
+local MovementSystem = require("src.systems.MovementSystem")
+local RenderSystem = require("src.systems.RenderSystem")
+local AnimationSystem = require("src.systems.AnimationSystem")
+local AnimationControllerSystem = require("src.systems.AnimationControllerSystem")
+local ShadowSystem = require("src.systems.ShadowSystem")
+local CollisionSystem = require("src.systems.CollisionSystem")
+local MouseFacingSystem = require("src.systems.MouseFacingSystem")
+local InputSystem = require("src.systems.InputSystem")
+local Player = require("src.actors.Player")
+local Entity = require("src.Entity")
+local Position = require("src.components.Position")
+local SpriteRenderer = require("src.components.SpriteRenderer")
+local CastableShadow = require("src.components.CastableShadow")
+local Collision = require("src.components.Collision")
 
 local ecsWorld = nil
 local playerEntity = nil

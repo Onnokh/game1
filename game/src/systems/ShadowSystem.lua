@@ -1,4 +1,4 @@
-local System = require("src.ecs.System")
+local System = require("src.System")
 
 ---@class ShadowSystem : System
 ---@field lightWorld any

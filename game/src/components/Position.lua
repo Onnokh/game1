@@ -11,7 +11,7 @@ Position.__index = Position
 ---@param z number|nil Z position, defaults to 0
 ---@return Component|Position
 function Position.new(x, y, z)
-    local Component = require("src.ecs.Component")
+    local Component = require("src.Component")
     local self = setmetatable(Component.new("Position"), Position)
 
     self.x = x or 0

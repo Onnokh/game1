@@ -1,4 +1,4 @@
-local System = require("src.ecs.System")
+local System = require("src.System")
 
 ---@class CollisionSystem : System
 ---@field physicsWorld any

@@ -8,14 +8,14 @@ local Player = {}
 ---@param physicsWorld table|nil The physics world for collision
 ---@return Entity The created player entity
 function Player.create(x, y, world, physicsWorld)
-    local Entity = require("src.ecs.Entity")
-    local Position = require("src.ecs.components.Position")
-    local Movement = require("src.ecs.components.Movement")
-    local SpriteRenderer = require("src.ecs.components.SpriteRenderer")
-    local Animator = require("src.ecs.components.Animator")
-    local AnimationController = require("src.ecs.components.AnimationController")
-    local CastableShadow = require("src.ecs.components.CastableShadow")
-    local Collision = require("src.ecs.components.Collision")
+    local Entity = require("src.Entity")
+    local Position = require("src.components.Position")
+    local Movement = require("src.components.Movement")
+    local SpriteRenderer = require("src.components.SpriteRenderer")
+    local Animator = require("src.components.Animator")
+    local AnimationController = require("src.components.AnimationController")
+    local CastableShadow = require("src.components.CastableShadow")
+    local Collision = require("src.components.Collision")
     local GameConstants = require("src.constants")
 
     -- Create the player entity
@@ -42,8 +42,8 @@ function Player.create(x, y, world, physicsWorld)
     -- Idle: frames 1-2 (row 1, cols 1-2), Walk: frames 9-12 (row 2, cols 1-4)
     local animationController = AnimationController.new(
         {1, 2},      -- idle frames
-        {13, 14, 15, 16}, -- run frames (row 2, columns 1-4)
-        6,           -- idle fps
+        {9, 10, 11, 12}, -- run frames (row 2, columns 1-4)
+        4,           -- idle fps
         8            -- walk fps
     )
     player:addComponent("AnimationController", animationController)

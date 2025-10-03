@@ -13,8 +13,9 @@ AnimationController.__index = AnimationController
 ---@param idleFps number|nil FPS for idle animation
 ---@param walkFps number|nil FPS for walking animation
 ---@return Component|AnimationController
+---@
 function AnimationController.new(idleFrames, walkFrames, idleFps, walkFps)
-    local Component = require("src.ecs.Component")
+    local Component = require("src.Component")
     local self = setmetatable(Component.new("AnimationController"), AnimationController)
 
     self.idleFrames = idleFrames or {1, 2}

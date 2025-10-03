@@ -23,7 +23,7 @@ GameConstants.WORLD_HEIGHT_PIXELS = GameConstants.WORLD_HEIGHT * GameConstants.T
 -- Player constants
 GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24
-GameConstants.PLAYER_SPEED = 175 -- Match working implementation
+GameConstants.PLAYER_SPEED = 80 -- Match working implementation
 
 -- Camera constants
 GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the world

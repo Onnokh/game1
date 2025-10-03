@@ -1,4 +1,4 @@
-local System = require("src.ecs.System")
+local System = require("src.System")
 
 ---@class AnimationControllerSystem : System
 local AnimationControllerSystem = setmetatable({}, {__index = System})
