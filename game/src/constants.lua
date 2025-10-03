@@ -26,6 +26,6 @@ GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 175 -- Match working implementation
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 2 -- Zoomed out to see more of the world
+GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the world
 
 return GameConstants

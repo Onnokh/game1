@@ -6,10 +6,10 @@ local world = {}
 local tileVariants = {} -- Store sprite variants for each tile
 local GameConstants = require("src.constants")
 local sprites = require("src.sprites")
-local shadows = require "shadows" -- 2D lighting library
 local LightWorld = require "shadows.LightWorld"
 local Light = require "shadows.Light"
-_G.Light = Light
+local Body = require("shadows.Body")
+local PolygonShadow = require("shadows.ShadowShapes.PolygonShadow")
 
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -31,8 +31,8 @@ local playerEntity = nil
 local playerCollider = nil
 local lightWorld = nil
 local playerLight = nil
-local staticLight = nil
-local clickLights = {} -- Store lights created by clicking
+local debugWallBody = nil
+local debugWallWidth, debugWallHeight = 32, 64
 
 -- Physics
 local bf = require("lib.breezefield")
@@ -58,23 +58,12 @@ function GameScene.load()
 
   -- Initialize Shädows lighting system
   lightWorld = LightWorld:new()
-  lightWorld:SetColor(100, 100, 100, 255) -- Brighter ambient color (gray instead of black)
+  lightWorld:SetColor(200, 200, 200, 255)
   GameScene.lightWorld = lightWorld
-  _G.lightWorld = lightWorld
 
   -- Add a player light
-  playerLight = Light:new(lightWorld, 300) -- Larger radius to be more visible
-  playerLight:SetPosition(100, 100, 1) -- Start at player position
-  playerLight:SetColor(255, 255, 255) -- white light
-  playerLight.Blur = true -- Enable blur for better visibility
-  _G.playerLight = playerLight
-
-  -- Add a static light at tile (10, 20)
-  staticLight = Light:new(lightWorld, 40) -- Medium radius
-  staticLight:SetPosition(144, 304, 1) -- Tile (10, 20) = (144, 304)
-  staticLight:SetColor(255, 200, 100) -- Orange/yellow light
-  staticLight.Blur = true -- Enable blur for better visibility
-  _G.clickLights = clickLights
+  playerLight = Light:new(lightWorld, 160)
+  playerLight:SetColor(255, 255, 255, 80)
 
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(MovementSystem.new())            -- First: handle movement and collision
@@ -163,17 +152,7 @@ function GameScene.update(dt, gameState)
 
   -- Create player entity if it doesn't exist
   if not playerEntity and ecsWorld then
-    print("=== PLAYER CREATION DEBUG ===")
-    print("gameState.player.x:", gameState.player.x, "gameState.player.y:", gameState.player.y)
-    print("Camera position:", gameState.camera.x, gameState.camera.y, "Scale:", gameState.camera.scale)
-
     playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld)
-
-    -- Check where player actually ended up
-    local position = playerEntity:getComponent("Position")
-    if position then
-      print("Player actually created at:", position.x, position.y)
-    end
 
     -- Create input system with gameState input
     local inputSystem = InputSystem.new(gameState.input)
@@ -181,6 +160,16 @@ function GameScene.update(dt, gameState)
 
     -- Add mouse facing system (needs gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
+  end
+
+  -- Create a debug shadow-casting wall next to the player (once)
+  if playerEntity and lightWorld and not debugWallBody then
+    debugWallBody = Body:new(lightWorld)
+    -- Position slightly to the right of the player
+    local px, py = gameState.player.x, gameState.player.y
+    debugWallBody:SetPosition(px + 64, py, 1)
+    -- Rectangle 32x64 (origin at body's local 0,0)
+    PolygonShadow:new(debugWallBody, 0, 0, 32, 0, 32, 64, 0, 64)
   end
 
   -- Update ECS world (handles movement, collision, rendering)
@@ -219,20 +208,13 @@ function GameScene.update(dt, gameState)
   local scale = GameConstants.CAMERA_SCALE
 
   -- Set camera position directly (like the working implementation)
-  gameState.camera.x = gameState.player.x
-  gameState.camera.y = gameState.player.y
+  gameState.camera:setPosition(gameState.player.x, gameState.player.y)
   gameState.camera:setScale(scale)
 
   -- Update light position to follow player
   if playerLight and gameState.player then
     -- Position light at player's world coordinates (same coordinate system as mouse clicks)
-    playerLight:SetPosition(gameState.player.x, gameState.player.y, 1)
-
-    -- Debug: Print light position occasionally
-    if math.random() < 0.01 then -- 1% chance each frame
-      local lightX, lightY, lightZ = playerLight:GetPosition()
-      print("Light position:", lightX, lightY, lightZ, "Player position:", gameState.player.x, gameState.player.y)
-    end
+    playerLight:SetPosition(gameState.player.x + gameState.player.width /2, gameState.player.y + gameState.player.height /2, 1)
   end
 
   -- Update light world to render lighting
@@ -241,13 +223,10 @@ function GameScene.update(dt, gameState)
     local camX, camY, scale = gameState.camera.x, gameState.camera.y, gameState.camera.scale
     local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
     -- Shädows does: translate(-x*z, -y*z); scale(z,z)
-    -- Last working formula (correct speed, small offset):
     -- origin at camera top-left in world units
     local lwX = camX - (halfW / scale)
     local lwY = camY - (halfH / scale)
-    -- Snap to integer pixels to avoid subpixel sampling artifacts
-    lwX = math.floor(lwX + 0.5)
-    lwY = math.floor(lwY + 0.5)
+
     lightWorld:SetPosition(lwX, lwY, scale)
     lightWorld:Update()
   end
@@ -256,30 +235,7 @@ end
 -- Handle mouse clicks for debugging
 function GameScene.mousepressed(x, y, button, gameState)
   if button == 1 then -- Left click
-    local worldX, worldY = gameState.camera:toWorld(x, y)
-    local scale = gameState.camera.scale or 1
-
-    -- Simplified debug output
-    print("=== MOUSE CLICK DEBUG ===")
-    print("Screen click:", x, y)
-    print("World coords:", worldX, worldY)
-    print("Tile:", math.floor(worldX / tileSize) + 1, math.floor(worldY / tileSize) + 1)
-
-    -- Create a new light at the clicked world position
-    local newLight = Light:new(lightWorld, 150) -- Medium radius
-    -- Snap spawn to integer pixels to avoid shader edge bleeding
-    local lx = math.floor(worldX + 0.5)
-    local ly = math.floor(worldY + 0.5)
-    newLight:SetPosition(lx, ly, 1)
-    newLight:SetColor(math.random(100, 255), math.random(100, 255), math.random(100, 255)) -- Random color
-    newLight.Blur = true -- Enable blur for better visibility
-
-    -- Store the light so it doesn't get garbage collected
-    table.insert(clickLights, newLight)
-
-    print("Created light at world coords:", worldX, worldY)
-    print("Total lights:", #clickLights + 1) -- +1 for player light
-    print("==========================")
+    print("Left click at:", x, y)
   end
 end
 
@@ -295,78 +251,19 @@ function GameScene.draw(gameState)
       ecsWorld:draw()
     end
 
-    -- Draw coordinate grid for debugging
-    love.graphics.setColor(1, 1, 1, 0.3)
-    for x = 0, worldWidth do
-      local lineX = x * tileSize
-      love.graphics.line(lineX, 0, lineX, worldHeight * tileSize)
+    -- Draw a red border around the debug wall
+    if debugWallBody then
+      local wx, wy = debugWallBody:GetPosition()
+      love.graphics.setColor(0, 0, 0, 1)
+      love.graphics.setLineWidth(1)
+      love.graphics.rectangle("line", wx, wy, debugWallWidth, debugWallHeight)
+      love.graphics.setColor(1, 1, 1, 1)
     end
-    for y = 0, worldHeight do
-      local lineY = y * tileSize
-      love.graphics.line(0, lineY, worldWidth * tileSize, lineY)
-    end
-
-    -- Draw tile numbers for debugging
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.setFont(love.graphics.newFont(5))
-    for x = 1, worldWidth do
-      for y = 1, worldHeight do
-        local tileX = (x - 1) * tileSize + 2
-        local tileY = (y - 1) * tileSize + 2
-        love.graphics.print(x .. "," .. y, tileX, tileY)
-      end
-    end
-
-    -- Render Shädows lighting is handled outside the camera transform
   end)
-
-  -- Draw debug info on screen (not affected by camera)
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.setFont(love.graphics.newFont(14))
-  local mouseX, mouseY = love.mouse.getPosition()
-  local worldX, worldY = gameState.camera:toWorld(mouseX, mouseY)
-  local tileX = math.floor(worldX / tileSize) + 1
-  local tileY = math.floor(worldY / tileSize) + 1
-
-  love.graphics.print("Mouse: " .. mouseX .. ", " .. mouseY, 10, 10)
-  love.graphics.print("World: " .. math.floor(worldX) .. ", " .. math.floor(worldY), 10, 30)
-  love.graphics.print("Tile: " .. tileX .. ", " .. tileY, 10, 50)
-  love.graphics.print("Camera: " .. math.floor(gameState.camera.x) .. ", " .. math.floor(gameState.camera.y), 10, 70)
-
-  -- Lighting debug info
-  if lightWorld then
-    local lwX, lwY, lwZ = lightWorld:GetPosition()
-    love.graphics.print("Light World: " .. math.floor(lwX) .. ", " .. math.floor(lwY) .. ", " .. lwZ, 10, 90)
-    love.graphics.print("Total Lights: " .. (#clickLights + 1), 10, 110)
-  end
-
   -- Render Shädows lighting (outside camera transform to avoid double transforms)
   if lightWorld then
     lightWorld:Draw()
   end
-end
-
--- Helper functions for Lovebird diagnostics
-if not _G.spawnLightScreen then
-function _G.spawnLightScreen(sx, sy, radius, r, g, b)
-  if not lightWorld then return end
-  local L = Light:new(lightWorld, radius or 150)
-  if r and g and b then L:SetColor(r, g, b) end
-  L.Blur = true
-  L:SetPosition(sx, sy, 1)
-  table.insert(clickLights, L)
-  return L
-end
-end
-
-if not _G.spawnLightWorld then
-function _G.spawnLightWorld(wx, wy, radius, r, g, b)
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  local cx, cy = _G.gameState and _G.gameState.camera.x or 0, _G.gameState and _G.gameState.camera.y or 0
-  local sx = wx - cx + w / 2
-  local sy = wy - cy + h / 2
-  return _G.spawnLightScreen(sx, sy, radius, r, g, b)
-end
 end
 
 return GameScene
