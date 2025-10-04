@@ -29,8 +29,24 @@ function Wandering:onEnter(stateMachine, entity)
             animator:setAnimation(SkeletonConfig.WALKING_ANIMATION.frames, SkeletonConfig.WALKING_ANIMATION.fps, SkeletonConfig.WALKING_ANIMATION.loop)
         end
 
-        -- Reset wander timer
-        stateMachine:setStateData("wanderTime", 0)
+        -- Get wander path
+        local pathfinding = entity:getComponent("Pathfinding")
+        local position = entity:getComponent("Position")
+        if pathfinding and position then
+            -- Use current position for pathfinding
+            local currentX, currentY = position.x, position.y
+
+            -- Check if we have collision component for more accurate position
+            local collision = entity:getComponent("Collision")
+            if collision and collision:hasCollider() then
+                currentX, currentY = collision:getPosition()
+                currentX = currentX + collision.width / 2
+                currentY = currentY + collision.height / 2
+            end
+
+            -- Start a new wander from current position
+            pathfinding:startWander(currentX, currentY, 16) -- 16 is tile size
+        end
     end
 end
 
@@ -41,24 +57,30 @@ end
 function Wandering:onUpdate(stateMachine, entity, dt)
     local pathfinding = entity:getComponent("Pathfinding")
     local movement = entity:getComponent("Movement")
-    local wanderTime = stateMachine:getStateData("wanderTime") or 0
-    stateMachine:setStateData("wanderTime", wanderTime + dt)
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
 
-    -- Debug: Print pathfinding status (only occasionally)
-    if pathfinding and wanderTime % 5.0 < 0.1 then -- Print every 5 seconds
-        local isComplete = pathfinding:isPathComplete()
-        local hasPath = pathfinding.currentPath ~= nil
+    -- Handle sprite flipping based on movement direction
+    if movement and spriteRenderer then
+        if movement.velocityX < -0.1 then
+            -- Moving left, flip sprite horizontally
+            spriteRenderer.scaleX = -1
+        elseif movement.velocityX > 0.1 then
+            -- Moving right, normal orientation
+            spriteRenderer.scaleX = 1
+        end
+        -- If velocityX is very small, keep current orientation
     end
 
-    -- Only transition to idle after wandering for at least 3 seconds
-    if wanderTime > 3.0 then
-        -- Check if we should transition to idle
-        if pathfinding and pathfinding:isPathComplete() then
-            -- If pathfinding is complete and we're not moving much, go to idle
-            if movement and (math.abs(movement.velocityX) < 0.1 and math.abs(movement.velocityY) < 0.1) then
-                stateMachine:changeState("idle", entity)
-            end
-        end
+    -- Check if we've reached the wander target
+    if pathfinding and pathfinding:isPathComplete() and movement and (math.abs(movement.velocityX) < 0.1 and math.abs(movement.velocityY) < 0.1) then
+        -- We've reached the target, immediately transition to idle
+        -- Clear the current path
+        pathfinding.currentPath = nil
+        pathfinding.currentPathIndex = 1
+
+        -- Debug output
+        print("Skeleton reached wander target, transitioning to idle")
+        stateMachine:changeState("idle", entity)
     end
 end
 

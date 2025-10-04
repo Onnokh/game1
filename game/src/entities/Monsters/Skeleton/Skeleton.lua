@@ -55,6 +55,9 @@ function Skeleton.create(x, y, world, physicsWorld)
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("wandering", Wandering.new())
 
+    -- Create Animator component for idle animation
+    local Animator = require("src.components.Animator")
+    local animator = Animator.new("skeleton", SkeletonConfig.IDLE_ANIMATION.frames, SkeletonConfig.IDLE_ANIMATION.fps, SkeletonConfig.IDLE_ANIMATION.loop)
 
     skeleton:addComponent("Position", position)
     skeleton:addComponent("Movement", movement)
@@ -62,6 +65,7 @@ function Skeleton.create(x, y, world, physicsWorld)
     skeleton:addComponent("Collision", collision)
     skeleton:addComponent("Pathfinding", pathfinding)
     skeleton:addComponent("StateMachine", stateMachine)
+    skeleton:addComponent("Animator", animator)
 
     if world then
         world:addEntity(skeleton)

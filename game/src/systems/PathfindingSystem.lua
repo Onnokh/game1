@@ -245,29 +245,6 @@ end
 ---@param pathfinding Pathfinding The pathfinding component
 ---@param dt number Delta time
 function PathfindingSystem:updateEntityPathfinding(entity, position, movement, pathfinding, dt)
-    -- Update wander timer
-    pathfinding.lastWanderTime = pathfinding.lastWanderTime + dt
-
-    -- Check if we need to start a new wander (only when path is complete, not when there's no path)
-    if pathfinding:isPathComplete() and pathfinding.lastWanderTime >= pathfinding.wanderCooldown then
-        -- Use collision center for pathfinding if available
-        local collision = entity:getComponent("Collision")
-        local currentX, currentY = position.x, position.y
-
-        if collision and collision:hasCollider() then
-            -- Use collision center position for pathfinding
-            currentX, currentY = collision:getPosition()
-            currentX = currentX + collision.width / 2
-            currentY = currentY + collision.height / 2
-        end
-
-        local success = pathfinding:startWander(currentX, currentY, self.tileSize)
-        if not success then
-            -- If we can't find a path, try again in a shorter time
-            pathfinding.lastWanderTime = pathfinding.wanderCooldown - 1.0
-        end
-    end
-
     -- If we have a path, move towards the next waypoint
     if not pathfinding:isPathComplete() then
         local nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)

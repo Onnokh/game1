@@ -17,6 +17,7 @@ end
 ---@param entity Entity The entity this state belongs to
 function Idle:onEnter(stateMachine, entity)
     stateMachine:setStateData("idleTime", 0)
+    stateMachine:setStateData("targetIdleTime", math.random(1, 5)) -- Random idle time between 1-3 seconds
 
     -- Create and set idle animation when entering state
     if entity then
@@ -39,10 +40,12 @@ end
 ---@param dt number Delta time
 function Idle:onUpdate(stateMachine, entity, dt)
     local idleTime = stateMachine:getStateData("idleTime") or 0
+    local targetIdleTime = stateMachine:getStateData("targetIdleTime") or 2
     stateMachine:setStateData("idleTime", idleTime + dt)
 
-    -- After 2 seconds of idling, start wandering
-    if idleTime > 1.0 then
+    -- After random amount of time idling, start wandering
+    if idleTime > targetIdleTime then
+        print("Skeleton idle time complete, transitioning to wandering")
         stateMachine:changeState("wandering", entity)
     end
 end

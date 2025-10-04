@@ -222,27 +222,6 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
     love.graphics.line(startX, y, endX, y)
   end
 
-  -- Draw coordinate labels (DISABLED - conflicts with game coordinate system)
-  -- love.graphics.setColor(1, 0, 0, 1) -- Bright red color for coordinates (more visible)
-  -- local font = love.graphics.getFont()
-  -- local fontSize = .5 / scale -- Larger font size
-
-  -- for x = startX, endX, gridSize do
-  --   for y = startY, endY, gridSize do
-  --     -- Convert pixel coordinates to tile coordinates (1-based)
-  --     local tileX = math.floor(x / gridSize) + 1
-  --     local tileY = math.floor(y / gridSize) + 1
-
-  --     -- Only show coordinates for tiles within world bounds
-  --     if tileX >= 1 and tileX <= 50 and tileY >= 1 and tileY <= 50 then
-  --       local coordText = string.format("%d,%d", tileX, tileY)
-
-  --       -- Position text in top-left corner of tile
-  --       love.graphics.print(coordText, x + 2, y + 2, 0, fontSize, fontSize)
-  --     end
-  --   end
-  -- end
-
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
 

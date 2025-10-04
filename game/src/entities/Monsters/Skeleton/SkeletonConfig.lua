@@ -14,7 +14,7 @@ SkeletonConfig.IDLE_ANIMATION = {
 }
 
 SkeletonConfig.WALKING_ANIMATION = {
-    frames = {3, 4, 5, 6},
+    frames = {25, 26, 27, 28, 29, 30}, -- Row 5 (0-indexed as 4), columns 1-6 (0-indexed: 4*6+0 = 24)
     fps = 6,
     loop = true
 }
