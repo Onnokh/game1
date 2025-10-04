@@ -24,6 +24,9 @@ local ShadowSystem = require("src.systems.ShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
+local AttackSystem = require("src.systems.AttackSystem")
+local DamageSystem = require("src.systems.DamageSystem")
+local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
 local Entity = require("src.core.Entity")
@@ -78,9 +81,12 @@ function GameScene.load()
   ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
   ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
   ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
-  ecsWorld:addSystem(AnimationSystem.new())           -- Fourth: advance animations
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fifth: update shadow bodies
-  ecsWorld:addSystem(RenderSystem.new())              -- Sixth: render everything
+  ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
+  ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events
+  ecsWorld:addSystem(AnimationSystem.new())           -- Sixth: advance animations
+  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Seventh: update particles
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eighth: update shadow bodies
+  ecsWorld:addSystem(RenderSystem.new())              -- Ninth: render everything
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -193,9 +199,12 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
     ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
     ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
-    ecsWorld:addSystem(AnimationSystem.new())           -- Fourth: advance animations
-    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Fifth: update shadow bodies
-    ecsWorld:addSystem(RenderSystem.new())              -- Sixth: render everything
+    ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
+    ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events
+    ecsWorld:addSystem(AnimationSystem.new())           -- Sixth: advance animations
+    ecsWorld:addSystem(ParticleRenderSystem.new())      -- Seventh: update particles
+    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eighth: update shadow bodies
+    ecsWorld:addSystem(RenderSystem.new())              -- Ninth: render everything
 
   end
 
@@ -303,14 +312,14 @@ end
 
 -- Handle mouse clicks for debugging
 function GameScene.mousepressed(x, y, button, gameState)
-  if button == 1 then -- Left click
-    print("Left click at:", x, y)
+  if button == 1 then -- Left click - debug depth info
+    GameScene.debugDepthInfo()
+  elseif button == 2 then -- Right click
+    print("Right click at:", x, y)
     -- Add a monster at click position (convert screen to world coordinates)
     local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
     GameScene.addMonster(worldX, worldY)
-  elseif button == 2 then -- Right click - debug depth info
-    GameScene.debugDepthInfo()
   end
 end
 

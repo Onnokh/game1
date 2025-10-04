@@ -19,6 +19,12 @@ SkeletonConfig.WALKING_ANIMATION = {
     loop = true
 }
 
+SkeletonConfig.DYING_ANIMATION = {
+    frames = {37, 38, 39, 40}, -- Row 7 (0-indexed as 6), columns 1-4 (6*6+1 = 37)
+    fps = 2,
+    loop = false
+}
+
 -- Physics settings
 SkeletonConfig.COLLIDER_WIDTH = 12
 SkeletonConfig.COLLIDER_HEIGHT = 8

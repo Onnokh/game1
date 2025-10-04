@@ -55,6 +55,7 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     local Idle = require("src.entities.Monsters.Skeleton.states.Idle")
     local Wandering = require("src.entities.Monsters.Skeleton.states.Wandering")
+    local Dying = require("src.entities.Monsters.Skeleton.states.Dying")
     local Animator = require("src.components.Animator")
 
     local animator = Animator.new("skeleton", SkeletonConfig.IDLE_ANIMATION.frames, SkeletonConfig.IDLE_ANIMATION.fps, SkeletonConfig.IDLE_ANIMATION.loop)
@@ -67,6 +68,7 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("wandering", Wandering.new())
+    stateMachine:addState("dying", Dying.new())
 
     skeleton:addComponent("Position", position)
     skeleton:addComponent("Movement", movement)

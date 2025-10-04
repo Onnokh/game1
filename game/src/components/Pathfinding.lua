@@ -1,4 +1,4 @@
-local CoordinateUtils = require("src.utils.coordinateUtils")
+local CoordinateUtils = require("src.utils.coordinates")
 
 ---@class Pathfinding : Component
 ---Component for pathfinding and AI behavior

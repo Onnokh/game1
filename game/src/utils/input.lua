@@ -30,4 +30,18 @@ function InputHelpers.isCancelInput(input)
     return input.cancel
 end
 
+---Check if attack input is pressed (left mouse button or space)
+---@param input table Input state table with attack field
+---@return boolean True if attack key is pressed
+function InputHelpers.isAttackInput(input)
+    return input.attack
+end
+
+---Check if secondary attack input is pressed (right mouse button or Q)
+---@param input table Input state table with secondaryAttack field
+---@return boolean True if secondary attack key is pressed
+function InputHelpers.isSecondaryAttackInput(input)
+    return input.secondaryAttack
+end
+
 return InputHelpers

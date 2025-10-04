@@ -14,12 +14,19 @@ function Player.create(x, y, world, physicsWorld)
     local SpriteRenderer = require("src.components.SpriteRenderer")
     local Collision = require("src.components.Collision")
     local StateMachine = require("src.components.StateMachine")
+    local Attack = require("src.components.Attack")
+    local Health = require("src.components.Health")
+    local HealthBar = require("src.components.HealthBar")
     local GameConstants = require("src.constants")
     local PlayerConfig = require("src.entities.Player.PlayerConfig")
     local DepthSorting = require("src.utils.depthSorting")
 
     -- Create the player entity
     local player = Entity.new()
+    ---@class PlayerEntity : Entity
+    ---@field isPlayer boolean
+    local playerEntity = player
+    playerEntity.isPlayer = true -- Mark as player for attack system
 
     -- Create components
     local position = Position.new(x, y, DepthSorting.getLayerZ("PLAYER")) -- Player layer
@@ -81,19 +88,31 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("running", Running.new())
     stateMachine:addState("dash", Dash.new())
 
+    -- Create attack component
+    local attack = Attack.new(15, 40, 0.5, "melee", 50) -- damage, range, cooldown, type, knockback
+
+    -- Create health component
+    local health = Health.new(100) -- 100 max health
+
+    -- Create health bar component
+    local healthBar = HealthBar.new()
+
     -- Add all components to the player
-    player:addComponent("Position", position)
-    player:addComponent("Movement", movement)
-    player:addComponent("SpriteRenderer", spriteRenderer)
-    player:addComponent("Collision", collision)
-    player:addComponent("StateMachine", stateMachine)
+    playerEntity:addComponent("Position", position)
+    playerEntity:addComponent("Movement", movement)
+    playerEntity:addComponent("SpriteRenderer", spriteRenderer)
+    playerEntity:addComponent("Collision", collision)
+    playerEntity:addComponent("StateMachine", stateMachine)
+    playerEntity:addComponent("Attack", attack)
+    playerEntity:addComponent("Health", health)
+    playerEntity:addComponent("HealthBar", healthBar)
 
     -- Add the player to the world
     if world then
-        world:addEntity(player)
+        world:addEntity(playerEntity)
     end
 
-    return player
+    return playerEntity
 end
 
 return Player
