@@ -1,5 +1,6 @@
 -- Import System base class
 local System = require("src.core.System")
+local DepthSorting = require("src.utils.depthSorting")
 
 ---@class RenderSystem : System
 local RenderSystem = setmetatable({}, {__index = System})
@@ -15,19 +16,8 @@ end
 
 ---Draw all entities with Position and SpriteRenderer components
 function RenderSystem:draw()
-    -- Sort entities by z-level (lower z renders first, higher z renders on top)
-    local sortedEntities = {}
-    for _, entity in ipairs(self.entities) do
-        table.insert(sortedEntities, entity)
-    end
-
-    table.sort(sortedEntities, function(a, b)
-        local posA = a:getComponent("Position")
-        local posB = b:getComponent("Position")
-        local zA = posA and posA.z or 0
-        local zB = posB and posB.z or 0
-        return zA < zB
-    end)
+    -- Use the depth sorting utility for proper 2D layering
+    local sortedEntities = DepthSorting.sortEntities(self.entities)
 
     for _, entity in ipairs(sortedEntities) do
         local position = entity:getComponent("Position")

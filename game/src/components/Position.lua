@@ -54,4 +54,22 @@ function Position:distanceTo(other)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+---Get the depth value for sorting (Y + Z)
+---@return number Combined depth value for rendering order
+function Position:getDepth()
+    return self.y + (self.z or 0)
+end
+
+---Set the Z-index for layering
+---@param z number Z-index value (higher values render on top)
+function Position:setZ(z)
+    self.z = z or 0
+end
+
+---Get the Z-index
+---@return number Current Z-index value
+function Position:getZ()
+    return self.z or 0
+end
+
 return Position

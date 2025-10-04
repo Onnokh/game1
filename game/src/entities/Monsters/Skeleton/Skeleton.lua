@@ -18,12 +18,13 @@ function Skeleton.create(x, y, world, physicsWorld)
     local GameConstants = require("src.constants")
     local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
     local CastableShadow = require("src.components.CastableShadow")
+    local DepthSorting = require("src.utils.depthSorting")
 
     -- Create the skeleton entity
     local skeleton = Entity.new()
 
     -- Create components
-    local position = Position.new(x, y, 0.5) -- Skeleton behind player but above ground
+    local position = Position.new(x, y, DepthSorting.getLayerZ("GROUND")) -- Skeleton at ground level
     local movement = Movement.new(GameConstants.PLAYER_SPEED, 2000, 1) -- maxSpeed, acceleration, friction
 
     local spriteRenderer = SpriteRenderer.new(nil, SkeletonConfig.SPRITE_WIDTH, SkeletonConfig.SPRITE_HEIGHT)

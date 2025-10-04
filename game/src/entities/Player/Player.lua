@@ -16,12 +16,13 @@ function Player.create(x, y, world, physicsWorld)
     local StateMachine = require("src.components.StateMachine")
     local GameConstants = require("src.constants")
     local PlayerConfig = require("src.entities.Player.PlayerConfig")
+    local DepthSorting = require("src.utils.depthSorting")
 
     -- Create the player entity
     local player = Entity.new()
 
     -- Create components
-    local position = Position.new(x, y, 1) -- Player in front of monsters
+    local position = Position.new(x, y, DepthSorting.getLayerZ("PLAYER")) -- Player layer
     local movement = Movement.new(GameConstants.PLAYER_SPEED, 3000, 1) -- maxSpeed, acceleration, friction
 
     local spriteRenderer = SpriteRenderer.new(nil, PlayerConfig.SPRITE_WIDTH, PlayerConfig.SPRITE_HEIGHT)

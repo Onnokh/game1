@@ -31,6 +31,7 @@ local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local CastableShadow = require("src.components.CastableShadow")
 local Collision = require("src.components.Collision")
+local DepthSorting = require("src.utils.depthSorting")
 
 local ecsWorld = nil
 local playerEntity = nil
@@ -308,7 +309,28 @@ function GameScene.mousepressed(x, y, button, gameState)
     local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
     GameScene.addMonster(worldX, worldY)
+  elseif button == 2 then -- Right click - debug depth info
+    GameScene.debugDepthInfo()
   end
+end
+
+-- Debug function to show depth information
+function GameScene.debugDepthInfo()
+  print("=== DEPTH DEBUG INFO ===")
+
+  if playerEntity then
+    local playerInfo = DepthSorting.getDepthInfo(playerEntity)
+    print(string.format("Player: Y=%.1f, Z=%.1f, Depth=%.1f, Layer=%s",
+          playerInfo.y, playerInfo.z, playerInfo.depth, playerInfo.layer))
+  end
+
+  for i, monster in ipairs(monsters) do
+    local monsterInfo = DepthSorting.getDepthInfo(monster)
+    print(string.format("Monster %d: Y=%.1f, Z=%.1f, Depth=%.1f, Layer=%s",
+          i, monsterInfo.y, monsterInfo.z, monsterInfo.depth, monsterInfo.layer))
+  end
+
+  print("=== END DEPTH DEBUG ===")
 end
 
 -- Draw the game scene
