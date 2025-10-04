@@ -8,6 +8,8 @@ local System = require("src.core.System")
 ---@field tileSize number Size of each tile in pixels
 ---@field grid table|nil Jumper grid object
 ---@field pathfinder table|nil Jumper pathfinder object
+---@field entityCollisionSize number Collision size to account for in pathfinding
+---@field physicsWorld table|nil The physics world for collision detection
 local PathfindingSystem = setmetatable({}, {__index = System})
 PathfindingSystem.__index = PathfindingSystem
 
@@ -26,10 +28,60 @@ function PathfindingSystem.new(worldMap, worldWidth, worldHeight, tileSize)
     self.worldHeight = worldHeight
     self.tileSize = tileSize
 
+    -- Hardcoded collision size for skeleton (12x18 pixels)
+    -- TODO: Make this dynamic per entity in the future
+    self.entityCollisionSize = 18 -- Use the larger dimension
+    self.entityCollisionWidth = 12 -- Width of collision box
+    self.entityCollisionHeight = 18 -- Height of collision box
+
     -- Initialize Jumper pathfinding
     self:initializePathfinding()
 
     return self
+end
+
+---Expand collision boundaries to account for entity collision size
+---@param collisionMap table The collision map to modify
+function PathfindingSystem:expandCollisionBoundaries(collisionMap)
+    if self.entityCollisionSize <= self.tileSize then
+        return -- No expansion needed if entity fits in one tile
+    end
+
+    -- Calculate expansion radius based on entity collision size
+    -- We need to account for the fact that the entity's collision box is offset from its visual center
+    local expansionRadiusX = math.ceil(self.entityCollisionWidth / (2 * self.tileSize))
+    local expansionRadiusY = math.ceil(self.entityCollisionHeight / (2 * self.tileSize))
+    print("PathfindingSystem: Expanding collision boundaries by", expansionRadiusX, "x", expansionRadiusY, "tiles for entity size", self.entityCollisionWidth, "x", self.entityCollisionHeight)
+
+    -- Create a copy of the original collision map
+    local originalMap = {}
+    for x = 1, self.worldWidth do
+        originalMap[x] = {}
+        for y = 1, self.worldHeight do
+            originalMap[x][y] = collisionMap[x][y]
+        end
+    end
+
+    -- Expand blocked areas
+    for x = 1, self.worldWidth do
+        for y = 1, self.worldHeight do
+            if originalMap[x][y] == 0 then -- If this tile is blocked
+                -- Mark surrounding tiles as blocked based on entity size
+                -- Use rectangular expansion to match collision box shape
+                for dx = -expansionRadiusX, expansionRadiusX do
+                    for dy = -expansionRadiusY, expansionRadiusY do
+                        local newX = x + dx
+                        local newY = y + dy
+
+                        -- Check if this expansion tile is within bounds
+                        if newX >= 1 and newX <= self.worldWidth and newY >= 1 and newY <= self.worldHeight then
+                            collisionMap[newX][newY] = 0
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 ---Add an entity to this system
@@ -70,6 +122,8 @@ function PathfindingSystem:initializePathfinding()
     -- Add collision objects to the pathfinding grid
     self:addCollisionObjectsToGrid(collisionMap)
 
+    -- Expand collision boundaries to account for entity collision size
+    self:expandCollisionBoundaries(collisionMap)
 
     -- Transpose collision map for Jumper (expects map[y][x] format)
     local transposedMap = {}
@@ -160,6 +214,9 @@ function PathfindingSystem:rebuildPathfindingGrid()
     -- Add collision objects to the pathfinding grid
     self:addCollisionObjectsToGrid(collisionMap)
 
+    -- Expand collision boundaries to account for entity collision size
+    self:expandCollisionBoundaries(collisionMap)
+
     -- Transpose collision map for Jumper (expects map[y][x] format)
     local transposedMap = {}
     for y = 1, self.worldHeight do
@@ -226,9 +283,20 @@ function PathfindingSystem:updateEntityPathfinding(entity, position, movement, p
         local nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)
 
         if nextX and nextY then
+            -- Get the collision center position for accurate movement calculation
+            local collision = entity:getComponent("Collision")
+            local currentX, currentY = position.x, position.y
+
+            if collision and collision:hasCollider() then
+                -- Use collision center position for movement calculation
+                currentX, currentY = collision:getPosition()
+                currentX = currentX + collision.width / 2
+                currentY = currentY + collision.height / 2
+            end
+
             -- Calculate direction to next waypoint
-            local dx = nextX - position.x
-            local dy = nextY - position.y
+            local dx = nextX - currentX
+            local dy = nextY - currentY
             local distance = math.sqrt(dx * dx + dy * dy)
 
             -- If we're close enough to the waypoint, move to the next one
@@ -236,8 +304,8 @@ function PathfindingSystem:updateEntityPathfinding(entity, position, movement, p
                 pathfinding:advancePath()
                 nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)
                 if nextX and nextY then
-                    dx = nextX - position.x
-                    dy = nextY - position.y
+                    dx = nextX - currentX
+                    dy = nextY - currentY
                     distance = math.sqrt(dx * dx + dy * dy)
                 end
             end
