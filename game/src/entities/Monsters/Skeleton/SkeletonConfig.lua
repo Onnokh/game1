@@ -31,9 +31,9 @@ SkeletonConfig.COLLIDER_DAMPING = 0.2
 SkeletonConfig.SPRITE_WIDTH = 32
 SkeletonConfig.SPRITE_HEIGHT = 32
 
--- Combat settings (for future expansion)
--- SkeletonConfig.HEALTH = 50
--- SkeletonConfig.MAX_HEALTH = 50
+-- Combat settings
+SkeletonConfig.HEALTH = 45
+SkeletonConfig.MAX_HEALTH = 50
 -- SkeletonConfig.ATTACK_DAMAGE = 15
 -- SkeletonConfig.ATTACK_RANGE = 20
 -- SkeletonConfig.ATTACK_COOLDOWN = 2

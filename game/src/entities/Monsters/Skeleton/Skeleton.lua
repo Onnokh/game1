@@ -18,6 +18,8 @@ function Skeleton.create(x, y, world, physicsWorld)
     local GameConstants = require("src.constants")
     local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
     local CastableShadow = require("src.components.CastableShadow")
+    local Health = require("src.components.Health")
+    local HealthBar = require("src.components.HealthBar")
     local DepthSorting = require("src.utils.depthSorting")
 
     -- Create the skeleton entity
@@ -57,6 +59,12 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     local animator = Animator.new("skeleton", SkeletonConfig.IDLE_ANIMATION.frames, SkeletonConfig.IDLE_ANIMATION.fps, SkeletonConfig.IDLE_ANIMATION.loop)
 
+    -- Create health component
+    local health = Health.new(SkeletonConfig.MAX_HEALTH, SkeletonConfig.HEALTH)
+
+    -- Create health bar component (16x2 pixels, positioned above skeleton)
+    local healthBar = HealthBar.new(16, 2, -8)
+
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("wandering", Wandering.new())
 
@@ -67,6 +75,8 @@ function Skeleton.create(x, y, world, physicsWorld)
     skeleton:addComponent("Pathfinding", pathfinding)
     skeleton:addComponent("StateMachine", stateMachine)
     skeleton:addComponent("Animator", animator)
+    skeleton:addComponent("Health", health)
+    skeleton:addComponent("HealthBar", healthBar)
 
     if world then
         world:addEntity(skeleton)

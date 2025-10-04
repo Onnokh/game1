@@ -84,6 +84,34 @@ function RenderSystem:draw()
         end
     end
 
+    -- Draw health bars for entities that have them
+    self:drawHealthBars(sortedEntities)
+end
+
+---Draw health bars for entities with Health and HealthBar components
+---@param entities table List of entities to check for health bars
+function RenderSystem:drawHealthBars(entities)
+    for _, entity in ipairs(entities) do
+        local position = entity:getComponent("Position")
+        local health = entity:getComponent("Health")
+        local healthBar = entity:getComponent("HealthBar")
+        local spriteRenderer = entity:getComponent("SpriteRenderer")
+
+        if position and health and healthBar and healthBar.visible and not health.isDead then
+            -- Get health percentage
+            local healthPercentage = health:getHealthPercentage()
+
+            -- Only show health bar if not at full health
+            if healthPercentage < 1.0 then
+                -- Calculate health bar position
+                local entityWidth = spriteRenderer and spriteRenderer.width or 32 -- Default width if no sprite renderer
+                local x, y = healthBar:getPosition(position.x, position.y, entityWidth)
+
+                -- Draw the health bar
+                healthBar:draw(x, y, healthPercentage)
+            end
+        end
+    end
 end
 
 
