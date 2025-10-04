@@ -12,8 +12,10 @@ local CoordinateUtils = require("src.utils.coordinateUtils")
 ---@field lastWanderTime number Time since last wander
 ---@field wanderCooldown number Cooldown between wanders
 ---@field isWandering boolean Whether currently wandering
+---@field minWanderDistance number Minimum distance for new wander targets
 ---@field pathfinder table|nil Jumper pathfinder object
 ---@field grid table|nil Jumper grid object
+---@field clearance number Clearance value for pathfinding
 local Pathfinding = {}
 Pathfinding.__index = Pathfinding
 setmetatable(Pathfinding, {__index = require("src.core.Component")})
@@ -44,9 +46,11 @@ end
 ---Set the pathfinding grid and pathfinder
 ---@param grid table The Jumper grid object
 ---@param pathfinder table The Jumper pathfinder object
-function Pathfinding:setPathfinder(grid, pathfinder)
+---@param clearance number|nil The clearance value for pathfinding
+function Pathfinding:setPathfinder(grid, pathfinder, clearance)
     self.grid = grid
     self.pathfinder = pathfinder
+    self.clearance = clearance or 1 -- Default to 1 if not provided
 end
 
 ---Find a random wander target within the radius
@@ -152,8 +156,8 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
     targetGridX = math.max(minX, math.min(targetGridX, maxX))
     targetGridY = math.max(minY, math.min(targetGridY, maxY))
 
-    -- Find path
-    local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY)
+    -- Find path with clearance
+    local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
 
     if path and path._nodes and #path._nodes > 0 then
         self.currentPath = path

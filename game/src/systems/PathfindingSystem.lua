@@ -9,6 +9,9 @@ local System = require("src.core.System")
 ---@field grid table|nil Jumper grid object
 ---@field pathfinder table|nil Jumper pathfinder object
 ---@field entityCollisionSize number Collision size to account for in pathfinding
+---@field entityCollisionWidth number Width of entity collision box
+---@field entityCollisionHeight number Height of entity collision box
+---@field clearance number Clearance value for pathfinding in tiles
 ---@field physicsWorld table|nil The physics world for collision detection
 local PathfindingSystem = setmetatable({}, {__index = System})
 PathfindingSystem.__index = PathfindingSystem
@@ -34,55 +37,17 @@ function PathfindingSystem.new(worldMap, worldWidth, worldHeight, tileSize)
     self.entityCollisionWidth = 12 -- Width of collision box
     self.entityCollisionHeight = 18 -- Height of collision box
 
+    -- Calculate clearance in tiles for pathfinding
+    local clearanceX = math.ceil(self.entityCollisionWidth / self.tileSize)
+    local clearanceY = math.ceil(self.entityCollisionHeight / self.tileSize)
+    self.clearance = math.max(clearanceX, clearanceY) -- Use the larger dimension
+
     -- Initialize Jumper pathfinding
     self:initializePathfinding()
 
     return self
 end
 
----Expand collision boundaries to account for entity collision size
----@param collisionMap table The collision map to modify
-function PathfindingSystem:expandCollisionBoundaries(collisionMap)
-    if self.entityCollisionSize <= self.tileSize then
-        return -- No expansion needed if entity fits in one tile
-    end
-
-    -- Calculate expansion radius based on entity collision size
-    -- We need to account for the fact that the entity's collision box is offset from its visual center
-    local expansionRadiusX = math.ceil(self.entityCollisionWidth / (2 * self.tileSize))
-    local expansionRadiusY = math.ceil(self.entityCollisionHeight / (2 * self.tileSize))
-    print("PathfindingSystem: Expanding collision boundaries by", expansionRadiusX, "x", expansionRadiusY, "tiles for entity size", self.entityCollisionWidth, "x", self.entityCollisionHeight)
-
-    -- Create a copy of the original collision map
-    local originalMap = {}
-    for x = 1, self.worldWidth do
-        originalMap[x] = {}
-        for y = 1, self.worldHeight do
-            originalMap[x][y] = collisionMap[x][y]
-        end
-    end
-
-    -- Expand blocked areas
-    for x = 1, self.worldWidth do
-        for y = 1, self.worldHeight do
-            if originalMap[x][y] == 0 then -- If this tile is blocked
-                -- Mark surrounding tiles as blocked based on entity size
-                -- Use rectangular expansion to match collision box shape
-                for dx = -expansionRadiusX, expansionRadiusX do
-                    for dy = -expansionRadiusY, expansionRadiusY do
-                        local newX = x + dx
-                        local newY = y + dy
-
-                        -- Check if this expansion tile is within bounds
-                        if newX >= 1 and newX <= self.worldWidth and newY >= 1 and newY <= self.worldHeight then
-                            collisionMap[newX][newY] = 0
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
 
 ---Add an entity to this system
 ---@param entity Entity The entity to add
@@ -92,7 +57,7 @@ function PathfindingSystem:addEntity(entity)
     -- Set up pathfinder for this entity if it has pathfinding component
     local pathfinding = entity:getComponent("Pathfinding")
     if pathfinding and self.grid and self.pathfinder then
-        pathfinding:setPathfinder(self.grid, self.pathfinder)
+        pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
         pathfinding.entityId = entity.id -- Store entity ID for debug output
     end
 
@@ -122,8 +87,6 @@ function PathfindingSystem:initializePathfinding()
     -- Add collision objects to the pathfinding grid
     self:addCollisionObjectsToGrid(collisionMap)
 
-    -- Expand collision boundaries to account for entity collision size
-    self:expandCollisionBoundaries(collisionMap)
 
     -- Transpose collision map for Jumper (expects map[y][x] format)
     local transposedMap = {}
@@ -136,13 +99,24 @@ function PathfindingSystem:initializePathfinding()
 
     -- Create grid and pathfinder
     self.grid = Grid(transposedMap)
+
+    -- Calculate clearance based on entity collision size in tiles
+    local clearanceX = math.ceil(self.entityCollisionWidth / self.tileSize)
+    local clearanceY = math.ceil(self.entityCollisionHeight / self.tileSize)
+    local clearance = math.max(clearanceX, clearanceY) -- Use the larger dimension
+
+    print("PathfindingSystem: Entity collision size:", self.entityCollisionWidth, "x", self.entityCollisionHeight)
+    print("PathfindingSystem: Tile size:", self.tileSize)
+    print("PathfindingSystem: Calculated clearance:", clearance, "(X:", clearanceX, "Y:", clearanceY, ")")
+
     self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
+    self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
 
     -- Set up pathfinder for all entities
     for _, entity in ipairs(self.entities) do
         local pathfinding = entity:getComponent("Pathfinding")
         if pathfinding then
-            pathfinding:setPathfinder(self.grid, self.pathfinder)
+            pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
         end
     end
 end
@@ -214,8 +188,6 @@ function PathfindingSystem:rebuildPathfindingGrid()
     -- Add collision objects to the pathfinding grid
     self:addCollisionObjectsToGrid(collisionMap)
 
-    -- Expand collision boundaries to account for entity collision size
-    self:expandCollisionBoundaries(collisionMap)
 
     -- Transpose collision map for Jumper (expects map[y][x] format)
     local transposedMap = {}
@@ -228,13 +200,20 @@ function PathfindingSystem:rebuildPathfindingGrid()
 
     -- Create new grid and pathfinder
     self.grid = Grid(transposedMap)
-    self.pathfinder = Pathfinder(self.grid, 'JPS', 1)
+
+    -- Calculate clearance based on entity collision size in tiles
+    local clearanceX = math.ceil(self.entityCollisionWidth / self.tileSize)
+    local clearanceY = math.ceil(self.entityCollisionHeight / self.tileSize)
+    local clearance = math.max(clearanceX, clearanceY) -- Use the larger dimension
+
+    self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
+    self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
 
     -- Update pathfinders for all entities
     for _, entity in ipairs(self.entities) do
         local pathfinding = entity:getComponent("Pathfinding")
         if pathfinding then
-            pathfinding:setPathfinder(self.grid, self.pathfinder)
+            pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
         end
     end
 end
@@ -251,7 +230,7 @@ function PathfindingSystem:update(dt)
         if position and movement and pathfinding then
             -- Ensure pathfinder is set up for this entity
             if not pathfinding.pathfinder or not pathfinding.grid then
-                pathfinding:setPathfinder(self.grid, self.pathfinder)
+                pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
             end
 
             self:updateEntityPathfinding(entity, position, movement, pathfinding, dt)

@@ -299,7 +299,7 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
         love.graphics.setColor(1, 1, 0, 0.8) -- Yellow for unknown types
       end
 
-      love.graphics.setLineWidth(2)
+      love.graphics.setLineWidth(1)
 
       -- Draw Love2D physics collider manually
       if collision.collider and collision.collider.body and collision.collider.shape then
