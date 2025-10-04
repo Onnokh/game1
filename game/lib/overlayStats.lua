@@ -181,14 +181,15 @@ function overlayStats.load()
   overlayStats.supportedFeatures.pixelShaderHighp = supported.pixelshaderhighp
 end
 
----Draws 16x16 pixel gridlines in world space
+---Draws gridlines in world space using GameConstants.TILE_SIZE
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
 ---@param cameraScale number Camera scale factor (optional)
 ---@return nil
 function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
   local width, height = love.graphics.getDimensions()
-  local gridSize = 16
+  local GameConstants = require("src.constants")
+  local gridSize = GameConstants.TILE_SIZE
   local scale = cameraScale or 1.0
 
   -- Save current graphics state
@@ -406,6 +407,8 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
     return
   end
 
+  local GameConstants = require("src.constants")
+  local tileSize = GameConstants.TILE_SIZE
   local scale = cameraScale or 1.0
 
   -- Save current graphics state
@@ -425,6 +428,7 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   for _, entity in ipairs(entitiesWithPathfinding) do
     local pathfinding = entity:getComponent("Pathfinding")
     local position = entity:getComponent("Position")
+    local collision = entity:getComponent("Collision")
 
     if pathfinding and position then
       -- Draw current path
@@ -432,14 +436,20 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
         -- Draw the complete path from skeleton to destination
         love.graphics.setColor(0, 1, 0, 0.8) -- Green
 
-        -- Start from skeleton position (center of sprite)
+        -- Start from collision center position (or sprite center if no collision)
         local prevX, prevY = position.x + 8, position.y + 8
+        if collision and collision:hasCollider() then
+          -- Use collision center position
+          prevX, prevY = collision:getPosition()
+          prevX = prevX + collision.width / 2
+          prevY = prevY + collision.height / 2
+        end
 
         -- Draw line from skeleton to first waypoint
         if pathfinding.pathIndex <= #pathfinding.currentPath._nodes then
           local firstNode = pathfinding.currentPath._nodes[pathfinding.pathIndex]
-          local firstWorldX = (firstNode._x - 1) * 16 + 8
-          local firstWorldY = (firstNode._y - 1) * 16 + 8
+          local firstWorldX = (firstNode._x - 1) * tileSize + tileSize / 2
+          local firstWorldY = (firstNode._y - 1) * tileSize + tileSize / 2
           love.graphics.line(prevX, prevY, firstWorldX, firstWorldY)
           prevX, prevY = firstWorldX, firstWorldY
         end
@@ -447,8 +457,8 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
         -- Draw remaining path segments
         for i = pathfinding.pathIndex + 1, #pathfinding.currentPath._nodes do
           local node = pathfinding.currentPath._nodes[i]
-          local worldX = (node._x - 1) * 16 + 8
-          local worldY = (node._y - 1) * 16 + 8
+          local worldX = (node._x - 1) * tileSize + tileSize / 2
+          local worldY = (node._y - 1) * tileSize + tileSize / 2
 
           love.graphics.line(prevX, prevY, worldX, worldY)
           prevX, prevY = worldX, worldY
@@ -461,8 +471,8 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
 
         for i = pathfinding.pathIndex, #pathfinding.currentPath._nodes do
           local node = pathfinding.currentPath._nodes[i]
-          local worldX = (node._x - 1) * 16 + 8
-          local worldY = (node._y - 1) * 16 + 8
+          local worldX = (node._x - 1) * tileSize + tileSize / 2
+          local worldY = (node._y - 1) * tileSize + tileSize / 2
 
           -- Draw coordinate text slightly offset from the waypoint
           local coordText = string.format("%d,%d", node._x, node._y)
@@ -536,7 +546,7 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   local font = love.graphics.setNewFont(16)
 
   if cameraX and cameraY then
-    -- Draw 16x16 gridlines in world space
+    -- Draw gridlines in world space
     overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
     -- Draw blocked pathfinding tiles in world space
     overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
