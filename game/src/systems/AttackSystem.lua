@@ -4,10 +4,8 @@ local InputHelpers = require("src.utils.input")
 local CoordinateUtils = require("src.utils.coordinates")
 
 ---@class AttackSystem : System
----@field _lastPreviewTime number Last time a preview was shown
 local AttackSystem = setmetatable({}, {__index = System})
 AttackSystem.__index = AttackSystem
-AttackSystem._lastPreviewTime = 0
 
 ---Create a new AttackSystem
 ---@return AttackSystem|System
@@ -28,11 +26,6 @@ function AttackSystem:update(dt)
         local collision = entity:getComponent("Collision")
 
         if position and attack and attack.enabled then
-            -- Show range preview for player when they're about to attack
-            if entity.isPlayer and self:isPlayerAboutToAttack(entity, currentTime) then
-                self:showRangePreview(entity, position, attack)
-            end
-
             -- Check for attack input (this assumes the entity has input handling)
             -- For now, we'll check if the entity is the player and handle input
             if self:shouldAttack(entity, currentTime) then
@@ -54,9 +47,12 @@ function AttackSystem:shouldAttack(entity, currentTime)
 
     -- Check if this is the player entity and handle input
     if entity.isPlayer then
-        -- Get input state (this would need to be passed from the game state)
-        -- For now, we'll use a simple check - this should be improved
-        return love.mouse.isDown(1) or love.keyboard.isDown("space")
+        -- Get input state from game state
+        local GameState = require("src.core.GameState")
+        if GameState and GameState.input then
+            return GameState.input.attack
+        end
+        return false
     end
 
     -- For AI entities, this would check their AI state
@@ -65,7 +61,7 @@ function AttackSystem:shouldAttack(entity, currentTime)
 end
 
 ---Perform an attack for an entity
----@param entity Entity The attacking entity
+---@param entity Entity|{isPlayer:boolean} The attacking entity
 ---@param position Position The position component
 ---@param attack Attack The attack component
 ---@param collision Collision|nil The collision component
@@ -75,11 +71,13 @@ function AttackSystem:performAttack(entity, position, attack, collision, current
         return
     end
 
-    -- Find targets within attack range
-    local targets = self:findTargetsInRange(entity, position, attack)
+    -- Calculate attack direction for player entities
+    if entity.isPlayer then
+        self:calculatePlayerAttackDirection(entity, position, attack)
+    end
 
-    -- Create particle effects for the attack
-    self:createAttackParticles(entity, position, attack, targets)
+    -- Find targets within attack area
+    local targets = self:findTargetsInAttackArea(entity, position, attack)
 
     -- Apply damage to each target
     for _, target in ipairs(targets) do
@@ -92,7 +90,82 @@ function AttackSystem:performAttack(entity, position, attack, collision, current
     end
 end
 
----Find all targets within attack range
+---Calculate attack direction for player based on mouse position
+---@param entity Entity|{isPlayer:boolean} The attacking entity
+---@param position Position The attacker's position
+---@param attack Attack The attack component
+function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
+    local GameState = require("src.core.GameState")
+    if not GameState or not GameState.input then
+        return
+    end
+
+    -- Get mouse position in world coordinates
+    local mouseX = GameState.input.mouseX
+    local mouseY = GameState.input.mouseY
+
+    -- Get player's visual center (accounting for sprite size)
+    local playerCenterX, playerCenterY = self:getEntityVisualCenter(entity, position)
+
+    -- Calculate direction from player center to mouse
+    local directionX = mouseX - playerCenterX
+    local directionY = mouseY - playerCenterY
+
+    -- Set the attack direction
+    attack:setDirection(directionX, directionY)
+
+    -- Calculate hit area position using player center
+    attack:calculateHitArea(playerCenterX, playerCenterY)
+end
+
+---Find all targets within attack area
+---@param attacker Entity The attacking entity
+---@param position Position The attacker's position
+---@param attack Attack The attack component
+---@return table Array of target entities
+function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
+    local targets = {}
+    local world = attacker._world
+
+    if not world then
+        return targets
+    end
+
+    -- Get all entities with Health component (potential targets)
+    local potentialTargets = world:getEntitiesWith({"Health"})
+
+    for _, target in ipairs(potentialTargets) do
+        -- Skip self
+        if target.id ~= attacker.id then
+            local targetPosition = target:getComponent("Position")
+            if targetPosition then
+                -- Check if target is within the attack hit area
+                if self:isTargetInHitArea(target, targetPosition, attack) then
+                    table.insert(targets, target)
+                end
+            end
+        end
+    end
+
+    return targets
+end
+
+---Check if a target is within the attack hit area
+---@param target Entity The target entity
+---@param targetPosition Position The target's position component
+---@param attack Attack The attack component
+---@return boolean True if target is in hit area
+function AttackSystem:isTargetInHitArea(target, targetPosition, attack)
+    local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
+
+    -- Check if target center is within the hit area rectangle
+    return targetCenterX >= attack.hitAreaX and
+           targetCenterX <= attack.hitAreaX + attack.hitAreaWidth and
+           targetCenterY >= attack.hitAreaY and
+           targetCenterY <= attack.hitAreaY + attack.hitAreaHeight
+end
+
+---Find all targets within attack range (legacy method for non-directional attacks)
 ---@param attacker Entity The attacking entity
 ---@param position Position The attacker's position
 ---@param attack Attack The attack component
@@ -173,146 +246,6 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
                 targetMovement.velocityY = targetMovement.velocityY + knockbackY
             end
         end
-    end
-end
-
----Create particle effects for an attack
----@param attacker Entity The attacking entity
----@param position Position The attacker's position
----@param attack Attack The attack component
----@param targets table Array of target entities
-function AttackSystem:createAttackParticles(attacker, position, attack, targets)
-    -- Get or create a particle system for the attacker
-    local particleSystem = attacker:getComponent("ParticleSystem")
-    if not particleSystem then
-        local ParticleSystem = require("src.components.ParticleSystem")
-        particleSystem = ParticleSystem.new(200, 0, 0) -- max particles, gravity, wind
-        attacker:addComponent("ParticleSystem", particleSystem)
-    end
-
-    -- Get the visual center of the entity (account for sprite size)
-    local centerX, centerY = self:getEntityVisualCenter(attacker, position)
-
-    -- Create different particle effects based on attack type
-    if attack.attackType == "melee" then
-        -- Create a clear range indicator with particles around the circumference
-        self:createRangeIndicator(particleSystem, centerX, centerY, attack.range)
-
-        -- Create impact particles for each target hit
-        for _, target in ipairs(targets) do
-            local targetPosition = target:getComponent("Position")
-            if targetPosition then
-                local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
-                local impactColor = {r = 1, g = 0.2, b = 0.2, a = 1} -- Red impact
-                particleSystem:createBurst(targetCenterX, targetCenterY, 8, 8, 0.3, impactColor, 2)
-            end
-        end
-
-        -- Create slash effect particles
-        local slashCount = math.min(12, #targets * 2 + 6)
-        local slashColor = {r = 1, g = 0.9, b = 0.3, a = 0.9} -- Bright golden slash
-        particleSystem:createBurst(centerX, centerY, attack.range * 0.6, slashCount, 0.3, slashColor, 1.5)
-
-    elseif attack.attackType == "ranged" then
-        -- Create a line of particles from attacker to targets
-        for _, target in ipairs(targets) do
-            local targetPosition = target:getComponent("Position")
-            if targetPosition then
-                local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
-                local projectileColor = {r = 0.2, g = 0.8, b = 1, a = 0.9} -- Blue projectile
-                particleSystem:createLine(centerX, centerY, targetCenterX, targetCenterY, 12, 0.3, projectileColor, 1.5)
-            end
-        end
-    end
-end
-
----Check if player is about to attack (mouse button held down)
----@param entity Entity|{isPlayer:boolean} The entity to check
----@param currentTime number Current game time
----@return boolean True if player is about to attack
-function AttackSystem:isPlayerAboutToAttack(entity, currentTime)
-    if not entity.isPlayer then
-        return false
-    end
-
-    local attack = entity:getComponent("Attack")
-    if not attack or not attack:isReady(currentTime) then
-        return false
-    end
-
-    -- Check if mouse button is held down (about to attack)
-    return love.mouse.isDown(1) or love.keyboard.isDown("space")
-end
-
----Show a preview of the attack range
----@param entity Entity The attacking entity
----@param position Position The position component
----@param attack Attack The attack component
-function AttackSystem:showRangePreview(entity, position, attack)
-    -- Get or create a particle system for the attacker
-    local particleSystem = entity:getComponent("ParticleSystem")
-    if not particleSystem then
-        local ParticleSystem = require("src.components.ParticleSystem")
-        particleSystem = ParticleSystem.new(200, 0, 0)
-        entity:addComponent("ParticleSystem", particleSystem)
-    end
-
-    -- Only show preview occasionally to avoid particle spam
-    local currentTime = love.timer.getTime()
-    if (currentTime - AttackSystem._lastPreviewTime) > 0.1 then
-        AttackSystem._lastPreviewTime = currentTime
-
-        -- Get the visual center of the entity (account for sprite size)
-        local centerX, centerY = self:getEntityVisualCenter(entity, position)
-
-        -- Create subtle range preview particles
-        local previewColor = {r = 1, g = 1, b = 0.3, a = 0.3} -- Dim yellow
-        local previewCount = math.floor(attack.range * 0.3)
-
-        for i = 1, previewCount do
-            local angle = (i / previewCount) * math.pi * 2
-            local px = centerX + math.cos(angle) * attack.range
-            local py = centerY + math.sin(angle) * attack.range
-
-            particleSystem:addParticle(px, py, 0, 0, 0.2, previewColor, 1, true)
-        end
-    end
-end
-
----Create a clear range indicator showing the attack radius
----@param particleSystem any The particle system to add particles to
----@param x number Center X position
----@param y number Center Y position
----@param radius number Attack radius
-function AttackSystem:createRangeIndicator(particleSystem, x, y, radius)
-    -- Create particles around the circumference to show the exact range
-    local rangeColor = {r = 1, g = 1, b = 0.5, a = 0.8} -- Bright yellow for visibility
-    local particleCount = math.floor(radius * 0.8) -- More particles for larger ranges
-
-    for i = 1, particleCount do
-        local angle = (i / particleCount) * math.pi * 2
-        local px = x + math.cos(angle) * radius
-        local py = y + math.sin(angle) * radius
-
-        -- Add some variation to make it look more natural
-        local variation = 2
-        px = px + (math.random() - 0.5) * variation
-        py = py + (math.random() - 0.5) * variation
-
-        -- Create particles that fade out quickly to show the range
-        particleSystem:addParticle(px, py, 0, 0, 0.6, rangeColor, 2, true)
-    end
-
-    -- Add some inner particles to fill the range area
-    local innerCount = math.floor(particleCount * 0.3)
-    for i = 1, innerCount do
-        local angle = math.random() * math.pi * 2
-        local distance = math.random() * radius * 0.7
-        local px = x + math.cos(angle) * distance
-        local py = y + math.sin(angle) * distance
-
-        local innerColor = {r = 1, g = 0.8, b = 0.2, a = 0.4} -- Dimmer inner particles
-        particleSystem:addParticle(px, py, 0, 0, 0.4, innerColor, 1.5, true)
     end
 end
 

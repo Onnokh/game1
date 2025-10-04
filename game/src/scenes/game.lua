@@ -26,7 +26,9 @@ local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
 local DamageSystem = require("src.systems.DamageSystem")
+local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
+local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
 local Entity = require("src.core.Entity")
@@ -61,6 +63,9 @@ function GameScene.load()
   -- Load sprites with Iffy
   sprites.load()
 
+  -- Load shaders
+  ShaderManager.loadDefaultShaders()
+
   -- Initialize ECS world
   ecsWorld = World.new()
 
@@ -83,10 +88,11 @@ function GameScene.load()
   ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
   ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events
-  ecsWorld:addSystem(AnimationSystem.new())           -- Sixth: advance animations
-  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Seventh: update particles
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eighth: update shadow bodies
-  ecsWorld:addSystem(RenderSystem.new())              -- Ninth: render everything
+  ecsWorld:addSystem(FlashEffectSystem.new())         -- Sixth: update flash effects
+  ecsWorld:addSystem(AnimationSystem.new())           -- Seventh: advance animations
+  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Eighth: update particles
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Ninth: update shadow bodies
+  ecsWorld:addSystem(RenderSystem.new())              -- Tenth: render everything
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -201,10 +207,11 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
     ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
     ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events
-    ecsWorld:addSystem(AnimationSystem.new())           -- Sixth: advance animations
-    ecsWorld:addSystem(ParticleRenderSystem.new())      -- Seventh: update particles
-    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eighth: update shadow bodies
-    ecsWorld:addSystem(RenderSystem.new())              -- Ninth: render everything
+    ecsWorld:addSystem(FlashEffectSystem.new())         -- Sixth: update flash effects
+    ecsWorld:addSystem(AnimationSystem.new())           -- Seventh: advance animations
+    ecsWorld:addSystem(ParticleRenderSystem.new())      -- Eighth: update particles
+    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Ninth: update shadow bodies
+    ecsWorld:addSystem(RenderSystem.new())              -- Tenth: render everything
 
   end
 
@@ -312,9 +319,7 @@ end
 
 -- Handle mouse clicks for debugging
 function GameScene.mousepressed(x, y, button, gameState)
-  if button == 1 then -- Left click - debug depth info
-    GameScene.debugDepthInfo()
-  elseif button == 2 then -- Right click
+  if button == 2 then -- Right click
     print("Right click at:", x, y)
     -- Add a monster at click position (convert screen to world coordinates)
     local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
@@ -323,24 +328,6 @@ function GameScene.mousepressed(x, y, button, gameState)
   end
 end
 
--- Debug function to show depth information
-function GameScene.debugDepthInfo()
-  print("=== DEPTH DEBUG INFO ===")
-
-  if playerEntity then
-    local playerInfo = DepthSorting.getDepthInfo(playerEntity)
-    print(string.format("Player: Y=%.1f, Z=%.1f, Depth=%.1f, Layer=%s",
-          playerInfo.y, playerInfo.z, playerInfo.depth, playerInfo.layer))
-  end
-
-  for i, monster in ipairs(monsters) do
-    local monsterInfo = DepthSorting.getDepthInfo(monster)
-    print(string.format("Monster %d: Y=%.1f, Z=%.1f, Depth=%.1f, Layer=%s",
-          i, monsterInfo.y, monsterInfo.z, monsterInfo.depth, monsterInfo.layer))
-  end
-
-  print("=== END DEPTH DEBUG ===")
-end
 
 -- Draw the game scene
 function GameScene.draw(gameState)

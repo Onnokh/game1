@@ -17,6 +17,7 @@ function Player.create(x, y, world, physicsWorld)
     local Attack = require("src.components.Attack")
     local Health = require("src.components.Health")
     local HealthBar = require("src.components.HealthBar")
+    local ParticleSystem = require("src.components.ParticleSystem")
     local GameConstants = require("src.constants")
     local PlayerConfig = require("src.entities.Player.PlayerConfig")
     local DepthSorting = require("src.utils.depthSorting")
@@ -89,13 +90,16 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("dash", Dash.new())
 
     -- Create attack component
-    local attack = Attack.new(15, 40, 0.5, "melee", 50) -- damage, range, cooldown, type, knockback
+    local attack = Attack.new(15, 15, 0.5, "melee", 50) -- damage, range, cooldown, type, knockback
 
     -- Create health component
     local health = Health.new(100) -- 100 max health
 
     -- Create health bar component
     local healthBar = HealthBar.new()
+
+    -- Create particle system for walking effects
+    local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
 
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
@@ -106,6 +110,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("HealthBar", healthBar)
+    playerEntity:addComponent("ParticleSystem", particleSystem)
 
     -- Add the player to the world
     if world then

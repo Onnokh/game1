@@ -79,8 +79,11 @@ function love.mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.mousepressed(x, y, button)
-  -- Pass mouse events to current scene
-  if gameState.scenes[gameState.currentScene] and gameState.scenes[gameState.currentScene].mousepressed then
-    gameState.scenes[gameState.currentScene].mousepressed(x, y, button, gameState)
-  end
+  -- Handle mouse input through game state
+  gameState.handleMousePressed(x, y, button)
+end
+
+function love.mousereleased(x, y, button)
+  -- Handle mouse release through game state
+  gameState.handleMouseReleased(x, y, button)
 end

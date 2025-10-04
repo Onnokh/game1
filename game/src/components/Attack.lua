@@ -6,6 +6,12 @@
 ---@field enabled boolean Whether the attack is enabled
 ---@field attackType string Type of attack ("melee", "ranged", etc.)
 ---@field knockback number Knockback force applied to targets
+---@field attackDirectionX number X component of attack direction
+---@field attackDirectionY number Y component of attack direction
+---@field hitAreaX number X position of attack hit area
+---@field hitAreaY number Y position of attack hit area
+---@field hitAreaWidth number Width of attack hit area
+---@field hitAreaHeight number Height of attack hit area
 local Attack = {}
 Attack.__index = Attack
 
@@ -27,6 +33,12 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.enabled = true
     self.attackType = attackType or "melee"
     self.knockback = knockback or 0
+    self.attackDirectionX = 0
+    self.attackDirectionY = 0
+    self.hitAreaX = 0
+    self.hitAreaY = 0
+    self.hitAreaWidth = 16
+    self.hitAreaHeight = 16
 
     return self
 end
@@ -95,6 +107,34 @@ function Attack:getCooldownPercentage(currentTime)
         return 1.0
     end
     return math.min(1.0, self:getRemainingCooldown(currentTime) / self.cooldown)
+end
+
+---Set the attack direction
+---@param directionX number X component of attack direction
+---@param directionY number Y component of attack direction
+function Attack:setDirection(directionX, directionY)
+    self.attackDirectionX = directionX
+    self.attackDirectionY = directionY
+end
+
+---Calculate and set the hit area based on attacker position and direction
+---@param attackerX number Attacker X position
+---@param attackerY number Attacker Y position
+function Attack:calculateHitArea(attackerX, attackerY)
+    -- Normalize direction
+    local length = math.sqrt(self.attackDirectionX * self.attackDirectionX + self.attackDirectionY * self.attackDirectionY)
+    if length > 0 then
+        local normalizedX = self.attackDirectionX / length
+        local normalizedY = self.attackDirectionY / length
+        
+        -- Position hit area at the end of the attack range
+        self.hitAreaX = attackerX + normalizedX * self.range - self.hitAreaWidth / 2
+        self.hitAreaY = attackerY + normalizedY * self.range - self.hitAreaHeight / 2
+    else
+        -- Default to right if no direction
+        self.hitAreaX = attackerX + self.range - self.hitAreaWidth / 2
+        self.hitAreaY = attackerY - self.hitAreaHeight / 2
+    end
 end
 
 return Attack

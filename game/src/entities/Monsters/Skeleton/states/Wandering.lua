@@ -78,8 +78,6 @@ function Wandering:onUpdate(stateMachine, entity, dt)
         pathfinding.currentPath = nil
         pathfinding.currentPathIndex = 1
 
-        -- Debug output
-        print("Skeleton reached wander target, transitioning to idle")
         stateMachine:changeState("idle", entity)
     end
 end

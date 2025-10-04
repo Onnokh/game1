@@ -19,6 +19,7 @@ local GameState = {
     action = false,
     cancel = false,
     shift = false,
+    attack = false,
     mouseX = 0,
     mouseY = 0
   },
@@ -131,6 +132,31 @@ function GameState.handleKeyReleased(key)
     GameState.input.cancel = false
   elseif key == "lshift" or key == "rshift" then
     GameState.input.shift = false
+  end
+end
+
+---Handle mouse press events
+---@param x number Mouse X position
+---@param y number Mouse Y position
+---@param button number Mouse button pressed
+function GameState.handleMousePressed(x, y, button)
+  if button == 1 then -- Left mouse button
+    GameState.input.attack = true
+  end
+
+  -- Pass to current scene
+  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].mousepressed then
+    GameState.scenes[GameState.currentScene].mousepressed(x, y, button, GameState)
+  end
+end
+
+---Handle mouse release events
+---@param x number Mouse X position
+---@param y number Mouse Y position
+---@param button number Mouse button released
+function GameState.handleMouseReleased(x, y, button)
+  if button == 1 then -- Left mouse button
+    GameState.input.attack = false
   end
 end
 

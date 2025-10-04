@@ -141,10 +141,6 @@ function StateMachine:changeState(newState, entity)
         return -- Already in this state
     end
 
-    -- Log state change with entity information
-    local entityInfo = entity and entity.id and ("Entity ID: " .. entity.id) or "Unknown Entity"
-    print("StateMachine: " .. self.currentState .. " -> " .. newState .. " (" .. entityInfo .. ")")
-
     -- Call onExit for current state
     local currentStateConfig = self.states[self.currentState]
     if currentStateConfig and currentStateConfig.instance and currentStateConfig.instance.onExit then

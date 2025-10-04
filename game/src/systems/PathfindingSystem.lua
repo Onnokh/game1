@@ -64,7 +64,6 @@ function PathfindingSystem:addEntity(entity)
     -- If this is a static collision entity, rebuild the pathfinding grid
     local collision = entity:getComponent("Collision")
     if collision and collision.type == "static" and self.grid and self.pathfinder then
-        print("PathfindingSystem: Rebuilding grid due to static collision entity")
         self:rebuildPathfindingGrid()
     end
 end
@@ -105,9 +104,6 @@ function PathfindingSystem:initializePathfinding()
     local clearanceY = math.ceil(self.entityCollisionHeight / self.tileSize)
     local clearance = math.max(clearanceX, clearanceY) -- Use the larger dimension
 
-    print("PathfindingSystem: Entity collision size:", self.entityCollisionWidth, "x", self.entityCollisionHeight)
-    print("PathfindingSystem: Tile size:", self.tileSize)
-    print("PathfindingSystem: Calculated clearance:", clearance, "(X:", clearanceX, "Y:", clearanceY, ")")
 
     self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
     self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
@@ -125,18 +121,14 @@ end
 ---@param collisionMap table The collision map to modify
 function PathfindingSystem:addCollisionObjectsToGrid(collisionMap)
     local collisionCount = 0
-    print("PathfindingSystem: Processing", #self.entities, "entities for static collision")
 
     -- Get all entities with collision components
     for i, entity in ipairs(self.entities) do
         local collision = entity:getComponent("Collision")
         local position = entity:getComponent("Position")
 
-        print("PathfindingSystem: Entity", i, "collision:", collision and collision.type or "none", "position:", position and "yes" or "no")
-
         -- Only process static collision objects (ignore moving entities)
         if collision and position and collision.type == "static" then
-            print("PathfindingSystem: Found static collision entity", i)
             if collision:hasCollider() then
                 collisionCount = collisionCount + 1
                 -- Get collision bounds in grid coordinates
@@ -146,9 +138,6 @@ function PathfindingSystem:addCollisionObjectsToGrid(collisionMap)
                 local gridX2 = math.floor((colliderX + collision.width) / 16) + 1
                 local gridY2 = math.floor((colliderY + collision.height) / 16) + 1
 
-                print("PathfindingSystem: Static collision at", colliderX, colliderY, "size", collision.width, "x", collision.height)
-                print("PathfindingSystem: Grid bounds", gridX1, gridY1, "to", gridX2, gridY2)
-
                 -- Mark collision area as blocked (0 = blocked)
                 for x = gridX1, gridX2 do
                     for y = gridY1, gridY2 do
@@ -157,13 +146,9 @@ function PathfindingSystem:addCollisionObjectsToGrid(collisionMap)
                         end
                     end
                 end
-            else
-                print("PathfindingSystem: Static collision entity has no collider")
             end
         end
     end
-
-    print("PathfindingSystem: Processed", collisionCount, "static collision objects")
 end
 
 ---Rebuild the pathfinding grid with current collision data

@@ -48,6 +48,21 @@ PlayerConfig.COLLIDER_DAMPING = 0
 PlayerConfig.SPRITE_WIDTH = 24
 PlayerConfig.SPRITE_HEIGHT = 24
 
+-- Walking particle effects
+PlayerConfig.WALKING_PARTICLES = {
+    enabled = true,
+    count = 1,              -- Number of particles per spawn
+    life = .5,             -- How long particles live (seconds)
+    size = 2,               -- Particle size
+    color = {r = 0.8, g = 0.6, b = 0.4, a = 0.7}, -- Dust color
+    velocity = {
+        min = 20,           -- Minimum velocity
+        max = 40,           -- Maximum velocity
+        spread = 0         -- Degrees of spread
+    },
+    spawnRate = 0.15        -- How often to spawn particles (seconds)
+}
+
 -- Future expansion - you can add more attributes here:
 -- PlayerConfig.HEALTH = 100
 -- PlayerConfig.MAX_HEALTH = 100

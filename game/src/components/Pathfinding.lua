@@ -138,7 +138,6 @@ end
 ---@return boolean success
 function Pathfinding:startWander(currentX, currentY, tileSize)
     if not self.pathfinder or not self.grid then
-        print("Pathfinding: No pathfinder or grid available")
         return false
     end
 
@@ -168,7 +167,6 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
         self.lastWanderTime = 0
         return true
     else
-        print("Pathfinding: No path found from", startGridX, startGridY, "to", targetGridX, targetGridY)
         return false
     end
 end

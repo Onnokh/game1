@@ -45,7 +45,6 @@ function Idle:onUpdate(stateMachine, entity, dt)
 
     -- After random amount of time idling, start wandering
     if idleTime > targetIdleTime then
-        print("Skeleton idle time complete, transitioning to wandering")
         stateMachine:changeState("wandering", entity)
     end
 end

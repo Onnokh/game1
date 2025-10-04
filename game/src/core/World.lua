@@ -26,6 +26,13 @@ end
 ---Add an entity to the world
 ---@param entity Entity The entity to add
 function World:addEntity(entity)
+    -- Check if entity is already in the world to prevent duplicates
+    for _, existingEntity in ipairs(self.entities) do
+        if existingEntity.id == entity.id then
+            return -- Entity already exists in world
+        end
+    end
+
     table.insert(self.entities, entity)
     -- Set world reference on entity so it can notify systems when components are added
     entity:setWorld(self)

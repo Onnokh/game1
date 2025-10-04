@@ -34,6 +34,12 @@ end
 ---@param entity Entity The entity to add
 function System:addEntity(entity)
     if self:entityMatches(entity) then
+        -- Check if entity is already in the system to prevent duplicates
+        for _, existingEntity in ipairs(self.entities) do
+            if existingEntity.id == entity.id then
+                return -- Entity already exists in system
+            end
+        end
         table.insert(self.entities, entity)
     end
 end

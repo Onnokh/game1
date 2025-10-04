@@ -1,5 +1,6 @@
 -- Import System base class
 local System = require("src.core.System")
+local FlashEffect = require("src.components.FlashEffect")
 
 ---@class DamageSystem : System
 local DamageSystem = setmetatable({}, {__index = System})
@@ -42,6 +43,9 @@ function DamageSystem:processDamageEvent(entity, health, damageEvent)
     -- Apply the damage
     local wasAlive = health:isAlive()
     health:takeDamage(damageEvent.amount)
+
+    -- Add damage flash effect
+    self:addDamageFlash(entity)
 
     -- Handle death if the entity died
     if wasAlive and not health:isAlive() then
@@ -160,6 +164,22 @@ function DamageSystem:applyKnockback(entity, damageEvent)
             movement.velocityX = movement.velocityX + knockbackX
             movement.velocityY = movement.velocityY + knockbackY
         end
+    end
+end
+
+---Add damage flash effect to an entity
+---@param entity Entity The entity to flash
+function DamageSystem:addDamageFlash(entity)
+    -- Check if entity already has a flash effect component
+    local existingFlash = entity:getComponent("FlashEffect")
+    if existingFlash then
+        -- Restart the existing flash
+        existingFlash:startFlash()
+    else
+        -- Create new flash effect component
+        local flashEffect = FlashEffect.new(0.5) -- 0.5 second flash
+        flashEffect:startFlash()
+        entity:addComponent("FlashEffect", flashEffect)
     end
 end
 
