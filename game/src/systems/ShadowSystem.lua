@@ -2,8 +2,7 @@ local System = require("src.core.System")
 
 ---@class ShadowSystem : System
 ---@field lightWorld any
-local ShadowSystem = setmetatable({}, {__index = System})
-ShadowSystem.__index = ShadowSystem
+local ShadowSystem = System:extend("ShadowSystem", {"Position", "CastableShadow"})
 
 ---Create a new ShadowSystem
 ---@param lightWorld any The Shädows LightWorld instance

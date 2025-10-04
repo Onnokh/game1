@@ -1,18 +1,8 @@
--- Import System base class
 local System = require("src.core.System")
 
 ---@class StateMachineSystem : System
 ---System that updates all StateMachine components
-local StateMachineSystem = setmetatable({}, {__index = System})
-StateMachineSystem.__index = StateMachineSystem
-
----Create a new StateMachineSystem
----@return StateMachineSystem|System
-function StateMachineSystem.new()
-    local self = System.new({"StateMachine"})
-    setmetatable(self, StateMachineSystem)
-    return self
-end
+local StateMachineSystem = System:extend("StateMachineSystem", {"StateMachine"})
 
 ---Update all entities with StateMachine components
 ---@param dt number Delta time

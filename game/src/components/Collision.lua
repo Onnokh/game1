@@ -1,4 +1,6 @@
----@class Collision
+local Component = require("src.core.Component")
+
+---@class Collision : Component
 ---@field collider table|nil The physics collider object
 ---@field width number Width of the collision box (or diameter for circle)
 ---@field height number Height of the collision box (or diameter for circle)
@@ -23,7 +25,6 @@ Collision.__index = Collision
 ---@param shape string|nil Shape of collider ("rectangle" or "circle"), defaults to "rectangle"
 ---@return Component|Collision
 function Collision.new(width, height, type, offsetX, offsetY, shape)
-    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Collision"), Collision)
 
     self.collider = nil

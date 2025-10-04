@@ -1,19 +1,8 @@
--- Import System base class
 local System = require("src.core.System")
-local InputHelpers = require("src.utils.input")
 local CoordinateUtils = require("src.utils.coordinates")
 
 ---@class AttackSystem : System
-local AttackSystem = setmetatable({}, {__index = System})
-AttackSystem.__index = AttackSystem
-
----Create a new AttackSystem
----@return AttackSystem|System
-function AttackSystem.new()
-    local self = System.new({"Position", "Attack"})
-    setmetatable(self, AttackSystem)
-    return self
-end
+local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
 
 ---Update all entities with Position and Attack components
 ---@param dt number Delta time

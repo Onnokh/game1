@@ -1,17 +1,7 @@
--- Import System base class
 local System = require("src.core.System")
 
 ---@class MovementSystem : System
-local MovementSystem = setmetatable({}, {__index = System})
-MovementSystem.__index = MovementSystem
-
----Create a new MovementSystem
----@return MovementSystem|System
-function MovementSystem.new()
-    local self = System.new({"Position", "Movement"})
-    setmetatable(self, MovementSystem)
-    return self
-end
+local MovementSystem = System:extend("MovementSystem", {"Position", "Movement"})
 
 ---Update all entities with Position and Movement components
 ---@param dt number Delta time

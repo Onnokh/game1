@@ -1,4 +1,6 @@
----@class Movement
+local Component = require("src.core.Component")
+
+---@class Movement : Component
 ---@field velocityX number X velocity
 ---@field velocityY number Y velocity
 ---@field maxSpeed number Maximum movement speed
@@ -15,7 +17,6 @@ Movement.__index = Movement
 ---@param friction number|nil Friction rate (0-1), defaults to 0.8
 ---@return Component|Movement
 function Movement.new(maxSpeed, acceleration, friction)
-    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Movement"), Movement)
 
     self.velocityX = 0

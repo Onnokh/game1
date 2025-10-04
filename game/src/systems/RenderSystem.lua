@@ -1,18 +1,8 @@
--- Import System base class
 local System = require("src.core.System")
 local DepthSorting = require("src.utils.depthSorting")
 
 ---@class RenderSystem : System
-local RenderSystem = setmetatable({}, {__index = System})
-RenderSystem.__index = RenderSystem
-
----Create a new RenderSystem
----@return RenderSystem|System
-function RenderSystem.new()
-    local self = System.new({"Position", "SpriteRenderer"})
-    setmetatable(self, RenderSystem)
-    return self
-end
+local RenderSystem = System:extend("RenderSystem", {"Position", "SpriteRenderer"})
 
 ---Draw all entities with Position and SpriteRenderer components
 function RenderSystem:draw()

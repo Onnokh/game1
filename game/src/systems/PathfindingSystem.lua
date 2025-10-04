@@ -1,4 +1,3 @@
--- Import System base class
 local System = require("src.core.System")
 
 ---@class PathfindingSystem : System
@@ -13,8 +12,7 @@ local System = require("src.core.System")
 ---@field entityCollisionHeight number Height of entity collision box
 ---@field clearance number Clearance value for pathfinding in tiles
 ---@field physicsWorld table|nil The physics world for collision detection
-local PathfindingSystem = setmetatable({}, {__index = System})
-PathfindingSystem.__index = PathfindingSystem
+local PathfindingSystem = System:extend("PathfindingSystem", {"Position", "Pathfinding"})
 
 ---Create a new PathfindingSystem
 ---@param worldMap table The 2D world map array

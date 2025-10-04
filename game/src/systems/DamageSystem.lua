@@ -1,18 +1,8 @@
--- Import System base class
 local System = require("src.core.System")
 local FlashEffect = require("src.components.FlashEffect")
 
 ---@class DamageSystem : System
-local DamageSystem = setmetatable({}, {__index = System})
-DamageSystem.__index = DamageSystem
-
----Create a new DamageSystem
----@return DamageSystem|System
-function DamageSystem.new()
-    local self = System.new({"Health", "DamageEvent"})
-    setmetatable(self, DamageSystem)
-    return self
-end
+local DamageSystem = System:extend("DamageSystem", {"Health", "DamageEvent"})
 
 ---Update all entities with Health and DamageEvent components
 ---@param dt number Delta time

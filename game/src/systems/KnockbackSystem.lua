@@ -1,17 +1,7 @@
--- Import System base class
 local System = require("src.core.System")
 
 ---@class KnockbackSystem : System
-local KnockbackSystem = setmetatable({}, {__index = System})
-KnockbackSystem.__index = KnockbackSystem
-
----Create a new KnockbackSystem
----@return KnockbackSystem|System
-function KnockbackSystem.new()
-    local self = System.new({"Collision", "Knockback"})
-    setmetatable(self, KnockbackSystem)
-    return self
-end
+local KnockbackSystem = System:extend("KnockbackSystem", {"Collision", "Knockback"})
 
 ---Update all entities with Knockback components
 ---@param dt number Delta time

@@ -1,4 +1,7 @@
----@class FlashEffect
+local Component = require("src.core.Component")
+local ShaderManager = require("src.utils.ShaderManager")
+
+---@class FlashEffect : Component
 ---@field duration number Duration of the flash effect in seconds
 ---@field elapsed number Time elapsed since flash started
 ---@field intensity number Flash intensity (0-1)
@@ -12,10 +15,7 @@ FlashEffect.__index = FlashEffect
 ---@param duration number|nil Duration of the flash effect in seconds (default: 0.5)
 ---@return any
 function FlashEffect.new(duration)
-    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("FlashEffect"), FlashEffect)
-
-    local ShaderManager = require("src.utils.ShaderManager")
 
     self.duration = duration or 0.5
     self.elapsed = 0

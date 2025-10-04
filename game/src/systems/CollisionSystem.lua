@@ -1,18 +1,17 @@
 local System = require("src.core.System")
 
 ---@class CollisionSystem : System
----@field physicsWorld any
-local CollisionSystem = setmetatable({}, {__index = System})
-CollisionSystem.__index = CollisionSystem
+---@field physicsWorld love.World
+local CollisionSystem = System:extend("CollisionSystem", {"Position", "Collision"})
 
 ---Create a new CollisionSystem
----@param physicsWorld any The Love2D physics world
+---@param physicsWorld love.World
 ---@return CollisionSystem
 function CollisionSystem.new(physicsWorld)
-	local self = System.new({"Position", "Collision"})
-	setmetatable(self, CollisionSystem)
-	self.physicsWorld = physicsWorld
-	return self
+    local self = System.new({"Position", "Collision"})
+    setmetatable(self, CollisionSystem)
+    self.physicsWorld = physicsWorld
+    return self
 end
 
 ---On update, ensure colliders exist for entities lacking one

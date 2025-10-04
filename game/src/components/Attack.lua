@@ -1,4 +1,6 @@
----@class Attack
+local Component = require("src.core.Component")
+
+---@class Attack : Component
 ---@field damage number Amount of damage this attack deals
 ---@field range number Range of the attack
 ---@field cooldown number Cooldown time between attacks in seconds
@@ -23,7 +25,6 @@ Attack.__index = Attack
 ---@param knockback number|nil Knockback force applied to targets
 ---@return Component|Attack
 function Attack.new(damage, range, cooldown, attackType, knockback)
-    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Attack"), Attack)
 
     self.damage = damage or 10

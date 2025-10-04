@@ -1,9 +1,7 @@
--- Import System base class
 local System = require("src.core.System")
 
 ---@class MouseFacingSystem : System
-local MouseFacingSystem = setmetatable({}, {__index = System})
-MouseFacingSystem.__index = MouseFacingSystem
+local MouseFacingSystem = System:extend("MouseFacingSystem", {"Position", "SpriteRenderer"})
 
 ---Create a new MouseFacingSystem
 ---@param gameState table The game state containing mouse position

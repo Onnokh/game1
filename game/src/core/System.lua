@@ -66,4 +66,26 @@ function System:draw()
     -- Override in subclasses
 end
 
+---Create a new system class that extends this System
+---@param className string The name of the new system class
+---@param requiredComponents table Array of component types the new system requires
+---@return table The new system class
+function System:extend(className, requiredComponents)
+    local NewSystem = {}
+    NewSystem.__index = NewSystem
+
+    -- Set up inheritance chain
+    setmetatable(NewSystem, {__index = self})
+
+    ---Create a new instance of the extended system
+    ---@return table The new system instance
+    function NewSystem.new()
+        local self = System.new(requiredComponents)
+        setmetatable(self, NewSystem)
+        return self
+    end
+
+    return NewSystem
+end
+
 return System

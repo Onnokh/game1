@@ -1,4 +1,6 @@
----@class Position
+local Component = require("src.core.Component")
+
+---@class Position : Component
 ---@field x number X position
 ---@field y number Y position
 ---@field z number|nil Z position (for layering)
@@ -11,7 +13,6 @@ Position.__index = Position
 ---@param z number|nil Z position, defaults to 0
 ---@return Component|Position
 function Position.new(x, y, z)
-    local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Position"), Position)
 
     self.x = x or 0
