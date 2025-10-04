@@ -108,12 +108,39 @@ function Collision:getPosition()
     return 0, 0
 end
 
+---Get the collider velocity
+---@return number, number X and Y velocity
+function Collision:getLinearVelocity()
+    if self.collider and self.collider.body then
+        return self.collider.body:getLinearVelocity()
+    end
+    return 0, 0
+end
+
 ---Set the collider velocity
 ---@param vx number X velocity
 ---@param vy number Y velocity
 function Collision:setLinearVelocity(vx, vy)
     if self.collider and self.collider.body then
         self.collider.body:setLinearVelocity(vx, vy)
+    end
+end
+
+---Apply a linear impulse to the collider (better for knockback)
+---@param ix number X impulse
+---@param iy number Y impulse
+function Collision:applyLinearImpulse(ix, iy)
+    if self.collider and self.collider.body then
+        self.collider.body:applyLinearImpulse(ix, iy)
+    end
+end
+
+---Apply a force to the collider (smoother for continuous effects)
+---@param fx number X force
+---@param fy number Y force
+function Collision:applyForce(fx, fy)
+    if self.collider and self.collider.body then
+        self.collider.body:applyForce(fx, fy)
     end
 end
 

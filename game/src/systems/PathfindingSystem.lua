@@ -213,6 +213,13 @@ function PathfindingSystem:update(dt)
 
         -- Only process entities that have pathfinding components
         if position and movement and pathfinding then
+            -- Skip pathfinding if entity is being knocked back
+            local knockback = entity:getComponent("Knockback")
+            if knockback then
+                -- Entity is being knocked back, don't interfere with movement
+                return
+            end
+
             -- Ensure pathfinder is set up for this entity
             if not pathfinding.pathfinder or not pathfinding.grid then
                 pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)

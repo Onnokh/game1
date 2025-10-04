@@ -30,8 +30,8 @@ SkeletonConfig.COLLIDER_WIDTH = 12
 SkeletonConfig.COLLIDER_HEIGHT = 8
 SkeletonConfig.COLLIDER_SHAPE = "circle" -- "rectangle" or "circle"
 SkeletonConfig.COLLIDER_RESTITUTION = 0.1
-SkeletonConfig.COLLIDER_FRICTION = 0.3
-SkeletonConfig.COLLIDER_DAMPING = 0.2
+SkeletonConfig.COLLIDER_FRICTION = 0.1
+SkeletonConfig.COLLIDER_DAMPING = 0.1
 
 -- Sprite settings
 SkeletonConfig.SPRITE_WIDTH = 32

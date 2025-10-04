@@ -126,7 +126,7 @@ function Attack:calculateHitArea(attackerX, attackerY)
     if length > 0 then
         local normalizedX = self.attackDirectionX / length
         local normalizedY = self.attackDirectionY / length
-        
+
         -- Position hit area at the end of the attack range
         self.hitAreaX = attackerX + normalizedX * self.range - self.hitAreaWidth / 2
         self.hitAreaY = attackerY + normalizedY * self.range - self.hitAreaHeight / 2

@@ -219,33 +219,47 @@ end
 ---@param targets table Array of target entities
 ---@param attack Attack The attack component
 function AttackSystem:applyKnockback(attacker, targets, attack)
-    local attackerPosition = attacker:getComponent("Position")
-    if not attackerPosition then
-        return
-    end
+    local Knockback = require("src.components.Knockback")
 
     for _, target in ipairs(targets) do
-        local targetPosition = target:getComponent("Position")
-        local targetMovement = target:getComponent("Movement")
+        local knockbackX, knockbackY = 0, 0
 
-        if targetPosition and targetMovement then
-            -- Calculate knockback direction using visual centers
-            local attackerCenterX, attackerCenterY = self:getEntityVisualCenter(attacker, attackerPosition)
-            local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
-            local dx = targetCenterX - attackerCenterX
-            local dy = targetCenterY - attackerCenterY
-            local distance = math.sqrt(dx * dx + dy * dy)
+        -- For directional attacks, use the attack direction for knockback
+        if attacker.isPlayer and attack.attackDirectionX ~= 0 and attack.attackDirectionY ~= 0 then
+            -- Use the attack direction (normalized)
+            local directionLength = math.sqrt(attack.attackDirectionX * attack.attackDirectionX + attack.attackDirectionY * attack.attackDirectionY)
+            if directionLength > 0 then
+                local normalizedX = attack.attackDirectionX / directionLength
+                local normalizedY = attack.attackDirectionY / directionLength
 
-            if distance > 0 then
-                -- Normalize direction and apply knockback force
-                local knockbackX = (dx / distance) * attack.knockback
-                local knockbackY = (dy / distance) * attack.knockback
+                -- Apply knockback in the attack direction
+                knockbackX = normalizedX
+                knockbackY = normalizedY
+            end
+        else
+            -- Fallback to radial knockback for non-player entities or when no direction is set
+            local attackerPosition = attacker:getComponent("Position")
+            local targetPosition = target:getComponent("Position")
 
-                -- Apply knockback to movement velocity
-                targetMovement.velocityX = targetMovement.velocityX + knockbackX
-                targetMovement.velocityY = targetMovement.velocityY + knockbackY
+            if attackerPosition and targetPosition then
+                -- Calculate knockback direction using visual centers (radial from attacker)
+                local attackerCenterX, attackerCenterY = self:getEntityVisualCenter(attacker, attackerPosition)
+                local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
+                local dx = targetCenterX - attackerCenterX
+                local dy = targetCenterY - attackerCenterY
+                local distance = math.sqrt(dx * dx + dy * dy)
+
+                if distance > 0 then
+                    -- Normalize direction and apply knockback force
+                    knockbackX = dx / distance
+                    knockbackY = dy / distance
+                end
             end
         end
+
+        -- Create knockback component for the target
+        local knockbackComponent = Knockback.new(knockbackX, knockbackY, attack.knockback, 0.1)
+        target:addComponent("Knockback", knockbackComponent)
     end
 end
 

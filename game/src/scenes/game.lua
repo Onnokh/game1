@@ -28,6 +28,7 @@ local AttackSystem = require("src.systems.AttackSystem")
 local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
+local KnockbackSystem = require("src.systems.KnockbackSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -87,12 +88,13 @@ function GameScene.load()
   ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
   ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-  ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events
-  ecsWorld:addSystem(FlashEffectSystem.new())         -- Sixth: update flash effects
-  ecsWorld:addSystem(AnimationSystem.new())           -- Seventh: advance animations
-  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Eighth: update particles
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Ninth: update shadow bodies
-  ecsWorld:addSystem(RenderSystem.new())              -- Tenth: render everything
+  ecsWorld:addSystem(KnockbackSystem.new())            -- Fifth: handle knockback effects
+  ecsWorld:addSystem(DamageSystem.new())               -- Sixth: process damage events
+  ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
+  ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
+  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
+  ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -206,12 +208,13 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
     ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
     ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-    ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events
-    ecsWorld:addSystem(FlashEffectSystem.new())         -- Sixth: update flash effects
-    ecsWorld:addSystem(AnimationSystem.new())           -- Seventh: advance animations
-    ecsWorld:addSystem(ParticleRenderSystem.new())      -- Eighth: update particles
-    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Ninth: update shadow bodies
-    ecsWorld:addSystem(RenderSystem.new())              -- Tenth: render everything
+    ecsWorld:addSystem(KnockbackSystem.new())            -- Fifth: handle knockback effects
+    ecsWorld:addSystem(DamageSystem.new())               -- Sixth: process damage events
+    ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
+    ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
+    ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
+    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
+    ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
 
   end
 
