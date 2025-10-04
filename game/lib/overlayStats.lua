@@ -301,8 +301,28 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
 
       love.graphics.setLineWidth(2)
 
-      -- Use Breezefield's built-in drawing method
-      collision.collider:__draw__()
+      -- Draw Love2D physics collider manually
+      if collision.collider and collision.collider.body and collision.collider.shape then
+        local body = collision.collider.body
+        local shape = collision.collider.shape
+        local bodyX, bodyY = body:getPosition()
+        local bodyAngle = body:getAngle()
+
+        love.graphics.push()
+        love.graphics.translate(bodyX, bodyY)
+        love.graphics.rotate(bodyAngle)
+
+        -- Draw shape based on type
+        if shape:getType() == "rectangle" then
+          local w, h = shape:getDimensions()
+          love.graphics.rectangle("line", -w/2, -h/2, w, h)
+        elseif shape:getType() == "polygon" then
+          local points = {shape:getPoints()}
+          love.graphics.polygon("line", points)
+        end
+
+        love.graphics.pop()
+      end
     end
   end
 

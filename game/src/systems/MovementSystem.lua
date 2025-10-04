@@ -22,9 +22,9 @@ function MovementSystem:update(dt)
         local collision = entity:getComponent("Collision")
 
         if position and movement and movement.enabled then
-            -- Apply velocity to physics collider and let Breezefield handle collision
+            -- Apply velocity to physics collider and let Love2D handle collision
             if collision and collision:hasCollider() then
-                collision.collider:setLinearVelocity(movement.velocityX, movement.velocityY)
+                collision:setLinearVelocity(movement.velocityX, movement.velocityY)
                 -- Sync ECS position from physics collider
                 local x, y = collision:getPosition()
                 position:setPosition(x, y)

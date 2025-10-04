@@ -42,7 +42,6 @@ local testBoxEntity = nil
 local testBoxOverlayRegistered = false
 
 -- Physics
-local bf = require("lib.breezefield")
 local physicsWorld = nil
 local borderColliders = {}
 
@@ -62,7 +61,7 @@ function GameScene.load()
   ecsWorld = World.new()
 
   -- Initialize physics world (gravity: 0, 0 for top-down game)
-  physicsWorld = bf.newWorld(0, 0, true)
+  physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
 
   -- Initialize Shädows lighting system
@@ -167,14 +166,18 @@ function GameScene.createBorderColliders()
 
         -- Create a rectangular collider for each border tile
         if physicsWorld then
-          local collider = physicsWorld:newCollider("Rectangle", {
-            tileX + tileSize / 2, tileY + tileSize / 2, tileSize, tileSize
-          })
-          collider:setType("static")
-          collider:setRestitution(0.1) -- Slight bounce
-          collider:setFriction(0.8)    -- High friction
+          local body = love.physics.newBody(physicsWorld,
+            tileX + tileSize / 2, tileY + tileSize / 2, "static")
+          local shape = love.physics.newRectangleShape(tileSize, tileSize)
+          local fixture = love.physics.newFixture(body, shape)
+          fixture:setRestitution(0.1) -- Slight bounce
+          fixture:setFriction(0.8)    -- High friction
 
-          table.insert(borderColliders, collider)
+          table.insert(borderColliders, {
+            body = body,
+            fixture = fixture,
+            shape = shape
+          })
         end
       end
     end

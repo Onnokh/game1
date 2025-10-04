@@ -6,12 +6,11 @@ local CollisionSystem = setmetatable({}, {__index = System})
 CollisionSystem.__index = CollisionSystem
 
 ---Create a new CollisionSystem
----@param physicsWorld any The Breezefield physics world
----@return CollisionSystem|System
+---@param physicsWorld any The Love2D physics world
+---@return CollisionSystem
 function CollisionSystem.new(physicsWorld)
 	local self = System.new({"Position", "Collision"})
 	setmetatable(self, CollisionSystem)
-	---@type any
 	self.physicsWorld = physicsWorld
 	return self
 end
@@ -25,13 +24,6 @@ function CollisionSystem:update(dt)
 		local collision = entity:getComponent("Collision")
 		if position and collision and not collision:hasCollider() and self.physicsWorld then
 			collision:createCollider(self.physicsWorld, position.x, position.y)
-			-- Push basic material properties if set on component
-			if collision.collider then
-				collision.collider:setType(collision.type or "dynamic")
-				collision.collider:setRestitution(collision.restitution or 0)
-				collision.collider:setFriction(collision.friction or 0)
-				collision.collider:setLinearDamping(collision.linearDamping or 0)
-			end
 		end
 	end
 end

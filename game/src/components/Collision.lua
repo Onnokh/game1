@@ -49,17 +49,32 @@ function Collision:createCollider(physicsWorld, x, y)
     end
 
     self.physicsWorld = physicsWorld
-    self.collider = physicsWorld:newCollider("Rectangle", {
+
+    -- Create Love2D physics body
+    local body = love.physics.newBody(physicsWorld,
         x + self.offsetX + self.width/2,
         y + self.offsetY + self.height/2,
-        self.width, self.height
-    })
+        self.type == "static" and "static" or "dynamic")
 
-    self.collider:setType(self.type)
-    self.collider:setRestitution(self.restitution)
-    self.collider:setFriction(self.friction)
-    self.collider:setLinearDamping(self.linearDamping)
-    self.collider:setFixedRotation(true) -- Prevent the collider from rotating
+    -- Create rectangle shape
+    local shape = love.physics.newRectangleShape(self.width, self.height)
+
+    -- Create fixture
+    local fixture = love.physics.newFixture(body, shape)
+    fixture:setRestitution(self.restitution)
+    fixture:setFriction(self.friction)
+    fixture:setDensity(1.0)
+
+    -- Set body properties
+    body:setLinearDamping(self.linearDamping)
+    body:setFixedRotation(true) -- Prevent the collider from rotating
+
+    -- Store the body and fixture as our collider
+    self.collider = {
+        body = body,
+        fixture = fixture,
+        shape = shape
+    }
 end
 
 
@@ -67,25 +82,35 @@ end
 ---@param x number X position
 ---@param y number Y position
 function Collision:setPosition(x, y)
-    if self.collider then
-        self.collider:setPosition(x + self.offsetX + self.width/2, y + self.offsetY + self.height/2)
+    if self.collider and self.collider.body then
+        self.collider.body:setPosition(x + self.offsetX + self.width/2, y + self.offsetY + self.height/2)
     end
 end
 
 ---Get the collider position
 ---@return number, number X and Y position
 function Collision:getPosition()
-    if self.collider then
-        return self.collider:getX() - self.width/2 - self.offsetX, self.collider:getY() - self.height/2 - self.offsetY
+    if self.collider and self.collider.body then
+        local bodyX, bodyY = self.collider.body:getPosition()
+        return bodyX - self.width/2 - self.offsetX, bodyY - self.height/2 - self.offsetY
     end
     return 0, 0
+end
+
+---Set the collider velocity
+---@param vx number X velocity
+---@param vy number Y velocity
+function Collision:setLinearVelocity(vx, vy)
+    if self.collider and self.collider.body then
+        self.collider.body:setLinearVelocity(vx, vy)
+    end
 end
 
 
 ---Destroy the collider
 function Collision:destroy()
-    if self.collider then
-        self.collider:destroy()
+    if self.collider and self.collider.body then
+        self.collider.body:destroy()
         self.collider = nil
     end
 end
@@ -93,7 +118,7 @@ end
 ---Check if the collider exists
 ---@return boolean True if collider exists
 function Collision:hasCollider()
-    return self.collider ~= nil
+    return self.collider ~= nil and self.collider.body ~= nil
 end
 
 
