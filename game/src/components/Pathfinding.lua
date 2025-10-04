@@ -1,3 +1,5 @@
+local CoordinateUtils = require("src.utils.coordinateUtils")
+
 ---@class Pathfinding : Component
 ---Component for pathfinding and AI behavior
 ---@field spawnX number X coordinate of spawn location
@@ -82,29 +84,6 @@ function Pathfinding:findWanderTarget(currentX, currentY)
     return targetX, targetY
 end
 
----Convert world coordinates to grid coordinates
----@param worldX number World X coordinate
----@param worldY number World Y coordinate
----@param tileSize number Size of each tile
----@return number gridX
----@return number gridY
-function Pathfinding:worldToGrid(worldX, worldY, tileSize)
-    local gridX = math.floor(worldX / tileSize) + 1
-    local gridY = math.floor(worldY / tileSize) + 1
-    return gridX, gridY
-end
-
----Convert grid coordinates to world coordinates
----@param gridX number Grid X coordinate
----@param gridY number Grid Y coordinate
----@param tileSize number Size of each tile
----@return number worldX
----@return number worldY
-function Pathfinding:gridToWorld(gridX, gridY, tileSize)
-    local worldX = (gridX - 1) * tileSize + tileSize / 2
-    local worldY = (gridY - 1) * tileSize + tileSize / 2
-    return worldX, worldY
-end
 
 ---Check if a position is within the wander radius
 ---@param x number X coordinate
@@ -132,7 +111,7 @@ function Pathfinding:getNextPathPosition(tileSize)
     end
 
     local gridX, gridY = node._x, node._y
-    return self:gridToWorld(gridX, gridY, tileSize)
+    return CoordinateUtils.gridToWorld(gridX, gridY, tileSize)
 end
 
 ---Move to the next position in the path
@@ -163,8 +142,8 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
     local targetX, targetY = self:findWanderTarget(currentX, currentY)
 
     -- Convert to grid coordinates
-    local startGridX, startGridY = self:worldToGrid(currentX, currentY, tileSize)
-    local targetGridX, targetGridY = self:worldToGrid(targetX, targetY, tileSize)
+    local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
+    local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
 
     -- Ensure target is within grid bounds
     local minX, minY, maxX, maxY = self.grid:getBounds()
