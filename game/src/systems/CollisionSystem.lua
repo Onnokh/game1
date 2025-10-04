@@ -8,6 +8,7 @@ local CollisionSystem = System:extend("CollisionSystem", {"Position", "Collision
 ---@param physicsWorld love.World
 ---@return CollisionSystem
 function CollisionSystem.new(physicsWorld)
+    ---@class CollisionSystem
     local self = System.new({"Position", "Collision"})
     setmetatable(self, CollisionSystem)
     self.physicsWorld = physicsWorld
