@@ -29,11 +29,12 @@ function Skeleton.create(x, y, world, physicsWorld)
     local spriteRenderer = SpriteRenderer.new(nil, SkeletonConfig.SPRITE_WIDTH, SkeletonConfig.SPRITE_HEIGHT)
 
     -- Collision component
-    -- Collider centered at bottom: width 12, height 16, offsetX centers horizontally, offsetY positions at bottom
+    -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
     local colliderWidth, colliderHeight = SkeletonConfig.COLLIDER_WIDTH, SkeletonConfig.COLLIDER_HEIGHT
+    local colliderShape = SkeletonConfig.COLLIDER_SHAPE
     local offsetX = (spriteRenderer.width - colliderWidth) / 2
     local offsetY = spriteRenderer.height - colliderHeight - 8
-    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY)
+    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY, colliderShape)
     collision.restitution = SkeletonConfig.COLLIDER_RESTITUTION
     collision.friction = SkeletonConfig.COLLIDER_FRICTION
     collision.linearDamping = SkeletonConfig.COLLIDER_DAMPING
@@ -51,13 +52,12 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     local Idle = require("src.entities.Monsters.Skeleton.states.Idle")
     local Wandering = require("src.entities.Monsters.Skeleton.states.Wandering")
+    local Animator = require("src.components.Animator")
+
+    local animator = Animator.new("skeleton", SkeletonConfig.IDLE_ANIMATION.frames, SkeletonConfig.IDLE_ANIMATION.fps, SkeletonConfig.IDLE_ANIMATION.loop)
 
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("wandering", Wandering.new())
-
-    -- Create Animator component for idle animation
-    local Animator = require("src.components.Animator")
-    local animator = Animator.new("skeleton", SkeletonConfig.IDLE_ANIMATION.frames, SkeletonConfig.IDLE_ANIMATION.fps, SkeletonConfig.IDLE_ANIMATION.loop)
 
     skeleton:addComponent("Position", position)
     skeleton:addComponent("Movement", movement)

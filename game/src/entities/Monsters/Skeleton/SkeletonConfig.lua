@@ -21,7 +21,8 @@ SkeletonConfig.WALKING_ANIMATION = {
 
 -- Physics settings
 SkeletonConfig.COLLIDER_WIDTH = 12
-SkeletonConfig.COLLIDER_HEIGHT = 18
+SkeletonConfig.COLLIDER_HEIGHT = 8
+SkeletonConfig.COLLIDER_SHAPE = "circle" -- "rectangle" or "circle"
 SkeletonConfig.COLLIDER_RESTITUTION = 0.1
 SkeletonConfig.COLLIDER_FRICTION = 0.3
 SkeletonConfig.COLLIDER_DAMPING = 0.2

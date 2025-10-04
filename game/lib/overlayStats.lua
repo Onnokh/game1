@@ -299,6 +299,9 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
         elseif shape:getType() == "polygon" then
           local points = {shape:getPoints()}
           love.graphics.polygon("line", points)
+        elseif shape:getType() == "circle" then
+          local radius = shape:getRadius()
+          love.graphics.circle("line", 0, 0, radius)
         end
 
         love.graphics.pop()

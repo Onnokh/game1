@@ -1,10 +1,11 @@
 ---@class Collision
 ---@field collider table|nil The physics collider object
----@field width number Width of the collision box
----@field height number Height of the collision box
+---@field width number Width of the collision box (or diameter for circle)
+---@field height number Height of the collision box (or diameter for circle)
 ---@field offsetX number Horizontal offset from entity top-left
 ---@field offsetY number Vertical offset from entity top-left
 ---@field type string Type of collider ("dynamic", "static", "kinematic")
+---@field shape string Shape of collider ("rectangle", "circle")
 ---@field restitution number Bounce factor (0-1)
 ---@field friction number Friction factor (0-1)
 ---@field linearDamping number Linear damping factor
@@ -14,13 +15,14 @@ local Collision = {}
 Collision.__index = Collision
 
 ---Create a new Collision component
----@param width number Width of the collision box
----@param height number Height of the collision box
+---@param width number Width of the collision box (or diameter for circle)
+---@param height number Height of the collision box (or diameter for circle)
 ---@param type string|nil Type of collider, defaults to "dynamic"
 ---@param offsetX number|nil Horizontal offset from entity top-left
 ---@param offsetY number|nil Vertical offset from entity top-left
+---@param shape string|nil Shape of collider ("rectangle" or "circle"), defaults to "rectangle"
 ---@return Component|Collision
-function Collision.new(width, height, type, offsetX, offsetY)
+function Collision.new(width, height, type, offsetX, offsetY, shape)
     local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Collision"), Collision)
 
@@ -28,6 +30,7 @@ function Collision.new(width, height, type, offsetX, offsetY)
     self.width = width or 16
     self.height = height or 24
     self.type = type or "dynamic"
+    self.shape = shape or "rectangle"
     self.restitution = 0.1
     self.friction = 0.3
     self.linearDamping = 0
@@ -56,8 +59,16 @@ function Collision:createCollider(physicsWorld, x, y)
         y + self.offsetY + self.height/2,
         self.type == "static" and "static" or "dynamic")
 
-    -- Create rectangle shape
-    local shape = love.physics.newRectangleShape(self.width, self.height)
+    -- Create shape based on type
+    local shape
+    if self.shape == "circle" then
+        -- For circle, use the width as diameter
+        local radius = self.width / 2
+        shape = love.physics.newCircleShape(radius)
+    else
+        -- Default to rectangle shape
+        shape = love.physics.newRectangleShape(self.width, self.height)
+    end
 
     -- Create fixture
     local fixture = love.physics.newFixture(body, shape)

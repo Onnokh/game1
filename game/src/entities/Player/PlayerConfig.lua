@@ -39,6 +39,7 @@ PlayerConfig.DASH_ANIMATION = {
 -- Physics settings
 PlayerConfig.COLLIDER_WIDTH = 12
 PlayerConfig.COLLIDER_HEIGHT = 12
+PlayerConfig.COLLIDER_SHAPE = "circle"
 PlayerConfig.COLLIDER_RESTITUTION = 0.1
 PlayerConfig.COLLIDER_FRICTION = 0.3
 PlayerConfig.COLLIDER_DAMPING = 0

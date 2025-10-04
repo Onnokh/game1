@@ -31,9 +31,10 @@ function Player.create(x, y, world, physicsWorld)
     -- Collision component
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
     local colliderWidth, colliderHeight = PlayerConfig.COLLIDER_WIDTH, PlayerConfig.COLLIDER_HEIGHT
+    local colliderShape = PlayerConfig.COLLIDER_SHAPE
     local offsetX = (spriteRenderer.width - colliderWidth) / 2
     local offsetY = spriteRenderer.height - colliderHeight
-    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY)
+    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY, colliderShape)
     collision.restitution = PlayerConfig.COLLIDER_RESTITUTION
     collision.friction = PlayerConfig.COLLIDER_FRICTION
     collision.linearDamping = PlayerConfig.COLLIDER_DAMPING
