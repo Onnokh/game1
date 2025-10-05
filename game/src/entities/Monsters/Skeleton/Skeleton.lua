@@ -76,7 +76,7 @@ function Skeleton.create(x, y, world, physicsWorld)
     local attack = Attack.new(SkeletonConfig.ATTACK_DAMAGE, (SkeletonConfig.ATTACK_RANGE_TILES or 1.0) * GameConstants.TILE_SIZE, SkeletonConfig.ATTACK_COOLDOWN, "melee", SkeletonConfig.ATTACK_KNOCKBACK)
 
     -- Create health bar component (16x2 pixels, positioned above skeleton)
-    local healthBar = HealthBar.new(16, 2, -8)
+    local healthBar = HealthBar.new(16, 2, 0)
 
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("wandering", Wandering.new())

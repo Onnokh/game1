@@ -16,9 +16,9 @@ function DamageNumberSystem:update(dt)
                 local pos = dn.owner:getComponent("Position")
                 local sr = dn.owner:getComponent("SpriteRenderer")
                 if pos then
-                    local w = (sr and sr.width) or 24
+                    local w, h = (sr and sr.width) or 24, (sr and sr.height) or 24
                     dn.worldX = pos.x + w * 0.5 + dn.offsetX + dn.localX
-                    dn.worldY = pos.y + dn.offsetY + dn.localY
+                    dn.worldY = pos.y - 4 + dn.offsetY + dn.localY
                 end
             end
 

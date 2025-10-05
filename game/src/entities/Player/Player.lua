@@ -98,7 +98,7 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("dash", Dash.new())
 
     -- Create attack component
-    local attack = Attack.new(15, 15, 0.5, "melee", 6) -- damage, range, cooldown, type, knockback
+    local attack = Attack.new(8, 15, 0.5, "melee", 6) -- damage, range, cooldown, type, knockback
 
     -- Create health component
     local health = Health.new(100) -- 100 max health
