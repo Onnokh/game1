@@ -85,6 +85,9 @@ function RenderSystem:draw()
 
     -- Draw attack hit areas for entities that are attacking
     self:drawAttackHitAreas()
+
+    -- Draw fixed-screen HUD elements last
+    self:drawPlayerHUD()
 end
 
 ---Draw entity with flash shader
@@ -265,6 +268,73 @@ function RenderSystem:drawAttackHitAreas()
             end
         end
     end
+end
+
+---Draw the player's HUD (bottom-left health bar)
+function RenderSystem:drawPlayerHUD()
+    -- Obtain world reference from any tracked entity
+    local world = nil
+    if #self.entities > 0 and self.entities[1]._world then
+        world = self.entities[1]._world
+    end
+    if not world then
+        return
+    end
+
+    -- Find the player entity (marked with isPlayer flag)
+    local player = nil
+    for _, entity in ipairs(world.entities or {}) do
+        if entity.isPlayer then
+            player = entity
+            break
+        end
+    end
+    if not player then
+        return
+    end
+
+    local health = player:getComponent("Health")
+    if not health or health.isDead then
+        return
+    end
+
+    -- Switch to screen-space (ignore camera transforms)
+    love.graphics.push()
+    love.graphics.origin()
+
+    local sw, sh = love.graphics.getDimensions()
+    local marginX, marginY = 32, 32
+    local barWidth, barHeight = 480, 32
+
+    local x = marginX
+    local y = sh - marginY - barHeight
+
+    local pct = math.max(0, math.min(1, health:getHealthPercentage()))
+
+    -- Save color and line width
+    local r, g, b, a = love.graphics.getColor()
+    local prevLineWidth = love.graphics.getLineWidth()
+
+    -- Background
+    love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
+    love.graphics.rectangle("fill", x, y, barWidth, barHeight, 3, 3)
+
+    -- Health fill (red)
+    if pct > 0 then
+        love.graphics.setColor(0.8, 0.2, 0.2, 1.0)
+        love.graphics.rectangle("fill", x, y, barWidth * pct, barHeight, 3, 3)
+    end
+
+    -- Border
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.setLineWidth(1)
+    love.graphics.rectangle("line", x, y, barWidth, barHeight, 3, 3)
+
+    -- Restore
+    love.graphics.setLineWidth(prevLineWidth)
+    love.graphics.setColor(r, g, b, a)
+
+    love.graphics.pop()
 end
 
 return RenderSystem

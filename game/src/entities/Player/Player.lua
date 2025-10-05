@@ -118,7 +118,6 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("StateMachine", stateMachine)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
-    playerEntity:addComponent("HealthBar", healthBar)
     playerEntity:addComponent("ParticleSystem", particleSystem)
 
     -- Add the player to the world
