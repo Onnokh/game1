@@ -56,6 +56,7 @@ function CollisionSystem:update(dt)
 	for _, entity in ipairs(self.entities) do
 		local position = entity:getComponent("Position")
 		local movement = entity:getComponent("Movement")
+		local knockback = entity:getComponent("Knockback")
 		if position and self.physicsWorld then
 			-- Handle PathfindingCollision component (for pathfinding and physics collision)
 			local pathfindingCollision = entity:getComponent("PathfindingCollision")
@@ -73,10 +74,21 @@ function CollisionSystem:update(dt)
 				end
 			end
 
+			-- Update knockback timer and remove when expired
+			if knockback and knockback.active then
+				knockback.timer = (knockback.timer or 0) + dt
+				if knockback.timer >= (knockback.duration or 0.1) then
+					knockback.active = false
+				end
+			end
+
 			-- Apply movement velocity to collider and sync back ECS position
 			if movement then
 				if pathfindingCollision and pathfindingCollision:hasCollider() and pathfindingCollision.type ~= "static" then
-					pathfindingCollision:setLinearVelocity(movement.velocityX, movement.velocityY)
+					-- During knockback, let physics impulse drive motion; don't override
+					if not (knockback and knockback.active) then
+						pathfindingCollision:setLinearVelocity(movement.velocityX, movement.velocityY)
+					end
 					local x, y = pathfindingCollision:getPosition()
 					position:setPosition(x, y)
 				end

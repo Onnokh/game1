@@ -221,6 +221,7 @@ function PathfindingSystem:update(dt)
         local position = entity:getComponent("Position")
         local pathfinding = entity:getComponent("Pathfinding")
         local movement = entity:getComponent("Movement")
+        local knockback = entity:getComponent("Knockback")
 
         if position and pathfinding and movement then
             -- Ensure pathfinder is set up for this entity
@@ -231,7 +232,7 @@ function PathfindingSystem:update(dt)
             self:updateEntityPathfinding(entity, position, pathfinding, dt)
 
             -- Steering toward waypoint: compute desired velocity here
-            if not pathfinding:isPathComplete() then
+            if not pathfinding:isPathComplete() and not knockback then
                 local tileSize = self.tileSize
                 local nextX, nextY = pathfinding:getNextPathPosition(tileSize)
                 if nextX and nextY then

@@ -4,6 +4,7 @@
 ---@field power number Power/magnitude of knockback
 ---@field duration number How long the knockback effect lasts
 ---@field timer number Current timer for the knockback effect
+---@field active boolean Whether knockback is currently active
 local Knockback = {}
 Knockback.__index = Knockback
 
@@ -22,6 +23,7 @@ function Knockback.new(x, y, power, duration)
     self.power = power or 1
     self.duration = duration or 0.1
     self.timer = 0
+    self.active = false
 
     return self
 end

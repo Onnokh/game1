@@ -154,6 +154,20 @@ function DamageSystem:applyKnockback(target, source, force)
     local impulseX = (dx / dist) * force
     local impulseY = (dy / dist) * force
     physicsBody:applyLinearImpulse(impulseX, impulseY)
+
+    -- Toggle existing knockback component (no churn)
+    local Knockback = require("src.components.Knockback")
+    local kb = target:getComponent("Knockback")
+    if not kb then
+        kb = Knockback.new(dx / dist, dy / dist, force, 0.2)
+        target:addComponent("Knockback", kb)
+    end
+    kb.x = dx / dist
+    kb.y = dy / dist
+    kb.power = force
+    kb.duration = 0.15
+    kb.timer = 0
+    kb.active = true
 end
 
 ---Add damage flash effect to an entity

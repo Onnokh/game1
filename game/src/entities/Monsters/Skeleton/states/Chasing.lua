@@ -83,7 +83,20 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     if pathfindingCollision and pathfindingCollision:hasCollider() then
         sx, sy = pathfindingCollision:getCenterPosition()
     end
+    -- Aim for the player's center when chasing
     local px, py = playerPos.x, playerPos.y
+    do
+        local playerPfc = player:getComponent("PathfindingCollision")
+        if playerPfc and playerPfc:hasCollider() then
+            px, py = playerPfc:getCenterPosition()
+        else
+            local playerSprite = player:getComponent("SpriteRenderer")
+            if playerSprite and playerSprite.width and playerSprite.height then
+                px = playerPos.x + playerSprite.width / 2
+                py = playerPos.y + playerSprite.height / 2
+            end
+        end
+    end
 
     -- Leave chase if player is far or not visible
     local chaseRange = (SkeletonConfig.CHASE_RANGE or 8) * (GameConstants.TILE_SIZE or 16)
@@ -108,10 +121,23 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         local dx = px - sx
         local dy = py - sy
         local dist = math.sqrt(dx*dx + dy*dy)
-        if dist > 0 then
-            local desiredSpeed = movement.maxSpeed * 0.9
-            movement.velocityX = (dx / dist) * desiredSpeed
-            movement.velocityY = (dy / dist) * desiredSpeed
+        -- Stop moving within attack range
+        local tileSize = (GameConstants.TILE_SIZE or 16)
+        local stopRange = (require("src.entities.Monsters.Skeleton.SkeletonConfig").ATTACK_RANGE_TILES or 0.8) * tileSize
+        if dist <= stopRange then
+            movement.velocityX = 0
+            movement.velocityY = 0
+            -- Enter attacking state
+            local stateMachine = entity:getComponent("StateMachine")
+            if stateMachine then
+                stateMachine:changeState("attacking", entity)
+            end
+        else
+            if dist > 0 then
+                local desiredSpeed = movement.maxSpeed * 0.9
+                movement.velocityX = (dx / dist) * desiredSpeed
+                movement.velocityY = (dy / dist) * desiredSpeed
+            end
         end
         -- Clear any existing path to avoid PathfindingSystem steering
         pathfinding.currentPath = nil

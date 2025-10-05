@@ -21,6 +21,12 @@ SkeletonConfig.WALKING_ANIMATION = {
 
 -- Chase behavior
 SkeletonConfig.CHASE_RANGE = 10 -- tiles
+SkeletonConfig.ATTACK_RANGE_TILES = 1.5 -- stop within this many tiles of target
+
+-- Attack settings
+SkeletonConfig.ATTACK_COOLDOWN = 1.2 -- seconds
+SkeletonConfig.ATTACK_DAMAGE = 8
+SkeletonConfig.ATTACK_KNOCKBACK = 4
 
 SkeletonConfig.DYING_ANIMATION = {
     frames = {37, 38, 39, 40}, -- Row 7 (0-indexed as 6), columns 1-4 (6*6+1 = 37)
