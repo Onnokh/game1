@@ -28,4 +28,16 @@ GameConstants.PLAYER_SPEED = 80 -- Match working implementation
 -- Camera constants
 GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the world
 
+-- Collision categories for Love2D physics
+GameConstants.COLLISION_CATEGORIES = {
+    PATHFINDING = 1,  -- PathfindingCollision components
+    PHYSICS = 2       -- PhysicsCollision components
+}
+
+-- Collision masks (what each category can collide with)
+GameConstants.COLLISION_MASKS = {
+    PATHFINDING = 1 + 2,  -- PathfindingCollision collides with both PathfindingCollision and PhysicsCollision
+    PHYSICS = 2           -- PhysicsCollision only collides with other PhysicsCollision
+}
+
 return GameConstants

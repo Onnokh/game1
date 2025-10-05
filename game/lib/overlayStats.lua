@@ -259,32 +259,88 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   love.graphics.scale(scale, scale)
   love.graphics.translate(-topLeftX, -topLeftY)
 
-  -- Query all entities with Collision components using the ECS system
-  local entitiesWithCollision = gameScene.ecsWorld:getEntitiesWith({"Collision"})
+  -- Query all entities with PathfindingCollision components (pathfinding and physics collision) using the ECS system
+  local entitiesWithPathfindingCollision = gameScene.ecsWorld:getEntitiesWith({"PathfindingCollision"})
 
-  -- Draw colliders for each entity
-  for _, entity in ipairs(entitiesWithCollision) do
-    local collision = entity:getComponent("Collision")
+  -- Draw pathfinding colliders for each entity
+  for _, entity in ipairs(entitiesWithPathfindingCollision) do
+    local pathfindingCollision = entity:getComponent("PathfindingCollision")
     local position = entity:getComponent("Position")
 
-    if collision and collision:hasCollider() and position then
-      -- Set color based on collider type
-      if collision.type == "static" then
+    if pathfindingCollision and pathfindingCollision:hasCollider() and position then
+      -- Set color based on collider type - pathfinding colliders use solid colors
+      if pathfindingCollision.type == "static" then
         love.graphics.setColor(0, 1, 0, 0.8) -- Green for static colliders
-      elseif collision.type == "dynamic" then
+      elseif pathfindingCollision.type == "dynamic" then
         love.graphics.setColor(1, 0, 0, 0.8) -- Red for dynamic colliders
-      elseif collision.type == "kinematic" then
+      elseif pathfindingCollision.type == "kinematic" then
         love.graphics.setColor(0, 0, 1, 0.8) -- Blue for kinematic colliders
       else
         love.graphics.setColor(1, 1, 0, 0.8) -- Yellow for unknown types
       end
 
-      love.graphics.setLineWidth(1)
+      love.graphics.setLineWidth(2) -- Thicker line for pathfinding colliders
+
+      -- Draw Love2D physics collider manually (for static entities) or pathfinding bounds (for dynamic entities)
+      if pathfindingCollision.collider and pathfindingCollision.collider.body and pathfindingCollision.collider.shape then
+        -- Static entities with physics bodies
+        local body = pathfindingCollision.collider.body
+        local shape = pathfindingCollision.collider.shape
+        local bodyX, bodyY = body:getPosition()
+        local bodyAngle = body:getAngle()
+
+        love.graphics.push()
+        love.graphics.translate(bodyX, bodyY)
+        love.graphics.rotate(bodyAngle)
+
+        -- Draw shape based on type
+        if shape:getType() == "rectangle" then
+          local w, h = shape:getDimensions()
+          love.graphics.rectangle("line", -w/2, -h/2, w, h)
+        elseif shape:getType() == "polygon" then
+          local points = {shape:getPoints()}
+          love.graphics.polygon("line", points)
+        elseif shape:getType() == "circle" then
+          local radius = shape:getRadius()
+          love.graphics.circle("line", 0, 0, radius)
+        end
+
+        love.graphics.pop()
+      elseif pathfindingCollision.collider then
+        -- Dynamic entities without physics bodies (pathfinding only)
+        local colliderX, colliderY = pathfindingCollision:getPosition()
+        love.graphics.rectangle("line", colliderX, colliderY, pathfindingCollision.width, pathfindingCollision.height)
+      end
+    end
+  end
+
+  -- Query all entities with PhysicsCollision components (physics) using the ECS system
+  local entitiesWithPhysicsCollision = gameScene.ecsWorld:getEntitiesWith({"PhysicsCollision"})
+
+  -- Draw physics colliders for each entity
+  for _, entity in ipairs(entitiesWithPhysicsCollision) do
+    local physicsCollision = entity:getComponent("PhysicsCollision")
+    local position = entity:getComponent("Position")
+
+    if physicsCollision and physicsCollision:hasCollider() and position then
+      -- Set color based on collider type - physics colliders use dashed/dotted colors
+      if physicsCollision.type == "static" then
+        love.graphics.setColor(0, 1, 0, 0.6) -- Green for static colliders (dimmer)
+      elseif physicsCollision.type == "dynamic" then
+        love.graphics.setColor(1, 0, 0, 0.6) -- Red for dynamic colliders (dimmer)
+      elseif physicsCollision.type == "kinematic" then
+        love.graphics.setColor(0, 0, 1, 0.6) -- Blue for kinematic colliders (dimmer)
+      else
+        love.graphics.setColor(1, 1, 0, 0.6) -- Yellow for unknown types (dimmer)
+      end
+
+      love.graphics.setLineWidth(1) -- Thinner line for physics colliders
+      love.graphics.setLineStyle("rough") -- Dashed line style for physics colliders
 
       -- Draw Love2D physics collider manually
-      if collision.collider and collision.collider.body and collision.collider.shape then
-        local body = collision.collider.body
-        local shape = collision.collider.shape
+      if physicsCollision.collider and physicsCollision.collider.body and physicsCollision.collider.shape then
+        local body = physicsCollision.collider.body
+        local shape = physicsCollision.collider.shape
         local bodyX, bodyY = body:getPosition()
         local bodyAngle = body:getAngle()
 
@@ -636,17 +692,36 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   love.graphics.print(string.format("Particles: %d", math.floor(currentParticleCount)), 20, y)
   y = y + 20
 
-  -- Display collider count using ECS system
-  local colliderCount = 0
+  -- Display collider count using ECS system (both types)
+  local pathfindingColliderCount = 0
+  local physicsColliderCount = 0
   if cameraX and cameraY then
     local gameState = require("src.core.GameState")
     if gameState and gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
-      local entitiesWithCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"Collision"})
-      colliderCount = #entitiesWithCollision
+      local entitiesWithPathfindingCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PathfindingCollision"})
+      local entitiesWithPhysicsCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PhysicsCollision"})
+      pathfindingColliderCount = #entitiesWithPathfindingCollision
+      physicsColliderCount = #entitiesWithPhysicsCollision
     end
   end
-  love.graphics.print(string.format("Colliders: %d", colliderCount), 20, y)
+  love.graphics.print(string.format("Pathfinding Colliders: %d", pathfindingColliderCount), 20, y)
   y = y + 20
+  love.graphics.print(string.format("Physics Colliders: %d", physicsColliderCount), 20, y)
+  y = y + 20
+
+  -- Add collider legend
+  love.graphics.setColor(0.8, 0.8, 0.8, 1) -- Gray text for legend
+  love.graphics.print("Collider Legend:", 20, y)
+  y = y + 15
+  love.graphics.setColor(1, 0, 0, 0.8) -- Red for pathfinding
+  love.graphics.print("  Thick lines = PathfindingCollision", 20, y)
+  y = y + 15
+  love.graphics.setColor(1, 0, 0, 0.6) -- Dimmer red for physics
+  love.graphics.print("  Thin lines = PhysicsCollision", 20, y)
+  y = y + 20
+
+  -- Reset color to white
+  love.graphics.setColor(1, 1, 1, 1)
 
   -- Add GLSL 3 support indicator
   love.graphics.setColor(overlayStats.supportedFeatures.glsl3 and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })

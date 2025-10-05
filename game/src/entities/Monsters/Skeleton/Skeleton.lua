@@ -12,7 +12,8 @@ function Skeleton.create(x, y, world, physicsWorld)
     local Position = require("src.components.Position")
     local Movement = require("src.components.Movement")
     local SpriteRenderer = require("src.components.SpriteRenderer")
-    local Collision = require("src.components.Collision")
+    local PathfindingCollision = require("src.components.PathfindingCollision")
+    local PhysicsCollision = require("src.components.PhysicsCollision")
     local StateMachine = require("src.components.StateMachine")
     local Pathfinding = require("src.components.Pathfinding")
     local GameConstants = require("src.constants")
@@ -31,20 +32,27 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     local spriteRenderer = SpriteRenderer.new(nil, SkeletonConfig.SPRITE_WIDTH, SkeletonConfig.SPRITE_HEIGHT)
 
-    -- Collision component
+    -- PathfindingCollision component (for pathfinding and physics collision)
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
     local colliderWidth, colliderHeight = SkeletonConfig.COLLIDER_WIDTH, SkeletonConfig.COLLIDER_HEIGHT
     local colliderShape = SkeletonConfig.COLLIDER_SHAPE
     local offsetX = (spriteRenderer.width - colliderWidth) / 2
     local offsetY = spriteRenderer.height - colliderHeight - 8
-    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY, colliderShape)
-    collision.restitution = SkeletonConfig.COLLIDER_RESTITUTION
-    collision.friction = SkeletonConfig.COLLIDER_FRICTION
-    collision.linearDamping = SkeletonConfig.COLLIDER_DAMPING
+    local pathfindingCollision = PathfindingCollision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY, colliderShape)
+    pathfindingCollision.restitution = SkeletonConfig.COLLIDER_RESTITUTION
+    pathfindingCollision.friction = SkeletonConfig.COLLIDER_FRICTION
+    pathfindingCollision.linearDamping = SkeletonConfig.COLLIDER_DAMPING
 
-    -- Create collider if physics world is available
+    -- PhysicsCollision component (for physics interactions only) - use sprite size
+    local physicsCollision = PhysicsCollision.new(SkeletonConfig.DRAW_WIDTH, SkeletonConfig.DRAW_HEIGHT, "dynamic", spriteRenderer.width / 2 - SkeletonConfig.DRAW_WIDTH / 2, spriteRenderer.height / 2 - SkeletonConfig.DRAW_HEIGHT / 2, "rectangle")
+    physicsCollision.restitution = SkeletonConfig.COLLIDER_RESTITUTION
+    physicsCollision.friction = SkeletonConfig.COLLIDER_FRICTION
+    physicsCollision.linearDamping = SkeletonConfig.COLLIDER_DAMPING
+
+    -- Create colliders if physics world is available
     if physicsWorld then
-        collision:createCollider(physicsWorld, x, y)
+        pathfindingCollision:createCollider(physicsWorld, x, y)
+        physicsCollision:createCollider(physicsWorld, x, y)
     end
 
     -- Create pathfinding component
@@ -73,7 +81,8 @@ function Skeleton.create(x, y, world, physicsWorld)
     skeleton:addComponent("Position", position)
     skeleton:addComponent("Movement", movement)
     skeleton:addComponent("SpriteRenderer", spriteRenderer)
-    skeleton:addComponent("Collision", collision)
+    skeleton:addComponent("PathfindingCollision", pathfindingCollision)
+    skeleton:addComponent("PhysicsCollision", physicsCollision)
     skeleton:addComponent("Pathfinding", pathfinding)
     skeleton:addComponent("StateMachine", stateMachine)
     skeleton:addComponent("Animator", animator)

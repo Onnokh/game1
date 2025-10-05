@@ -26,7 +26,7 @@ SkeletonConfig.DYING_ANIMATION = {
 }
 
 -- Physics settings
-SkeletonConfig.COLLIDER_WIDTH = 12
+SkeletonConfig.COLLIDER_WIDTH = 8
 SkeletonConfig.COLLIDER_HEIGHT = 8
 SkeletonConfig.COLLIDER_SHAPE = "circle" -- "rectangle" or "circle"
 SkeletonConfig.COLLIDER_RESTITUTION = 0.1
@@ -37,11 +37,11 @@ SkeletonConfig.COLLIDER_DAMPING = 0.1
 SkeletonConfig.SPRITE_WIDTH = 32
 SkeletonConfig.SPRITE_HEIGHT = 32
 
+SkeletonConfig.DRAW_WIDTH = 12
+SkeletonConfig.DRAW_HEIGHT = 22
+
 -- Combat settings
 SkeletonConfig.HEALTH = 45
 SkeletonConfig.MAX_HEALTH = 50
--- SkeletonConfig.ATTACK_DAMAGE = 15
--- SkeletonConfig.ATTACK_RANGE = 20
--- SkeletonConfig.ATTACK_COOLDOWN = 2
 
 return SkeletonConfig

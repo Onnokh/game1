@@ -59,9 +59,9 @@ function PathfindingSystem:addEntity(entity)
         pathfinding.entityId = entity.id -- Store entity ID for debug output
     end
 
-    -- If this is a static collision entity, rebuild the pathfinding grid
-    local collision = entity:getComponent("Collision")
-    if collision and collision.type == "static" and self.grid and self.pathfinder then
+    -- If this entity has a pathfinding collision component, rebuild the pathfinding grid
+    local pathfindingCollision = entity:getComponent("PathfindingCollision")
+    if pathfindingCollision and self.grid and self.pathfinder then
         self:rebuildPathfindingGrid()
     end
 end
@@ -120,33 +120,33 @@ end
 function PathfindingSystem:addCollisionObjectsToGrid(collisionMap)
     local collisionCount = 0
 
-    -- Get all entities with collision components
-    for i, entity in ipairs(self.entities) do
-        local collision = entity:getComponent("Collision")
-        local position = entity:getComponent("Position")
+		-- Get all entities with pathfinding collision components
+		for i, entity in ipairs(self.entities) do
+			local pathfindingCollision = entity:getComponent("PathfindingCollision")
+			local position = entity:getComponent("Position")
 
-        -- Only process static collision objects (ignore moving entities)
-        if collision and position and collision.type == "static" then
-            if collision:hasCollider() then
-                collisionCount = collisionCount + 1
-                -- Get collision bounds in grid coordinates
-                local colliderX, colliderY = collision:getPosition()
-                local gridX1 = math.floor(colliderX / 16) + 1
-                local gridY1 = math.floor(colliderY / 16) + 1
-                local gridX2 = math.floor((colliderX + collision.width) / 16) + 1
-                local gridY2 = math.floor((colliderY + collision.height) / 16) + 1
+			-- Process both static and dynamic collision objects for pathfinding
+			if pathfindingCollision and position then
+				if pathfindingCollision:hasCollider() then
+					collisionCount = collisionCount + 1
+					-- Get collision bounds in grid coordinates
+					local colliderX, colliderY = pathfindingCollision:getPosition()
+					local gridX1 = math.floor(colliderX / 16) + 1
+					local gridY1 = math.floor(colliderY / 16) + 1
+					local gridX2 = math.floor((colliderX + pathfindingCollision.width) / 16) + 1
+					local gridY2 = math.floor((colliderY + pathfindingCollision.height) / 16) + 1
 
-                -- Mark collision area as blocked (0 = blocked)
-                for x = gridX1, gridX2 do
-                    for y = gridY1, gridY2 do
-                        if x >= 1 and x <= self.worldWidth and y >= 1 and y <= self.worldHeight then
-                            collisionMap[x][y] = 0
-                        end
-                    end
-                end
-            end
-        end
-    end
+					-- Mark collision area as blocked (0 = blocked)
+					for x = gridX1, gridX2 do
+						for y = gridY1, gridY2 do
+							if x >= 1 and x <= self.worldWidth and y >= 1 and y <= self.worldHeight then
+								collisionMap[x][y] = 0
+							end
+						end
+					end
+				end
+			end
+		end
 end
 
 ---Rebuild the pathfinding grid with current collision data
@@ -204,6 +204,19 @@ end
 ---Update all entities with pathfinding
 ---@param dt number Delta time
 function PathfindingSystem:update(dt)
+    -- Rebuild pathfinding grid periodically to account for moving entities
+    -- This is expensive, so we do it less frequently than every frame
+    local currentTime = love.timer.getTime()
+    if not self.lastGridRebuild then
+        self.lastGridRebuild = currentTime
+    end
+
+    -- Rebuild grid every 0.5 seconds to account for moving entities
+    if currentTime - self.lastGridRebuild > 0.5 then
+        self:rebuildPathfindingGrid()
+        self.lastGridRebuild = currentTime
+    end
+
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
         local movement = entity:getComponent("Movement")

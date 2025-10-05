@@ -1,6 +1,8 @@
 local Component = require("src.core.Component")
+local GameConstants = require("src.constants")
 
----@class Collision : Component
+---@class PhysicsCollision : Component
+---Physics-only collision component (no pathfinding integration)
 ---@field collider table|nil The physics collider object
 ---@field width number Width of the collision box (or diameter for circle)
 ---@field height number Height of the collision box (or diameter for circle)
@@ -13,19 +15,19 @@ local Component = require("src.core.Component")
 ---@field linearDamping number Linear damping factor
 ---@field enabled boolean Whether collision is enabled
 ---@field physicsWorld table|nil The physics world this collider belongs to
-local Collision = {}
-Collision.__index = Collision
+local PhysicsCollision = {}
+PhysicsCollision.__index = PhysicsCollision
 
----Create a new Collision component
+---Create a new PhysicsCollision component
 ---@param width number Width of the collision box (or diameter for circle)
 ---@param height number Height of the collision box (or diameter for circle)
 ---@param type string|nil Type of collider, defaults to "dynamic"
 ---@param offsetX number|nil Horizontal offset from entity top-left
 ---@param offsetY number|nil Vertical offset from entity top-left
 ---@param shape string|nil Shape of collider ("rectangle" or "circle"), defaults to "rectangle"
----@return Component|Collision
-function Collision.new(width, height, type, offsetX, offsetY, shape)
-    local self = setmetatable(Component.new("Collision"), Collision)
+---@return Component|PhysicsCollision
+function PhysicsCollision.new(width, height, type, offsetX, offsetY, shape)
+    local self = setmetatable(Component.new("PhysicsCollision"), PhysicsCollision)
 
     self.collider = nil
     self.width = width or 16
@@ -47,7 +49,7 @@ end
 ---@param physicsWorld table The physics world to create collider in
 ---@param x number X position
 ---@param y number Y position
-function Collision:createCollider(physicsWorld, x, y)
+function PhysicsCollision:createCollider(physicsWorld, x, y)
     if not physicsWorld or self.collider then
         return
     end
@@ -71,11 +73,16 @@ function Collision:createCollider(physicsWorld, x, y)
         shape = love.physics.newRectangleShape(self.width, self.height)
     end
 
-    -- Create fixture
+    -- Create fixture as a sensor (detects collisions but doesn't physically block)
     local fixture = love.physics.newFixture(body, shape)
+    fixture:setSensor(true) -- This makes it a sensor - detects collisions but doesn't block movement
     fixture:setRestitution(self.restitution)
     fixture:setFriction(self.friction)
     fixture:setDensity(1.0)
+
+    -- No collision filtering - let PhysicsCollision collide with everything (but it's a sensor so won't block)
+    -- fixture:setCategory(GameConstants.COLLISION_CATEGORIES.PHYSICS)
+    -- fixture:setMask(GameConstants.COLLISION_MASKS.PHYSICS)
 
     -- Set body properties
     body:setLinearDamping(self.linearDamping)
@@ -89,11 +96,10 @@ function Collision:createCollider(physicsWorld, x, y)
     }
 end
 
-
 ---Update the collider position
 ---@param x number X position
 ---@param y number Y position
-function Collision:setPosition(x, y)
+function PhysicsCollision:setPosition(x, y)
     if self.collider and self.collider.body then
         self.collider.body:setPosition(x + self.offsetX + self.width/2, y + self.offsetY + self.height/2)
     end
@@ -101,7 +107,7 @@ end
 
 ---Get the collider position
 ---@return number, number X and Y position
-function Collision:getPosition()
+function PhysicsCollision:getPosition()
     if self.collider and self.collider.body then
         local bodyX, bodyY = self.collider.body:getPosition()
         return bodyX - self.width/2 - self.offsetX, bodyY - self.height/2 - self.offsetY
@@ -111,7 +117,7 @@ end
 
 ---Get the collider velocity
 ---@return number, number X and Y velocity
-function Collision:getLinearVelocity()
+function PhysicsCollision:getLinearVelocity()
     if self.collider and self.collider.body then
         return self.collider.body:getLinearVelocity()
     end
@@ -121,7 +127,7 @@ end
 ---Set the collider velocity
 ---@param vx number X velocity
 ---@param vy number Y velocity
-function Collision:setLinearVelocity(vx, vy)
+function PhysicsCollision:setLinearVelocity(vx, vy)
     if self.collider and self.collider.body then
         self.collider.body:setLinearVelocity(vx, vy)
     end
@@ -130,7 +136,7 @@ end
 ---Apply a linear impulse to the collider (better for knockback)
 ---@param ix number X impulse
 ---@param iy number Y impulse
-function Collision:applyLinearImpulse(ix, iy)
+function PhysicsCollision:applyLinearImpulse(ix, iy)
     if self.collider and self.collider.body then
         self.collider.body:applyLinearImpulse(ix, iy)
     end
@@ -139,15 +145,14 @@ end
 ---Apply a force to the collider (smoother for continuous effects)
 ---@param fx number X force
 ---@param fy number Y force
-function Collision:applyForce(fx, fy)
+function PhysicsCollision:applyForce(fx, fy)
     if self.collider and self.collider.body then
         self.collider.body:applyForce(fx, fy)
     end
 end
 
-
 ---Destroy the collider
-function Collision:destroy()
+function PhysicsCollision:destroy()
     if self.collider and self.collider.body then
         self.collider.body:destroy()
         self.collider = nil
@@ -156,9 +161,8 @@ end
 
 ---Check if the collider exists
 ---@return boolean True if collider exists
-function Collision:hasCollider()
+function PhysicsCollision:hasCollider()
     return self.collider ~= nil and self.collider.body ~= nil
 end
 
-
-return Collision
+return PhysicsCollision

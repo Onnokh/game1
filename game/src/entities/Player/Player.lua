@@ -12,7 +12,8 @@ function Player.create(x, y, world, physicsWorld)
     local Position = require("src.components.Position")
     local Movement = require("src.components.Movement")
     local SpriteRenderer = require("src.components.SpriteRenderer")
-    local Collision = require("src.components.Collision")
+    local PathfindingCollision = require("src.components.PathfindingCollision")
+    local PhysicsCollision = require("src.components.PhysicsCollision")
     local StateMachine = require("src.components.StateMachine")
     local Attack = require("src.components.Attack")
     local Health = require("src.components.Health")
@@ -37,20 +38,27 @@ function Player.create(x, y, world, physicsWorld)
     spriteRenderer.facingMouse = true -- Enable mouse-facing
 
 
-    -- Collision component
+    -- PathfindingCollision component (for pathfinding and physics collision)
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
     local colliderWidth, colliderHeight = PlayerConfig.COLLIDER_WIDTH, PlayerConfig.COLLIDER_HEIGHT
     local colliderShape = PlayerConfig.COLLIDER_SHAPE
     local offsetX = (spriteRenderer.width - colliderWidth) / 2
     local offsetY = spriteRenderer.height - colliderHeight
-    local collision = Collision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY, colliderShape)
-    collision.restitution = PlayerConfig.COLLIDER_RESTITUTION
-    collision.friction = PlayerConfig.COLLIDER_FRICTION
-    collision.linearDamping = PlayerConfig.COLLIDER_DAMPING
+    local pathfindingCollision = PathfindingCollision.new(colliderWidth, colliderHeight, "dynamic", offsetX, offsetY, colliderShape)
+    pathfindingCollision.restitution = PlayerConfig.COLLIDER_RESTITUTION
+    pathfindingCollision.friction = PlayerConfig.COLLIDER_FRICTION
+    pathfindingCollision.linearDamping = PlayerConfig.COLLIDER_DAMPING
 
-    -- Create collider if physics world is available
+    -- PhysicsCollision component (for physics interactions only) - use sprite size
+    local physicsCollision = PhysicsCollision.new(spriteRenderer.width, spriteRenderer.height, "dynamic", 0, 0, colliderShape)
+    physicsCollision.restitution = PlayerConfig.COLLIDER_RESTITUTION
+    physicsCollision.friction = PlayerConfig.COLLIDER_FRICTION
+    physicsCollision.linearDamping = PlayerConfig.COLLIDER_DAMPING
+
+    -- Create colliders if physics world is available
     if physicsWorld then
-        collision:createCollider(physicsWorld, x, y)
+        pathfindingCollision:createCollider(physicsWorld, x, y)
+        physicsCollision:createCollider(physicsWorld, x, y)
     end
 
     -- Create state machine first
@@ -90,7 +98,7 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("dash", Dash.new())
 
     -- Create attack component
-    local attack = Attack.new(15, 15, 0.5, "melee", 80) -- damage, range, cooldown, type, knockback
+    local attack = Attack.new(15, 15, 0.5, "melee", 15) -- damage, range, cooldown, type, knockback
 
     -- Create health component
     local health = Health.new(100) -- 100 max health
@@ -105,7 +113,8 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Position", position)
     playerEntity:addComponent("Movement", movement)
     playerEntity:addComponent("SpriteRenderer", spriteRenderer)
-    playerEntity:addComponent("Collision", collision)
+    playerEntity:addComponent("PathfindingCollision", pathfindingCollision)
+    playerEntity:addComponent("PhysicsCollision", physicsCollision)
     playerEntity:addComponent("StateMachine", stateMachine)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)

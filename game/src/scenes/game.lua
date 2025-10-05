@@ -36,7 +36,7 @@ local Entity = require("src.core.Entity")
 local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local CastableShadow = require("src.components.CastableShadow")
-local Collision = require("src.components.Collision")
+local PathfindingCollision = require("src.components.PathfindingCollision")
 local DepthSorting = require("src.utils.depthSorting")
 
 local ecsWorld = nil
@@ -152,12 +152,12 @@ function GameScene.load()
     offsetX = 0,
     offsetY = 0,
   })
-  local collision = Collision.new(wallWidth, wallHeight, "static", 0, 0)
+  local pathfindingCollision = PathfindingCollision.new(wallWidth, wallHeight, "static", 0, 0)
   testWall:addComponent("CastableShadow", shadow)
-  testWall:addComponent("Collision", collision)
+  testWall:addComponent("PathfindingCollision", pathfindingCollision)
 
   -- Create the collider in the physics world
-  collision:createCollider(physicsWorld, testWallX, testWallY)
+  pathfindingCollision:createCollider(physicsWorld, testWallX, testWallY)
 
   -- Add the wall entity to ECS world BEFORE initializing pathfinding
   ecsWorld:addEntity(testWall)

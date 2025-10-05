@@ -12,13 +12,13 @@ function AttackSystem:update(dt)
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
         local attack = entity:getComponent("Attack")
-        local collision = entity:getComponent("Collision")
+        local physicsCollision = entity:getComponent("PhysicsCollision")
 
         if position and attack and attack.enabled then
             -- Check for attack input (this assumes the entity has input handling)
             -- For now, we'll check if the entity is the player and handle input
             if self:shouldAttack(entity, currentTime) then
-                self:performAttack(entity, position, attack, collision, currentTime)
+                self:performAttack(entity, position, attack, physicsCollision, currentTime)
             end
         end
     end
@@ -53,9 +53,9 @@ end
 ---@param entity Entity|{isPlayer:boolean} The attacking entity
 ---@param position Position The position component
 ---@param attack Attack The attack component
----@param collision Collision|nil The collision component
+---@param physicsCollision PhysicsCollision|nil The physics collision component
 ---@param currentTime number Current game time
-function AttackSystem:performAttack(entity, position, attack, collision, currentTime)
+function AttackSystem:performAttack(entity, position, attack, physicsCollision, currentTime)
     if not attack:performAttack(currentTime) then
         return
     end
@@ -107,7 +107,7 @@ function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
     attack:calculateHitArea(playerCenterX, playerCenterY)
 end
 
----Find all targets within attack area
+---Find all targets within attack area using PhysicsCollision overlap detection
 ---@param attacker Entity The attacking entity
 ---@param position Position The attacker's position
 ---@param attack Attack The attack component
@@ -120,16 +120,16 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
         return targets
     end
 
-    -- Get all entities with Health component (potential targets)
-    local potentialTargets = world:getEntitiesWith({"Health"})
+    -- Get all entities with Health and PhysicsCollision components (potential targets)
+    local potentialTargets = world:getEntitiesWith({"Health", "PhysicsCollision"})
 
     for _, target in ipairs(potentialTargets) do
         -- Skip self
         if target.id ~= attacker.id then
-            local targetPosition = target:getComponent("Position")
-            if targetPosition then
-                -- Check if target is within the attack hit area
-                if self:isTargetInHitArea(target, targetPosition, attack) then
+            local targetPhysicsCollision = target:getComponent("PhysicsCollision")
+            if targetPhysicsCollision and targetPhysicsCollision:hasCollider() then
+                -- Check if target's PhysicsCollision overlaps with the attack hit area
+                if self:isTargetInHitArea(target, targetPhysicsCollision, attack) then
                     table.insert(targets, target)
                 end
             end
@@ -139,19 +139,22 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
     return targets
 end
 
----Check if a target is within the attack hit area
+---Check if a target's PhysicsCollision overlaps with the attack hit area
 ---@param target Entity The target entity
----@param targetPosition Position The target's position component
+---@param targetPhysicsCollision PhysicsCollision The target's physics collision component
 ---@param attack Attack The attack component
----@return boolean True if target is in hit area
-function AttackSystem:isTargetInHitArea(target, targetPosition, attack)
-    local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
+---@return boolean True if target's collision overlaps with hit area
+function AttackSystem:isTargetInHitArea(target, targetPhysicsCollision, attack)
+    -- Get the target's collision bounds
+    local targetX, targetY = targetPhysicsCollision:getPosition()
+    local targetWidth = targetPhysicsCollision.width
+    local targetHeight = targetPhysicsCollision.height
 
-    -- Check if target center is within the hit area rectangle
-    return targetCenterX >= attack.hitAreaX and
-           targetCenterX <= attack.hitAreaX + attack.hitAreaWidth and
-           targetCenterY >= attack.hitAreaY and
-           targetCenterY <= attack.hitAreaY + attack.hitAreaHeight
+    -- Check for rectangle overlap between attack hit area and target's PhysicsCollision
+    return self:rectanglesOverlap(
+        attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight,
+        targetX, targetY, targetWidth, targetHeight
+    )
 end
 
 ---Find all targets within attack range (legacy method for non-directional attacks)
@@ -250,6 +253,23 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
         local knockbackComponent = Knockback.new(knockbackX, knockbackY, attack.knockback, 0.1)
         target:addComponent("Knockback", knockbackComponent)
     end
+end
+
+---Check if two rectangles overlap
+---@param x1 number First rectangle X position
+---@param y1 number First rectangle Y position
+---@param w1 number First rectangle width
+---@param h1 number First rectangle height
+---@param x2 number Second rectangle X position
+---@param y2 number Second rectangle Y position
+---@param w2 number Second rectangle width
+---@param h2 number Second rectangle height
+---@return boolean True if rectangles overlap
+function AttackSystem:rectanglesOverlap(x1, y1, w1, h1, x2, y2, w2, h2)
+    return x1 < x2 + w2 and
+           x1 + w1 > x2 and
+           y1 < y2 + h2 and
+           y1 + h1 > y2
 end
 
 ---Get the visual center of an entity (accounting for sprite size)
