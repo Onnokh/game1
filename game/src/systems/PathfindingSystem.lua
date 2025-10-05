@@ -253,15 +253,13 @@ function PathfindingSystem:updateEntityPathfinding(entity, position, movement, p
         local nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)
 
         if nextX and nextY then
-            -- Get the collision center position for accurate movement calculation
-            local collision = entity:getComponent("Collision")
+            -- Get the pathfinding collision center position for accurate movement calculation
+            local pathfindingCollision = entity:getComponent("PathfindingCollision")
             local currentX, currentY = position.x, position.y
 
-            if collision and collision:hasCollider() then
-                -- Use collision center position for movement calculation
-                currentX, currentY = collision:getPosition()
-                currentX = currentX + collision.width / 2
-                currentY = currentY + collision.height / 2
+            if pathfindingCollision and pathfindingCollision:hasCollider() then
+                -- Use pathfinding collision center position for movement calculation
+                currentX, currentY = pathfindingCollision:getCenterPosition()
             end
 
             -- Calculate direction to next waypoint

@@ -466,7 +466,7 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   for _, entity in ipairs(entitiesWithPathfinding) do
     local pathfinding = entity:getComponent("Pathfinding")
     local position = entity:getComponent("Position")
-    local collision = entity:getComponent("Collision")
+    local pathfindingCollision = entity:getComponent("PathfindingCollision")
 
     if pathfinding and position then
       -- Draw current path
@@ -474,13 +474,11 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
         -- Draw the complete path from skeleton to destination
         love.graphics.setColor(0, 1, 0, 0.8) -- Green
 
-        -- Start from collision center position (or sprite center if no collision)
+        -- Start from pathfinding collision center position (or sprite center if no collision)
         local prevX, prevY = position.x + 8, position.y + 8
-        if collision and collision:hasCollider() then
-          -- Use collision center position
-          prevX, prevY = collision:getPosition()
-          prevX = prevX + collision.width / 2
-          prevY = prevY + collision.height / 2
+        if pathfindingCollision and pathfindingCollision:hasCollider() then
+          -- Use pathfinding collision center position
+          prevX, prevY = pathfindingCollision:getCenterPosition()
         end
 
         -- Draw line from skeleton to first waypoint

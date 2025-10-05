@@ -36,12 +36,10 @@ function Wandering:onEnter(stateMachine, entity)
             -- Use current position for pathfinding
             local currentX, currentY = position.x, position.y
 
-            -- Check if we have collision component for more accurate position
-            local collision = entity:getComponent("Collision")
-            if collision and collision:hasCollider() then
-                currentX, currentY = collision:getPosition()
-                currentX = currentX + collision.width / 2
-                currentY = currentY + collision.height / 2
+            -- Check if we have pathfinding collision component for more accurate position
+            local pathfindingCollision = entity:getComponent("PathfindingCollision")
+            if pathfindingCollision and pathfindingCollision:hasCollider() then
+                currentX, currentY = pathfindingCollision:getCenterPosition()
             end
 
             -- Start a new wander from current position
