@@ -71,19 +71,18 @@ function Wandering:onUpdate(stateMachine, entity, dt)
 
     -- Check if we've reached the wander target
     if pathfinding and pathfinding:isPathComplete() and movement then
-        -- Stop movement to avoid glide
-        movement.velocityX = 0
-        movement.velocityY = 0
-        -- Clear the current path
+        -- Clear the current path to allow new wandering
         pathfinding.currentPath = nil
         pathfinding.currentPathIndex = 1
-    end
-
-    -- Steering moved to MovementSystem; ensure we don't glide when no path
-    if (not pathfinding) or pathfinding:isPathComplete() then
-        if movement then
-            movement.velocityX = 0
-            movement.velocityY = 0
+        -- Start a new wander from current position
+        local position = entity:getComponent("Position")
+        if position then
+            local currentX, currentY = position.x, position.y
+            local pathfindingCollision = entity:getComponent("PathfindingCollision")
+            if pathfindingCollision and pathfindingCollision:hasCollider() then
+                currentX, currentY = pathfindingCollision:getCenterPosition()
+            end
+            pathfinding:startWander(currentX, currentY, 16) -- 16 is tile size
         end
     end
 end

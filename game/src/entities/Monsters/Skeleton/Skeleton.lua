@@ -217,7 +217,12 @@ function Skeleton.selectState(entity, dt)
         end
     end
 
-    -- Priority 3: Default behavior (idle/wandering)
+    -- Priority 3: Default behavior (idle/wandering) when no target
+    -- If currently attacking or chasing but no target, transition to idle
+    if currentState == "attacking" or currentState == "chasing" then
+        return "idle"
+    end
+
     -- Handle idle/wandering transitions
     if currentState == "idle" then
         -- Check if idle time has expired
