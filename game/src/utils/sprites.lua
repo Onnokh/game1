@@ -29,7 +29,7 @@ function IffySprites.load()
   print("Loading sprites with Iffy...")
 
   -- 1x1 grid (16x16 tiles)
-  iffy.newTileset("grass", "resources/tileset/Grass_Middle.png", 16, 16, 0, 0, 32, 32)
+  iffy.newTileset("grass", "resources/tileset/Grass_Middle.png", 16, 16, 0, 0, 16, 16)
 
   -- 3x6 grid (16x16 tiles)
   -- 48x96 total spritesheet size
