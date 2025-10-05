@@ -16,9 +16,7 @@ function MovementSystem:update(dt)
             -- Apply velocity to pathfinding collider and let Love2D handle collision
             if pathfindingCollision and pathfindingCollision:hasCollider() then
                 -- Static entities don't move
-                if pathfindingCollision.type == "static" then
-                    return
-                else
+                if pathfindingCollision.type ~= "static" then
                     -- Dynamic entities - apply velocity to physics body
                     pathfindingCollision:setLinearVelocity(movement.velocityX, movement.velocityY)
                     -- Sync ECS position from physics collider
@@ -28,6 +26,9 @@ function MovementSystem:update(dt)
                     -- Also sync the physics collision position (sensor for hit detection)
                     if physicsCollision and physicsCollision:hasCollider() then
                         physicsCollision:setPosition(x, y)
+                        if physicsCollision.collider and physicsCollision.collider.fixture then
+                            physicsCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })
+                        end
                     end
                 end
             else

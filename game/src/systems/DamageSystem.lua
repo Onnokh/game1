@@ -1,53 +1,80 @@
 local System = require("src.core.System")
 local FlashEffect = require("src.components.FlashEffect")
+local DamageQueue = require("src.DamageQueue")
 
 ---@class DamageSystem : System
-local DamageSystem = System:extend("DamageSystem", {"Health", "DamageEvent"})
+local DamageSystem = System:extend("DamageSystem", {"Health"})
 
 ---Update all entities with Health and DamageEvent components
 ---@param dt number Delta time
 function DamageSystem:update(dt)
-    for _, entity in ipairs(self.entities) do
-        local health = entity:getComponent("Health")
-        local damageEvent = entity:getComponent("DamageEvent")
-
-        if health and damageEvent then
-            -- Apply damage
-            self:processDamageEvent(entity, health, damageEvent)
-
-            -- Remove the damage event after processing
-            entity:removeComponent("DamageEvent")
-        end
-    end
-end
-
----Process a damage event and apply damage to the entity
----@param entity Entity The entity taking damage
----@param health any The health component
----@param damageEvent any The damage event component
-function DamageSystem:processDamageEvent(entity, health, damageEvent)
-    if health.isDead then
+    -- Process queued damages once per frame
+    if DamageQueue:isProcessing() then
+        -- Another instance already processed this frame; skip
         return
     end
+    DamageQueue:beginProcessing()
 
-    -- Apply the damage
+    local queued = DamageQueue:getAll()
+    if #queued > 0 then
+        print(string.format("DamageQueue: processing %d entries", #queued))
+        for i = 1, #queued do
+            local e = queued[i]
+            if e and e.target and e.target.active ~= false then
+                local health = e.target:getComponent("Health")
+                if health and not health.isDead then
+                    self:processDamageEntry(e.target, health, e)
+                end
+            end
+        end
+        DamageQueue:clear()
+    end
+
+    DamageQueue:endProcessing()
+end
+
+---Process a queued damage entry
+---@param entity Entity
+---@param health any
+---@param entry table
+function DamageSystem:processDamageEntry(entity, health, entry)
+    if health.isDead then return end
     local wasAlive = health:isAlive()
-    health:takeDamage(damageEvent.amount)
+    health:takeDamage(entry.amount or 0)
 
     -- Add damage flash effect
     self:addDamageFlash(entity)
 
-    -- Handle death if the entity died
-    if wasAlive and not health:isAlive() then
-        self:handleEntityDeath(entity, damageEvent)
+    -- Apply knockback impulse directly (sensor-based attack flow)
+    if (entry.knockback or 0) > 0 and entry.source then
+        local pathfindingCollision = entity:getComponent("PathfindingCollision")
+        local sourcePos = entry.source:getComponent("Position")
+        local targetPos = entity:getComponent("Position")
+        if pathfindingCollision and pathfindingCollision:hasCollider() and sourcePos and targetPos then
+            local sourceSprite = entry.source:getComponent("SpriteRenderer")
+            local targetSprite = entity:getComponent("SpriteRenderer")
+            local sourceCenterX = sourcePos.x + (sourceSprite and sourceSprite.width or 24) / 2
+            local sourceCenterY = sourcePos.y + (sourceSprite and sourceSprite.height or 24) / 2
+            local targetCenterX = targetPos.x + (targetSprite and targetSprite.width or 24) / 2
+            local targetCenterY = targetPos.y + (targetSprite and targetSprite.height or 24) / 2
+            local dx = targetCenterX - sourceCenterX
+            local dy = targetCenterY - sourceCenterY
+            local dist = math.sqrt(dx * dx + dy * dy)
+            if dist > 0 then
+                local impulseX = (dx / dist) * entry.knockback
+                local impulseY = (dy / dist) * entry.knockback
+                pathfindingCollision:applyLinearImpulse(impulseX, impulseY)
+            end
+        end
     end
 
-    -- Apply any additional effects
-    self:applyDamageEffects(entity, damageEvent)
+    if wasAlive and not health:isAlive() then
+        self:handleEntityDeath(entity, { amount = entry.amount or 0, source = entry.source })
+    end
 
-    -- Apply knockback if specified
-    if damageEvent.knockback > 0 then
-        self:applyKnockback(entity, damageEvent)
+    -- Effects
+    if entry.effects then
+        self:applyDamageEffects(entity, entry)
     end
 end
 
@@ -63,9 +90,6 @@ function DamageSystem:handleEntityDeath(entity, damageEvent)
         -- Set skeleton to dying state instead of immediately deactivating
         stateMachine:changeState("dying", entity)
         print("Skeleton entering dying state")
-    else
-        -- For other entities, mark as inactive immediately
-        entity.active = false
     end
 
     -- You can add death effects here:
@@ -85,8 +109,10 @@ end
 ---@param damageEvent any The damage event
 function DamageSystem:applyDamageEffects(entity, damageEvent)
     -- Apply any effects specified in the damage event
-    for effect, value in pairs(damageEvent.effects) do
-        self:applyEffect(entity, effect, value)
+    if damageEvent.effects then
+        for effect, value in pairs(damageEvent.effects) do
+            self:applyEffect(entity, effect, value)
+        end
     end
 end
 
@@ -117,45 +143,6 @@ end
 ---Apply knockback to an entity
 ---@param entity Entity The entity to apply knockback to
 ---@param damageEvent any The damage event containing knockback info
-function DamageSystem:applyKnockback(entity, damageEvent)
-    local movement = entity:getComponent("Movement")
-    local position = entity:getComponent("Position")
-
-    if not movement or not position then
-        return
-    end
-
-    -- Get the source entity position for knockback direction
-    local sourcePosition = nil
-    if damageEvent.source then
-        sourcePosition = damageEvent.source:getComponent("Position")
-    end
-
-    if sourcePosition then
-        -- Calculate knockback direction from source to target using visual centers
-        local sourceSpriteRenderer = damageEvent.source:getComponent("SpriteRenderer")
-        local targetSpriteRenderer = entity:getComponent("SpriteRenderer")
-
-        local sourceCenterX = sourcePosition.x + (sourceSpriteRenderer and sourceSpriteRenderer.width or 24) / 2
-        local sourceCenterY = sourcePosition.y + (sourceSpriteRenderer and sourceSpriteRenderer.height or 24) / 2
-        local targetCenterX = position.x + (targetSpriteRenderer and targetSpriteRenderer.width or 24) / 2
-        local targetCenterY = position.y + (targetSpriteRenderer and targetSpriteRenderer.height or 24) / 2
-
-        local dx = targetCenterX - sourceCenterX
-        local dy = targetCenterY - sourceCenterY
-        local distance = math.sqrt(dx * dx + dy * dy)
-
-        if distance > 0 then
-            -- Normalize direction and apply knockback force
-            local knockbackX = (dx / distance) * damageEvent.knockback
-            local knockbackY = (dy / distance) * damageEvent.knockback
-
-            -- Apply knockback to movement velocity
-            movement.velocityX = movement.velocityX + knockbackX
-            movement.velocityY = movement.velocityY + knockbackY
-        end
-    end
-end
 
 ---Add damage flash effect to an entity
 ---@param entity Entity The entity to flash
@@ -180,12 +167,6 @@ end
 ---@param damageType string|nil Type of damage
 ---@param knockback number|nil Knockback force
 ---@param effects table|nil Additional effects
-function DamageSystem:createDamageEvent(entity, amount, source, damageType, knockback, effects)
-    local DamageEvent = require("src.components.DamageEvent")
-    local damageEvent = DamageEvent.new(amount, source, damageType, knockback, effects)
-
-    -- Add the damage event to the entity
-    entity:addComponent("DamageEvent", damageEvent)
-end
+-- Event-based damage path removed; damage now flows via DamageQueue only
 
 return DamageSystem

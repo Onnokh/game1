@@ -12,6 +12,40 @@ function CollisionSystem.new(physicsWorld)
     local self = System.new({"Position"})
     setmetatable(self, CollisionSystem)
     self.physicsWorld = physicsWorld
+    if self.physicsWorld then
+        self.physicsWorld:setCallbacks(
+            function(a, b, contact)
+                -- beginContact
+                local ua = a and a:getUserData() or nil
+                local ub = b and b:getUserData() or nil
+                local function handle(attackFixture, otherFixture)
+                    if not attackFixture then return end
+                    local u = attackFixture:getUserData()
+                    if u and type(u) == "table" and u.kind == "attack" and u.component then
+                        local attackComp = u.component
+                        local otherU = otherFixture and otherFixture:getUserData() or nil
+                        local otherEntity = nil
+                        if otherU and type(otherU) == "table" and otherU.entity then
+                            otherEntity = otherU.entity
+                        end
+                        -- Fallback: walk ECS via body/fixture mapping if needed
+                        if not otherEntity and otherFixture then
+                            -- No strict mapping available; leave to AttackSystem via queue if desired
+                        end
+                        if otherEntity and otherEntity ~= attackComp.attacker and not attackComp.hitEntities[otherEntity.id] then
+                            -- Enqueue damage
+                            local DamageQueue = require("src.DamageQueue")
+                            DamageQueue:push(otherEntity, attackComp.damage, attackComp.attacker, "physical", attackComp.knockback, nil)
+                            attackComp.hitEntities[otherEntity.id] = true
+                        end
+                    end
+                end
+                if ua and type(ua) == "table" and ua.kind == "attack" then handle(a, b) end
+                if ub and type(ub) == "table" and ub.kind == "attack" then handle(b, a) end
+            end,
+            nil, nil, nil
+        )
+    end
     return self
 end
 
@@ -32,6 +66,10 @@ function CollisionSystem:update(dt)
 			local physicsCollision = entity:getComponent("PhysicsCollision")
 			if physicsCollision and not physicsCollision:hasCollider() then
 				physicsCollision:createCollider(self.physicsWorld, position.x, position.y)
+				-- Tag fixture with entity reference for contact handlers
+				if physicsCollision.collider and physicsCollision.collider.fixture then
+					physicsCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })
+				end
 			end
 		end
 	end

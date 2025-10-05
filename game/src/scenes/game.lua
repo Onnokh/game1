@@ -28,7 +28,6 @@ local AttackSystem = require("src.systems.AttackSystem")
 local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
-local KnockbackSystem = require("src.systems.KnockbackSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -37,7 +36,6 @@ local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local CastableShadow = require("src.components.CastableShadow")
 local PathfindingCollision = require("src.components.PathfindingCollision")
-local DepthSorting = require("src.utils.depthSorting")
 
 local ecsWorld = nil
 local playerEntity = nil
@@ -88,8 +86,7 @@ function GameScene.load()
   ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
   ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-  ecsWorld:addSystem(KnockbackSystem.new())            -- Fifth: handle knockback effects
-  ecsWorld:addSystem(DamageSystem.new())               -- Sixth: process damage events
+  ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
   ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
   ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
   ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
@@ -208,8 +205,7 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
     ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
     ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-    ecsWorld:addSystem(KnockbackSystem.new())            -- Fifth: handle knockback effects
-    ecsWorld:addSystem(DamageSystem.new())               -- Sixth: process damage events
+    ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
     ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
     ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
     ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles

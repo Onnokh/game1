@@ -4,6 +4,8 @@
 ---@field sampleSize number Maximum number of samples to keep for metrics
 ---@field vsyncEnabled boolean|nil Current VSync state
 local name, version, vendor, device = love.graphics.getRendererInfo()
+local overlayFontMain = nil
+local overlayFontSmall = nil
 local overlayStats = {
   isActive = false,
   sampleSize = 60,
@@ -179,6 +181,9 @@ function overlayStats.load()
   local supported = love.graphics.getSupported()
   overlayStats.supportedFeatures.glsl3 = supported.glsl3
   overlayStats.supportedFeatures.pixelShaderHighp = supported.pixelshaderhighp
+  -- Cache fonts used by overlay to avoid per-frame allocations
+  overlayFontMain = love.graphics.newFont(16)
+  overlayFontSmall = love.graphics.newFont(8)
 end
 
 ---Draws gridlines in world space using GameConstants.TILE_SIZE
@@ -502,8 +507,9 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
 
         -- Draw coordinate labels along the path
         love.graphics.setColor(1, 1, 1, 0.9) -- White text
-        local font = love.graphics.newFont(8)
-        love.graphics.setFont(font)
+        if overlayFontSmall then
+          love.graphics.setFont(overlayFontSmall)
+        end
 
         for i = pathfinding.pathIndex, #pathfinding.currentPath._nodes do
           local node = pathfinding.currentPath._nodes[i]
@@ -579,7 +585,13 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
 
   -- Set up overlay drawing
   love.graphics.push("all")
-  local font = love.graphics.setNewFont(16)
+  local font
+  if overlayFontMain then
+    love.graphics.setFont(overlayFontMain)
+    font = overlayFontMain
+  else
+    font = love.graphics.setNewFont(16)
+  end
 
   if cameraX and cameraY then
     -- Draw gridlines in world space

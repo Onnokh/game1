@@ -226,17 +226,15 @@ function PathfindingSystem:update(dt)
         if position and movement and pathfinding then
             -- Skip pathfinding if entity is being knocked back
             local knockback = entity:getComponent("Knockback")
-            if knockback then
-                -- Entity is being knocked back, don't interfere with movement
-                return
-            end
+            if not knockback then
+                -- Ensure pathfinder is set up for this entity
+                if not pathfinding.pathfinder or not pathfinding.grid then
+                    pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
+                end
 
-            -- Ensure pathfinder is set up for this entity
-            if not pathfinding.pathfinder or not pathfinding.grid then
-                pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
+                self:updateEntityPathfinding(entity, position, movement, pathfinding, dt)
             end
-
-            self:updateEntityPathfinding(entity, position, movement, pathfinding, dt)
+            -- if knocked back, skip path update this frame but continue loop
         end
     end
 end

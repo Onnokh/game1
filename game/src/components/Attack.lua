@@ -2,7 +2,7 @@ local Component = require("src.core.Component")
 
 ---@class Attack : Component
 ---@field damage number Amount of damage this attack deals
----@field range number Range of the attack
+---@field range number Range of the attack (used to position the attack collider)
 ---@field cooldown number Cooldown time between attacks in seconds
 ---@field lastAttackTime number Time when the last attack was performed
 ---@field enabled boolean Whether the attack is enabled
@@ -10,10 +10,10 @@ local Component = require("src.core.Component")
 ---@field knockback number Knockback force applied to targets
 ---@field attackDirectionX number X component of attack direction
 ---@field attackDirectionY number Y component of attack direction
----@field hitAreaX number X position of attack hit area
----@field hitAreaY number Y position of attack hit area
----@field hitAreaWidth number Width of attack hit area
----@field hitAreaHeight number Height of attack hit area
+---@field hitAreaX number X of spawned attack collider AABB
+---@field hitAreaY number Y of spawned attack collider AABB
+---@field hitAreaWidth number Width of spawned attack collider AABB
+---@field hitAreaHeight number Height of spawned attack collider AABB
 local Attack = {}
 Attack.__index = Attack
 

@@ -1,5 +1,7 @@
 local System = require("src.core.System")
 local CoordinateUtils = require("src.utils.coordinates")
+local DamageQueue = require("src.DamageQueue")
+local GameState = require("src.core.GameState")
 
 ---@class AttackSystem : System
 local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
@@ -65,18 +67,17 @@ function AttackSystem:performAttack(entity, position, attack, physicsCollision, 
         self:calculatePlayerAttackDirection(entity, position, attack)
     end
 
-    -- Find targets within attack area
-    local targets = self:findTargetsInAttackArea(entity, position, attack)
-
-    -- Apply damage to each target
-    for _, target in ipairs(targets) do
-        self:applyDamageToTarget(entity, target, attack)
-    end
+    -- Spawn a short-lived attack collider sensor (no fallback path)
+    local AttackCollider = require("src.components.AttackCollider")
+    local attackerPhys = entity:getComponent("PhysicsCollision")
+    local physicsWorld = attackerPhys and attackerPhys.physicsWorld or nil
+    if not physicsWorld then return end
+    local ac = AttackCollider.new(entity, attack.damage, attack.knockback, 0.05)
+    ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
+    entity:addComponent("AttackCollider", ac)
 
     -- Apply knockback if specified
-    if attack.knockback > 0 then
-        self:applyKnockback(entity, targets, attack)
-    end
+    -- Knockback is handled in DamageSystem during queue processing
 end
 
 ---Calculate attack direction for player based on mouse position
@@ -84,7 +85,6 @@ end
 ---@param position Position The attacker's position
 ---@param attack Attack The attack component
 function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
-    local GameState = require("src.core.GameState")
     if not GameState or not GameState.input then
         return
     end
@@ -120,17 +120,47 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
         return targets
     end
 
+    -- Try to use Box2D broadphase via physicsWorld:queryBoundingBox to find overlapping fixtures quickly
+    local physicsWorld = nil
+    local attackerPhys = attacker:getComponent("PhysicsCollision")
+    if attackerPhys and attackerPhys.physicsWorld then
+        physicsWorld = attackerPhys.physicsWorld
+    end
+
+    local usePhysicsQuery = physicsWorld ~= nil
+    local fixturesInArea = nil
+
+    if usePhysicsQuery then
+        fixturesInArea = {}
+        local minX = attack.hitAreaX
+        local minY = attack.hitAreaY
+        local maxX = attack.hitAreaX + attack.hitAreaWidth
+        local maxY = attack.hitAreaY + attack.hitAreaHeight
+
+        physicsWorld:queryBoundingBox(minX, minY, maxX, maxY, function(fixture)
+            fixturesInArea[fixture] = true
+            return true -- continue query
+        end)
+    end
+
     -- Get all entities with Health and PhysicsCollision components (potential targets)
     local potentialTargets = world:getEntitiesWith({"Health", "PhysicsCollision"})
 
     for _, target in ipairs(potentialTargets) do
-        -- Skip self
         if target.id ~= attacker.id then
             local targetPhysicsCollision = target:getComponent("PhysicsCollision")
             if targetPhysicsCollision and targetPhysicsCollision:hasCollider() then
-                -- Check if target's PhysicsCollision overlaps with the attack hit area
-                if self:isTargetInHitArea(target, targetPhysicsCollision, attack) then
-                    table.insert(targets, target)
+                if usePhysicsQuery then
+                    -- Filter using physics query results first
+                    local targetFixture = targetPhysicsCollision.collider and targetPhysicsCollision.collider.fixture
+                    if targetFixture and fixturesInArea[targetFixture] then
+                        table.insert(targets, target)
+                    end
+                else
+                    -- Fallback to manual AABB overlap
+                    if self:isTargetInHitArea(target, targetPhysicsCollision, attack) then
+                        table.insert(targets, target)
+                    end
                 end
             end
         end
@@ -198,12 +228,8 @@ end
 ---@param target Entity The target entity
 ---@param attack Attack The attack component
 function AttackSystem:applyDamageToTarget(attacker, target, attack)
-    -- Create a damage event and add it to the target
-    local DamageEvent = require("src.components.DamageEvent")
-    local damageEvent = DamageEvent.new(attack.damage, attacker, "physical", attack.knockback)
-
-    -- Add the damage event to the target entity
-    target:addComponent("DamageEvent", damageEvent)
+    -- Push to global damage queue for batch processing
+    DamageQueue:push(target, attack.damage, attacker, "physical", 0, nil)
 end
 
 ---Apply knockback to targets
@@ -211,8 +237,6 @@ end
 ---@param targets table Array of target entities
 ---@param attack Attack The attack component
 function AttackSystem:applyKnockback(attacker, targets, attack)
-    local Knockback = require("src.components.Knockback")
-
     for _, target in ipairs(targets) do
         local knockbackX, knockbackY = 0, 0
 

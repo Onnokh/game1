@@ -28,6 +28,9 @@ GameConstants.PLAYER_SPEED = 80 -- Match working implementation
 -- Camera constants
 GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the world
 
+-- Feature toggles
+GameConstants.ENABLE_KNOCKBACK = true
+
 -- Collision categories for Love2D physics
 GameConstants.COLLISION_CATEGORIES = {
     PATHFINDING = 1,  -- PathfindingCollision components
