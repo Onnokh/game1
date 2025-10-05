@@ -5,6 +5,7 @@ Wandering.__index = Wandering
 setmetatable(Wandering, {__index = require("src.core.State")})
 
 local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local GameConstants = require("src.constants")
 
 ---@return Wandering The created wandering state
 function Wandering.new()
@@ -82,7 +83,7 @@ function Wandering:onUpdate(stateMachine, entity, dt)
             if pathfindingCollision and pathfindingCollision:hasCollider() then
                 currentX, currentY = pathfindingCollision:getCenterPosition()
             end
-            pathfinding:startWander(currentX, currentY, 16) -- 16 is tile size
+            pathfinding:startWander(currentX, currentY, GameConstants.TILE_SIZE) -- 16 is tile size
         end
     end
 end

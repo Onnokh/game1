@@ -163,8 +163,6 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
     love.graphics.pop()
 end
 
--- Health bars are now handled by UISystems.HealthBarSystem
-
 ---Draw attack hit areas for entities that are attacking
 function RenderSystem:drawAttackHitAreas()
     local currentTime = love.timer.getTime()

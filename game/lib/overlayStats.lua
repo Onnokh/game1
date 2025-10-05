@@ -464,7 +464,7 @@ function overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
   love.graphics.pop()
 end
 
----Draws pathfinding debug information in world space using ECS component system
+---Draws pathfinding debug information in screen space
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
 ---@param cameraScale number Camera scale factor (optional)
@@ -485,16 +485,13 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   local GameConstants = require("src.constants")
   local tileSize = GameConstants.TILE_SIZE
   local scale = cameraScale or 1.0
+  local screenWidth, screenHeight = love.graphics.getDimensions()
+  local halfW, halfH = screenWidth / 2, screenHeight / 2
 
-  -- Save current graphics state
-  love.graphics.push("all")
-
-  -- Apply camera transform aligned with gamera (use top-left world position)
-  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
-  local topLeftX = cameraX - (halfW / scale)
-  local topLeftY = cameraY - (halfH / scale)
-  love.graphics.scale(scale, scale)
-  love.graphics.translate(-topLeftX, -topLeftY)
+  -- Use main font for better readability
+  if overlayFontMain then
+    love.graphics.setFont(overlayFontMain)
+  end
 
   -- Query all entities with Pathfinding components using the ECS system
   local entitiesWithPathfinding = gameScene.ecsWorld:getEntitiesWith({"Pathfinding"})
@@ -512,19 +509,26 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
         love.graphics.setColor(0, 1, 0, 0.8) -- Green
 
         -- Start from pathfinding collision center position (or sprite center if no collision)
-        local prevX, prevY = position.x + 8, position.y + 8
+        local prevWorldX, prevWorldY = position.x + 8, position.y + 8
         if pathfindingCollision and pathfindingCollision:hasCollider() then
           -- Use pathfinding collision center position
-          prevX, prevY = pathfindingCollision:getCenterPosition()
+          prevWorldX, prevWorldY = pathfindingCollision:getCenterPosition()
         end
+
+        -- Convert to screen coordinates
+        local prevScreenX = halfW + (prevWorldX - cameraX) * scale
+        local prevScreenY = halfH + (prevWorldY - cameraY) * scale
 
         -- Draw line from skeleton to first waypoint
         if pathfinding.pathIndex <= #pathfinding.currentPath._nodes then
           local firstNode = pathfinding.currentPath._nodes[pathfinding.pathIndex]
           local firstWorldX = (firstNode._x - 1) * tileSize + tileSize / 2
           local firstWorldY = (firstNode._y - 1) * tileSize + tileSize / 2
-          love.graphics.line(prevX, prevY, firstWorldX, firstWorldY)
-          prevX, prevY = firstWorldX, firstWorldY
+          local firstScreenX = halfW + (firstWorldX - cameraX) * scale
+          local firstScreenY = halfH + (firstWorldY - cameraY) * scale
+
+          love.graphics.line(prevScreenX, prevScreenY, firstScreenX, firstScreenY)
+          prevScreenX, prevScreenY = firstScreenX, firstScreenY
         end
 
         -- Draw remaining path segments
@@ -532,41 +536,48 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
           local node = pathfinding.currentPath._nodes[i]
           local worldX = (node._x - 1) * tileSize + tileSize / 2
           local worldY = (node._y - 1) * tileSize + tileSize / 2
+          local screenX = halfW + (worldX - cameraX) * scale
+          local screenY = halfH + (worldY - cameraY) * scale
 
-          love.graphics.line(prevX, prevY, worldX, worldY)
-          prevX, prevY = worldX, worldY
+          love.graphics.line(prevScreenX, prevScreenY, screenX, screenY)
+          prevScreenX, prevScreenY = screenX, screenY
         end
 
-        -- Draw coordinate labels along the path
+        -- Draw coordinate labels along the path in screen space
         love.graphics.setColor(1, 1, 1, 0.9) -- White text
-        if overlayFontSmall then
-          love.graphics.setFont(overlayFontSmall)
-        end
 
         for i = pathfinding.pathIndex, #pathfinding.currentPath._nodes do
           local node = pathfinding.currentPath._nodes[i]
           local worldX = (node._x - 1) * tileSize + tileSize / 2
           local worldY = (node._y - 1) * tileSize + tileSize / 2
+          local screenX = halfW + (worldX - cameraX) * scale
+          local screenY = halfH + (worldY - cameraY) * scale
 
-          -- Draw coordinate text slightly offset from the waypoint
-          local coordText = string.format("%d,%d", node._x, node._y)
-          love.graphics.print(coordText, worldX + 2, worldY - 10)
+          -- Only draw if waypoint is on screen
+          if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
+            -- Draw coordinate text slightly offset from the waypoint
+            local coordText = string.format("%d,%d", node._x, node._y)
+            love.graphics.print(coordText, screenX + 2, screenY - 10)
+          end
         end
       end
 
       -- Draw target destination even if no path (e.g., direct chase)
       if pathfinding.targetX and pathfinding.targetY then
-        love.graphics.setColor(1, 0, 0, 0.8) -- Red
-        love.graphics.circle("fill", pathfinding.targetX, pathfinding.targetY, 6)
+        local targetScreenX = halfW + (pathfinding.targetX - cameraX) * scale
+        local targetScreenY = halfH + (pathfinding.targetY - cameraY) * scale
+
+        -- Only draw if target is on screen
+        if targetScreenX >= 0 and targetScreenX <= screenWidth and targetScreenY >= 0 and targetScreenY <= screenHeight then
+          love.graphics.setColor(1, 0, 0, 0.8) -- Red
+          love.graphics.circle("fill", targetScreenX, targetScreenY, 6)
+        end
       end
     end
   end
 
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
-
-  -- Restore graphics state
-  love.graphics.pop()
 end
 
 ---Draws blocked pathfinding tiles in world space
@@ -603,6 +614,87 @@ function overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
   love.graphics.pop()
 end
 
+---Draws skeleton state overlays in screen space at skeleton positions
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
+  -- Try to access the game scene's ECS world
+  local gameState = require("src.core.GameState")
+  if not gameState or not gameState.scenes or not gameState.scenes.game then
+    return
+  end
+
+  -- Access the ECS world from the game scene
+  local gameScene = gameState.scenes.game
+  if not gameScene.ecsWorld then
+    return
+  end
+
+  local scale = cameraScale or 1.0
+  local screenWidth, screenHeight = love.graphics.getDimensions()
+  local halfW, halfH = screenWidth / 2, screenHeight / 2
+
+  -- Query all entities with Position, SpriteRenderer, and StateMachine components
+  local entitiesWithSprites = gameScene.ecsWorld:getEntitiesWith({"Position", "SpriteRenderer", "StateMachine"})
+
+  -- Use main font for better readability in screen space
+  if overlayFontMain then
+    love.graphics.setFont(overlayFontMain)
+  end
+
+  -- Draw state overlays for skeleton entities
+  for _, entity in ipairs(entitiesWithSprites) do
+    if entity.isSkeleton then
+      local position = entity:getComponent("Position")
+      local spriteRenderer = entity:getComponent("SpriteRenderer")
+      local stateMachine = entity:getComponent("StateMachine")
+
+      if position and spriteRenderer and stateMachine then
+        local currentState = stateMachine:getCurrentState()
+        local target = entity.target
+
+        -- Color code the state
+        local stateColor = {1, 1, 1, 1} -- Default white
+
+        -- Convert world position to screen position
+        local worldX = position.x + spriteRenderer.offsetX + (spriteRenderer.width / 2)
+        local worldY = position.y + spriteRenderer.offsetY
+
+        -- Convert to screen coordinates (camera is centered)
+        local screenX = halfW + (worldX - cameraX) * scale
+        local screenY = halfH + (worldY - cameraY) * scale
+
+        -- Only draw if skeleton is on screen
+        if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
+          local textY = screenY - 20 -- Above skeleton
+
+          -- Set color and draw state text (can show full state name now)
+          love.graphics.setColor(stateColor)
+          love.graphics.print(currentState, screenX - 15, textY) -- Full state name
+
+          -- Draw target info to the right of state
+          if target then
+            local targetInfo = "?"
+            if target.isPlayer then
+              targetInfo = "p"
+            elseif target.isReactor then
+              targetInfo = "r"
+            end
+
+            love.graphics.setColor(0.7, 0.7, 0.7, 1) -- Gray for target info
+            love.graphics.print("->" .. targetInfo, screenX + 15, textY)
+          end
+        end
+      end
+    end
+  end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
+end
+
 ---Draws the performance overlay when active
 ---@param cameraX number Camera X position (optional)
 ---@param cameraY number Camera Y position (optional)
@@ -636,6 +728,8 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
     overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
     -- Draw pathfinding debug in world space
     overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
+    -- Draw skeleton state overlays in world space
+    overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
   end
 
 
@@ -665,7 +759,7 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
 
   -- Draw background rectangle with dynamic width
   love.graphics.setColor(0, 0, 0, 0.8)
-  love.graphics.rectangle("fill", 10, 10, rectangleWidth, 340)
+  love.graphics.rectangle("fill", 10, 10, rectangleWidth, 400)
   love.graphics.setColor(0.678, 0.847, 0.902, 1)
 
   -- System Info
@@ -749,17 +843,6 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   love.graphics.print(string.format("Pathfinding Colliders: %d", pathfindingColliderCount), 20, y)
   y = y + 20
   love.graphics.print(string.format("Physics Colliders: %d", physicsColliderCount), 20, y)
-  y = y + 20
-
-  -- Add collider legend
-  love.graphics.setColor(0.8, 0.8, 0.8, 1) -- Gray text for legend
-  love.graphics.print("Collider Legend:", 20, y)
-  y = y + 15
-  love.graphics.setColor(1, 0, 0, 0.8) -- Red for pathfinding
-  love.graphics.print("  Thick lines = PathfindingCollision", 20, y)
-  y = y + 15
-  love.graphics.setColor(1, 0, 0, 0.6) -- Dimmer red for physics
-  love.graphics.print("  Thin lines = PhysicsCollision", 20, y)
   y = y + 20
 
   -- Reset color to white
