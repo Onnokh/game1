@@ -21,7 +21,7 @@ function Reactor.create(x, y, world, physicsWorld)
     local reactor = Entity.new()
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
-    local animator = Animator.new("reactor", {1, 2, 3}, 3, true)
+    local animator = Animator.new("reactor", {1, 2, 3, 4}, 4, true)
     local health = Health.new(1000)
     local healthBar = HealthBar.new(48, 4, -6)
     healthBar.alwaysVisible = true
