@@ -2,8 +2,6 @@ local System = require("src.core.System")
 local EventBus = require("src.utils.EventBus")
 local FlashEffect = require("src.components.FlashEffect")
 local DamageQueue = require("src.DamageQueue")
-local Entity = require("src.core.Entity")
-local DamageNumber = require("src.components.DamageNumber")
 
 -- Local constants to avoid magic numbers and repeated allocations
 local DEFAULT_SPRITE_W = 24
@@ -195,23 +193,6 @@ function DamageSystem:addDamageFlash(entity)
     end
 end
 
----Spawn a floating damage number near the entity
----@param entity Entity
----@param amount number
-function DamageSystem:spawnDamageNumber(entity, amount)
-    -- Skip player: do not show damage numbers for the player
-    if entity.isPlayer then return end
-    local pos = entity:getComponent("Position")
-    if not pos then return end
-
-    local e = Entity.new()
-    e:addComponent("DamageNumber", DamageNumber.new(entity, amount))
-
-    -- Attach to same world so systems can render it
-    if entity._world then
-        entity._world:addEntity(e)
-    end
-end
 
 -- Damage creation helper was removed; damage now flows via DamageQueue only
 

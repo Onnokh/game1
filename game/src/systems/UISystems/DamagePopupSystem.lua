@@ -32,6 +32,7 @@ function DamagePopupSystem.new(ecsWorld)
     end
 
 		-- Create advanced damage number with same features as original system
+		local entityWidth = (sr and sr.width) or 24
 		table.insert(self.popups, {
 			text = tostring(math.floor(amount + 0.5)),
 			owner = target,
@@ -39,7 +40,7 @@ function DamagePopupSystem.new(ecsWorld)
 			offsetY = -8,
 			localX = 0,
 			localY = 0,
-			worldX = pos.x + ((sr and sr.width) or 24) * 0.5,
+			worldX = pos.x + entityWidth * 0.5,
 			worldY = pos.y - 4,
 			vx = 0,
 			vy = -32, -- float upward
@@ -48,8 +49,8 @@ function DamagePopupSystem.new(ecsWorld)
 			scale = 1.0,
 			color = { r = 1.0, g = 1.0, b = 1.0, a = 1.0 },
 			stickToOwner = true,
-			jitterX = (love.math.random() - 0.5) * 24, -- ~[-12,12] px initial horizontal jitter
-			jitterY = (love.math.random() - 0.5) * 10, -- ~[-5,5] px initial vertical jitter
+			jitterX = (love.math.random() - 0.5) * entityWidth, -- ~[-entityWidth/2, entityWidth/2] px horizontal jitter relative to entity width
+			jitterY = (love.math.random() - 0.5) * 15, -- ~[-5,5] px initial vertical jitter
 		})
 	end)
 
