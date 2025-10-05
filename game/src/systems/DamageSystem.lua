@@ -2,6 +2,10 @@ local System = require("src.core.System")
 local FlashEffect = require("src.components.FlashEffect")
 local DamageQueue = require("src.DamageQueue")
 
+-- Local constants to avoid magic numbers and repeated allocations
+local DEFAULT_SPRITE_W = 24
+local DEFAULT_SPRITE_H = 24
+
 ---@class DamageSystem : System
 local DamageSystem = System:extend("DamageSystem", {"Health"})
 
@@ -47,25 +51,7 @@ function DamageSystem:processDamageEntry(entity, health, entry)
 
     -- Apply knockback impulse directly (sensor-based attack flow)
     if (entry.knockback or 0) > 0 and entry.source then
-        local pathfindingCollision = entity:getComponent("PathfindingCollision")
-        local sourcePos = entry.source:getComponent("Position")
-        local targetPos = entity:getComponent("Position")
-        if pathfindingCollision and pathfindingCollision:hasCollider() and sourcePos and targetPos then
-            local sourceSprite = entry.source:getComponent("SpriteRenderer")
-            local targetSprite = entity:getComponent("SpriteRenderer")
-            local sourceCenterX = sourcePos.x + (sourceSprite and sourceSprite.width or 24) / 2
-            local sourceCenterY = sourcePos.y + (sourceSprite and sourceSprite.height or 24) / 2
-            local targetCenterX = targetPos.x + (targetSprite and targetSprite.width or 24) / 2
-            local targetCenterY = targetPos.y + (targetSprite and targetSprite.height or 24) / 2
-            local dx = targetCenterX - sourceCenterX
-            local dy = targetCenterY - sourceCenterY
-            local dist = math.sqrt(dx * dx + dy * dy)
-            if dist > 0 then
-                local impulseX = (dx / dist) * entry.knockback
-                local impulseY = (dy / dist) * entry.knockback
-                pathfindingCollision:applyLinearImpulse(impulseX, impulseY)
-            end
-        end
+        self:applyKnockback(entity, entry.source, entry.knockback)
     end
 
     if wasAlive and not health:isAlive() then
@@ -141,8 +127,34 @@ function DamageSystem:applyEffect(entity, effect, value)
 end
 
 ---Apply knockback to an entity
----@param entity Entity The entity to apply knockback to
----@param damageEvent any The damage event containing knockback info
+---@param target Entity The entity to apply knockback to
+---@param source Entity The source that caused the knockback
+---@param force number Knockback force
+function DamageSystem:applyKnockback(target, source, force)
+    local physicsBody = target:getComponent("PathfindingCollision")
+    local sourcePos = source and source:getComponent("Position") or nil
+    local targetPos = target:getComponent("Position")
+    if not (physicsBody and physicsBody:hasCollider() and sourcePos and targetPos) then
+        return
+    end
+
+    local sourceSprite = source:getComponent("SpriteRenderer")
+    local targetSprite = target:getComponent("SpriteRenderer")
+
+    local sourceCenterX = sourcePos.x + (sourceSprite and sourceSprite.width or DEFAULT_SPRITE_W) / 2
+    local sourceCenterY = sourcePos.y + (sourceSprite and sourceSprite.height or DEFAULT_SPRITE_H) / 2
+    local targetCenterX = targetPos.x + (targetSprite and targetSprite.width or DEFAULT_SPRITE_W) / 2
+    local targetCenterY = targetPos.y + (targetSprite and targetSprite.height or DEFAULT_SPRITE_H) / 2
+
+    local dx = targetCenterX - sourceCenterX
+    local dy = targetCenterY - sourceCenterY
+    local dist = math.sqrt(dx * dx + dy * dy)
+    if dist <= 0 then return end
+
+    local impulseX = (dx / dist) * force
+    local impulseY = (dy / dist) * force
+    physicsBody:applyLinearImpulse(impulseX, impulseY)
+end
 
 ---Add damage flash effect to an entity
 ---@param entity Entity The entity to flash
@@ -160,13 +172,6 @@ function DamageSystem:addDamageFlash(entity)
     end
 end
 
----Create a damage event for an entity
----@param entity Entity The entity to damage
----@param amount number Amount of damage
----@param source Entity|nil Source of the damage
----@param damageType string|nil Type of damage
----@param knockback number|nil Knockback force
----@param effects table|nil Additional effects
--- Event-based damage path removed; damage now flows via DamageQueue only
+-- Damage creation helper was removed; damage now flows via DamageQueue only
 
 return DamageSystem
