@@ -72,26 +72,58 @@ function HealthBarHUD.draw(world)
 
     love.graphics.setLineWidth(prevLineWidth)
 
-    -- Draw recent damage number centered in the bar
+    -- Draw current health value, centered in the bar
+    do
+        local hp = math.max(0, math.floor((health.current or 0) + 0.5))
+        local text = tostring(hp)
+        local font = fonts.getUIFont(28)
+        local prevFont = love.graphics.getFont()
+        if font then love.graphics.setFont(font) end
+
+        local textWidth = (font and font:getWidth(text)) or 0
+        local textHeight = (font and font:getHeight()) or 28
+        local tx = x + (barWidth * 0.5) - (textWidth * 0.5)
+        local ty = y + (barHeight * 0.5) - (textHeight * 0.5)
+
+        -- Subtle shadow for readability
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.print(text, tx + 1, ty + 1)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(text, tx, ty)
+
+        if prevFont then love.graphics.setFont(prevFont) end
+    end
+
+    -- Draw recent damage number right-aligned, 8px from the right edge
     local ttl = 0.9
     local age = love.timer.getTime() - (lastPlayerDamage.timestamp or -math.huge)
     if age >= 0 and age <= ttl and (lastPlayerDamage.amount or 0) > 0 then
         local text = string.format("-%d", math.floor((lastPlayerDamage.amount or 0) + 0.5))
-        local font = fonts.getUIFont(18)
+        local font = fonts.getUIFont(24)
         local prevFont = love.graphics.getFont()
         if font then love.graphics.setFont(font) end
 
         local alpha = 1 - (age / ttl)
+        -- Simple grow from 0.8 to 1.0 over time
+        local pulse = 1 + 0.2 * math.exp(-age * 3)
         local textWidth = (font and font:getWidth(text)) or 0
-        local textHeight = (font and font:getHeight()) or 18
-        local tx = x + (barWidth * 0.5) - (textWidth * 0.5)
+        local textHeight = (font and font:getHeight()) or 24
+        local tx = x + barWidth - 16 - textWidth
         local ty = y + (barHeight * 0.5) - (textHeight * 0.5)
+
+        -- Apply pulsing scale
+        love.graphics.push()
+        love.graphics.translate(tx + textWidth * 0.5, ty + textHeight * 0.5)
+        love.graphics.scale(pulse, pulse)
+        love.graphics.translate(-textWidth * 0.5, -textHeight * 0.5)
 
         -- Shadow and main
         love.graphics.setColor(0, 0, 0, alpha)
-        love.graphics.print(text, tx + 1, ty + 1)
+        love.graphics.print(text, 1, 1)
         love.graphics.setColor(1, 1, 1, alpha)
-        love.graphics.print(text, tx, ty)
+        love.graphics.print(text, 0, 0)
+
+        love.graphics.pop()
 
         if prevFont then love.graphics.setFont(prevFont) end
     end
