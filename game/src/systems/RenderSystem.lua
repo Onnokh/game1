@@ -1,6 +1,5 @@
 local System = require("src.core.System")
 local DepthSorting = require("src.utils.depthSorting")
-local HealthBarHUD = require("src.ui.HealthBarHUD")
 
 ---@class RenderSystem : System
 local RenderSystem = System:extend("RenderSystem", {"Position", "SpriteRenderer"})
@@ -81,20 +80,8 @@ function RenderSystem:draw()
         end
     end
 
-    -- Draw health bars for entities that have them
-    self:drawHealthBars(sortedEntities)
-
     -- Draw attack hit areas for entities that are attacking
     self:drawAttackHitAreas()
-
-    -- Draw fixed-screen HUD elements last
-    local world = nil
-    if #self.entities > 0 and self.entities[1]._world then
-        world = self.entities[1]._world
-    end
-    if world then
-        HealthBarHUD.draw(world)
-    end
 end
 
 ---Draw entity with flash shader
@@ -176,31 +163,7 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
     love.graphics.pop()
 end
 
----Draw health bars for entities with Health and HealthBar components
----@param entities table List of entities to check for health bars
-function RenderSystem:drawHealthBars(entities)
-    for _, entity in ipairs(entities) do
-        local position = entity:getComponent("Position")
-        local health = entity:getComponent("Health")
-        local healthBar = entity:getComponent("HealthBar")
-        local spriteRenderer = entity:getComponent("SpriteRenderer")
-
-        if position and health and healthBar and healthBar.visible and not health.isDead then
-            -- Get health percentage
-            local healthPercentage = health:getHealthPercentage()
-
-            -- Only show health bar if not at full health
-            if healthPercentage < 1.0 then
-                -- Calculate health bar position
-                local entityWidth = spriteRenderer and spriteRenderer.width or 32 -- Default width if no sprite renderer
-                local x, y = healthBar:getPosition(position.x, position.y, entityWidth)
-
-                -- Draw the health bar
-                healthBar:draw(x, y, healthPercentage)
-            end
-        end
-    end
-end
+-- Health bars are now handled by UISystems.HealthBarSystem
 
 ---Draw attack hit areas for entities that are attacking
 function RenderSystem:drawAttackHitAreas()

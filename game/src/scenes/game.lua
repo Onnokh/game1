@@ -26,7 +26,6 @@ local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
 local DamageSystem = require("src.systems.DamageSystem")
-local DamageNumberSystem = require("src.systems.DamageNumberSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
@@ -39,6 +38,7 @@ local CastableShadow = require("src.components.CastableShadow")
 local PathfindingCollision = require("src.components.PathfindingCollision")
 
 local ecsWorld = nil
+local uiWorld = nil
 local playerEntity = nil
 local monsters = {} -- Array of monster entities
 local playerCollider = nil
@@ -68,6 +68,8 @@ function GameScene.load()
 
   -- Initialize ECS world
   ecsWorld = World.new()
+  -- Initialize UI world (separate from ECS)
+  uiWorld = World.new()
 
   -- Initialize physics world (gravity: 0, 0 for top-down game)
   physicsWorld = love.physics.newWorld(0, 0, true)
@@ -94,7 +96,19 @@ function GameScene.load()
   ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
   ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
   ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
-  ecsWorld:addSystem(DamageNumberSystem.new())        -- Twelfth: draw last so numbers over health bars
+  -- Damage numbers are now handled by UISystems.DamagePopupSystem
+
+  -- Add UI systems to separate world
+  local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
+  local HUDSystem = require("src.systems.UISystems.HUDSystem")
+  local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
+  local MenuSystem = require("src.systems.UISystems.MenuSystem")
+
+  local healthBarSystem = HealthBarSystem.new(ecsWorld)
+  uiWorld:addSystem(healthBarSystem)
+  uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+  uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
+  uiWorld:addSystem(MenuSystem.new())
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -215,7 +229,21 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
     ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
     ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
-    ecsWorld:addSystem(DamageNumberSystem.new())        -- Twelfth: draw last so numbers over health bars
+    -- Damage numbers are now handled by UISystems.DamagePopupSystem
+
+    if not uiWorld then
+      uiWorld = World.new()
+      local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
+      local HUDSystem = require("src.systems.UISystems.HUDSystem")
+      local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
+      local MenuSystem = require("src.systems.UISystems.MenuSystem")
+
+      local healthBarSystem = HealthBarSystem.new(ecsWorld)
+      uiWorld:addSystem(healthBarSystem)
+      uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+      uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
+      uiWorld:addSystem(MenuSystem.new())
+    end
 
   end
 
@@ -249,6 +277,11 @@ function GameScene.update(dt, gameState)
     ecsWorld:update(dt)
     -- Update the exposed reference
     GameScene.ecsWorld = ecsWorld
+  end
+
+  -- Update UI world separate from camera/lighting
+  if uiWorld then
+    uiWorld:update(dt)
   end
 
   -- Update physics world for collision detection only
@@ -351,8 +384,27 @@ function GameScene.draw(gameState)
     end
 
   end)
+  -- Draw UI elements
+  if uiWorld then
+    -- First draw world-space UI elements (health bars) inside camera transform
+    gameState.camera:draw(function()
+      for _, system in ipairs(uiWorld.systems) do
+        if system.isWorldSpace then
+          system:draw()
+        end
+      end
+    end)
 
-
+    -- Then draw screen-space UI elements (HUD, menus) outside camera transform
+    love.graphics.push()
+    love.graphics.origin()
+    for _, system in ipairs(uiWorld.systems) do
+      if not system.isWorldSpace then
+        system:draw()
+      end
+    end
+    love.graphics.pop()
+  end
 end
 
 return GameScene

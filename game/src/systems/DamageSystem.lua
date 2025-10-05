@@ -1,4 +1,5 @@
 local System = require("src.core.System")
+local EventBus = require("src.utils.EventBus")
 local FlashEffect = require("src.components.FlashEffect")
 local DamageQueue = require("src.DamageQueue")
 local Entity = require("src.core.Entity")
@@ -49,6 +50,9 @@ function DamageSystem:processDamageEntry(entity, health, entry)
     local amount = entry.amount or 0
     health:takeDamage(amount)
 
+    -- Emit UI-facing event
+    EventBus.emit("entityDamaged", { target = entity, amount = amount, source = entry.source })
+
     -- Add damage flash effect
     self:addDamageFlash(entity)
 
@@ -66,8 +70,7 @@ function DamageSystem:processDamageEntry(entity, health, entry)
         self:applyDamageEffects(entity, entry)
     end
 
-    -- Spawn damage number above entity in world space (match in-world bars)
-    self:spawnDamageNumber(entity, amount)
+    -- Damage numbers are now handled by UISystems.DamagePopupSystem via EventBus
 end
 
 ---Handle entity death

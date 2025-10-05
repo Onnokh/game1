@@ -1,5 +1,20 @@
 ---@class HealthBarHUD
 local HealthBarHUD = {}
+local EventBus = require("src.utils.EventBus")
+local fonts = require("src.utils.fonts")
+
+-- Track latest player damage for HUD text
+local lastPlayerDamage = { amount = 0, timestamp = -math.huge }
+
+-- Subscribe once to damage events
+EventBus.subscribe("entityDamaged", function(payload)
+    local target = payload and payload.target or nil
+    local amount = payload and payload.amount or 0
+    if target and target.isPlayer then
+        lastPlayerDamage.amount = amount
+        lastPlayerDamage.timestamp = love.timer.getTime()
+    end
+end)
 
 ---Draw the player's health bar in screen space (bottom-left)
 ---@param world World
@@ -29,10 +44,10 @@ function HealthBarHUD.draw(world)
     love.graphics.origin()
 
     local sw, sh = love.graphics.getDimensions()
-    local marginX, marginY = 32, 32
-    local barWidth, barHeight = 480, 32
+    local marginX, marginY = 32, 64
+    local barWidth, barHeight = 640, 64
 
-    local x = marginX
+    local x = sw/2 - barWidth/2
     local y = sh - marginY - barHeight
 
     local pct = math.max(0, math.min(1, health:getHealthPercentage()))
@@ -56,8 +71,33 @@ function HealthBarHUD.draw(world)
     love.graphics.rectangle("line", x, y, barWidth, barHeight, 6, 6)
 
     love.graphics.setLineWidth(prevLineWidth)
-    love.graphics.setColor(r, g, b, a)
 
+    -- Draw recent damage number centered in the bar
+    local ttl = 0.9
+    local age = love.timer.getTime() - (lastPlayerDamage.timestamp or -math.huge)
+    if age >= 0 and age <= ttl and (lastPlayerDamage.amount or 0) > 0 then
+        local text = string.format("-%d", math.floor((lastPlayerDamage.amount or 0) + 0.5))
+        local font = fonts.getUIFont(18)
+        local prevFont = love.graphics.getFont()
+        if font then love.graphics.setFont(font) end
+
+        local alpha = 1 - (age / ttl)
+        local textWidth = (font and font:getWidth(text)) or 0
+        local textHeight = (font and font:getHeight()) or 18
+        local tx = x + (barWidth * 0.5) - (textWidth * 0.5)
+        local ty = y + (barHeight * 0.5) - (textHeight * 0.5)
+
+        -- Shadow and main
+        love.graphics.setColor(0, 0, 0, alpha)
+        love.graphics.print(text, tx + 1, ty + 1)
+        love.graphics.setColor(1, 1, 1, alpha)
+        love.graphics.print(text, tx, ty)
+
+        if prevFont then love.graphics.setFont(prevFont) end
+    end
+
+    -- Restore color and stack
+    love.graphics.setColor(r, g, b, a)
     love.graphics.pop()
 end
 
