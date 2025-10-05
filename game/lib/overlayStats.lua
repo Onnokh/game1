@@ -370,6 +370,38 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
     end
   end
 
+  -- Draw ephemeral AttackCollider sensors with rotation
+  local entitiesWithAttackCollider = gameScene.ecsWorld:getEntitiesWith({"AttackCollider"})
+  for _, entity in ipairs(entitiesWithAttackCollider) do
+    local attackCollider = entity:getComponent("AttackCollider")
+    if attackCollider and attackCollider.collider and attackCollider.collider.body and attackCollider.collider.shape then
+      local body = attackCollider.collider.body
+      local shape = attackCollider.collider.shape
+      local bodyX, bodyY = body:getPosition()
+      local bodyAngle = body:getAngle()
+
+      love.graphics.setColor(1, 1, 0, 0.85) -- Yellow for attack sensors
+      love.graphics.setLineWidth(2)
+
+      love.graphics.push()
+      love.graphics.translate(bodyX, bodyY)
+      love.graphics.rotate(bodyAngle)
+
+      if shape:getType() == "rectangle" then
+        local w, h = shape:getDimensions()
+        love.graphics.rectangle("line", -w/2, -h/2, w, h)
+      elseif shape:getType() == "polygon" then
+        local points = {shape:getPoints()}
+        love.graphics.polygon("line", points)
+      elseif shape:getType() == "circle" then
+        local radius = shape:getRadius()
+        love.graphics.circle("line", 0, 0, radius)
+      end
+
+      love.graphics.pop()
+    end
+  end
+
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
 

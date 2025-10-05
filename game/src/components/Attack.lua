@@ -10,6 +10,7 @@ local Component = require("src.core.Component")
 ---@field knockback number Knockback force applied to targets
 ---@field attackDirectionX number X component of attack direction
 ---@field attackDirectionY number Y component of attack direction
+---@field attackAngleRad number Angle of attack in radians (from +X axis)
 ---@field hitAreaX number X of spawned attack collider AABB
 ---@field hitAreaY number Y of spawned attack collider AABB
 ---@field hitAreaWidth number Width of spawned attack collider AABB
@@ -36,10 +37,11 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.knockback = knockback or 0
     self.attackDirectionX = 0
     self.attackDirectionY = 0
+    self.attackAngleRad = 0
     self.hitAreaX = 0
     self.hitAreaY = 0
-    self.hitAreaWidth = 16
-    self.hitAreaHeight = 16
+    self.hitAreaWidth = 8
+    self.hitAreaHeight = 8
 
     return self
 end
@@ -116,6 +118,10 @@ end
 function Attack:setDirection(directionX, directionY)
     self.attackDirectionX = directionX
     self.attackDirectionY = directionY
+    -- Cache angle for consumers (e.g., rotating colliders)
+    if directionX ~= 0 or directionY ~= 0 then
+        self.attackAngleRad = math.atan2(directionY, directionX)
+    end
 end
 
 ---Calculate and set the hit area based on attacker position and direction
@@ -128,13 +134,31 @@ function Attack:calculateHitArea(attackerX, attackerY)
         local normalizedX = self.attackDirectionX / length
         local normalizedY = self.attackDirectionY / length
 
-        -- Position hit area at the end of the attack range
-        self.hitAreaX = attackerX + normalizedX * self.range - self.hitAreaWidth / 2
-        self.hitAreaY = attackerY + normalizedY * self.range - self.hitAreaHeight / 2
+        -- Use an oriented rectangle: length along local X, small thickness along local Y
+        -- Make the length equal to the attack range for clear rotation visibility
+        local orientedLength = self.range
+        local orientedThickness = self.hitAreaHeight > 0 and self.hitAreaHeight or 8
+        self.hitAreaWidth = orientedLength
+        self.hitAreaHeight = orientedThickness
+
+        -- Place the rectangle center halfway along the direction from the attacker
+        -- so the blade spans from near the attacker outwards
+        local centerX = attackerX + normalizedX * (orientedLength / 2)
+        local centerY = attackerY + normalizedY * (orientedLength / 2)
+
+        -- Store as AABB top-left, since fixture creation uses x+w/2/y+h/2 for body center
+        self.hitAreaX = centerX - (self.hitAreaWidth / 2)
+        self.hitAreaY = centerY - (self.hitAreaHeight / 2)
     else
-        -- Default to right if no direction
-        self.hitAreaX = attackerX + self.range - self.hitAreaWidth / 2
-        self.hitAreaY = attackerY - self.hitAreaHeight / 2
+        -- Default to a horizontal blade to the right if no direction
+        local orientedLength = self.range
+        local orientedThickness = self.hitAreaHeight > 0 and self.hitAreaHeight or 8
+        self.hitAreaWidth = orientedLength
+        self.hitAreaHeight = orientedThickness
+        local centerX = attackerX + (orientedLength / 2)
+        local centerY = attackerY
+        self.hitAreaX = centerX - (self.hitAreaWidth / 2)
+        self.hitAreaY = centerY - (self.hitAreaHeight / 2)
     end
 end
 

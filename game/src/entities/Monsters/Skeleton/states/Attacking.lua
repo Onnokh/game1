@@ -100,6 +100,10 @@ function Attacking:onUpdate(stateMachine, entity, dt)
         if physicsWorld then
             local ac = AttackCollider.new(entity, attack.damage, attack.knockback, 0.06)
             ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
+            -- Rotate collider to face the player
+            if attack.attackAngleRad and ac.setAngle then
+                ac:setAngle(attack.attackAngleRad)
+            end
             entity:addComponent("AttackCollider", ac)
             attack:performAttack(now)
         end

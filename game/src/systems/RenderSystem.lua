@@ -218,23 +218,47 @@ function RenderSystem:drawAttackHitAreas()
             local attackDuration = 0.2 -- Show hit area for 0.2 seconds after attack
 
             if timeSinceAttack >= 0 and timeSinceAttack <= attackDuration then
-                -- Draw the attack hit area as a red square
-                love.graphics.setColor(1, 0, 0, 0.5) -- Red with 50% transparency
-                love.graphics.rectangle("fill",
-                    attack.hitAreaX,
-                    attack.hitAreaY,
-                    attack.hitAreaWidth,
-                    attack.hitAreaHeight
-                )
+                -- Draw the attack hit area as a rotated rectangle pointing at the mouse
+                -- Recompute center from the attacker's current center so it moves with the entity
+                local angle = attack.attackAngleRad or 0
+                -- Prefer actual physics/pathfinding collider center over sprite center
+                local entityCenterX, entityCenterY = position.x, position.y
+                local pfc = entity:getComponent("PathfindingCollision")
+                local phys = entity:getComponent("PhysicsCollision")
+                if pfc and pfc.hasCollider and pfc:hasCollider() and pfc.getCenterPosition then
+                    entityCenterX, entityCenterY = pfc:getCenterPosition()
+                elseif phys and phys.hasCollider and phys:hasCollider() and phys.collider and phys.collider.body then
+                    entityCenterX, entityCenterY = phys.collider.body:getPosition()
+                else
+                    local spriteRenderer = entity:getComponent("SpriteRenderer")
+                    entityCenterX = position.x + ((spriteRenderer and spriteRenderer.width) or 24) * 0.5
+                    entityCenterY = position.y + ((spriteRenderer and spriteRenderer.height) or 24) * 0.5
+                end
+
+                -- Offset so the near edge starts at collider edge instead of center
+                local colliderHalfExtent = 0
+                if pfc then
+                    colliderHalfExtent = math.max(pfc.width or 0, pfc.height or 0) * 0.5
+                elseif phys then
+                    colliderHalfExtent = math.max(phys.width or 0, phys.height or 0) * 0.5
+                end
+
+                local halfLength = attack.hitAreaWidth * 0.5
+                local cx = entityCenterX + math.cos(angle) * (colliderHalfExtent + halfLength)
+                local cy = entityCenterY + math.sin(angle) * (colliderHalfExtent + halfLength)
+
+                love.graphics.push()
+                love.graphics.translate(cx, cy)
+                love.graphics.rotate(angle)
+
+                love.graphics.setColor(1, 0, 0, .5) -- Solid white fill
+                love.graphics.rectangle("fill", -attack.hitAreaWidth * 0.5, -attack.hitAreaHeight * 0.5, attack.hitAreaWidth, attack.hitAreaHeight)
 
                 -- Draw outline
-                love.graphics.setColor(1, 0, 0, 1) -- Solid red outline
-                love.graphics.rectangle("line",
-                    attack.hitAreaX,
-                    attack.hitAreaY,
-                    attack.hitAreaWidth,
-                    attack.hitAreaHeight
-                )
+                love.graphics.setColor(1, 0, 0, 1) -- Solid black outline
+                love.graphics.rectangle("line", -attack.hitAreaWidth * 0.5, -attack.hitAreaHeight * 0.5, attack.hitAreaWidth, attack.hitAreaHeight)
+
+                love.graphics.pop()
 
                 -- Reset color
                 love.graphics.setColor(1, 1, 1, 1)

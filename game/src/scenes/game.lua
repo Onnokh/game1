@@ -86,6 +86,7 @@ function GameScene.load()
   ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
   ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
+  ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Manage ephemeral attack colliders
   ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
   ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
   ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
@@ -205,6 +206,7 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
     ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
     ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
+    ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Manage ephemeral attack colliders
     ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
     ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
     ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations

@@ -74,6 +74,10 @@ function AttackSystem:performAttack(entity, position, attack, physicsCollision, 
     if not physicsWorld then return end
     local ac = AttackCollider.new(entity, attack.damage, attack.knockback, 0.05)
     ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
+    -- Rotate collider to match attack angle if available
+    if attack.attackAngleRad and ac.setAngle then
+        ac:setAngle(attack.attackAngleRad)
+    end
     entity:addComponent("AttackCollider", ac)
 
     -- Apply knockback if specified
@@ -301,16 +305,25 @@ end
 ---@param position Position The position component
 ---@return number, number Center X and Y coordinates
 function AttackSystem:getEntityVisualCenter(entity, position)
+    -- Prefer physics/pathfinding collider center when available
+    local pfc = entity:getComponent("PathfindingCollision")
+    if pfc and pfc.hasCollider and pfc:hasCollider() and pfc.getCenterPosition then
+        local cx, cy = pfc:getCenterPosition()
+        if cx and cy then return cx, cy end
+    end
+    local phys = entity:getComponent("PhysicsCollision")
+    if phys and phys.hasCollider and phys:hasCollider() and phys.collider and phys.collider.body then
+        local cx, cy = phys.collider.body:getPosition()
+        if cx and cy then return cx, cy end
+    end
+
     local spriteRenderer = entity:getComponent("SpriteRenderer")
     if spriteRenderer then
-        -- Account for sprite size and any offsets
         local centerX = position.x + (spriteRenderer.width or 24) / 2
         local centerY = position.y + (spriteRenderer.height or 24) / 2
         return centerX, centerY
-    else
-        -- Fallback to position if no sprite renderer
-        return position.x, position.y
     end
+    return position.x, position.y
 end
 
 return AttackSystem

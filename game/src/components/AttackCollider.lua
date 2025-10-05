@@ -8,6 +8,7 @@ local Component = require("src.core.Component")
 ---@field knockback number
 ---@field attacker any
 ---@field hitEntities table
+---@field angleRad number|nil
 local AttackCollider = {}
 AttackCollider.__index = AttackCollider
 
@@ -20,6 +21,7 @@ function AttackCollider.new(attacker, damage, knockback, lifetime)
 	self.lifetime = lifetime or 0.05
 	self.age = 0
 	self.hitEntities = {}
+    self.angleRad = nil
 	return self
 end
 
@@ -32,7 +34,8 @@ end
 function AttackCollider:createFixture(physicsWorld, x, y, w, h)
 	if self.collider or not physicsWorld then return end
 	local body = love.physics.newBody(physicsWorld, x + w/2, y + h/2, "dynamic")
-	body:setFixedRotation(true)
+	-- Allow rotation for oriented attack hitboxes
+	body:setFixedRotation(false)
 	body:setGravityScale(0)
 	body:setLinearDamping(0)
 	local shape = love.physics.newRectangleShape(w, h)
@@ -40,6 +43,15 @@ function AttackCollider:createFixture(physicsWorld, x, y, w, h)
 	fixture:setSensor(true)
 	fixture:setUserData({ kind = "attack", component = self })
 	self.collider = { body = body, shape = shape, fixture = fixture }
+end
+
+---Set the current rotation of the collider body (in radians)
+---@param angleRad number
+function AttackCollider:setAngle(angleRad)
+    self.angleRad = angleRad
+    if self.collider and self.collider.body then
+        self.collider.body:setAngle(angleRad)
+    end
 end
 
 function AttackCollider:update(dt)
