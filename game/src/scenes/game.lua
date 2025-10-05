@@ -147,37 +147,9 @@ function GameScene.load()
   GameScene.createBorderColliders()
   GameScene.borderColliders = borderColliders
 
-  -- Create a test wall entity with collision (1 tile high, 15 tiles wide) BEFORE pathfinding system
-  local testWallX = 192 -- Fixed position instead of relative to player
-  local testWallY = 192
-  local wallWidth = 16 * 15 -- 15 tiles wide
-  local wallHeight = 16 -- 1 tile high
-
-  local testWall = Entity.new()
-  testWall:addComponent("Position", Position.new(testWallX, testWallY, 0))
-  local sr = SpriteRenderer.new(nil, wallWidth, wallHeight)
-  testWall:addComponent("SpriteRenderer", sr)
-  local shadow = CastableShadow.new({
-    shape = "rectangle",
-    width = wallWidth,
-    height = wallHeight,
-    offsetX = 0,
-    offsetY = 0,
-  })
-  local pathfindingCollision = PathfindingCollision.new(wallWidth, wallHeight, "static", 0, 0)
-  testWall:addComponent("CastableShadow", shadow)
-  testWall:addComponent("PathfindingCollision", pathfindingCollision)
-
-  -- Create the collider in the physics world
-  pathfindingCollision:createCollider(physicsWorld, testWallX, testWallY)
-
-  -- Add the wall entity to ECS world BEFORE initializing pathfinding
-  ecsWorld:addEntity(testWall)
-  testBoxEntity = testWall
-
   -- Add a Reactor entity (64x64 = 4x4 tiles) via factory
   do
-    local reactorTileX, reactorTileY = 8, 8 -- choose a free spot
+    local reactorTileX, reactorTileY = 24, 12 -- choose a free spot
     local reactorX = (reactorTileX - 1) * tileSize
     local reactorY = (reactorTileY - 1) * tileSize
     Reactor.create(reactorX, reactorY, ecsWorld, physicsWorld)

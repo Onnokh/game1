@@ -13,6 +13,8 @@ function Reactor.create(x, y, world, physicsWorld)
     local SpriteRenderer = require("src.components.SpriteRenderer")
     local Animator = require("src.components.Animator")
     local PathfindingCollision = require("src.components.PathfindingCollision")
+    local Health = require("src.components.Health")
+    local HealthBar = require("src.components.HealthBar")
     local Light = require("src.components.Light")
 
     local reactor = Entity.new()
@@ -20,22 +22,31 @@ function Reactor.create(x, y, world, physicsWorld)
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
     local animator = Animator.new("reactor", {1}, 1, true)
+    local health = Health.new(1000)
+    local healthBar = HealthBar.new(48, 4, -6)
+    healthBar.alwaysVisible = true
 
     local collider = PathfindingCollision.new(64, 48, "static", 0, 16)
     if physicsWorld then
         collider:createCollider(physicsWorld, x, y)
     end
     local light = Light.new({
-        radius = 400,
-        r = 255,
-        g = 255,
+        radius = 420,
+        r = 180,
+        g = 220,
         b = 255,
         a = 200,
+        flicker = true,
+        flickerSpeed = 2.2,              -- slow breathing
+        flickerRadiusAmplitude = 20,     -- gentle size pulsing
+        flickerAlphaAmplitude = 25       -- gentle brightness pulsing
     })
     reactor:addComponent("Position", position)
     reactor:addComponent("SpriteRenderer", spriteRenderer)
     reactor:addComponent("Animator", animator)
     reactor:addComponent("PathfindingCollision", collider)
+    reactor:addComponent("Health", health)
+    reactor:addComponent("HealthBar", healthBar)
     reactor:addComponent("Light", light)
 
 

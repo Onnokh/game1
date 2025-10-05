@@ -25,14 +25,14 @@ function HealthBarSystem:draw()
 		local healthBar = entity:getComponent("HealthBar")
 		local spriteRenderer = entity:getComponent("SpriteRenderer")
 
-		if position and health and healthBar and healthBar.visible and not health.isDead then
-			local healthPercentage = health:getHealthPercentage()
-			if healthPercentage < 1.0 then
-				local entityWidth = spriteRenderer and spriteRenderer.width or 32
-				local x, y = healthBar:getPosition(position.x, position.y, entityWidth)
-				healthBar:draw(x, y, healthPercentage)
-			end
-		end
+    		if position and health and healthBar and healthBar.visible and not health.isDead then
+    			local healthPercentage = health:getHealthPercentage()
+    			if healthBar.alwaysVisible or healthPercentage < 1.0 then
+    				local entityWidth = spriteRenderer and spriteRenderer.width or 32
+    				local x, y = healthBar:getPosition(position.x, position.y, entityWidth)
+    				healthBar:draw(x, y, healthPercentage)
+    			end
+    		end
 	end
 end
 

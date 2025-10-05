@@ -123,13 +123,14 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Add a light component to follow the player
     local light = Light.new({
-      radius = 200,
+      radius = 160,
       r = 255,
       g = 200,
       b = 120,
-      a = 120,
+      a = 160,
       offsetX = PlayerConfig.SPRITE_WIDTH/2,
-      offsetY = PlayerConfig.SPRITE_HEIGHT/2
+      offsetY = PlayerConfig.SPRITE_HEIGHT/2,
+      flicker = false
     })
     playerEntity:addComponent("Light", light)
 

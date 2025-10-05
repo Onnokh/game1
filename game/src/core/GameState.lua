@@ -25,8 +25,8 @@ local GameState = {
   },
   camera = nil, -- Will be initialized with gamera
   player = {
-    x = 144,  -- Tile (10, 10)
-    y = 144,  -- Tile (10, 10)
+    x = 320,  -- Tile (10, 10)
+    y = 192,  -- Tile (10, 10)
     width = 16,
     height = 24,
     speed = 300,

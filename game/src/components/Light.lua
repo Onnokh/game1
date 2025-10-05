@@ -10,6 +10,10 @@ local Component = require("src.core.Component")
 ---@field offsetY number
 ---@field lightRef any|nil
 ---@field enabled boolean
+---@field flicker boolean
+---@field flickerSpeed number
+---@field flickerRadiusAmplitude number
+---@field flickerAlphaAmplitude number
 local Light = {}
 Light.__index = Light
 
@@ -25,10 +29,15 @@ function Light.new(opts)
     self.g = opts.g or 255
     self.b = opts.b or 255
     self.a = opts.a or 255
-    self.offsetX = opts.offsetX or 0
-    self.offsetY = opts.offsetY or 0
+    -- Keep nil when not provided so systems can auto-center using SpriteRenderer
+    self.offsetX = opts.offsetX
+    self.offsetY = opts.offsetY
     self.lightRef = nil
     self.enabled = opts.enabled ~= false
+    self.flicker = opts.flicker == true
+    self.flickerSpeed = opts.flickerSpeed or 8
+    self.flickerRadiusAmplitude = opts.flickerRadiusAmplitude or 10
+    self.flickerAlphaAmplitude = opts.flickerAlphaAmplitude or 20
 
     return self
 end

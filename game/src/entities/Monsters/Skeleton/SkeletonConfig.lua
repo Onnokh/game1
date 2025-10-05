@@ -50,7 +50,7 @@ SkeletonConfig.DRAW_WIDTH = 12
 SkeletonConfig.DRAW_HEIGHT = 22
 
 -- Combat settings
-SkeletonConfig.HEALTH = 45
+SkeletonConfig.HEALTH = 50
 SkeletonConfig.MAX_HEALTH = 50
 
 return SkeletonConfig

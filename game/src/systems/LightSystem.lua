@@ -36,12 +36,42 @@ function LightSystem:update(dt)
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
         local lightComp = entity:getComponent("Light")
+        local spriteRenderer = entity:getComponent("SpriteRenderer")
         if position and lightComp and lightComp.enabled ~= false then
             ensureLightCreated(self, entity)
             if lightComp.lightRef then
-                local x = position.x + (lightComp.offsetX or 0)
-                local y = position.y + (lightComp.offsetY or 0)
+                local defaultOX = spriteRenderer and (spriteRenderer.width or 0) / 2 or 0
+                local defaultOY = spriteRenderer and (spriteRenderer.height or 0) / 2 or 0
+                local x = position.x + (lightComp.offsetX ~= nil and lightComp.offsetX or defaultOX)
+                local y = position.y + (lightComp.offsetY ~= nil and lightComp.offsetY or defaultOY)
                 lightComp.lightRef:SetPosition(x, y, 1)
+
+                -- Apply flicker if enabled
+                if lightComp.flicker then
+                    local t = love.timer.getTime()
+                    local speed = lightComp.flickerSpeed or 8
+                    local rAmp = lightComp.flickerRadiusAmplitude or 10
+                    local aAmp = lightComp.flickerAlphaAmplitude or 20
+                    local baseRadius = lightComp.radius or 400
+                    local baseA = lightComp.a or 255
+
+                    -- Simple layered noise using sines for organic flicker
+                    local n = math.sin(t * speed) * 0.6 + math.sin(t * (speed * 1.7) + 1.3) * 0.4
+                    local radius = baseRadius + n * rAmp
+                    local alpha = math.max(0, math.min(255, baseA + n * aAmp))
+
+                    lightComp.lightRef:SetRadius(radius)
+                    lightComp.lightRef:SetColor(lightComp.r, lightComp.g, lightComp.b, alpha)
+                else
+                    -- Ensure base properties when not flickering
+                    if lightComp.lightRef.GetRadius and lightComp.lightRef:GetRadius() ~= lightComp.radius then
+                        lightComp.lightRef:SetRadius(lightComp.radius)
+                    end
+                    local cr, cg, cb, ca = lightComp.lightRef:GetColor()
+                    if cr ~= lightComp.r or cg ~= lightComp.g or cb ~= lightComp.b or ca ~= lightComp.a then
+                        lightComp.lightRef:SetColor(lightComp.r, lightComp.g, lightComp.b, lightComp.a)
+                    end
+                end
             end
         end
     end

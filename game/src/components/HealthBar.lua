@@ -23,6 +23,7 @@ function HealthBar.new(width, height, offsetY)
     self.height = height or 2
     self.offsetY = offsetY or -8 -- Above the entity
     self.borderWidth = 1
+    self.alwaysVisible = false
 
     -- Default colors
     self.backgroundColor = {r = 0.2, g = 0.2, b = 0.2, a = 0.8} -- Dark gray background
@@ -68,6 +69,12 @@ end
 ---@param visible boolean Whether the health bar is visible
 function HealthBar:setVisible(visible)
     self.visible = visible
+end
+
+---Force the health bar to always render, even at full health
+---@param always boolean
+function HealthBar:setAlwaysVisible(always)
+    self.alwaysVisible = not not always
 end
 
 ---Get the health bar position relative to entity position
