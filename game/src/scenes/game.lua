@@ -36,6 +36,8 @@ local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local CastableShadow = require("src.components.CastableShadow")
 local PathfindingCollision = require("src.components.PathfindingCollision")
+local Animator = require("src.components.Animator")
+local Reactor = require("src.entities.Reactor.Reactor")
 
 local ecsWorld = nil
 local uiWorld = nil
@@ -176,6 +178,14 @@ function GameScene.load()
   -- Add the wall entity to ECS world BEFORE initializing pathfinding
   ecsWorld:addEntity(testWall)
   testBoxEntity = testWall
+
+  -- Add a Reactor entity (64x64 = 4x4 tiles) via factory
+  do
+    local reactorTileX, reactorTileY = 8, 8 -- choose a free spot
+    local reactorX = (reactorTileX - 1) * tileSize
+    local reactorY = (reactorTileY - 1) * tileSize
+    Reactor.create(reactorX, reactorY, ecsWorld, physicsWorld)
+  end
 
   -- Add pathfinding system after static collision objects are added
   ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize)) -- Pathfinding system

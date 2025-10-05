@@ -41,6 +41,9 @@ function IffySprites.load()
   -- Load skeleton spritesheet (6x10 grid - 6 columns, 10 rows)
   loadSpritesheet("skeleton", "resources/skeleton/Skeleton.png", 6, 10)
 
+  -- Load reactor spritesheet (1x1 grid, 64x64)
+  loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 1, 1)
+
   print("Iffy sprites loaded successfully")
 
   -- Debug: Check tilesets
