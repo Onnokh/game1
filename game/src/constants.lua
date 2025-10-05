@@ -13,8 +13,8 @@ local GameConstants = {}
 
 -- World dimensions
 GameConstants.TILE_SIZE = 16  -- Larger tiles
-GameConstants.WORLD_WIDTH = 50  -- Much wider world
-GameConstants.WORLD_HEIGHT = 50 -- Square world for easier navigation
+GameConstants.WORLD_WIDTH = 50
+GameConstants.WORLD_HEIGHT = 50
 
 -- Calculate pixel dimensions
 GameConstants.WORLD_WIDTH_PIXELS = GameConstants.WORLD_WIDTH * GameConstants.TILE_SIZE

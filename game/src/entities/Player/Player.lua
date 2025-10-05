@@ -1,3 +1,19 @@
+local Entity = require("src.core.Entity")
+local Position = require("src.components.Position")
+local Movement = require("src.components.Movement")
+local SpriteRenderer = require("src.components.SpriteRenderer")
+local PathfindingCollision = require("src.components.PathfindingCollision")
+local PhysicsCollision = require("src.components.PhysicsCollision")
+local StateMachine = require("src.components.StateMachine")
+local Attack = require("src.components.Attack")
+local Health = require("src.components.Health")
+local ParticleSystem = require("src.components.ParticleSystem")
+local GameConstants = require("src.constants")
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
+local DepthSorting = require("src.utils.depthSorting")
+local Light = require("src.components.Light")
+
+
 ---@class Player
 local Player = {}
 
@@ -8,20 +24,6 @@ local Player = {}
 ---@param physicsWorld table|nil The physics world for collision
 ---@return Entity The created player entity
 function Player.create(x, y, world, physicsWorld)
-    local Entity = require("src.core.Entity")
-    local Position = require("src.components.Position")
-    local Movement = require("src.components.Movement")
-    local SpriteRenderer = require("src.components.SpriteRenderer")
-    local PathfindingCollision = require("src.components.PathfindingCollision")
-    local PhysicsCollision = require("src.components.PhysicsCollision")
-    local StateMachine = require("src.components.StateMachine")
-    local Attack = require("src.components.Attack")
-    local Health = require("src.components.Health")
-    local ParticleSystem = require("src.components.ParticleSystem")
-    local GameConstants = require("src.constants")
-    local PlayerConfig = require("src.entities.Player.PlayerConfig")
-    local DepthSorting = require("src.utils.depthSorting")
-    local Light = require("src.components.Light")
 
     -- Create the player entity
     local player = Entity.new()

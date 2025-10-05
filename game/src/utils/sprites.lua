@@ -42,7 +42,7 @@ function IffySprites.load()
   loadSpritesheet("skeleton", "resources/skeleton/Skeleton.png", 6, 10)
 
   -- Load reactor spritesheet (1x1 grid, 64x64)
-  loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 1, 1)
+  loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 3, 1)
 
   print("Iffy sprites loaded successfully")
 

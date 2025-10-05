@@ -1,3 +1,12 @@
+local Entity = require("src.core.Entity")
+local Position = require("src.components.Position")
+local SpriteRenderer = require("src.components.SpriteRenderer")
+local Animator = require("src.components.Animator")
+local PathfindingCollision = require("src.components.PathfindingCollision")
+local Health = require("src.components.Health")
+local HealthBar = require("src.components.HealthBar")
+local Light = require("src.components.Light")
+
 ---@class Reactor
 local Reactor = {}
 
@@ -8,20 +17,11 @@ local Reactor = {}
 ---@param physicsWorld table|nil Physics world for collision
 ---@return Entity The created reactor entity
 function Reactor.create(x, y, world, physicsWorld)
-    local Entity = require("src.core.Entity")
-    local Position = require("src.components.Position")
-    local SpriteRenderer = require("src.components.SpriteRenderer")
-    local Animator = require("src.components.Animator")
-    local PathfindingCollision = require("src.components.PathfindingCollision")
-    local Health = require("src.components.Health")
-    local HealthBar = require("src.components.HealthBar")
-    local Light = require("src.components.Light")
 
     local reactor = Entity.new()
-
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
-    local animator = Animator.new("reactor", {1}, 1, true)
+    local animator = Animator.new("reactor", {1, 2, 3}, 3, true)
     local health = Health.new(1000)
     local healthBar = HealthBar.new(48, 4, -6)
     healthBar.alwaysVisible = true

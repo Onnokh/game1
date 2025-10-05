@@ -1,3 +1,20 @@
+local Entity = require("src.core.Entity")
+local Position = require("src.components.Position")
+local Movement = require("src.components.Movement")
+local SpriteRenderer = require("src.components.SpriteRenderer")
+local PathfindingCollision = require("src.components.PathfindingCollision")
+local PhysicsCollision = require("src.components.PhysicsCollision")
+local StateMachine = require("src.components.StateMachine")
+local Pathfinding = require("src.components.Pathfinding")
+local GameConstants = require("src.constants")
+local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local Attack = require("src.components.Attack")
+local CastableShadow = require("src.components.CastableShadow")
+local Health = require("src.components.Health")
+local HealthBar = require("src.components.HealthBar")
+local DepthSorting = require("src.utils.depthSorting")
+
+
 ---@class Skeleton
 local Skeleton = {}
 
@@ -8,21 +25,6 @@ local Skeleton = {}
 ---@param physicsWorld table|nil The physics world for collision
 ---@return Entity The created skeleton entity
 function Skeleton.create(x, y, world, physicsWorld)
-    local Entity = require("src.core.Entity")
-    local Position = require("src.components.Position")
-    local Movement = require("src.components.Movement")
-    local SpriteRenderer = require("src.components.SpriteRenderer")
-    local PathfindingCollision = require("src.components.PathfindingCollision")
-    local PhysicsCollision = require("src.components.PhysicsCollision")
-    local StateMachine = require("src.components.StateMachine")
-    local Pathfinding = require("src.components.Pathfinding")
-    local GameConstants = require("src.constants")
-    local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
-    local Attack = require("src.components.Attack")
-    local CastableShadow = require("src.components.CastableShadow")
-    local Health = require("src.components.Health")
-    local HealthBar = require("src.components.HealthBar")
-    local DepthSorting = require("src.utils.depthSorting")
 
     -- Create the skeleton entity
     local skeleton = Entity.new()
