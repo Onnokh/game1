@@ -30,7 +30,6 @@ function MenuScene.draw(gameState)
   love.graphics.setColor(1, 1, 1)
   love.graphics.setFont(love.graphics.newFont(32))
   love.graphics.printf("Pixel Top-Down Game", 0, 100, width, "center")
-
   -- Draw menu options
   love.graphics.setFont(love.graphics.newFont(24))
   for i, option in ipairs(menuOptions) do
