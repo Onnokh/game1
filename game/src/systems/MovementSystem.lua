@@ -9,39 +9,14 @@ function MovementSystem:update(dt)
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
         local movement = entity:getComponent("Movement")
-        local physicsCollision = entity:getComponent("PhysicsCollision")
         local pathfindingCollision = entity:getComponent("PathfindingCollision")
+        local physicsCollision = entity:getComponent("PhysicsCollision")
 
         if position and movement and movement.enabled then
-            -- Apply velocity to pathfinding collider and let Love2D handle collision
-            if pathfindingCollision and pathfindingCollision:hasCollider() then
-                -- Static entities don't move
-                if pathfindingCollision.type ~= "static" then
-                    -- Dynamic entities - apply velocity to physics body
-                    pathfindingCollision:setLinearVelocity(movement.velocityX, movement.velocityY)
-                    -- Sync ECS position from physics collider
-                    local x, y = pathfindingCollision:getPosition()
-                    position:setPosition(x, y)
-
-                    -- Also sync the physics collision position (sensor for hit detection)
-                    if physicsCollision and physicsCollision:hasCollider() then
-                        physicsCollision:setPosition(x, y)
-                        if physicsCollision.collider and physicsCollision.collider.fixture then
-                            physicsCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })
-                        end
-                    end
-                end
-            else
-                -- Fallback to direct position movement if no collider
+            -- If using physics colliders, CollisionSystem is responsible for syncing/applying physics.
+            -- Only integrate position directly when no colliders are present.
+            if (not pathfindingCollision or not pathfindingCollision:hasCollider()) and (not physicsCollision or not physicsCollision:hasCollider()) then
                 position:move(movement.velocityX * dt, movement.velocityY * dt)
-
-                -- Also update both collision positions if they exist
-                if pathfindingCollision and pathfindingCollision:hasCollider() then
-                    pathfindingCollision:setPosition(position.x, position.y)
-                end
-                if physicsCollision and physicsCollision:hasCollider() then
-                    physicsCollision:setPosition(position.x, position.y)
-                end
             end
         end
     end

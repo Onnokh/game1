@@ -55,6 +55,7 @@ function CollisionSystem:update(dt)
 	if not self or not self.entities then return end
 	for _, entity in ipairs(self.entities) do
 		local position = entity:getComponent("Position")
+		local movement = entity:getComponent("Movement")
 		if position and self.physicsWorld then
 			-- Handle PathfindingCollision component (for pathfinding and physics collision)
 			local pathfindingCollision = entity:getComponent("PathfindingCollision")
@@ -69,6 +70,23 @@ function CollisionSystem:update(dt)
 				-- Tag fixture with entity reference for contact handlers
 				if physicsCollision.collider and physicsCollision.collider.fixture then
 					physicsCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })
+				end
+			end
+
+			-- Apply movement velocity to collider and sync back ECS position
+			if movement then
+				if pathfindingCollision and pathfindingCollision:hasCollider() and pathfindingCollision.type ~= "static" then
+					pathfindingCollision:setLinearVelocity(movement.velocityX, movement.velocityY)
+					local x, y = pathfindingCollision:getPosition()
+					position:setPosition(x, y)
+				end
+
+				local physicsCollision = entity:getComponent("PhysicsCollision")
+				if physicsCollision and physicsCollision:hasCollider() then
+					physicsCollision:setPosition(position.x, position.y)
+					if physicsCollision.collider and physicsCollision.collider.fixture then
+						physicsCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })
+					end
 				end
 			end
 		end

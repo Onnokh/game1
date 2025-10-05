@@ -56,6 +56,8 @@ function Wandering:onUpdate(stateMachine, entity, dt)
     local pathfinding = entity:getComponent("Pathfinding")
     local movement = entity:getComponent("Movement")
     local spriteRenderer = entity:getComponent("SpriteRenderer")
+    local position = entity:getComponent("Position")
+    local pfc = entity:getComponent("PathfindingCollision")
 
     -- Transition to chasing if player nearby
     do
@@ -105,13 +107,24 @@ function Wandering:onUpdate(stateMachine, entity, dt)
     end
 
     -- Check if we've reached the wander target
-    if pathfinding and pathfinding:isPathComplete() and movement and (math.abs(movement.velocityX) < 0.1 and math.abs(movement.velocityY) < 0.1) then
-        -- We've reached the target, immediately transition to idle
+    if pathfinding and pathfinding:isPathComplete() and movement then
+        -- Stop movement to avoid glide
+        movement.velocityX = 0
+        movement.velocityY = 0
         -- Clear the current path
         pathfinding.currentPath = nil
         pathfinding.currentPathIndex = 1
-
+        -- Transition to idle
         stateMachine:changeState("idle", entity)
+        return
+    end
+
+    -- Steering moved to MovementSystem; ensure we don't glide when no path
+    if (not pathfinding) or pathfinding:isPathComplete() then
+        if movement then
+            movement.velocityX = 0
+            movement.velocityY = 0
+        end
     end
 end
 

@@ -219,22 +219,37 @@ function PathfindingSystem:update(dt)
 
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
-        local movement = entity:getComponent("Movement")
         local pathfinding = entity:getComponent("Pathfinding")
+        local movement = entity:getComponent("Movement")
 
-        -- Only process entities that have pathfinding components
-        if position and movement and pathfinding then
-            -- Skip pathfinding if entity is being knocked back
-            local knockback = entity:getComponent("Knockback")
-            if not knockback then
-                -- Ensure pathfinder is set up for this entity
-                if not pathfinding.pathfinder or not pathfinding.grid then
-                    pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
-                end
-
-                self:updateEntityPathfinding(entity, position, movement, pathfinding, dt)
+        if position and pathfinding and movement then
+            -- Ensure pathfinder is set up for this entity
+            if not pathfinding.pathfinder or not pathfinding.grid then
+                pathfinding:setPathfinder(self.grid, self.pathfinder, self.clearance)
             end
-            -- if knocked back, skip path update this frame but continue loop
+
+            self:updateEntityPathfinding(entity, position, pathfinding, dt)
+
+            -- Steering toward waypoint: compute desired velocity here
+            if not pathfinding:isPathComplete() then
+                local tileSize = self.tileSize
+                local nextX, nextY = pathfinding:getNextPathPosition(tileSize)
+                if nextX and nextY then
+                    local pathfindingCollision = entity:getComponent("PathfindingCollision")
+                    local cx, cy = position.x, position.y
+                    if pathfindingCollision and pathfindingCollision:hasCollider() then
+                        cx, cy = pathfindingCollision:getCenterPosition()
+                    end
+                    local dx, dy = nextX - cx, nextY - cy
+                    local dist = math.sqrt(dx*dx + dy*dy)
+                    if dist > 0 then
+                        -- Default walk factor; optionally override per-entity later
+                        local walkFactor = 0.6
+                        movement.velocityX = (dx / dist) * (movement.maxSpeed * walkFactor)
+                        movement.velocityY = (dy / dist) * (movement.maxSpeed * walkFactor)
+                    end
+                end
+            end
         end
     end
 end
@@ -242,65 +257,26 @@ end
 ---Update pathfinding for a specific entity
 ---@param entity Entity The entity to update
 ---@param position Position The position component
----@param movement Movement The movement component
 ---@param pathfinding Pathfinding The pathfinding component
 ---@param dt number Delta time
-function PathfindingSystem:updateEntityPathfinding(entity, position, movement, pathfinding, dt)
-    -- If we have a path, move towards the next waypoint
+function PathfindingSystem:updateEntityPathfinding(entity, position, pathfinding, dt)
+    -- If we have a path, only manage progression along waypoints; do not set velocity here
     if not pathfinding:isPathComplete() then
         local nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)
-
         if nextX and nextY then
-            -- Get the pathfinding collision center position for accurate movement calculation
             local pathfindingCollision = entity:getComponent("PathfindingCollision")
             local currentX, currentY = position.x, position.y
-
             if pathfindingCollision and pathfindingCollision:hasCollider() then
-                -- Use pathfinding collision center position for movement calculation
                 currentX, currentY = pathfindingCollision:getCenterPosition()
             end
 
-            -- Calculate direction to next waypoint
             local dx = nextX - currentX
             local dy = nextY - currentY
             local distance = math.sqrt(dx * dx + dy * dy)
-
-            -- If we're close enough to the waypoint, move to the next one
-            if distance < self.tileSize * 0.3 then -- Within 30% of tile size
+            if distance < self.tileSize * 0.3 then
                 pathfinding:advancePath()
-                nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)
-                if nextX and nextY then
-                    dx = nextX - currentX
-                    dy = nextY - currentY
-                    distance = math.sqrt(dx * dx + dy * dy)
-                end
-            end
-
-            -- Set movement direction only if not directly steered by Chasing state
-            local skipSteer = false
-            local sm = entity:getComponent("StateMachine")
-            if sm and sm.getCurrentState and sm:getCurrentState() == "chasing" then
-                -- If currentPath is nil, Chasing is doing direct steering
-                if not pathfinding.currentPath then
-                    skipSteer = true
-                end
-            end
-
-            if not skipSteer and distance > 0 then
-                local speed = movement.maxSpeed * 0.6
-                movement.velocityX = (dx / distance) * speed
-                movement.velocityY = (dy / distance) * speed
-                movement.direction = tostring(math.atan2(dy, dx))
-            elseif not skipSteer then
-                -- Stop moving if we've reached the target
-                movement.velocityX = 0
-                movement.velocityY = 0
             end
         end
-    else
-        -- No path, stop moving
-        movement.velocityX = 0
-        movement.velocityY = 0
     end
 end
 
