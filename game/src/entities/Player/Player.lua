@@ -17,7 +17,6 @@ function Player.create(x, y, world, physicsWorld)
     local StateMachine = require("src.components.StateMachine")
     local Attack = require("src.components.Attack")
     local Health = require("src.components.Health")
-    local HealthBar = require("src.components.HealthBar")
     local ParticleSystem = require("src.components.ParticleSystem")
     local GameConstants = require("src.constants")
     local PlayerConfig = require("src.entities.Player.PlayerConfig")
@@ -103,9 +102,6 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Create health component
     local health = Health.new(100) -- 100 max health
-
-    -- Create health bar component
-    local healthBar = HealthBar.new()
 
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
