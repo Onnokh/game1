@@ -34,7 +34,7 @@ function Attacking:onUpdate(stateMachine, entity, dt)
     -- Use the entity's current target
     local target = entity.target
 
-    if not target then
+    if not target or target.isDead then
         return
     end
 

@@ -6,6 +6,7 @@ local PathfindingCollision = require("src.components.PathfindingCollision")
 local Health = require("src.components.Health")
 local HealthBar = require("src.components.HealthBar")
 local Light = require("src.components.Light")
+local EventBus = require("src.utils.EventBus")
 
 ---@class Reactor
 local Reactor = {}
@@ -55,7 +56,32 @@ function Reactor.create(x, y, world, physicsWorld)
         world:addEntity(reactor)
     end
 
+    -- Subscribe to entity death events to handle reactor death
+    Reactor.subscribeToDeathEvents()
+
     return reactor
+end
+
+---Subscribe to death events to handle reactor death
+function Reactor.subscribeToDeathEvents()
+    EventBus.subscribe("entityDied", function(payload)
+        local entity = payload.entity
+        if entity and entity.isReactor then
+            Reactor.handleDeath(entity)
+        end
+    end)
+end
+
+---Handle reactor death - turn off light and add visual effects
+---@param entity Entity The reactor entity that died
+function Reactor.handleDeath(entity)
+    print("Reactor has died - turning off light")
+    -- Turn off the reactor's light
+    local light = entity:getComponent("Light")
+    if light then
+        light.enabled = false
+        print("Reactor light disabled")
+    end
 end
 
 return Reactor

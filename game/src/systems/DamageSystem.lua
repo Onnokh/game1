@@ -75,7 +75,15 @@ end
 ---@param entity Entity The entity that died
 ---@param damageEvent any The damage event that caused death
 function DamageSystem:handleEntityDeath(entity, damageEvent)
+    entity.isDead = true
     print(string.format("Entity died from %d damage", damageEvent.amount))
+
+    -- Emit entity death event for other systems to handle
+    EventBus.emit("entityDied", {
+        entity = entity,
+        amount = damageEvent.amount,
+        source = damageEvent.source
+    })
 
     -- Check if this is a skeleton that should go into dying state
     local stateMachine = entity:getComponent("StateMachine")

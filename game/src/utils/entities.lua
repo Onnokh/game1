@@ -61,6 +61,32 @@ function EntityUtils.findFirstEntityByType(world, entityType)
     return nil
 end
 
+---Get the visual center of an entity (accounting for sprite size)
+---@param entity Entity The entity to get the center of
+---@param position Position The position component
+---@return number, number Center X and Y coordinates
+function EntityUtils.getEntityVisualCenter(entity, position)
+    -- Prefer physics/pathfinding collider center when available
+    local pfc = entity:getComponent("PathfindingCollision")
+    if pfc and pfc.hasCollider and pfc:hasCollider() and pfc.getCenterPosition then
+        local cx, cy = pfc:getCenterPosition()
+        if cx and cy then return cx, cy end
+    end
+    local phys = entity:getComponent("PhysicsCollision")
+    if phys and phys.hasCollider and phys:hasCollider() and phys.collider and phys.collider.body then
+        local cx, cy = phys.collider.body:getPosition()
+        if cx and cy then return cx, cy end
+    end
+
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    if spriteRenderer then
+        local centerX = position.x + (spriteRenderer.width or 24) / 2
+        local centerY = position.y + (spriteRenderer.height or 24) / 2
+        return centerX, centerY
+    end
+    return position.x, position.y
+end
+
 ---Get the closest point on a target's collider from a given position
 ---@param fromX number Source X position
 ---@param fromY number Source Y position

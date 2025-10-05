@@ -135,7 +135,7 @@ function Skeleton.updateTarget(entity)
     local playerHasLOS = false
     local reactorHasLOS = false
 
-    if player then
+    if player and not player.isDead then
         local px, py = EntityUtils.getClosestPointOnTarget(skeletonPos.x, skeletonPos.y, player)
         local dx = px - skeletonPos.x
         local dy = py - skeletonPos.y
@@ -143,7 +143,7 @@ function Skeleton.updateTarget(entity)
         playerHasLOS = not pathfindingCollision or pathfindingCollision:hasLineOfSightTo(px, py, nil)
     end
 
-    if reactor then
+    if reactor and not reactor.isDead then
         local rx, ry = EntityUtils.getClosestPointOnTarget(skeletonPos.x, skeletonPos.y, reactor)
         local dx = rx - skeletonPos.x
         local dy = ry - skeletonPos.y

@@ -2,6 +2,7 @@ local System = require("src.core.System")
 local CoordinateUtils = require("src.utils.coordinates")
 local DamageQueue = require("src.DamageQueue")
 local GameState = require("src.core.GameState")
+local EntityUtils = require("src.utils.entities")
 
 ---@class AttackSystem : System
 local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
@@ -98,7 +99,7 @@ function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
     local mouseY = GameState.input.mouseY
 
     -- Get player's visual center (accounting for sprite size)
-    local playerCenterX, playerCenterY = self:getEntityVisualCenter(entity, position)
+    local playerCenterX, playerCenterY = EntityUtils.getEntityVisualCenter(entity, position)
 
     -- Calculate direction from player center to mouse
     local directionX = mouseX - playerCenterX
@@ -151,7 +152,7 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
     local potentialTargets = world:getEntitiesWith({"Health", "PhysicsCollision"})
 
     for _, target in ipairs(potentialTargets) do
-        if target.id ~= attacker.id then
+        if target.id ~= attacker.id and not target.isDead then
             local targetPhysicsCollision = target:getComponent("PhysicsCollision")
             if targetPhysicsCollision and targetPhysicsCollision:hasCollider() then
                 if usePhysicsQuery then
@@ -160,80 +161,12 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
                     if targetFixture and fixturesInArea[targetFixture] then
                         table.insert(targets, target)
                     end
-                else
-                    -- Fallback to manual AABB overlap
-                    if self:isTargetInHitArea(target, targetPhysicsCollision, attack) then
-                        table.insert(targets, target)
-                    end
                 end
             end
         end
     end
 
     return targets
-end
-
----Check if a target's PhysicsCollision overlaps with the attack hit area
----@param target Entity The target entity
----@param targetPhysicsCollision PhysicsCollision The target's physics collision component
----@param attack Attack The attack component
----@return boolean True if target's collision overlaps with hit area
-function AttackSystem:isTargetInHitArea(target, targetPhysicsCollision, attack)
-    -- Get the target's collision bounds
-    local targetX, targetY = targetPhysicsCollision:getPosition()
-    local targetWidth = targetPhysicsCollision.width
-    local targetHeight = targetPhysicsCollision.height
-
-    -- Check for rectangle overlap between attack hit area and target's PhysicsCollision
-    return self:rectanglesOverlap(
-        attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight,
-        targetX, targetY, targetWidth, targetHeight
-    )
-end
-
----Find all targets within attack range (legacy method for non-directional attacks)
----@param attacker Entity The attacking entity
----@param position Position The attacker's position
----@param attack Attack The attack component
----@return table Array of target entities
-function AttackSystem:findTargetsInRange(attacker, position, attack)
-    local targets = {}
-    local world = attacker._world
-
-    if not world then
-        return targets
-    end
-
-    -- Get all entities with Health component (potential targets)
-    local potentialTargets = world:getEntitiesWith({"Health"})
-
-    for _, target in ipairs(potentialTargets) do
-        -- Skip self
-        if target.id ~= attacker.id then
-            local targetPosition = target:getComponent("Position")
-            if targetPosition then
-                -- Use visual centers for consistent distance calculation
-                local attackerCenterX, attackerCenterY = self:getEntityVisualCenter(attacker, position)
-                local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
-                local distance = CoordinateUtils.calculateDistanceBetweenPoints(attackerCenterX, attackerCenterY, targetCenterX, targetCenterY)
-                if distance <= attack.range then
-                    table.insert(targets, target)
-                end
-            end
-        end
-    end
-
-    return targets
-end
-
-
----Apply damage to a target entity
----@param attacker Entity The attacking entity
----@param target Entity The target entity
----@param attack Attack The attack component
-function AttackSystem:applyDamageToTarget(attacker, target, attack)
-    -- Push to global damage queue for batch processing
-    DamageQueue:push(target, attack.damage, attacker, "physical", 0, nil)
 end
 
 ---Apply knockback to targets
@@ -263,8 +196,8 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
 
             if attackerPosition and targetPosition then
                 -- Calculate knockback direction using visual centers (radial from attacker)
-                local attackerCenterX, attackerCenterY = self:getEntityVisualCenter(attacker, attackerPosition)
-                local targetCenterX, targetCenterY = self:getEntityVisualCenter(target, targetPosition)
+                local attackerCenterX, attackerCenterY = EntityUtils.getEntityVisualCenter(attacker, attackerPosition)
+                local targetCenterX, targetCenterY = EntityUtils.getEntityVisualCenter(target, targetPosition)
                 local dx = targetCenterX - attackerCenterX
                 local dy = targetCenterY - attackerCenterY
                 local distance = math.sqrt(dx * dx + dy * dy)
@@ -283,47 +216,5 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
     end
 end
 
----Check if two rectangles overlap
----@param x1 number First rectangle X position
----@param y1 number First rectangle Y position
----@param w1 number First rectangle width
----@param h1 number First rectangle height
----@param x2 number Second rectangle X position
----@param y2 number Second rectangle Y position
----@param w2 number Second rectangle width
----@param h2 number Second rectangle height
----@return boolean True if rectangles overlap
-function AttackSystem:rectanglesOverlap(x1, y1, w1, h1, x2, y2, w2, h2)
-    return x1 < x2 + w2 and
-           x1 + w1 > x2 and
-           y1 < y2 + h2 and
-           y1 + h1 > y2
-end
-
----Get the visual center of an entity (accounting for sprite size)
----@param entity Entity The entity to get the center of
----@param position Position The position component
----@return number, number Center X and Y coordinates
-function AttackSystem:getEntityVisualCenter(entity, position)
-    -- Prefer physics/pathfinding collider center when available
-    local pfc = entity:getComponent("PathfindingCollision")
-    if pfc and pfc.hasCollider and pfc:hasCollider() and pfc.getCenterPosition then
-        local cx, cy = pfc:getCenterPosition()
-        if cx and cy then return cx, cy end
-    end
-    local phys = entity:getComponent("PhysicsCollision")
-    if phys and phys.hasCollider and phys:hasCollider() and phys.collider and phys.collider.body then
-        local cx, cy = phys.collider.body:getPosition()
-        if cx and cy then return cx, cy end
-    end
-
-    local spriteRenderer = entity:getComponent("SpriteRenderer")
-    if spriteRenderer then
-        local centerX = position.x + (spriteRenderer.width or 24) / 2
-        local centerY = position.y + (spriteRenderer.height or 24) / 2
-        return centerX, centerY
-    end
-    return position.x, position.y
-end
 
 return AttackSystem

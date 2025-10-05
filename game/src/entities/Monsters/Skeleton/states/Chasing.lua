@@ -44,7 +44,7 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     -- Use the entity's current target
     local target = entity.target
 
-    if not target or not position or not movement or not pathfinding then
+    if not target or target.isDead or not position or not movement or not pathfinding then
         return
     end
 

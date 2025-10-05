@@ -25,7 +25,7 @@ SkeletonConfig.ATTACK_RANGE_TILES = 1.2 -- stop within this many tiles of target
 
 -- Attack settings
 SkeletonConfig.ATTACK_COOLDOWN = 1.2 -- seconds
-SkeletonConfig.ATTACK_DAMAGE = 8
+SkeletonConfig.ATTACK_DAMAGE = 32
 SkeletonConfig.ATTACK_KNOCKBACK = 4
 
 SkeletonConfig.DYING_ANIMATION = {

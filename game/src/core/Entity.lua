@@ -2,6 +2,7 @@
 ---@field id number Unique identifier for this entity
 ---@field components table Table of components attached to this entity
 ---@field active boolean Whether this entity is active
+---@field isDead boolean Whether this entity is dead
 local Entity = {}
 Entity.__index = Entity
 
@@ -16,6 +17,7 @@ function Entity.new()
     nextEntityId = nextEntityId + 1
     self.components = {}
     self.active = true
+    self.isDead = false
     return self
 end
 
