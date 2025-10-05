@@ -19,6 +19,9 @@ SkeletonConfig.WALKING_ANIMATION = {
     loop = true
 }
 
+-- Chase behavior
+SkeletonConfig.CHASE_RANGE = 10 -- tiles
+
 SkeletonConfig.DYING_ANIMATION = {
     frames = {37, 38, 39, 40}, -- Row 7 (0-indexed as 6), columns 1-4 (6*6+1 = 37)
     fps = 2,

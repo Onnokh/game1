@@ -131,6 +131,39 @@ function Pathfinding:isPathComplete()
     return not self.currentPath or self.pathIndex > #self.currentPath._nodes
 end
 
+---Start a path towards a specific world target (in pixels)
+---@param currentX number Current X position (world pixels)
+---@param currentY number Current Y position (world pixels)
+---@param targetX number Target X position (world pixels)
+---@param targetY number Target Y position (world pixels)
+---@param tileSize number Tile size in pixels
+---@return boolean success
+function Pathfinding:startPathTo(currentX, currentY, targetX, targetY, tileSize)
+    if not self.pathfinder or not self.grid then
+        return false
+    end
+
+    local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
+    local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
+
+    -- Clamp to grid bounds
+    local minX, minY, maxX, maxY = self.grid:getBounds()
+    targetGridX = math.max(minX, math.min(targetGridX, maxX))
+    targetGridY = math.max(minY, math.min(targetGridY, maxY))
+
+    local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
+    if path and path._nodes and #path._nodes > 0 then
+        self.currentPath = path
+        self.pathIndex = 1
+        self.targetX = targetX
+        self.targetY = targetY
+        self.isWandering = false
+        return true
+    else
+        return false
+    end
+end
+
 ---Start a new wander to a random target
 ---@param currentX number Current X position
 ---@param currentY number Current Y position

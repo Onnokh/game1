@@ -57,6 +57,41 @@ function Wandering:onUpdate(stateMachine, entity, dt)
     local movement = entity:getComponent("Movement")
     local spriteRenderer = entity:getComponent("SpriteRenderer")
 
+    -- Transition to chasing if player nearby
+    do
+        local entityPos = entity:getComponent("Position")
+        local pfc = entity:getComponent("PathfindingCollision")
+        local sx, sy = entityPos and entityPos.x or 0, entityPos and entityPos.y or 0
+        if pfc and pfc:hasCollider() then
+            sx, sy = pfc:getCenterPosition()
+        end
+        local world = entity._world
+        if world then
+            local player
+            for _, e in ipairs(world.entities) do
+                if e.isPlayer then player = e break end
+            end
+            if player then
+                local playerPos = player:getComponent("Position")
+                if playerPos then
+                    local GameConstants = require("src.constants")
+                    local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+                    local chaseRange = (SkeletonConfig.CHASE_RANGE or 8) * (GameConstants.TILE_SIZE or 16)
+                    local dx = playerPos.x - sx
+                    local dy = playerPos.y - sy
+                    local dist = math.sqrt(dx*dx+dy*dy)
+                    if dist <= chaseRange then
+                        local pfc2 = entity:getComponent("PathfindingCollision")
+                        if not pfc2 or pfc2:hasLineOfSightTo(playerPos.x, playerPos.y, nil) then
+                            stateMachine:changeState("chasing", entity)
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     -- Handle sprite flipping based on movement direction
     if movement and spriteRenderer then
         if movement.velocityX < -0.1 then

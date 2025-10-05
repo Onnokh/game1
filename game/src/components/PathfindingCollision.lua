@@ -183,4 +183,38 @@ function PathfindingCollision:hasCollider()
 end
 
 
+---Check line of sight to a world point using physics raycast
+---@param targetX number
+---@param targetY number
+---@param ignoreFixture table|nil Fixture to ignore (e.g., player's fixture)
+---@return boolean
+function PathfindingCollision:hasLineOfSightTo(targetX, targetY, ignoreFixture)
+    if not (self.physicsWorld and self.collider and self.collider.body) then
+        return true -- fallback: assume visible
+    end
+
+    local startX, startY = self:getCenterPosition()
+    local blocked = false
+
+    self.physicsWorld:rayCast(startX, startY, targetX, targetY, function(fixture, x, y, xn, yn, fraction)
+        if ignoreFixture and fixture == ignoreFixture then
+            return -1 -- ignore and continue
+        end
+        -- Ignore our own fixture
+        if self.collider and fixture == self.collider.fixture then
+            return -1
+        end
+        -- Block on any static fixture (walls/borders)
+        local body = fixture:getBody()
+        if body and body:getType() == "static" then
+            blocked = true
+            return 0 -- terminate ray
+        end
+        return 1 -- continue
+    end)
+
+    return not blocked
+end
+
+
 return PathfindingCollision

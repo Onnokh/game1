@@ -520,12 +520,12 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
           local coordText = string.format("%d,%d", node._x, node._y)
           love.graphics.print(coordText, worldX + 2, worldY - 10)
         end
+      end
 
-        -- Draw target destination
-        if pathfinding.targetX and pathfinding.targetY then
-          love.graphics.setColor(1, 0, 0, 0.8) -- Red
-          love.graphics.circle("fill", pathfinding.targetX, pathfinding.targetY, 6)
-        end
+      -- Draw target destination even if no path (e.g., direct chase)
+      if pathfinding.targetX and pathfinding.targetY then
+        love.graphics.setColor(1, 0, 0, 0.8) -- Red
+        love.graphics.circle("fill", pathfinding.targetX, pathfinding.targetY, 6)
       end
     end
   end

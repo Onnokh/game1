@@ -276,13 +276,22 @@ function PathfindingSystem:updateEntityPathfinding(entity, position, movement, p
                 end
             end
 
-            -- Set movement direction
-            if distance > 0 then
-                local speed = movement.maxSpeed * 0.4 -- Slower than player
+            -- Set movement direction only if not directly steered by Chasing state
+            local skipSteer = false
+            local sm = entity:getComponent("StateMachine")
+            if sm and sm.getCurrentState and sm:getCurrentState() == "chasing" then
+                -- If currentPath is nil, Chasing is doing direct steering
+                if not pathfinding.currentPath then
+                    skipSteer = true
+                end
+            end
+
+            if not skipSteer and distance > 0 then
+                local speed = movement.maxSpeed * 0.6
                 movement.velocityX = (dx / distance) * speed
                 movement.velocityY = (dy / distance) * speed
                 movement.direction = tostring(math.atan2(dy, dx))
-            else
+            elseif not skipSteer then
                 -- Stop moving if we've reached the target
                 movement.velocityX = 0
                 movement.velocityY = 0
