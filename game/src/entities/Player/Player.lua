@@ -22,6 +22,7 @@ function Player.create(x, y, world, physicsWorld)
     local GameConstants = require("src.constants")
     local PlayerConfig = require("src.entities.Player.PlayerConfig")
     local DepthSorting = require("src.utils.depthSorting")
+    local Light = require("src.components.Light")
 
     -- Create the player entity
     local player = Entity.new()
@@ -119,6 +120,18 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("ParticleSystem", particleSystem)
+
+    -- Add a light component to follow the player
+    local light = Light.new({
+      radius = 200,
+      r = 255,
+      g = 200,
+      b = 120,
+      a = 120,
+      offsetX = PlayerConfig.SPRITE_WIDTH/2,
+      offsetY = PlayerConfig.SPRITE_HEIGHT/2
+    })
+    playerEntity:addComponent("Light", light)
 
     -- Add the player to the world
     if world then

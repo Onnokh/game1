@@ -7,7 +7,6 @@ local tileVariants = {} -- Store sprite variants for each tile
 local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local LightWorld = require "shadows.LightWorld"
-local Light = require "shadows.Light"
 
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -45,7 +44,6 @@ local playerEntity = nil
 local monsters = {} -- Array of monster entities
 local playerCollider = nil
 local lightWorld = nil
-local playerLight = nil
 local testBoxEntity = nil
 local testBoxOverlayRegistered = false
 
@@ -79,12 +77,9 @@ function GameScene.load()
 
   -- Initialize Shädows lighting system
   lightWorld = LightWorld:new()
-  lightWorld:SetColor(200, 200, 200, 255)
+  -- Dusk ambient lighting: cooler, slightly darker blue
+  lightWorld:SetColor(70, 90, 140, 255)
   GameScene.lightWorld = lightWorld
-
-  -- Add a player light
-  playerLight = Light:new(lightWorld, 400)
-  playerLight:SetColor(255, 255, 255, 80)
 
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
@@ -97,6 +92,7 @@ function GameScene.load()
   ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
   ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
   ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
+  ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Manage dynamic lights
   ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
   -- Damage numbers are now handled by UISystems.DamagePopupSystem
 
@@ -238,6 +234,7 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
     ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
     ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
+    ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Manage dynamic lights
     ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
     -- Damage numbers are now handled by UISystems.DamagePopupSystem
 
@@ -334,11 +331,7 @@ function GameScene.update(dt, gameState)
   gameState.camera:setPosition(gameState.player.x, gameState.player.y)
   gameState.camera:setScale(GameConstants.CAMERA_SCALE)
 
-  -- Update light position to follow player
-  if playerLight and gameState.player then
-    -- Position light at player's world coordinates (same coordinate system as mouse clicks)
-    playerLight:SetPosition(gameState.player.x + gameState.player.width /2, gameState.player.y + gameState.player.height /2, 1)
-  end
+  -- Player light following is handled by LightSystem via the player's Light component
 
   -- Update light world to render lighting
   if lightWorld then

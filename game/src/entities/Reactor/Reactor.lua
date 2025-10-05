@@ -13,7 +13,7 @@ function Reactor.create(x, y, world, physicsWorld)
     local SpriteRenderer = require("src.components.SpriteRenderer")
     local Animator = require("src.components.Animator")
     local PathfindingCollision = require("src.components.PathfindingCollision")
-    local CastableShadow = require("src.components.CastableShadow")
+    local Light = require("src.components.Light")
 
     local reactor = Entity.new()
 
@@ -25,19 +25,19 @@ function Reactor.create(x, y, world, physicsWorld)
     if physicsWorld then
         collider:createCollider(physicsWorld, x, y)
     end
-
-    local shadow = CastableShadow.new({
-        shape = "rectangle",
-        width = 64,
-        height = 64,
-        offsetX = 0,
-        offsetY = 0,
+    local light = Light.new({
+        radius = 400,
+        r = 255,
+        g = 255,
+        b = 255,
+        a = 200,
     })
-
     reactor:addComponent("Position", position)
     reactor:addComponent("SpriteRenderer", spriteRenderer)
     reactor:addComponent("Animator", animator)
     reactor:addComponent("PathfindingCollision", collider)
+    reactor:addComponent("Light", light)
+
 
     if world then
         world:addEntity(reactor)
