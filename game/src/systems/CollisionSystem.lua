@@ -60,8 +60,14 @@ function CollisionSystem:update(dt)
 		if position and self.physicsWorld then
 			-- Handle PathfindingCollision component (for pathfinding and physics collision)
 			local pathfindingCollision = entity:getComponent("PathfindingCollision")
-			if pathfindingCollision and not pathfindingCollision:hasCollider() then
-				pathfindingCollision:createCollider(self.physicsWorld, position.x, position.y)
+			if pathfindingCollision then
+				if not pathfindingCollision:hasCollider() then
+					pathfindingCollision:createCollider(self.physicsWorld, position.x, position.y)
+				end
+				-- Tag fixture with entity reference for contact handlers (for both new and existing colliders)
+				if pathfindingCollision.collider and pathfindingCollision.collider.fixture then
+					pathfindingCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })
+				end
 			end
 
 			-- Handle PhysicsCollision component (for physics only)
