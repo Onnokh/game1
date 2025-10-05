@@ -29,23 +29,6 @@ function Chasing:onEnter(stateMachine, entity)
         end
     end
 
-    -- Cache player entity reference to avoid scanning each frame
-    local world = entity._world
-    local player = nil
-    if world then
-        for _, e in ipairs(world.entities) do
-            if e.isPlayer then player = e break end
-        end
-    end
-    stateMachine:setStateData("playerRef", player)
-end
-
----Simple visibility check (no obstacles): within distance
-local function canSeeTarget(ex, ey, tx, ty, maxDistance)
-    local dx = tx - ex
-    local dy = ty - ey
-    local dist = math.sqrt(dx * dx + dy * dy)
-    return dist <= maxDistance
 end
 
 ---Called every frame while in this state
@@ -58,23 +41,10 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     local pathfinding = entity:getComponent("Pathfinding")
     local pathfindingCollision = entity:getComponent("PathfindingCollision")
 
-    -- Get cached player entity (fallback to lookup if missing)
-    local player = stateMachine:getStateData("playerRef")
-    if (not player) and entity._world then
-        for _, e in ipairs(entity._world.entities) do
-            if e.isPlayer then player = e break end
-        end
-        stateMachine:setStateData("playerRef", player)
-    end
+    -- Use the entity's current target
+    local target = entity.target
 
-    if not player or not position or not movement or not pathfinding then
-        stateMachine:changeState("idle", entity)
-        return
-    end
-
-    local playerPos = player:getComponent("Position")
-    if not playerPos then
-        stateMachine:changeState("idle", entity)
+    if not target or not position or not movement or not pathfinding then
         return
     end
 
@@ -83,43 +53,26 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     if pathfindingCollision and pathfindingCollision:hasCollider() then
         sx, sy = pathfindingCollision:getCenterPosition()
     end
-    -- Aim for the player's center when chasing
-    local px, py = playerPos.x, playerPos.y
-    do
-        local playerPfc = player:getComponent("PathfindingCollision")
-        if playerPfc and playerPfc:hasCollider() then
-            px, py = playerPfc:getCenterPosition()
-        else
-            local playerSprite = player:getComponent("SpriteRenderer")
-            if playerSprite and playerSprite.width and playerSprite.height then
-                px = playerPos.x + playerSprite.width / 2
-                py = playerPos.y + playerSprite.height / 2
-            end
-        end
-    end
 
-    -- Leave chase if player is far or not visible
-    local chaseRange = (SkeletonConfig.CHASE_RANGE or 8) * (GameConstants.TILE_SIZE or 16)
-    if not canSeeTarget(sx, sy, px, py, chaseRange) then
-        -- Stop path and go idle/wander
-        pathfinding.currentPath = nil
-        pathfinding.pathIndex = 1
-        stateMachine:changeState("idle", entity)
-        return
-    end
+    -- Get closest point on target's collider
+    local EntityUtils = require("src.utils.entities")
+    local tx, ty = EntityUtils.getClosestPointOnTarget(sx, sy, target)
 
     -- Decide steering: direct follow if line-of-sight; otherwise end chase
+    -- Exception: reactor doesn't need line of sight (static structure)
     local directLOS = false
-    if pathfindingCollision and pathfindingCollision:hasCollider() then
-        directLOS = pathfindingCollision:hasLineOfSightTo(px, py, nil)
+    if target.isReactor then
+        directLOS = true -- Always chase reactor
+    elseif pathfindingCollision and pathfindingCollision:hasCollider() then
+        directLOS = pathfindingCollision:hasLineOfSightTo(tx, ty, nil)
     else
         directLOS = true
     end
 
     if directLOS then
-        -- Direct chase: set velocity straight towards player
-        local dx = px - sx
-        local dy = py - sy
+        -- Direct chase: set velocity straight towards target
+        local dx = tx - sx
+        local dy = ty - sy
         local dist = math.sqrt(dx*dx + dy*dy)
         -- Stop moving within attack range
         local tileSize = (GameConstants.TILE_SIZE or 16)
@@ -127,11 +80,6 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         if dist <= stopRange then
             movement.velocityX = 0
             movement.velocityY = 0
-            -- Enter attacking state
-            local stateMachine = entity:getComponent("StateMachine")
-            if stateMachine then
-                stateMachine:changeState("attacking", entity)
-            end
         else
             if dist > 0 then
                 local desiredSpeed = movement.maxSpeed * 0.9
@@ -143,15 +91,14 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         pathfinding.currentPath = nil
         pathfinding.pathIndex = 1
         -- Set target for debug overlay
-        pathfinding.targetX = px
-        pathfinding.targetY = py
+        pathfinding.targetX = tx
+        pathfinding.targetY = ty
     else
         -- No LOS: stop chasing immediately
         pathfinding.currentPath = nil
         pathfinding.pathIndex = 1
         movement.velocityX = 0
         movement.velocityY = 0
-        stateMachine:changeState("idle", entity)
     end
 
     -- Speed tweak: move faster than wandering

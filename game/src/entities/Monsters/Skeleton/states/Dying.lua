@@ -27,6 +27,11 @@ function Dying:onEnter(stateMachine, entity)
         return
     end
 
+    -- Also check if death timer already exists
+    if stateMachine:getGlobalData("deathTimer") then
+        return
+    end
+
     print("Skeleton is dying...")
     stateMachine:setGlobalData("isDying", true)
 

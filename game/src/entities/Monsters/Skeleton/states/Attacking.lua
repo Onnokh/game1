@@ -28,67 +28,49 @@ function Attacking:onUpdate(stateMachine, entity, dt)
     local attack = entity:getComponent("Attack")
     local movement = entity:getComponent("Movement")
     if not position or not attack then
-        stateMachine:changeState("idle", entity)
         return
     end
 
-    -- Determine target (player)
-    local world = entity._world
-    local player = nil
-    if world then
-        for _, e in ipairs(world.entities) do
-            if e.isPlayer then player = e break end
-        end
-    end
-    if not player then
-        stateMachine:changeState("idle", entity)
+    -- Use the entity's current target
+    local target = entity.target
+
+    if not target then
         return
     end
 
-    -- Compute direction to player center
-    local playerPos = player:getComponent("Position")
-    if not playerPos then
-        stateMachine:changeState("idle", entity)
-        return
-    end
-    local px, py = playerPos.x, playerPos.y
-    local playerPfc = player:getComponent("PathfindingCollision")
-    if playerPfc and playerPfc:hasCollider() then
-        px, py = playerPfc:getCenterPosition()
-    else
-        local ps = player:getComponent("SpriteRenderer")
-        if ps and ps.width and ps.height then
-            px = playerPos.x + ps.width / 2
-            py = playerPos.y + ps.height / 2
-        end
-    end
-
+    -- Compute direction to closest point on target
     local ex, ey = position.x, position.y
     local pfc = entity:getComponent("PathfindingCollision")
     if pfc and pfc:hasCollider() then
         ex, ey = pfc:getCenterPosition()
     end
 
-    local dx, dy = px - ex, py - ey
+    local EntityUtils = require("src.utils.entities")
+    local tx, ty = EntityUtils.getClosestPointOnTarget(ex, ey, target)
+    local dx, dy = tx - ex, ty - ey
     local dist = math.sqrt(dx*dx + dy*dy)
 
-    -- Leave attacking if target out of range
-    local stopRange = (SkeletonConfig.ATTACK_RANGE_TILES or 1.0) * (GameConstants.TILE_SIZE or 16)
-    if dist > stopRange * 1.1 then
-        stateMachine:changeState("chasing", entity)
-        return
+    -- Check if we need to move closer to target or can attack
+    local attackRange = (require("src.entities.Monsters.Skeleton.SkeletonConfig").ATTACK_RANGE_TILES or 1.2) * (require("src.constants").TILE_SIZE or 16)
+
+    if dist <= attackRange then
+        -- Close enough to attack - stop movement
+        if movement then
+            movement.velocityX = 0
+            movement.velocityY = 0
+        end
+    else
+        -- Too far to attack - move toward target
+        if movement and dist > 0 then
+            local desiredSpeed = movement.maxSpeed * 0.8
+            movement.velocityX = (dx / dist) * desiredSpeed
+            movement.velocityY = (dy / dist) * desiredSpeed
+        end
     end
 
-    -- Face target (optional)
-    if movement and dist > 0 then
-        -- zero movement; attacking state holds position
-        movement.velocityX = 0
-        movement.velocityY = 0
-    end
-
-    -- Try to attack when cooldown ready
+    -- Try to attack when cooldown ready and in range
     local now = love.timer.getTime()
-    if attack:isReady(now) then
+    if dist <= attackRange and attack:isReady(now) then
         -- Set attack direction and hit area using attacker center
         attack:setDirection(dx, dy)
         attack:calculateHitArea(ex, ey)

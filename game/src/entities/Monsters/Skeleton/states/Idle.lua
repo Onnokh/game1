@@ -39,45 +39,15 @@ end
 ---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
 function Idle:onUpdate(stateMachine, entity, dt)
+    -- Update idle timer
     local idleTime = stateMachine:getStateData("idleTime") or 0
-    local targetIdleTime = stateMachine:getStateData("targetIdleTime") or 2
     stateMachine:setStateData("idleTime", idleTime + dt)
 
-    -- Check for player in chase range with line-of-sight
-    local entityPos = entity:getComponent("Position")
-    local pfc = entity:getComponent("PathfindingCollision")
-    local sx, sy = entityPos and entityPos.x or 0, entityPos and entityPos.y or 0
-    if pfc and pfc:hasCollider() then
-        sx, sy = pfc:getCenterPosition()
-    end
-    local world = entity._world
-    if world then
-        local player
-        for _, e in ipairs(world.entities) do
-            if e.isPlayer then player = e break end
-        end
-        if player then
-            local playerPos = player:getComponent("Position")
-            if playerPos then
-                local GameConstants = require("src.constants")
-                local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
-                local chaseRange = (SkeletonConfig.CHASE_RANGE or 8) * (GameConstants.TILE_SIZE or 16)
-                local dx = playerPos.x - sx
-                local dy = playerPos.y - sy
-                local dist = math.sqrt(dx*dx+dy*dy)
-                if dist <= chaseRange then
-                    if not pfc or pfc:hasLineOfSightTo(playerPos.x, playerPos.y, nil) then
-                        stateMachine:changeState("chasing", entity)
-                        return
-                    end
-                end
-            end
-        end
-    end
-
-    -- After random amount of time idling, start wandering
-    if idleTime > targetIdleTime then
-        stateMachine:changeState("wandering", entity)
+    -- Stop movement
+    local movement = entity:getComponent("Movement")
+    if movement then
+        movement.velocityX = 0
+        movement.velocityY = 0
     end
 end
 

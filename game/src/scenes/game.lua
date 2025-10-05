@@ -30,12 +30,6 @@ local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
-local Entity = require("src.core.Entity")
-local Position = require("src.components.Position")
-local SpriteRenderer = require("src.components.SpriteRenderer")
-local CastableShadow = require("src.components.CastableShadow")
-local PathfindingCollision = require("src.components.PathfindingCollision")
-local Animator = require("src.components.Animator")
 local Reactor = require("src.entities.Reactor.Reactor")
 
 local ecsWorld = nil
@@ -200,14 +194,14 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
     ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
     ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-    ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Manage ephemeral attack colliders
-    ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
+    ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Fifth: manage ephemeral attack colliders
+    ecsWorld:addSystem(DamageSystem.new())               -- Sixth: process damage events (includes knockback)
     ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
     ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
     ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
     ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
-    ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Manage dynamic lights
-    ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
+    ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Eleventh: manage dynamic lights
+    ecsWorld:addSystem(RenderSystem.new())              -- Twelfth: render everything
     -- Damage numbers are now handled by UISystems.DamagePopupSystem
 
     if not uiWorld then
@@ -238,9 +232,6 @@ function GameScene.update(dt, gameState)
   if #monsters == 0 and ecsWorld then
       -- Create multiple skeletons at different positions
       local monsterPositions = {
-          {x = 244, y = 260}, -- Original position
-          {x = 300, y = 240}, -- Top right
-          {x = 180, y = 300}, -- Bottom left
           {x = 350, y = 350}, -- Bottom right
       }
 
