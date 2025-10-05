@@ -26,6 +26,7 @@ local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
 local DamageSystem = require("src.systems.DamageSystem")
+local DamageNumberSystem = require("src.systems.DamageNumberSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
@@ -93,6 +94,7 @@ function GameScene.load()
   ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
   ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
   ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
+  ecsWorld:addSystem(DamageNumberSystem.new())        -- Twelfth: draw last so numbers over health bars
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -213,6 +215,7 @@ function GameScene.update(dt, gameState)
     ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
     ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
     ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
+    ecsWorld:addSystem(DamageNumberSystem.new())        -- Twelfth: draw last so numbers over health bars
 
   end
 

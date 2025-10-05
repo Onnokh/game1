@@ -1,6 +1,8 @@
 local System = require("src.core.System")
 local FlashEffect = require("src.components.FlashEffect")
 local DamageQueue = require("src.DamageQueue")
+local Entity = require("src.core.Entity")
+local DamageNumber = require("src.components.DamageNumber")
 
 -- Local constants to avoid magic numbers and repeated allocations
 local DEFAULT_SPRITE_W = 24
@@ -44,7 +46,8 @@ end
 function DamageSystem:processDamageEntry(entity, health, entry)
     if health.isDead then return end
     local wasAlive = health:isAlive()
-    health:takeDamage(entry.amount or 0)
+    local amount = entry.amount or 0
+    health:takeDamage(amount)
 
     -- Add damage flash effect
     self:addDamageFlash(entity)
@@ -62,6 +65,9 @@ function DamageSystem:processDamageEntry(entity, health, entry)
     if entry.effects then
         self:applyDamageEffects(entity, entry)
     end
+
+    -- Spawn damage number above entity in world space (match in-world bars)
+    self:spawnDamageNumber(entity, amount)
 end
 
 ---Handle entity death
@@ -183,6 +189,24 @@ function DamageSystem:addDamageFlash(entity)
         local flashEffect = FlashEffect.new(0.5) -- 0.5 second flash
         flashEffect:startFlash()
         entity:addComponent("FlashEffect", flashEffect)
+    end
+end
+
+---Spawn a floating damage number near the entity
+---@param entity Entity
+---@param amount number
+function DamageSystem:spawnDamageNumber(entity, amount)
+    -- Skip player: do not show damage numbers for the player
+    if entity.isPlayer then return end
+    local pos = entity:getComponent("Position")
+    if not pos then return end
+
+    local e = Entity.new()
+    e:addComponent("DamageNumber", DamageNumber.new(entity, amount))
+
+    -- Attach to same world so systems can render it
+    if entity._world then
+        entity._world:addEntity(e)
     end
 end
 
