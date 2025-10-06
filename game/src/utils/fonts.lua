@@ -4,7 +4,7 @@ local fonts = {}
 
 ---Get a UI font at a fixed pixel size
 ---@param px number
----@return love.Font|nil
+---@return love.Font
 function fonts.getUIFont(px)
 	return FontManager.getDetermination(px)
 end
