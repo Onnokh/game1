@@ -8,6 +8,7 @@ local gamera = require("lib.gamera")
 ---@field camera table Camera system
 ---@field player table Player character data
 ---@field phase string Current gameplay phase name
+---@field day integer Current in-game day counter
 
 local GameState = {
   currentScene = "game",
@@ -33,7 +34,8 @@ local GameState = {
     speed = 300,
     direction = "down"
   },
-  phase = "Discovery"
+  phase = "Discovery",
+  day = 1
 }
 
 ---Initialize the game state

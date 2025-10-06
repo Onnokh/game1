@@ -41,6 +41,11 @@ function Siege.draw(gameState)
 end
 
 function Siege.onExit(gameState)
+  -- Increment global day counter when leaving Siege
+  if gameState then
+    local current = tonumber(gameState.day or 0) or 0
+    gameState.day = current + 1
+  end
 end
 
 return Siege

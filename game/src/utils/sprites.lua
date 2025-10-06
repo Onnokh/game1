@@ -6,6 +6,8 @@ local iffy = require("lib.iffy")
 -- Generic spritesheet loader
 -- Loads any spritesheet with configurable grid dimensions
 local loadedSheets = {}
+local assetsLoaded = false
+local menuBackgroundImage = nil
 
 local function loadSpritesheet(name, path, cols, rows)
   if loadedSheets[name] then return end
@@ -26,6 +28,7 @@ end
 
 -- Initialize all sprites using Iffy
 function IffySprites.load()
+  if assetsLoaded then return end
   print("Loading sprites with Iffy...")
 
   -- 1x1 grid (16x16 tiles)
@@ -44,6 +47,18 @@ function IffySprites.load()
   -- Load reactor spritesheet (1x1 grid, 64x64)
   loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 4, 1)
 
+  -- Load menu background as a standalone image (not using iffy)
+  local okBg, imgOrErr = pcall(function()
+    local img = love.graphics.newImage("resources/menu/background.jpg")
+    img:setFilter("nearest", "nearest")
+    return img
+  end)
+  if okBg then
+    menuBackgroundImage = imgOrErr
+  else
+    print("ERROR loading menu background:", imgOrErr)
+  end
+
   print("Iffy sprites loaded successfully")
 
   -- Debug: Check tilesets
@@ -58,6 +73,7 @@ function IffySprites.load()
   else
     print("ERROR: Character tileset not found!")
   end
+  assetsLoaded = true
 end
 
 -- Generic animation helper
@@ -185,6 +201,19 @@ function IffySprites.drawWorld(world, worldWidth, worldHeight, tileSize, tileVar
       end
     end
   end
+end
+
+-- Draw the menu background scaled to cover the screen using raw image
+function IffySprites.drawMenuBackground()
+  if not menuBackgroundImage then return end
+  local iw, ih = menuBackgroundImage:getWidth(), menuBackgroundImage:getHeight()
+  local sw, sh = love.graphics.getWidth(), love.graphics.getHeight()
+  local scale = math.max(sw / iw, sh / ih)
+  local drawW, drawH = iw * scale, ih * scale
+  local dx = (sw - drawW) * 0.5
+  local dy = (sh - drawH) * 0.5
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.draw(menuBackgroundImage, dx, dy, 0, scale, scale)
 end
 
 return IffySprites

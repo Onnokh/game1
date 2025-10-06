@@ -1,4 +1,5 @@
 local gameController = require("src.core.GameController")
+local sprites = require("src.utils.sprites")
 local fonts = require("src.utils.fonts")
 
 
@@ -14,6 +15,7 @@ local optionHeight = 40
 -- Initialize the menu scene
 function MenuScene.load()
   selectedOption = 1
+  sprites.load()
 end
 
 -- Update the menu scene
@@ -27,13 +29,12 @@ function MenuScene.draw(gameState)
   local height = love.graphics.getHeight()
 
   -- Draw background
-  love.graphics.setColor(0.1, 0.1, 0.2)
-  love.graphics.rectangle("fill", 0, 0, width, height)
+  sprites.drawMenuBackground()
 
   -- Draw title
   love.graphics.setColor(1, 1, 1)
-  love.graphics.setFont(fonts.getUIFont(32))
-  love.graphics.printf("Pixel Top-Down Game", 0, 100, width, "center")
+  love.graphics.setFont(fonts.getUIFont(64))
+  love.graphics.printf("Outpost", 0, 100, width, "center")
 
   -- Draw menu options
   love.graphics.setFont(fonts.getUIFont(24))
