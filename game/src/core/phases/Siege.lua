@@ -18,7 +18,10 @@ function Siege.onEnter(gameState)
     local maxY = 500
     local x = math.random(0, math.max(0, maxX - 1))
     local y = math.random(401, math.max(401, maxY - 1))
-    GameScene.addMonster(x, y)
+    local enemy = GameScene.addMonster(x, y)
+    if enemy and enemy.addTag then
+      enemy:addTag("SiegeAttacker")
+    end
   end
 end
 
@@ -30,7 +33,7 @@ function Siege.update(dt, gameState)
 
   local remaining = 0
   for _, entity in ipairs(ecsWorld.entities or {}) do
-    if entity:hasTag("Skeleton") then
+    if entity:hasTag("SiegeAttacker") then
       remaining = remaining + 1
       if remaining > 0 then break end
     end

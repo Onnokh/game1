@@ -107,6 +107,7 @@ function GameScene.load()
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
+  local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
@@ -116,6 +117,7 @@ function GameScene.load()
   uiWorld:addSystem(MenuSystem.new())
   uiWorld:addSystem(PauseMenuSystem.new())
   uiWorld:addSystem(GameOverSystem.new())
+  uiWorld:addSystem(SiegeCounterSystem.new())
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -291,7 +293,9 @@ function GameScene.addMonster(x, y)
     local skeleton = Skeleton.create(x, y, ecsWorld, physicsWorld)
     table.insert(monsters, skeleton)
     print("Added monster at:", x, y, "Total monsters:", #monsters)
+    return skeleton
   end
+  return nil
 end
 
 -- Handle mouse clicks for debugging
