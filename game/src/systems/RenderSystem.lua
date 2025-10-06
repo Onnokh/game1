@@ -82,6 +82,9 @@ function RenderSystem:draw()
 
     -- Draw attack hit areas for entities that are attacking
     self:drawAttackHitAreas()
+
+    -- Draw oxygen safe zone around reactor
+    self:drawOxygenSafeZone()
 end
 
 ---Draw entity with flash shader
@@ -236,6 +239,60 @@ function RenderSystem:drawAttackHitAreas()
             end
         end
     end
+end
+
+---Draw oxygen safe zone around the reactor
+function RenderSystem:drawOxygenSafeZone()
+    -- Get world reference
+    local world = nil
+    if #self.entities > 0 and self.entities[1]._world then
+        world = self.entities[1]._world
+    end
+
+    if not world then
+        return
+    end
+
+    -- Find the reactor entity
+    local reactor = nil
+    for _, entity in ipairs(world.entities) do
+        if entity:hasTag("Reactor") then
+            reactor = entity
+            break
+        end
+    end
+
+    if not reactor then
+        return
+    end
+
+    -- Get reactor position
+    local position = reactor:getComponent("Position")
+    if not position then
+        return
+    end
+
+    -- Get the safe zone radius from constants
+    local GameConstants = require("src.constants")
+    local safeRadius = GameConstants.REACTOR_SAFE_RADIUS
+
+    -- Calculate reactor center (reactor is 64x64)
+    local reactorCenterX = position.x + 32
+    local reactorCenterY = position.y + 32
+
+    -- Draw the oxygen safe zone as a semi-transparent circle
+    -- Use a cyan/light blue color to indicate "breathable air"
+    love.graphics.setColor(0.3, 0.7, 1.0, 0.15) -- Light blue with low opacity
+    love.graphics.circle("fill", reactorCenterX, reactorCenterY, safeRadius, 64)
+
+    -- Draw a slightly visible border
+    love.graphics.setColor(0.4, 0.8, 1.0, 0.4) -- Brighter blue for border
+    love.graphics.setLineWidth(2)
+    love.graphics.circle("line", reactorCenterX, reactorCenterY, safeRadius, 64)
+
+    -- Reset graphics state
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setLineWidth(1)
 end
 
 return RenderSystem

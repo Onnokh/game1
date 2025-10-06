@@ -54,9 +54,11 @@ function OxygenSystem:isInReactorSafeZone(x, y)
         return false
     end
 
-    -- Calculate distance to reactor
-    local dx = x - reactorPosition.x
-    local dy = y - reactorPosition.y
+    -- Calculate distance to reactor center (reactor sprite is 64x64)
+    local reactorCenterX = reactorPosition.x + 32
+    local reactorCenterY = reactorPosition.y + 32
+    local dx = x - reactorCenterX
+    local dy = y - reactorCenterY
     local distance = math.sqrt(dx * dx + dy * dy)
 
     return distance <= GameConstants.REACTOR_SAFE_RADIUS
