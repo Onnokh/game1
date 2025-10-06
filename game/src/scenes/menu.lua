@@ -9,8 +9,8 @@ local MenuScene = {}
 -- Menu state
 local selectedOption = 1
 local menuOptions = {"Start Game", "Quit"}
-local menuY = 200
-local optionHeight = 40
+local menuY = 300
+local optionHeight = 56
 
 -- Initialize the menu scene
 function MenuScene.load()
@@ -27,33 +27,36 @@ end
 function MenuScene.draw(gameState)
   local width = love.graphics.getWidth()
   local height = love.graphics.getHeight()
+  local marginX = 80
+  local contentWidth = width - marginX * 2
+  local titleY = 120
 
   -- Draw background
   sprites.drawMenuBackground()
 
   -- Draw title
   love.graphics.setColor(1, 1, 1)
-  love.graphics.setFont(fonts.getUIFont(64))
-  love.graphics.printf("Outpost", 0, 100, width, "center")
+  love.graphics.setFont(fonts.getUIFont(128))
+  love.graphics.printf("Outpost", marginX, titleY, contentWidth, "left")
 
   -- Draw menu options
-  love.graphics.setFont(fonts.getUIFont(24))
+  love.graphics.setFont(fonts.getUIFont(36))
   for i, option in ipairs(menuOptions) do
     local y = menuY + (i - 1) * optionHeight
 
     if i == selectedOption then
       love.graphics.setColor(1, 1, 0) -- Yellow for selected
-      love.graphics.printf("> " .. option, 0, y, width, "center")
+      love.graphics.printf("> " .. option, marginX, y, contentWidth, "left")
     else
       love.graphics.setColor(1, 1, 1) -- White for unselected
-      love.graphics.printf(option, 0, y, width, "center")
+      love.graphics.printf(option, marginX, y, contentWidth, "left")
     end
   end
 
   -- Draw instructions
   love.graphics.setColor(0.7, 0.7, 0.7)
   love.graphics.setFont(fonts.getUIFont(16))
-  love.graphics.printf("Use arrow keys to navigate, Enter to select", 0, height - 50, width, "center")
+  love.graphics.printf("Use arrow keys to navigate, Enter to select", marginX, height - 50, contentWidth, "left")
 end
 
 -- Handle key press events
