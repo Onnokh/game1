@@ -33,48 +33,19 @@ function WeaponIndicator.draw(world)
     local healthBarWidth = 640
 
     -- Position to the left of the healthbar
-    local indicatorWidth = 180
-    local indicatorHeight = 80
-    local spacing = 24 -- Space between weapon indicator and healthbar
+    local indicatorWidth = 100
+    local indicatorHeight = 64
+    local spacing = 16 -- Space between weapon indicator and healthbar
 
     local healthBarX = sw/2 - healthBarWidth/2
     local x = healthBarX - indicatorWidth - spacing
     local y = sh - marginY - indicatorHeight
 
     local r, g, b, a = love.graphics.getColor()
-    local prevLineWidth = love.graphics.getLineWidth()
 
-
-    -- Background with slight transparency
+    -- Draw background
     love.graphics.setColor(0.15, 0.15, 0.15, 0.9)
     love.graphics.rectangle("fill", x, y, indicatorWidth, indicatorHeight, 6, 6)
-
-    -- Border
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", x, y, indicatorWidth, indicatorHeight, 6, 6)
-
-    love.graphics.setLineWidth(prevLineWidth)
-
-    -- Draw weapon type label at the top
-    do
-        local label = "WEAPON"
-        local font = fonts.getUIFont(16)
-        local prevFont = love.graphics.getFont()
-        if font then love.graphics.setFont(font) end
-
-        local textWidth = (font and font:getWidth(label)) or 0
-        local tx = x + (indicatorWidth * 0.5) - (textWidth * 0.5)
-        local ty = y + 8
-
-        -- Shadow for readability
-        love.graphics.setColor(0, 0, 0, 0.6)
-        love.graphics.print(label, tx + 1, ty + 1)
-        love.graphics.setColor(0.7, 0.7, 0.7, 1)
-        love.graphics.print(label, tx, ty)
-
-        if prevFont then love.graphics.setFont(prevFont) end
-    end
 
     -- Draw weapon type text
     do
@@ -84,9 +55,8 @@ function WeaponIndicator.draw(world)
         if font then love.graphics.setFont(font) end
 
         local textWidth = (font and font:getWidth(typeText)) or 0
-        local textHeight = (font and font:getHeight()) or 24
         local tx = x + (indicatorWidth * 0.5) - (textWidth * 0.5)
-        local ty = y + 32
+        local ty = y + 16
 
         -- Highlight color based on weapon type
         if currentWeaponData.type == "melee" then
