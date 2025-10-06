@@ -54,6 +54,7 @@ end
 function ShaderManager.loadDefaultShaders()
     ShaderManager.loadShader("flash", "src/shaders/flash_shader.vert", "src/shaders/flash_shader.frag")
     ShaderManager.loadShader("damage_number", "src/shaders/damage_number_shader.vert", "src/shaders/damage_number_shader.frag")
+    ShaderManager.loadShader("vignette", "src/shaders/vignette_shader.vert", "src/shaders/vignette_shader.frag")
 end
 
 return ShaderManager

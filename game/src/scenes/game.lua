@@ -112,6 +112,7 @@ function GameScene.load()
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
+  local SafezoneVignetteSystem = require("src.systems.UISystems.SafezoneVignetteSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
@@ -126,6 +127,7 @@ function GameScene.load()
   uiWorld:addSystem(GameOverSystem.new())
   uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
+  uiWorld:addSystem(SafezoneVignetteSystem.new(ecsWorld))
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do

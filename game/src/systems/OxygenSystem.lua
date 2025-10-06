@@ -12,12 +12,13 @@ function OxygenSystem:update(dt)
     local currentPhase = GameState and GameState.phase
 
     for _, entity in ipairs(self.entities) do
+        local spriteRenderer = entity:getComponent("SpriteRenderer")
         local position = entity:getComponent("Position")
         local oxygen = entity:getComponent("Oxygen")
 
         if position and oxygen then
             -- Check if entity is in the reactor's safe zone
-            local isInSafeZone = self:isInReactorSafeZone(position.x, position.y)
+            local isInSafeZone = self:isInReactorSafeZone(position.x + spriteRenderer.width / 2, position.y + spriteRenderer.height / 2)
 
             if currentPhase == "Siege" then
                 -- During Siege: restore oxygen when in safe zone, decay when outside
