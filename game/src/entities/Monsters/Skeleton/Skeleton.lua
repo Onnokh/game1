@@ -14,6 +14,12 @@ local HealthBar = require("src.components.HealthBar")
 local DropTable = require("src.components.DropTable")
 local DepthSorting = require("src.utils.depthSorting")
 
+local Idle = require("src.entities.Monsters.Skeleton.states.Idle")
+local Wandering = require("src.entities.Monsters.Skeleton.states.Wandering")
+local Chasing = require("src.entities.Monsters.Skeleton.states.Chasing")
+local Attacking = require("src.entities.Monsters.Skeleton.states.Attacking")
+local Dying = require("src.entities.Monsters.Skeleton.states.Dying")
+local Animator = require("src.components.Animator")
 
 ---@class Skeleton
 local Skeleton = {}
@@ -63,15 +69,6 @@ function Skeleton.create(x, y, world, physicsWorld)
     -- Create pathfinding component
     local pathfinding = Pathfinding.new(x, y, SkeletonConfig.WANDER_RADIUS) -- 8 tile wander radius
 
-
-
-    local Idle = require("src.entities.Monsters.Skeleton.states.Idle")
-    local Wandering = require("src.entities.Monsters.Skeleton.states.Wandering")
-    local Chasing = require("src.entities.Monsters.Skeleton.states.Chasing")
-    local Attacking = require("src.entities.Monsters.Skeleton.states.Attacking")
-    local Dying = require("src.entities.Monsters.Skeleton.states.Dying")
-    local Animator = require("src.components.Animator")
-
     local animator = Animator.new("skeleton", SkeletonConfig.IDLE_ANIMATION.frames, SkeletonConfig.IDLE_ANIMATION.fps, SkeletonConfig.IDLE_ANIMATION.loop)
 
     -- Create health component
@@ -83,7 +80,7 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     -- Create drop table component for loot drops (0-3 coins)
     local dropTable = DropTable.new()
-    dropTable:addDrop("coin", 0, 3, 1.0) -- 100% chance to drop 0-3 coins
+    dropTable:addDrop("coin", 1, 3, 1.0) -- 100% chance to drop 1-3 coins
 
      -- Create state machine with priority-based state selection
      local stateMachine = StateMachine.new("idle", {

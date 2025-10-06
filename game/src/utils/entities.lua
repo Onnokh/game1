@@ -2,13 +2,19 @@
 ---Utility functions for working with entities
 local EntityUtils = {}
 
+---Check whether an entity is the Player
+---@param entity Entity|nil
+---@return boolean
+function EntityUtils.isPlayer(entity)
+    return not not (entity and entity.hasTag and entity:hasTag("Player"))
+end
+
 ---Find the player entity in the world
 ---@param world World The ECS world to search in
 ---@return Entity|nil The player entity if found
 function EntityUtils.findPlayer(world)
-    if world then
-        local list = world:getEntitiesWithTag("Player") or {}
-        return list[1]
+    if world and world.getPlayer then
+        return world:getPlayer()
     end
     return nil
 end

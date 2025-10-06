@@ -13,6 +13,8 @@ function World.new()
     self.entities = {}
     self.systems = {}
     self.tagIndex = {}
+    -- Cache for frequently accessed special entities
+    self._cachedPlayer = nil
     return self
 end
 
@@ -61,6 +63,10 @@ function World:_registerTag(entity, tag)
         self.tagIndex[tag] = bucket
     end
     bucket[entity.id] = entity
+    -- Maintain cached special references
+    if tag == "Player" then
+        self._cachedPlayer = entity
+    end
 end
 
 ---Internal: unregister a tag for an entity
@@ -71,6 +77,10 @@ function World:_unregisterTag(entity, tag)
     if bucket then
         bucket[entity.id] = nil
         -- optional cleanup left out for performance
+    end
+    -- Invalidate cache if needed
+    if tag == "Player" and self._cachedPlayer and self._cachedPlayer.id == entity.id then
+        self._cachedPlayer = nil
     end
 end
 
@@ -88,6 +98,10 @@ function World:removeEntity(entity)
             table.remove(self.entities, i)
             break
         end
+    end
+    -- If a cached special entity was removed, clear it
+    if self._cachedPlayer and self._cachedPlayer.id == entity.id then
+        self._cachedPlayer = nil
     end
 end
 
@@ -151,6 +165,20 @@ function World:getEntitiesWithTag(tag)
         end
     end
     return result
+end
+
+---Get the player entity if present and active
+---@return Entity|nil
+function World:getPlayer()
+    -- Fast path: cached and still active
+    if self._cachedPlayer and self._cachedPlayer.active then
+        return self._cachedPlayer
+    end
+    -- Re-resolve from tag index to recover from cache invalidation
+    local list = self:getEntitiesWithTag("Player")
+    local player = list and list[1] or nil
+    self._cachedPlayer = player or nil
+    return player
 end
 
 ---Get all active entities that have all of the given tags

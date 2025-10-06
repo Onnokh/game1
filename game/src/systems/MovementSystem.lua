@@ -13,6 +13,9 @@ function MovementSystem:update(dt)
         local physicsCollision = entity:getComponent("PhysicsCollision")
 
         if position and movement and movement.enabled then
+            -- Apply friction to all entities with movement
+            movement:applyFriction(dt)
+
             -- If using physics colliders, CollisionSystem is responsible for syncing/applying physics.
             -- Only integrate position directly when no colliders are present.
             if (not pathfindingCollision or not pathfindingCollision:hasCollider()) and (not physicsCollision or not physicsCollision:hasCollider()) then

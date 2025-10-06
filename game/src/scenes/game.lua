@@ -28,6 +28,7 @@ local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
 local LootSystem = require("src.systems.LootSystem")
+local CoinPickupSystem = require("src.systems.CoinPickupSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -91,18 +92,20 @@ function GameScene.load()
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
   ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Manage ephemeral attack colliders
   ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
-  ecsWorld:addSystem(LootSystem.new())                 -- Sixth: handle loot drops when entities die
-  ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
-  ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
-  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
-  ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Manage dynamic lights
-  ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
+  ecsWorld:addSystem(LootSystem.new(physicsWorld))     -- Sixth: handle loot drops when entities die
+  ecsWorld:addSystem(CoinPickupSystem.new())          -- Seventh: handle coin pickup collisions
+  ecsWorld:addSystem(FlashEffectSystem.new())         -- Eighth: update flash effects
+  ecsWorld:addSystem(AnimationSystem.new())           -- Ninth: advance animations
+  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Tenth: update particles
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eleventh: update shadow bodies
+  ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Twelfth: manage dynamic lights
+  ecsWorld:addSystem(RenderSystem.new())              -- Thirteenth: render everything
 
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
   local HUDSystem = require("src.systems.UISystems.HUDSystem")
   local PhaseTextSystem = require("src.systems.UISystems.PhaseTextSystem")
+  local CoinCounterSystem = require("src.systems.UISystems.CoinCounterSystem")
   local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
@@ -112,6 +115,7 @@ function GameScene.load()
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+  uiWorld:addSystem(CoinCounterSystem.new())
   uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(MenuSystem.new())

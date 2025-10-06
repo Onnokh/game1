@@ -9,6 +9,10 @@ local DEFAULT_RUN = {
     x = 320,
     y = 192,
     direction = "down"
+  },
+  coins = {
+    total = 0,
+    collectedThisSession = 0
   }
 }
 
@@ -47,6 +51,10 @@ local GameState = {
     height = 24,
     speed = 300,
     direction = DEFAULT_RUN.player.direction
+  },
+  coins = {
+    total = DEFAULT_RUN.coins.total,
+    collectedThisSession = DEFAULT_RUN.coins.collectedThisSession
   },
   phase = DEFAULT_RUN.phase,
   day = DEFAULT_RUN.day
@@ -237,6 +245,41 @@ function GameState.changeScene(sceneName)
       GameState.scenes[sceneName].load()
     end
   end
+end
+
+---Add coins to the player's total
+---@param amount number Number of coins to add
+function GameState.addCoins(amount)
+  GameState.coins.total = GameState.coins.total + amount
+  GameState.coins.collectedThisSession = GameState.coins.collectedThisSession + amount
+end
+
+---Remove coins from the player's total
+---@param amount number Number of coins to remove
+---@return boolean True if enough coins were available to remove
+function GameState.removeCoins(amount)
+  if GameState.coins.total >= amount then
+    GameState.coins.total = GameState.coins.total - amount
+    return true
+  end
+  return false
+end
+
+---Get the total coin count
+---@return number Total number of coins
+function GameState.getTotalCoins()
+  return GameState.coins.total
+end
+
+---Get coins collected this session
+---@return number Coins collected in current session
+function GameState.getCoinsThisSession()
+  return GameState.coins.collectedThisSession
+end
+
+---Reset session coins (keep total, reset session counter)
+function GameState.resetSessionCoins()
+  GameState.coins.collectedThisSession = 0
 end
 
 return GameState

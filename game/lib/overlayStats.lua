@@ -674,18 +674,6 @@ function overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
           love.graphics.setColor(stateColor)
           love.graphics.print(currentState, screenX - 15, textY) -- Full state name
 
-          -- Draw target info to the right of state
-          if target then
-            local targetInfo = "?"
-            if target:hasTag("Player") then
-              targetInfo = "p"
-            elseif target:hasTag("Reactor") then
-              targetInfo = "r"
-            end
-
-            love.graphics.setColor(0.7, 0.7, 0.7, 1) -- Gray for target info
-            love.graphics.print("->" .. targetInfo, screenX + 15, textY)
-          end
         end
       end
     end

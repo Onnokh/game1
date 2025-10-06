@@ -12,6 +12,10 @@ local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
 
+local Idle = require("src.entities.Player.states.Idle")
+local Moving = require("src.entities.Player.states.Moving")
+local Running = require("src.entities.Player.states.Running")
+local Dash = require("src.entities.Player.states.Dash")
 
 ---@class Player
 local Player = {}
@@ -51,8 +55,8 @@ function Player.create(x, y, world, physicsWorld)
     pathfindingCollision.friction = PlayerConfig.COLLIDER_FRICTION
     pathfindingCollision.linearDamping = PlayerConfig.COLLIDER_DAMPING
 
-    -- PhysicsCollision component (for physics interactions only) - use sprite size
-    local physicsCollision = PhysicsCollision.new(spriteRenderer.width, spriteRenderer.height, "dynamic", 0, 0, colliderShape)
+    -- PhysicsCollision component (for physics interactions only) - use sprite size, force rectangle shape
+    local physicsCollision = PhysicsCollision.new(12, 16, "dynamic", 6, 6, "rectangle")
     physicsCollision.restitution = PlayerConfig.COLLIDER_RESTITUTION
     physicsCollision.friction = PlayerConfig.COLLIDER_FRICTION
     physicsCollision.linearDamping = PlayerConfig.COLLIDER_DAMPING
@@ -89,18 +93,13 @@ function Player.create(x, y, world, physicsWorld)
         end
     end)
 
-    local Idle = require("src.entities.Player.states.Idle")
-    local Moving = require("src.entities.Player.states.Moving")
-    local Running = require("src.entities.Player.states.Running")
-    local Dash = require("src.entities.Player.states.Dash")
-
     stateMachine:addState("idle", Idle.new())
     stateMachine:addState("moving", Moving.new())
     stateMachine:addState("running", Running.new())
     stateMachine:addState("dash", Dash.new())
 
     -- Create attack component
-    local attack = Attack.new(8, 15, 0.5, "melee", 6) -- damage, range, cooldown, type, knockback
+    local attack = Attack.new(32, 15, 0.5, "melee", 6) -- damage, range, cooldown, type, knockback
 
     -- Create health component
     local health = Health.new(100) -- 100 max health

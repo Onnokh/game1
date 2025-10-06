@@ -2,6 +2,7 @@
 local HealthBarHUD = {}
 local EventBus = require("src.utils.EventBus")
 local fonts = require("src.utils.fonts")
+local EntityUtils = require("src.utils.entities")
 
 -- Track latest player damage for HUD text
 local lastPlayerDamage = { amount = 0, timestamp = -math.huge }
@@ -10,7 +11,7 @@ local lastPlayerDamage = { amount = 0, timestamp = -math.huge }
 EventBus.subscribe("entityDamaged", function(payload)
     local target = payload and payload.target or nil
     local amount = payload and payload.amount or 0
-    if target and target.hasTag and target:hasTag("Player") then
+    if EntityUtils.isPlayer(target) then
         lastPlayerDamage.amount = amount
         lastPlayerDamage.timestamp = love.timer.getTime()
     end
@@ -23,12 +24,7 @@ function HealthBarHUD.draw(world)
         return
     end
 
-    -- Find player
-    local player = nil
-    local list = world:getEntitiesWithTag("Player") or nil
-    if list and #list > 0 then
-        player = list[1]
-    end
+    local player = world.getPlayer and world:getPlayer() or nil
     if not player then
         return
     end

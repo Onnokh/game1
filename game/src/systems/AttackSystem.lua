@@ -38,7 +38,7 @@ function AttackSystem:shouldAttack(entity, currentTime)
     end
 
     -- Check if this is the player entity and handle input
-    if entity.hasTag and entity:hasTag("Player") then
+    if EntityUtils.isPlayer(entity) then
         -- Get input state from game state
         local GameState = require("src.core.GameState")
         if GameState and GameState.input then
@@ -64,7 +64,7 @@ function AttackSystem:performAttack(entity, position, attack, physicsCollision, 
     end
 
     -- Calculate attack direction for player entities
-    if entity.hasTag and entity:hasTag("Player") then
+    if EntityUtils.isPlayer(entity) then
         self:calculatePlayerAttackDirection(entity, position, attack)
     end
 
@@ -178,7 +178,7 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
         local knockbackX, knockbackY = 0, 0
 
         -- For directional attacks, use the attack direction for knockback
-        if attacker.hasTag and attacker:hasTag("Player") and attack.attackDirectionX ~= 0 and attack.attackDirectionY ~= 0 then
+        if EntityUtils.isPlayer(attacker) and attack.attackDirectionX ~= 0 and attack.attackDirectionY ~= 0 then
             -- Use the attack direction (normalized)
             local directionLength = math.sqrt(attack.attackDirectionX * attack.attackDirectionX + attack.attackDirectionY * attack.attackDirectionY)
             if directionLength > 0 then

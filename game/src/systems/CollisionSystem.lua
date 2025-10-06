@@ -28,10 +28,6 @@ function CollisionSystem.new(physicsWorld)
                         if otherU and type(otherU) == "table" and otherU.entity then
                             otherEntity = otherU.entity
                         end
-                        -- Fallback: walk ECS via body/fixture mapping if needed
-                        if not otherEntity and otherFixture then
-                            -- No strict mapping available; leave to AttackSystem via queue if desired
-                        end
                         if otherEntity and otherEntity ~= attackComp.attacker and not attackComp.hitEntities[otherEntity.id] then
                             -- Enqueue damage
                             local DamageQueue = require("src.DamageQueue")
@@ -42,6 +38,7 @@ function CollisionSystem.new(physicsWorld)
                 end
                 if ua and type(ua) == "table" and ua.kind == "attack" then handle(a, b) end
                 if ub and type(ub) == "table" and ub.kind == "attack" then handle(b, a) end
+
             end,
             nil, nil, nil
         )
