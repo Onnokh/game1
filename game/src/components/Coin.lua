@@ -1,6 +1,7 @@
 ---@class Coin
 ---@field value number The value of this coin
 ---@field attractorRadius number The radius at which this coin starts being attracted to the player
+---@field spawnTime number The time when this coin was created
 local Coin = {}
 Coin.__index = Coin
 
@@ -14,6 +15,7 @@ function Coin.new(value, attractorRadius)
 
     self.value = value or 1
     self.attractorRadius = attractorRadius or 64 -- Default attraction radius of 64 pixels
+    self.spawnTime = love.timer.getTime() -- Record when this coin was created
 
     return self
 end
