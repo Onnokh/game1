@@ -79,6 +79,10 @@ function GameController.togglePause()
   GameController.paused = not GameController.paused
 end
 
+function GameController.resetPauseState()
+  GameController.paused = false
+end
+
 -- Input delegation (phases may intercept if needed, but systems stay in scenes)
 function GameController.keypressed(key)
   -- Controller-level bindings

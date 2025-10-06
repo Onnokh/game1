@@ -175,7 +175,16 @@ end
 ---@param sceneName string Name of the scene to change to
 function GameState.changeScene(sceneName)
   if GameState.scenes[sceneName] then
+    -- Cleanup current scene before switching
+    local currentScene = GameState.scenes[GameState.currentScene]
+    if currentScene and currentScene.cleanup then
+      currentScene.cleanup()
+    end
+
+    -- Switch to new scene
     GameState.currentScene = sceneName
+
+    -- Load new scene
     if GameState.scenes[sceneName].load then
       GameState.scenes[sceneName].load()
     end

@@ -1,5 +1,7 @@
 local overlayStats = require("lib.overlayStats")
 local GameController = require("src.core.GameController")
+local gameState = require("src.core.GameState")
+
 _G.gameController = GameController
 
 -- Load Lovebird for debugging
@@ -31,7 +33,6 @@ function love.draw()
   end
 
   -- Pass camera position and scale for world space gridlines
-  local gameState = require("src.core.GameState")
   overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale)
 end
 

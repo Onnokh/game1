@@ -1,3 +1,7 @@
+local gameController = require("src.core.GameController")
+local fonts = require("src.utils.fonts")
+
+
 ---@class MenuScene
 local MenuScene = {}
 
@@ -28,10 +32,11 @@ function MenuScene.draw(gameState)
 
   -- Draw title
   love.graphics.setColor(1, 1, 1)
-  love.graphics.setFont(love.graphics.newFont(32))
+  love.graphics.setFont(fonts.getUIFont(32))
   love.graphics.printf("Pixel Top-Down Game", 0, 100, width, "center")
+
   -- Draw menu options
-  love.graphics.setFont(love.graphics.newFont(24))
+  love.graphics.setFont(fonts.getUIFont(24))
   for i, option in ipairs(menuOptions) do
     local y = menuY + (i - 1) * optionHeight
 
@@ -46,7 +51,7 @@ function MenuScene.draw(gameState)
 
   -- Draw instructions
   love.graphics.setColor(0.7, 0.7, 0.7)
-  love.graphics.setFont(love.graphics.newFont(16))
+  love.graphics.setFont(fonts.getUIFont(16))
   love.graphics.printf("Use arrow keys to navigate, Enter to select", 0, height - 50, width, "center")
 end
 
@@ -64,13 +69,20 @@ function MenuScene.handleKeyPressed(key, gameState)
     end
   elseif key == "return" or key == "space" then
     if selectedOption == 1 then
-      -- Start game
+      -- Start game - ensure we're not paused
+      gameController.resetPauseState()
       gameState.changeScene("game")
     elseif selectedOption == 2 then
       -- Quit
       love.event.quit()
     end
   end
+end
+
+-- Cleanup the menu scene when switching away
+function MenuScene.cleanup()
+  -- Menu scene doesn't need much cleanup, just reset state
+  selectedOption = 1
 end
 
 return MenuScene

@@ -171,6 +171,17 @@ function Star:Remove()
 
 	self.Transform:SetParent(nil)
 
+	-- Properly release canvases to prevent memory leaks
+	if self.Canvas then
+		self.Canvas:release()
+		self.Canvas = nil
+	end
+
+	if self.ShadowCanvas then
+		self.ShadowCanvas:release()
+		self.ShadowCanvas = nil
+	end
+
 end
 
 return Star

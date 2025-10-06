@@ -85,6 +85,18 @@ function LightSystem:update(dt)
     end
 end
 
+---Cleanup method to remove all lights when system is destroyed
+function LightSystem:cleanup()
+    if not self or not self.entities then return end
+    for _, entity in ipairs(self.entities) do
+        local lightComp = entity:getComponent("Light")
+        if lightComp and lightComp.lightRef then
+            lightComp.lightRef:Remove()
+            lightComp.lightRef = nil
+        end
+    end
+end
+
 return LightSystem
 
 

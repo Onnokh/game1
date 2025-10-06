@@ -54,11 +54,19 @@ GameScene.monsters = monsters
 
 -- Initialize the game scene
 function GameScene.load()
+  -- Debug: Show canvas count at start of load
+  local canvasCountStart = love.graphics.getStats().canvases
+  print("GameScene: Canvas count at start of load:", canvasCountStart)
+
   -- Load sprites with Iffy
+  local canvasCountAfterSprites = love.graphics.getStats().canvases
+  print("GameScene: Canvas count after sprites load:", canvasCountAfterSprites)
   sprites.load()
 
   -- Load shaders
   ShaderManager.loadDefaultShaders()
+  local canvasCountAfterShaders = love.graphics.getStats().canvases
+  print("GameScene: Canvas count after shaders load:", canvasCountAfterShaders)
 
   -- Initialize ECS world
   ecsWorld = World.new()
@@ -88,7 +96,6 @@ function GameScene.load()
   ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
   ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Manage dynamic lights
   ecsWorld:addSystem(RenderSystem.new())              -- Eleventh: render everything
-  -- Damage numbers are now handled by UISystems.DamagePopupSystem
 
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
@@ -191,6 +198,7 @@ end
 
 -- Update the game scene
 function GameScene.update(dt, gameState)
+
   -- Ensure ECS world is initialized
   if not ecsWorld then
     ecsWorld = World.new()
@@ -386,6 +394,104 @@ function GameScene.draw(gameState)
     end
     love.graphics.pop()
   end
+end
+
+-- Cleanup the game scene when switching away
+function GameScene.cleanup()
+  print("GameScene: Cleaning up...")
+
+  -- Debug: Show canvas count before cleanup
+  local canvasCount = love.graphics.getStats().canvases
+  print("GameScene: Canvas count before cleanup:", canvasCount)
+
+  -- Clear monsters array
+  monsters = {}
+
+  -- Clear border colliders
+  borderColliders = {}
+
+  -- Destroy physics world (this will destroy all bodies, shapes, etc.)
+  if physicsWorld then
+    physicsWorld:destroy()
+    physicsWorld = nil
+    GameScene.physicsWorld = nil
+  end
+
+  -- Cleanup light world
+  if lightWorld then
+    -- Remove all lights from the light world to clean up their canvases
+    if lightWorld.Lights then
+      local lightCount = 0
+      for id, light in pairs(lightWorld.Lights) do
+        if light and light.Remove then
+          light:Remove()
+          lightCount = lightCount + 1
+        end
+      end
+    end
+
+    -- Try to explicitly release the LightWorld canvas
+    if lightWorld.Canvas then
+      lightWorld.Canvas:release()
+      print("GameScene: Released LightWorld canvas")
+    end
+    lightWorld = nil
+    GameScene.lightWorld = nil
+  end
+
+  -- Clear ECS world
+  if ecsWorld then
+    -- Try to cleanup ECS systems that might have canvases
+    for _, system in ipairs(ecsWorld.systems) do
+      if system.cleanup then
+        system.cleanup()
+      end
+    end
+    ecsWorld = nil
+    GameScene.ecsWorld = nil
+  end
+
+  -- Clear UI world
+  if uiWorld then
+    -- Try to cleanup UI systems that might have canvases
+    for _, system in ipairs(uiWorld.systems) do
+      if system.cleanup then
+        system.cleanup()
+      end
+    end
+    uiWorld = nil
+  end
+
+  -- Clear entity references
+  playerEntity = nil
+  testBoxEntity = nil
+  testBoxOverlayRegistered = false
+  playerCollider = nil
+  GameScene.playerCollider = nil
+  GameScene.borderColliders = nil
+  GameScene.monsters = nil
+
+  -- Force Love2D to reset graphics state and release canvases
+  love.graphics.reset()
+
+  -- Force garbage collection to clean up any remaining references
+  collectgarbage("collect")
+
+  -- Debug: Show canvas count after cleanup
+  local canvasCountAfter = love.graphics.getStats().canvases
+  print("GameScene: Canvas count after cleanup:", canvasCountAfter)
+
+  -- Debug: Show comprehensive graphics stats
+  local stats = love.graphics.getStats()
+  print("GameScene: Graphics stats after cleanup:")
+  print("  - Canvases:", stats.canvases)
+  print("  - Images:", stats.images)
+  print("  - Textures:", stats.textures)
+  print("  - Draw calls:", stats.drawcalls)
+  print("  - Canvas switches:", stats.canvasswitches)
+  print("  - Shader switches:", stats.shaderswitches)
+
+  print("GameScene: Cleanup complete")
 end
 
 return GameScene

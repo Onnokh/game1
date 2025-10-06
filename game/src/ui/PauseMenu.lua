@@ -1,6 +1,9 @@
----@class PauseMenu: UIElement
+local gameController = require("src.core.GameController")
+local gameState = require("src.core.GameState")
 local UIElement = require("src.ui.UIElement")
 local fonts = require("src.utils.fonts")
+
+---@class PauseMenu: UIElement
 
 local PauseMenu = setmetatable({}, { __index = UIElement })
 PauseMenu.__index = PauseMenu
@@ -22,7 +25,8 @@ function PauseMenu:handleMouseClick(x, y, button)
         if x >= self.buttonBounds.x and x <= self.buttonBounds.x + self.buttonBounds.width and
            y >= self.buttonBounds.y and y <= self.buttonBounds.y + self.buttonBounds.height then
             -- Button was clicked - go back to menu
-            local gameState = require("src.core.GameState")
+            -- Reset pause state before changing scene
+            gameController.resetPauseState()
             gameState.changeScene("menu")
             return true
         end

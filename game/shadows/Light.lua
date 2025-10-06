@@ -59,6 +59,14 @@ end
 
 function Light:DestroyCanvas()
 
+	-- Properly release canvases before setting to nil
+	if self.Canvas then
+		self.Canvas:release()
+	end
+	if self.ShadowCanvas then
+		self.ShadowCanvas:release()
+	end
+
 	self.Canvas = nil
 	self.ShadowCanvas = nil
 	self.Shapes = nil
@@ -472,6 +480,17 @@ function Light:Remove()
 
 		self.Transform:SetParent(nil)
 
+	end
+
+	-- Properly release canvases to prevent memory leaks
+	if self.Canvas then
+		self.Canvas:release()
+		self.Canvas = nil
+	end
+
+	if self.ShadowCanvas then
+		self.ShadowCanvas:release()
+		self.ShadowCanvas = nil
 	end
 
 end
