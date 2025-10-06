@@ -17,7 +17,7 @@ function PauseMenuSystem:update(dt, gameState)
     -- Update widget visibility based on game pause state
     if self.widget then
         local gameController = require("src.core.GameController")
-        self.widget.visible = gameController.paused
+        self.widget.visible = gameController.paused and not gameController.gameOver
         self._wasPaused = gameController.paused
     end
 end

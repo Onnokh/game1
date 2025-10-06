@@ -19,13 +19,10 @@ game/
 ├── runtime/                   -- Platform-specific native libraries and dependencies
 │   └── https/                 -- HTTPS client library binaries for different operating systems
 │
-├── shadows/                   -- Dynamic shadow rendering system for atmospheric lighting
-│   ├── Room/                  -- Room-based shadow casting (circles, rectangles, polygons)
-│   └── ShadowShapes/          -- Individual shadow shape implementations (normal, height, image)
-│
 ├── resources/                 -- Game assets and media files
 │   ├── character/             -- Player character sprites, animations, and sprite sheets
 │   ├── font/                  -- Custom fonts for UI text rendering
+│   ├── menu/                  -- Menu backgrounds and UI imagery
 │   ├── reactor/               -- Reactor entity graphics and animation frames
 │   ├── skeleton/              -- Skeleton enemy sprites and visual assets
 │   └── tileset/               -- Tile graphics for world map rendering (grass, water, paths, cliffs)
@@ -33,9 +30,11 @@ game/
 └── src/                       -- Core game source code
     ├── components/            -- ECS data components (Position, Health, Movement, Collision, etc.)
     ├── core/                  -- Entity-Component-System framework (Entity, World, System base classes)
+    │   └── phases/            -- Game phases and state progression (Discovery, Siege)
     ├── entities/              -- Game object definitions and configurations
     │   ├── Monsters/          -- Enemy entity implementations with AI states and behaviors
-    │   └── Player/            -- Player entity with movement states and input handling
+    │   ├── Player/            -- Player entity with movement states and input handling
+    │   └── Reactor/           -- Reactor entity implementation
     ├── scenes/                -- Game state management (menu screens, gameplay, transitions)
     ├── shaders/               -- GLSL shaders for visual effects (damage numbers, flash effects)
     ├── systems/               -- ECS logic systems that process components and update entities

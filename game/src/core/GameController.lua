@@ -1,5 +1,6 @@
-local overlayStats = require("lib.overlayStats")
 local GameState = require("src.core.GameState")
+local EventBus = require("src.utils.EventBus")
+local Reactor = require("src.entities.Reactor.Reactor")
 
 ---@class GameController
 ---@field currentPhase string
@@ -8,7 +9,8 @@ local GameState = require("src.core.GameState")
 local GameController = {
   currentPhase = "Discovery", -- default phase
   phases = {},
-  paused = false
+  paused = false,
+  gameOver = false
 }
 
 ---Initialize controller, game state, and phases
@@ -27,6 +29,17 @@ function GameController.load()
     GameState.phase = GameController.currentPhase
     GameController.phases[GameController.currentPhase].onEnter(GameState)
   end
+
+  -- Subscribe once for game-over trigger on reactor death
+  EventBus.subscribe("entityDied", function(payload)
+    local entity = payload and payload.entity
+    if entity and entity.isReactor then
+      -- Ensure reactor-specific visual shutdown runs
+      Reactor.handleDeath(entity)
+      -- Then enter game-over state via controller
+      GameController.setGameOver()
+    end
+  end)
 
 end
 
@@ -76,19 +89,61 @@ function GameController.setPaused(paused)
 end
 
 function GameController.togglePause()
+  if GameController.gameOver then
+    return
+  end
   GameController.paused = not GameController.paused
 end
 
 function GameController.resetPauseState()
   GameController.paused = false
+  GameController.gameOver = false
+end
+
+function GameController.setGameOver()
+  GameController.gameOver = true
+  GameController.setPaused(true)
+end
+
+-- Restart the current game session (reload the current scene and reset pause/gameOver)
+function GameController.restartGame()
+  -- Clear pause/game-over and reset phase
+  GameController.gameOver = false
+  GameController.paused = false
+  GameController.currentPhase = "Discovery"
+  -- Update phase overlay state
+  local phase = GameController.phases and GameController.phases[GameController.currentPhase]
+  if phase and phase.onEnter then
+    GameState.phase = GameController.currentPhase
+    phase.onEnter(GameState)
+  end
+  -- Reload the game scene cleanly
+  local GS = require("src.core.GameState")
+  if GS and GS.resetRunState then GS.resetRunState() end
+  if GS and GS.changeScene then
+    GS.changeScene("game")
+  end
+end
+
+-- Back to main menu scene
+function GameController.backToMenu()
+  GameController.gameOver = false
+  GameController.paused = false
+  local GameState = require("src.core.GameState")
+  if GameState and GameState.changeScene then
+    GameState.changeScene("menu")
+  end
 end
 
 -- Input delegation (phases may intercept if needed, but systems stay in scenes)
 function GameController.keypressed(key)
   -- Controller-level bindings
   if key == "escape" then
-    GameController.togglePause()
-    return true
+    if not GameController.gameOver then
+      GameController.togglePause()
+      return true
+    end
+    return true -- consume ESC during game over
   elseif key == "1" then
     GameController.switchPhase("Discovery")
     return true
@@ -99,8 +154,4 @@ function GameController.keypressed(key)
   GameState.handleKeyPressed(key)
 end
 
--- keyreleased/mousepressed/mousereleased are handled directly in main.lua via GameState
-
 return GameController
-
-

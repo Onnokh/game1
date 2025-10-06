@@ -103,6 +103,7 @@ function GameScene.load()
   local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
+  local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
@@ -111,6 +112,7 @@ function GameScene.load()
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(MenuSystem.new())
   uiWorld:addSystem(PauseMenuSystem.new())
+  uiWorld:addSystem(GameOverSystem.new())
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do

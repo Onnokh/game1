@@ -73,9 +73,8 @@ function MenuScene.handleKeyPressed(key, gameState)
     end
   elseif key == "return" or key == "space" then
     if selectedOption == 1 then
-      -- Start game - ensure we're not paused
-      gameController.resetPauseState()
-      gameState.changeScene("game")
+      -- Start a fresh run
+      gameController.restartGame()
     elseif selectedOption == 2 then
       -- Quit
       love.event.quit()

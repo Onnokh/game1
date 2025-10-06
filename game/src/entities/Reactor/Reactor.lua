@@ -56,20 +56,7 @@ function Reactor.create(x, y, world, physicsWorld)
         world:addEntity(reactor)
     end
 
-    -- Subscribe to entity death events to handle reactor death
-    Reactor.subscribeToDeathEvents()
-
     return reactor
-end
-
----Subscribe to death events to handle reactor death
-function Reactor.subscribeToDeathEvents()
-    EventBus.subscribe("entityDied", function(payload)
-        local entity = payload.entity
-        if entity and entity.isReactor then
-            Reactor.handleDeath(entity)
-        end
-    end)
 end
 
 ---Handle reactor death - turn off light and add visual effects

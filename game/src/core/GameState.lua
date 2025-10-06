@@ -1,6 +1,20 @@
 local GameConstants = require("src.constants")
 local gamera = require("lib.gamera")
 
+-- Single source of truth for a fresh run's starting values
+local DEFAULT_RUN = {
+  phase = "Discovery",
+  day = 1,
+  player = {
+    x = 320,
+    y = 192,
+    direction = "down"
+  }
+}
+
+-- Utility: deep copy a table (handles nested tables)
+local TableUtils = require("src.utils.table")
+
 ---@class GameState
 ---@field currentScene string The current active scene
 ---@field scenes table Table of all available scenes
@@ -27,20 +41,26 @@ local GameState = {
   },
   camera = nil, -- Will be initialized with gamera
   player = {
-    x = 320,  -- Tile (10, 10)
-    y = 192,  -- Tile (10, 10)
+    x = DEFAULT_RUN.player.x,  -- Tile (10, 10)
+    y = DEFAULT_RUN.player.y,  -- Tile (10, 10)
     width = 16,
     height = 24,
     speed = 300,
-    direction = "down"
+    direction = DEFAULT_RUN.player.direction
   },
-  phase = "Discovery",
-  day = 1
+  phase = DEFAULT_RUN.phase,
+  day = DEFAULT_RUN.day
 }
 
 ---Initialize the game state
 function GameState.load()
-  -- Set values from constants (using local variables to avoid linter issues)
+  -- Start from a fresh deep copy of defaults for a clean run
+  local runCopy = TableUtils.deepCopy(DEFAULT_RUN)
+  GameState.player = runCopy.player
+  GameState.phase = runCopy.phase
+  GameState.day = runCopy.day
+
+  -- Apply runtime constants to the copied player block
   local playerWidth = GameConstants.PLAYER_WIDTH
   local playerHeight = GameConstants.PLAYER_HEIGHT
   local playerSpeed = GameConstants.PLAYER_SPEED
@@ -66,6 +86,32 @@ function GameState.load()
   -- Load the current scene
   if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].load then
     GameState.scenes[GameState.currentScene].load()
+  end
+end
+
+---Reset run-specific state to start a fresh game
+function GameState.resetRunState()
+  -- Make a deep copy of DEFAULT_RUN and overwrite run-specific fields
+  local runCopy = TableUtils.deepCopy(DEFAULT_RUN)
+
+  for k, v in pairs(runCopy) do
+    GameState[k] = v
+  end
+
+  -- Ensure persistent systems are not overwritten and are reset
+  GameState.input = GameState.input or {}
+  for k in pairs(GameState.input) do
+    GameState.input[k] = false
+  end
+
+  -- Reapply constants for player block
+  GameState.player.width = GameConstants.PLAYER_WIDTH
+  GameState.player.height = GameConstants.PLAYER_HEIGHT
+  GameState.player.speed = GameConstants.PLAYER_SPEED
+
+  -- Recenter camera
+  if GameState.camera then
+    GameState.camera:setPosition(GameState.player.x, GameState.player.y)
   end
 end
 
