@@ -13,6 +13,7 @@ local Health = require("src.components.Health")
 local HealthBar = require("src.components.HealthBar")
 local DropTable = require("src.components.DropTable")
 local DepthSorting = require("src.utils.depthSorting")
+local GroundShadow = require("src.components.GroundShadow")
 
 local Idle = require("src.entities.Monsters.Skeleton.states.Idle")
 local Wandering = require("src.entities.Monsters.Skeleton.states.Wandering")
@@ -77,6 +78,7 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     -- Create health bar component (16x2 pixels, positioned above skeleton)
     local healthBar = HealthBar.new(16, 2, 0)
+    local groundShadow = GroundShadow.new({ alpha = 0.3, widthFactor = 0.9, heightFactor = 0.2, offsetY = 0 })
 
     -- Create drop table component for loot drops (0-3 coins)
     local dropTable = DropTable.new()
@@ -107,6 +109,7 @@ function Skeleton.create(x, y, world, physicsWorld)
     skeleton:addComponent("HealthBar", healthBar)
     skeleton:addComponent("Attack", attack)
     skeleton:addComponent("DropTable", dropTable)
+    skeleton:addComponent("GroundShadow", groundShadow)
 
     if world then
         world:addEntity(skeleton)

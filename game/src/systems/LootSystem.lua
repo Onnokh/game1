@@ -56,7 +56,7 @@ function LootSystem:dropLoot(entity, dropTable, position)
             for i = 1, drop.amount do
                 -- Calculate random direction and distance for positioning
                 local angle = math.random() * 2 * math.pi -- Random angle in radians
-                local distance = math.random(8, 24) -- Distance from entity center
+                local distance = math.random(0, 4) -- Distance from entity center
 
                 -- Calculate spawn position
                 local coinX = position.x + math.cos(angle) * distance

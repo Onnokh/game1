@@ -19,6 +19,7 @@ local MovementSystem = require("src.systems.MovementSystem")
 local PathfindingSystem = require("src.systems.PathfindingSystem")
 local RenderSystem = require("src.systems.RenderSystem")
 local AnimationSystem = require("src.systems.AnimationSystem")
+local GroundShadowSystem = require("src.systems.GroundShadowSystem")
 local ShadowSystem = require("src.systems.ShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
@@ -99,7 +100,8 @@ function GameScene.load()
   ecsWorld:addSystem(ParticleRenderSystem.new())      -- Tenth: update particles
   ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eleventh: update shadow bodies
   ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Twelfth: manage dynamic lights
-  ecsWorld:addSystem(RenderSystem.new())              -- Thirteenth: render everything
+  ecsWorld:addSystem(GroundShadowSystem.new())        -- Thirteenth: draw ground shadows beneath sprites
+  ecsWorld:addSystem(RenderSystem.new())              -- Fourteenth: render sprites and debug visuals
 
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")

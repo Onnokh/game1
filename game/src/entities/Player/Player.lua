@@ -8,6 +8,7 @@ local StateMachine = require("src.components.StateMachine")
 local Attack = require("src.components.Attack")
 local Health = require("src.components.Health")
 local ParticleSystem = require("src.components.ParticleSystem")
+local GroundShadow = require("src.components.GroundShadow")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -106,6 +107,7 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
+    local groundShadow = GroundShadow.new({ alpha = .5, widthFactor = 0.8, heightFactor = 0.18, offsetY = 0 })
 
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
@@ -117,6 +119,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("ParticleSystem", particleSystem)
+    playerEntity:addComponent("GroundShadow", groundShadow)
 
     if world then
         world:addEntity(playerEntity)

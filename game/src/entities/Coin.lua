@@ -7,6 +7,7 @@ local Coin = require("src.components.Coin")
 local Animator = require("src.components.Animator")
 local Movement = require("src.components.Movement")
 local DepthSorting = require("src.utils.depthSorting")
+local GroundShadow = require("src.components.GroundShadow")
 
 ---@class Coin
 local CoinEntity = {}
@@ -39,8 +40,11 @@ function CoinEntity.create(x, y, value, world, physicsWorld, velocityX, velocity
     spriteRenderer.scaleX = 0.75 -- Scale down to 8x8 visual size
     spriteRenderer.scaleY = 0.75 -- Scale down to 8x8 visual size
 
-    -- Create pathfinding collision for physics/movement (as sensor so it doesn't block movement)
-    local pathfindingCollision = PathfindingCollision.new(4, 4, "dynamic", spriteRenderer.width / 2, spriteRenderer.height / 2, "circle")
+    -- Small subtle ground shadow for coin
+    local groundShadow = GroundShadow.new({ alpha = .75, widthFactor = 0.8, heightFactor = 0.18, offsetY = 2 })
+
+    -- Create pathfinding collision to match physics collision footprint (8x8 circle at offset 2,4)
+    local pathfindingCollision = PathfindingCollision.new(8, 8, "dynamic", 2, 4, "circle")
 
     -- Create physics collision sensor for pickup detection
     local physicsCollision = PhysicsCollision.new(8, 8, "sensor", 2, 4, "circle")
@@ -59,6 +63,7 @@ function CoinEntity.create(x, y, value, world, physicsWorld, velocityX, velocity
     coin:addComponent("Position", position)
     coin:addComponent("Movement", movement)
     coin:addComponent("SpriteRenderer", spriteRenderer)
+    coin:addComponent("GroundShadow", groundShadow)
     coin:addComponent("Animator", Animator.new("coin", {1, 2, 3, 4, 5, 6, 7, 8, 9}, 8, true))
     coin:addComponent("PathfindingCollision", pathfindingCollision)
     coin:addComponent("PhysicsCollision", physicsCollision)

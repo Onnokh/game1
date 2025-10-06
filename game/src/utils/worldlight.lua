@@ -1,11 +1,11 @@
 local LightWorld = require "shadows.LightWorld"
 
 local lw = nil
-local ambient = { r = 70, g = 90, b = 140, a = 255 }
+local ambient = { r = 255, g = 240, b = 255, a = 255 }
 local tween = {
   active = false,
-  start = { r = 70, g = 90, b = 140, a = 255 },
-  target = { r = 70, g = 90, b = 140, a = 255 },
+  start = { r = 255, g = 240, b = 255, a = 255 },
+  target = { r = 255, g = 240, b = 255, a = 255 },
   elapsed = 0,
   duration = 0
 }
