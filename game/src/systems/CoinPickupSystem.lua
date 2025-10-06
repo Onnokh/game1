@@ -36,9 +36,21 @@ function CoinPickupSystem:update(dt)
                 local coinValue = coinComponent:getValue()
                 GameState.addCoins(coinValue)
 
+                -- Determine a good screen-space anchor for the pickup popup
+                local position = coinEntity:getComponent("Position")
+                local sprite = coinEntity:getComponent("SpriteRenderer")
+                local anchorX = position and position.x or 0
+                local anchorY = position and position.y or 0
+                if sprite then
+                    local w = sprite.width or 16
+                    anchorX = anchorX + w * 0.5
+                end
+
                 EventBus.emit("coinPickedUp", {
                     amount = coinValue,
-                    total = GameState.getTotalCoins()
+                    total = GameState.getTotalCoins(),
+                    worldX = anchorX,
+                    worldY = anchorY,
                 })
 
                 if self.world then
