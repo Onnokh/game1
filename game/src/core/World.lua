@@ -132,6 +132,9 @@ function World:update(dt)
     for _, system in ipairs(self.systems) do
         system:update(dt)
     end
+
+    -- Note: Entities are responsible for calling world:removeEntity() when they need to be removed
+    -- Bullets call it immediately on collision, Skeletons call it after death animation completes
 end
 
 ---Draw all systems in the world

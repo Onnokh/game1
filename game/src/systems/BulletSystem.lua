@@ -49,66 +49,40 @@ function BulletSystem:moveBullet(position, bullet, physicsCollision, dt)
 end
 
 ---Check for collisions between bullet and other entities
+---This uses flags set by the physics collision callbacks in CollisionSystem
 ---@param bulletEntity Entity The bullet entity
 ---@param position Position The bullet's position
 ---@param bullet Bullet The bullet component
 ---@param physicsCollision PhysicsCollision The bullet's physics collision
 function BulletSystem:checkCollisions(bulletEntity, position, bullet, physicsCollision)
-    local world = bulletEntity._world
-    if not world then return end
+    -- Check if bullet hit a static object (wall)
+    -- Bullets are ALWAYS removed when hitting walls, regardless of piercing
+    if bulletEntity._hitStatic then
+        self:removeBullet(bulletEntity, physicsCollision)
+        return
+    end
 
-    -- Get all entities with Health component (potential targets)
-    local potentialTargets = world:getEntitiesWith({"Health", "PhysicsCollision"})
-
-    for _, target in ipairs(potentialTargets) do
-        -- Don't hit the owner, dead entities, or already-hit entities
-        if target.id ~= (bullet.owner and bullet.owner.id or -1)
-           and not target.isDead
-           and not bullet:hasHitEntity(target.id) then
-
-            local targetPhysicsCollision = target:getComponent("PhysicsCollision")
-
-            if targetPhysicsCollision and targetPhysicsCollision:hasCollider() then
-                -- Check if bullet collider overlaps with target collider
-                if self:checkOverlap(physicsCollision, targetPhysicsCollision) then
-                    -- Apply damage
-                    self:hitTarget(bulletEntity, target, bullet, position)
-
-                    -- If bullet is not piercing, remove it after first hit
-                    if not bullet.piercing then
-                        self:removeBullet(bulletEntity, physicsCollision)
-                        return
-                    end
-                end
+    -- Check if bullet hit any entities (set by collision callbacks)
+    if bulletEntity._hitEntities and #bulletEntity._hitEntities > 0 then
+        local hitCount = 0
+        for _, target in ipairs(bulletEntity._hitEntities) do
+            -- Make sure target is still valid and has Health
+            if not target.isDead and target:getComponent("Health") then
+                -- Apply damage
+                self:hitTarget(bulletEntity, target, bullet, position)
+                hitCount = hitCount + 1
             end
         end
+
+        -- Clear the hit list for this frame
+        bulletEntity._hitEntities = {}
+
+        -- If bullet is not piercing and hit something, remove it
+        if hitCount > 0 and not bullet.piercing then
+            self:removeBullet(bulletEntity, physicsCollision)
+            return
+        end
     end
-end
-
----Check if two physics colliders overlap
----@param collider1 PhysicsCollision First collider
----@param collider2 PhysicsCollision Second collider
----@return boolean True if colliders overlap
-function BulletSystem:checkOverlap(collider1, collider2)
-    if not collider1:hasCollider() or not collider2:hasCollider() then
-        return false
-    end
-
-    -- Get center positions of the physics bodies (not top-left corners!)
-    local x1, y1 = collider1.collider.body:getPosition()
-    local x2, y2 = collider2.collider.body:getPosition()
-
-    -- Simple circle-circle collision for now
-    -- (can be improved with proper shape-based collision detection)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    local distance = math.sqrt(dx * dx + dy * dy)
-
-    -- Get radii (approximate for both circle and rectangle shapes)
-    local radius1 = (collider1.width + collider1.height) / 4
-    local radius2 = (collider2.width + collider2.height) / 4
-
-    return distance < (radius1 + radius2)
 end
 
 ---Apply damage to a target hit by a bullet
@@ -129,15 +103,22 @@ end
 
 ---Remove a bullet from the world
 ---@param bulletEntity Entity The bullet entity to remove
----@param physicsCollision PhysicsCollision|nil The physics collision component
+---@param physicsCollision PhysicsCollision|nil The physics collision component (unused - kept for signature compatibility)
 function BulletSystem:removeBullet(bulletEntity, physicsCollision)
-    -- Destroy physics collider
-    if physicsCollision and physicsCollision:hasCollider() then
-        physicsCollision:destroy()
+    -- Prevent double-removal
+    if bulletEntity.isDead then
+        return
     end
 
-    -- Mark entity as dead for removal
+    -- Mark as dead first to prevent double-removal
     bulletEntity.isDead = true
+
+    -- Remove entity from the world
+    -- Entity:destroy() will automatically clean up all components
+    local world = bulletEntity._world
+    if world then
+        world:removeEntity(bulletEntity)
+    end
 end
 
 return BulletSystem

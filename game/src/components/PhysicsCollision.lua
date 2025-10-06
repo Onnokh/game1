@@ -49,7 +49,8 @@ end
 ---@param physicsWorld table The physics world to create collider in
 ---@param x number X position
 ---@param y number Y position
-function PhysicsCollision:createCollider(physicsWorld, x, y)
+---@param entity Entity|nil Optional entity reference for collision callbacks
+function PhysicsCollision:createCollider(physicsWorld, x, y, entity)
     if not physicsWorld or self.collider then
         return
     end
@@ -79,6 +80,14 @@ function PhysicsCollision:createCollider(physicsWorld, x, y)
     fixture:setRestitution(self.restitution)
     fixture:setFriction(self.friction)
     fixture:setDensity(1.0)
+
+    -- Set userData for collision callbacks if entity is provided
+    if entity then
+        fixture:setUserData({
+            kind = "entity",
+            entity = entity
+        })
+    end
 
     -- No collision filtering - let PhysicsCollision collide with everything (but it's a sensor so won't block)
     -- fixture:setCategory(GameConstants.COLLISION_CATEGORIES.PHYSICS)

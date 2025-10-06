@@ -104,9 +104,17 @@ function Entity:hasTag(tag)
     return self.tags[tag] == true
 end
 
----Destroy this entity (mark as inactive)
+---Destroy this entity and clean up all components
 function Entity:destroy()
     self.active = false
+
+    -- Clean up components that have a destroy method (e.g., physics colliders)
+    for _, component in pairs(self.components) do
+        if component and type(component) == "table" and component.destroy then
+            component:destroy()
+        end
+    end
+
     self.components = {}
 end
 

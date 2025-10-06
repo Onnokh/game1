@@ -13,6 +13,11 @@ local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
 function AttackSystem:update(dt)
     local currentTime = love.timer.getTime()
 
+    -- Initialize active melee attacks tracker if not already initialized
+    if not self.activeMeleeAttacks then
+        self.activeMeleeAttacks = {}
+    end
+
     for _, entity in ipairs(self.entities) do
         local attack = entity:getComponent("Attack")
 
@@ -104,6 +109,14 @@ function AttackSystem:performAttack(entity, currentTime)
     else
         -- Spawn a short-lived attack collider sensor for melee attacks
         self:spawnMeleeAttack(entity)
+
+        -- Register this melee attack for debug visualization
+        local attackDuration = 0.2 -- Show hit area for 0.2 seconds
+        table.insert(self.activeMeleeAttacks, {
+            entity = entity,
+            startTime = currentTime,
+            endTime = currentTime + attackDuration
+        })
     end
 end
 
@@ -364,6 +377,62 @@ function AttackSystem:spawnMeleeAttack(entity)
     end
 
     entity:addComponent("AttackCollider", ac)
+end
+
+---Draw debug visualization for active melee attacks
+function AttackSystem:draw()
+    -- Initialize active melee attacks tracker if not already initialized
+    if not self.activeMeleeAttacks then
+        self.activeMeleeAttacks = {}
+        return
+    end
+
+    local currentTime = love.timer.getTime()
+
+    -- Clean up expired attacks and draw active ones
+    local i = 1
+    while i <= #self.activeMeleeAttacks do
+        local attackData = self.activeMeleeAttacks[i]
+
+        if currentTime > attackData.endTime then
+            -- Remove expired attack
+            table.remove(self.activeMeleeAttacks, i)
+        else
+            -- Draw active attack
+            local entity = attackData.entity
+            local attack = entity:getComponent("Attack")
+            local position = entity:getComponent("Position")
+
+            if attack and position and attack.enabled then
+                -- Draw the attack hit area as a rotated rectangle
+                -- Use the exact same position calculation as the actual AttackCollider
+                local angle = attack.attackAngleRad or 0
+
+                -- The AttackCollider body is created at (hitAreaX + width/2, hitAreaY + height/2)
+                -- So we use the same center point for the debug visualization
+                local cx = attack.hitAreaX + attack.hitAreaWidth * 0.5
+                local cy = attack.hitAreaY + attack.hitAreaHeight * 0.5
+
+                love.graphics.push()
+                love.graphics.translate(cx, cy)
+                love.graphics.rotate(angle)
+
+                love.graphics.setColor(1, 0, 0, 0.5) -- Red semi-transparent fill
+                love.graphics.rectangle("fill", -attack.hitAreaWidth * 0.5, -attack.hitAreaHeight * 0.5, attack.hitAreaWidth, attack.hitAreaHeight)
+
+                -- Draw outline
+                love.graphics.setColor(1, 0, 0, 1) -- Red solid outline
+                love.graphics.rectangle("line", -attack.hitAreaWidth * 0.5, -attack.hitAreaHeight * 0.5, attack.hitAreaWidth, attack.hitAreaHeight)
+
+                love.graphics.pop()
+
+                -- Reset color
+                love.graphics.setColor(1, 1, 1, 1)
+            end
+
+            i = i + 1
+        end
+    end
 end
 
 return AttackSystem

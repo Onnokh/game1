@@ -106,17 +106,17 @@ function Player.create(x, y, world, physicsWorld)
         melee = {
             name = "Sword",
             type = "melee",
-            damage = 32,
+            damage = 12,
             range = 15,
             cooldown = 0.5,
             knockback = 6
         },
         ranged = {
-            name = "Pistol",
+            name = "Gun",
             type = "ranged",
-            damage = 20,
+            damage = 8,
             range = 300,
-            cooldown = 0.3,
+            cooldown = 0.15,
             knockback = 3,
             bulletSpeed = 300,
             bulletLifetime = 3,
@@ -137,7 +137,7 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
-    local groundShadow = GroundShadow.new({ alpha = .5, widthFactor = 0.8, heightFactor = 0.18, offsetY = 0 })
+    local groundShadow = GroundShadow.new({ alpha = .5, widthFactor = 0.8, heightFactor = 0.25, offsetY = 0 })
 
     -- Add all components to the player
     playerEntity:addComponent("Position", position)

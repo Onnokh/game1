@@ -5,6 +5,8 @@ local PhysicsCollision = require("src.components.PhysicsCollision")
 local Bullet = require("src.components.Bullet")
 local DepthSorting = require("src.utils.depthSorting")
 local GroundShadow = require("src.components.GroundShadow")
+local PathfindingCollision = require("src.components.PathfindingCollision")
+local Light = require("src.components.Light")
 
 ---@class BulletEntity
 local BulletEntity = {}
@@ -52,13 +54,22 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     -- Small physics collider for bullet collision detection (sensor)
     -- PhysicsCollision already creates sensors by default (non-blocking)
     local physicsCollision = PhysicsCollision.new(4, 4, "dynamic", 0, 0, "circle")
+    local pathfindingCollision = PathfindingCollision.new(4, 4, "dynamic", 0, 0, "circle")
 
     -- Create collider if physics world is available
     if physicsWorld then
         physicsCollision:createCollider(physicsWorld, x, y)
+        pathfindingCollision:createCollider(physicsWorld, x, y)
         -- Enable continuous collision detection for fast-moving bullets
         if physicsCollision.collider and physicsCollision.collider.body then
             physicsCollision.collider.body:setBullet(true)
+        end
+        -- Set user data on the fixture so collision callbacks can identify bullets
+        if physicsCollision.collider and physicsCollision.collider.fixture then
+            physicsCollision.collider.fixture:setUserData({
+                kind = "bullet",
+                entity = bullet
+            })
         end
     end
 
@@ -67,7 +78,9 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     bullet:addComponent("SpriteRenderer", spriteRenderer)
     bullet:addComponent("Bullet", bulletComponent)
     bullet:addComponent("PhysicsCollision", physicsCollision)
-    bullet:addComponent("GroundShadow", GroundShadow.new())
+    bullet:addComponent("PathfindingCollision", pathfindingCollision)
+    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 0.8, heightFactor = 0.18, offsetY = 2 }))
+    bullet:addComponent("Light", Light.new({ radius = 10, color = { r = 1, g = 1, b = 0.2, a = 1 } }))
 
     -- Add to world
     if world then
