@@ -5,14 +5,11 @@ local System = require("src.core.System")
 local ShadowSystem = System:extend("ShadowSystem", {"Position", "CastableShadow"})
 
 ---Create a new ShadowSystem
----@param lightWorld any The Shädows LightWorld instance
 ---@return ShadowSystem
-function ShadowSystem.new(lightWorld)
+function ShadowSystem.new()
 	---@class ShadowSystem
 	local self = System.new({"Position", "CastableShadow"})
 	setmetatable(self, ShadowSystem)
-	-- Store LightWorld reference on the instance
-	self.lightWorld = lightWorld
 	return self
 end
 
@@ -23,12 +20,12 @@ local function ensureShadowCreated(self, entity)
 	local CastableShadow = entity:getComponent("CastableShadow")
 	if not CastableShadow or CastableShadow.enabled == false then return end
 	if CastableShadow.body then return end
-	if not self or not self.lightWorld then return end
+	if not self or not self.world or not self.world.lightWorld then return end
 
 	local Body = require("shadows.Body")
 	local PolygonShadow = require("shadows.ShadowShapes.PolygonShadow")
 
-	local body = Body:new(self.lightWorld)
+	local body = Body:new(self.world.lightWorld)
 	CastableShadow.body = body
 	CastableShadow.shapeRefs = {}
 

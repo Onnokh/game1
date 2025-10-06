@@ -7,14 +7,19 @@ local World = {}
 World.__index = World
 
 ---Create a new ECS world
+---@param physicsWorld love.World|nil The physics world (optional)
+---@param lightWorld table|nil The light world (optional)
 ---@return World
-function World.new()
+function World.new(physicsWorld, lightWorld)
     local self = setmetatable({}, World)
     self.entities = {}
     self.systems = {}
     self.tagIndex = {}
     -- Cache for frequently accessed special entities
     self._cachedPlayer = nil
+    -- Store world references for systems to access
+    self.physicsWorld = physicsWorld
+    self.lightWorld = lightWorld
     return self
 end
 
@@ -109,6 +114,10 @@ end
 ---@param system System The system to add
 function World:addSystem(system)
     table.insert(self.systems, system)
+    -- Set world references on the system if it supports them
+    if system.setWorld then
+        system:setWorld(self)
+    end
     -- Add all existing entities to the system
     for _, entity in ipairs(self.entities) do
         system:addEntity(entity)

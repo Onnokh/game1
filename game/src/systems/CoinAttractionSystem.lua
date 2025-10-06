@@ -5,13 +5,11 @@ local EntityUtils = require("src.utils.entities")
 local CoinAttractionSystem = System:extend("CoinAttractionSystem")
 
 ---Create a new CoinAttractionSystem
----@param world World The ECS world
 ---@return CoinAttractionSystem
-function CoinAttractionSystem.new(world)
+function CoinAttractionSystem.new()
     ---@class CoinAttractionSystem
     local self = System.new()
     setmetatable(self, CoinAttractionSystem)
-    self.world = world
     return self
 end
 

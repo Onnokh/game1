@@ -6,15 +6,19 @@ local System = {}
 System.__index = System
 
 ---Create a new system
----@param requiredComponents table Array of component types this system requires
----@param requiredTags table|nil Array of tags this system requires
 ---@return System
-function System.new(requiredComponents, requiredTags)
+function System.new()
     local self = setmetatable({}, System)
-    self.requiredComponents = requiredComponents or {}
-    self.requiredTags = requiredTags or {}
+    self.requiredComponents = {}
+    self.requiredTags = {}
     self.entities = {}
     return self
+end
+
+---Set the world reference for this system
+---@param world World The ECS world
+function System:setWorld(world)
+    self.world = world
 end
 
 ---Check if an entity matches this system's requirements
@@ -76,7 +80,7 @@ end
 
 ---Create a new system class that extends this System
 ---@param className string The name of the new system class
----@param requiredComponents table Array of component types the new system requires
+---@param requiredComponents table|nil Array of component types the new system requires
 ---@param requiredTags table|nil Array of tags the new system requires
 ---@return table The new system class
 function System:extend(className, requiredComponents, requiredTags)
@@ -89,8 +93,15 @@ function System:extend(className, requiredComponents, requiredTags)
     ---Create a new instance of the extended system
     ---@return table The new system instance
     function NewSystem.new()
-        local self = System.new(requiredComponents, requiredTags)
+        local self = System.new()
         setmetatable(self, NewSystem)
+        -- Set component requirements if provided
+        if requiredComponents then
+            self.requiredComponents = requiredComponents
+        end
+        if requiredTags then
+            self.requiredTags = requiredTags
+        end
         return self
     end
 

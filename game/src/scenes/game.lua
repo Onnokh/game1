@@ -75,37 +75,36 @@ function GameScene.load()
   local canvasCountAfterShaders = love.graphics.getStats().canvases
   print("GameScene: Canvas count after shaders load:", canvasCountAfterShaders)
 
-  -- Initialize ECS world
-  ecsWorld = World.new()
-  -- Initialize UI world (separate from ECS)
-  uiWorld = World.new()
-
   -- Initialize physics world (gravity: 0, 0 for top-down game)
   physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
-
 
   -- Initialize Shädows lighting system via WorldLight manager
   lightWorld = WorldLight.init()
   GameScene.lightWorld = lightWorld
 
+  -- Initialize ECS world with physics and light world references
+  ecsWorld = World.new(physicsWorld, lightWorld)
+  -- Initialize UI world (separate from ECS)
+  uiWorld = World.new()
+
   -- Add systems to the ECS world (order matters!)
-  ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
-  ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
-  ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
-  ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
+  ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
+  ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
+  ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
+  ecsWorld:addSystem(AttackSystem.new()) -- Handle attacks
   ecsWorld:addSystem(AttackColliderSystem.new()) -- Manage ephemeral attack colliders
-  ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
-  ecsWorld:addSystem(LootSystem.new(physicsWorld))     -- Sixth: handle loot drops when entities die
-  ecsWorld:addSystem(CoinPickupSystem.new())          -- Seventh: handle coin pickup collisions
-  ecsWorld:addSystem(CoinAttractionSystem.new(ecsWorld))      -- Eighth: handle coin attraction to player
-  ecsWorld:addSystem(FlashEffectSystem.new())         -- Ninth: update flash effects
-  ecsWorld:addSystem(AnimationSystem.new())           -- Tenth: advance animations
-  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Eleventh: update particles
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Twelfth: update shadow bodies
-  ecsWorld:addSystem(LightSystem.new(lightWorld)) -- Thirteenth: manage dynamic lights
-  ecsWorld:addSystem(GroundShadowSystem.new())        -- Fourteenth: draw ground shadows beneath sprites
-  ecsWorld:addSystem(RenderSystem.new())              -- Fifteenth: render sprites and debug visuals
+  ecsWorld:addSystem(DamageSystem.new()) -- Process damage events (includes knockback)
+  ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die
+  ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
+  ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
+  ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
+  ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
+  ecsWorld:addSystem(ParticleRenderSystem.new()) -- Update particles
+  ecsWorld:addSystem(ShadowSystem.new()) -- Update shadow bodies
+  ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
+  ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
+  ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
 
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
