@@ -7,6 +7,7 @@ local gamera = require("lib.gamera")
 ---@field input table Input state tracking
 ---@field camera table Camera system
 ---@field player table Player character data
+---@field phase string Current gameplay phase name
 
 local GameState = {
   currentScene = "game",
@@ -31,7 +32,8 @@ local GameState = {
     height = 24,
     speed = 300,
     direction = "down"
-  }
+  },
+  phase = "Discovery"
 }
 
 ---Initialize the game state

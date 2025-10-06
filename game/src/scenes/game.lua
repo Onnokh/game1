@@ -93,12 +93,14 @@ function GameScene.load()
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
   local HUDSystem = require("src.systems.UISystems.HUDSystem")
+  local PhaseTextSystem = require("src.systems.UISystems.PhaseTextSystem")
   local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+  uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(MenuSystem.new())
 
@@ -227,20 +229,6 @@ function GameScene.update(dt, gameState)
     -- Add mouse facing system (needs gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
   end
-
-  -- Create monsters if they don't exist
-  if #monsters == 0 and ecsWorld then
-      -- Create multiple skeletons at different positions
-      local monsterPositions = {
-          {x = 350, y = 350}, -- Bottom right
-      }
-
-      for _, pos in ipairs(monsterPositions) do
-          local skeleton = Skeleton.create(pos.x, pos.y, ecsWorld, physicsWorld)
-          table.insert(monsters, skeleton)
-      end
-  end
-
 
   -- Update ECS world (handles movement, collision, rendering)
   if ecsWorld then

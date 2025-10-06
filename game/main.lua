@@ -1,57 +1,53 @@
 local overlayStats = require("lib.overlayStats")
-local gameState = require("src.core.GameState")
-_G.gameState = gameState
+local GameController = require("src.core.GameController")
+_G.gameController = GameController
 
 -- Load Lovebird for debugging
 local lovebird = require("lovebird")
 
 function love.load()
-  -- Initialize game state
+  -- Initialize controller (which initializes GameState and scenes)
   local success, err = pcall(function()
-    gameState.load()
+    GameController.load()
   end)
 
   if not success then
-    print("Error in gameState.load():", err)
+    print("Error in GameController.load():", err)
     error(err)
   end
 
-  -- Your game load here
   overlayStats.load() -- Should always be called last
 end
 
 function love.draw()
-  -- Draw game state
+  -- Draw via controller
   local success, err = pcall(function()
-    gameState.draw()
+    GameController.draw()
   end)
 
   if not success then
-    print("Error in gameState.draw():", err)
+    print("Error in GameController.draw():", err)
     error(err)
   end
 
   -- Pass camera position and scale for world space gridlines
+  local gameState = require("src.core.GameState")
   overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale)
 end
 
 function love.update(dt)
   -- lovebird.update()
 
-  -- Update mouse position
-  gameState.updateMousePosition()
-
-  -- Update game state
+  -- Update via controller
   local success, err = pcall(function()
-    gameState.update(dt)
+    GameController.update(dt)
   end)
 
   if not success then
-    print("Error in gameState.update():", err)
+    print("Error in GameController.update():", err)
     error(err)
   end
 
-  -- Your game update here
   overlayStats.update(dt) -- Should always be called last
 end
 
@@ -59,14 +55,13 @@ function love.keypressed(key)
   if key == "escape" and love.system.getOS() ~= "Web" then
     love.event.quit()
   else
-    -- Handle input through game state
-    gameState.handleKeyPressed(key)
+    GameController.keypressed(key)
     overlayStats.handleKeyboard(key) -- Should always be called last
   end
 end
 
 function love.keyreleased(key)
-  -- Handle key release through game state
+  local gameState = require("src.core.GameState")
   gameState.handleKeyReleased(key)
 end
 
@@ -74,16 +69,12 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
   overlayStats.handleTouch(id, x, y, dx, dy, pressure) -- Should always be called last
 end
 
-function love.mousemoved(x, y, dx, dy, istouch)
-  -- Mouse movement is handled in update() via updateMousePosition()
-end
-
 function love.mousepressed(x, y, button)
-  -- Handle mouse input through game state
+  local gameState = require("src.core.GameState")
   gameState.handleMousePressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
-  -- Handle mouse release through game state
+  local gameState = require("src.core.GameState")
   gameState.handleMouseReleased(x, y, button)
 end

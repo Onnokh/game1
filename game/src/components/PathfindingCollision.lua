@@ -17,6 +17,12 @@ local GameConstants = require("src.constants")
 local PathfindingCollision = {}
 PathfindingCollision.__index = PathfindingCollision
 
+local function isBodyValid(body)
+    if not body then return false end
+    local ok, _ = pcall(body.getType, body)
+    return ok
+end
+
 ---Create a new PathfindingCollision component
 ---@param width number Width of the collision box (or diameter for circle)
 ---@param height number Height of the collision box (or diameter for circle)
@@ -106,7 +112,7 @@ end
 ---@param x number X position
 ---@param y number Y position
 function PathfindingCollision:setPosition(x, y)
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         self.collider.body:setPosition(x + self.offsetX + self.width/2, y + self.offsetY + self.height/2)
     end
 end
@@ -114,7 +120,7 @@ end
 ---Get the collider position (top-left corner)
 ---@return number, number X and Y position
 function PathfindingCollision:getPosition()
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         local bodyX, bodyY = self.collider.body:getPosition()
         return bodyX - self.width/2 - self.offsetX, bodyY - self.height/2 - self.offsetY
     end
@@ -124,7 +130,7 @@ end
 ---Get the collider center position
 ---@return number, number X and Y center position
 function PathfindingCollision:getCenterPosition()
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         local bodyX, bodyY = self.collider.body:getPosition()
         return bodyX, bodyY
     end
@@ -134,7 +140,7 @@ end
 ---Get the collider velocity
 ---@return number, number X and Y velocity
 function PathfindingCollision:getLinearVelocity()
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         return self.collider.body:getLinearVelocity()
     end
     return 0, 0
@@ -144,7 +150,7 @@ end
 ---@param vx number X velocity
 ---@param vy number Y velocity
 function PathfindingCollision:setLinearVelocity(vx, vy)
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         self.collider.body:setLinearVelocity(vx, vy)
     end
 end
@@ -153,7 +159,7 @@ end
 ---@param ix number X impulse
 ---@param iy number Y impulse
 function PathfindingCollision:applyLinearImpulse(ix, iy)
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         self.collider.body:applyLinearImpulse(ix, iy)
     end
 end
@@ -162,7 +168,7 @@ end
 ---@param fx number X force
 ---@param fy number Y force
 function PathfindingCollision:applyForce(fx, fy)
-    if self.collider and self.collider.body then
+    if self.collider and isBodyValid(self.collider.body) then
         self.collider.body:applyForce(fx, fy)
     end
 end
@@ -170,8 +176,10 @@ end
 
 ---Destroy the collider
 function PathfindingCollision:destroy()
-    if self.collider and self.collider.body then
-        self.collider.body:destroy()
+    if self.collider then
+        if isBodyValid(self.collider.body) then
+            self.collider.body:destroy()
+        end
         self.collider = nil
     end
 end
@@ -189,7 +197,7 @@ end
 ---@param ignoreFixture table|nil Fixture to ignore (e.g., player's fixture)
 ---@return boolean
 function PathfindingCollision:hasLineOfSightTo(targetX, targetY, ignoreFixture)
-    if not (self.physicsWorld and self.collider and self.collider.body) then
+    if not (self.physicsWorld and self.collider and isBodyValid(self.collider.body)) then
         return true -- fallback: assume visible
     end
 
