@@ -264,8 +264,6 @@ function GameScene.update(dt, gameState)
   gameState.camera:setPosition(gameState.player.x, gameState.player.y)
   gameState.camera:setScale(GameConstants.CAMERA_SCALE)
 
-  -- Player light following is handled by LightSystem via the player's Light component
-
   -- Update light world to render lighting
   if lightWorld then
     -- Align LightWorld with camera so lights can use WORLD coordinates
@@ -321,7 +319,6 @@ function GameScene.mousepressed(x, y, button, gameState)
     GameScene.addMonster(worldX, worldY)
   end
 end
-
 
 -- Draw the game scene
 function GameScene.draw(gameState)
