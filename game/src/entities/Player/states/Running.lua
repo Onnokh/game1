@@ -55,6 +55,16 @@ function Running:onUpdate(stateMachine, entity, dt)
         if GameState.input.right then velocityX = runSpeed end
         if GameState.input.up then velocityY = -runSpeed end
         if GameState.input.down then velocityY = runSpeed end
+
+        -- Normalize diagonal movement to prevent faster diagonal movement
+        local magnitude = math.sqrt(velocityX * velocityX + velocityY * velocityY)
+        if magnitude > 0 then
+            local normalizedX = velocityX / magnitude
+            local normalizedY = velocityY / magnitude
+            velocityX = normalizedX * runSpeed
+            velocityY = normalizedY * runSpeed
+        end
+
         movement:setVelocity(velocityX, velocityY)
 
         -- Spawn running particles if moving and enough time has passed (more frequent than walking)

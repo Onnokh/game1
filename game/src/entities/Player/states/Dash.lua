@@ -81,6 +81,13 @@ function Dash:onUpdate(stateMachine, entity, dt)
         local dashDirX = stateMachine:getStateData("dashDirX") or 0
         local dashDirY = stateMachine:getStateData("dashDirY") or 1
 
+        -- Normalize diagonal movement to prevent faster diagonal movement
+        local magnitude = math.sqrt(dashDirX * dashDirX + dashDirY * dashDirY)
+        if magnitude > 0 then
+            dashDirX = dashDirX / magnitude
+            dashDirY = dashDirY / magnitude
+        end
+
         local velocityX = dashDirX * dashSpeed
         local velocityY = dashDirY * dashSpeed
 

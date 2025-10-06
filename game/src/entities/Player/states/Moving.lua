@@ -53,6 +53,16 @@ function Moving:onUpdate(stateMachine, entity, dt)
         if GameState.input.right then velocityX = movement.maxSpeed end
         if GameState.input.up then velocityY = -movement.maxSpeed end
         if GameState.input.down then velocityY = movement.maxSpeed end
+
+        -- Normalize diagonal movement to prevent faster diagonal movement
+        local magnitude = math.sqrt(velocityX * velocityX + velocityY * velocityY)
+        if magnitude > 0 then
+            local normalizedX = velocityX / magnitude
+            local normalizedY = velocityY / magnitude
+            velocityX = normalizedX * movement.maxSpeed
+            velocityY = normalizedY * movement.maxSpeed
+        end
+
         movement:setVelocity(velocityX, velocityY)
 
         -- Spawn walking particles if moving and enough time has passed

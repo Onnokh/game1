@@ -46,40 +46,6 @@ function Movement:addVelocity(deltaX, deltaY)
     self.velocityY = self.velocityY + deltaY
 end
 
----Apply acceleration in a direction
----@param directionX number X direction (-1, 0, or 1)
----@param directionY number Y direction (-1, 0, or 1)
----@param dt number Delta time
-function Movement:accelerate(directionX, directionY, dt)
-    if not self.enabled then return end
-
-    -- Normalize diagonal movement to prevent faster diagonal movement
-    local magnitude = math.sqrt(directionX * directionX + directionY * directionY)
-    if magnitude > 0 then
-        directionX = directionX / magnitude
-        directionY = directionY / magnitude
-    end
-
-    local accelX = directionX * self.acceleration * dt
-    local accelY = directionY * self.acceleration * dt
-
-    self.velocityX = self.velocityX + accelX
-    self.velocityY = self.velocityY + accelY
-
-    -- Update direction based on movement
-    if directionX ~= 0 or directionY ~= 0 then
-        if directionY < 0 then
-            self.direction = "up"
-        elseif directionY > 0 then
-            self.direction = "down"
-        elseif directionX < 0 then
-            self.direction = "left"
-        elseif directionX > 0 then
-            self.direction = "right"
-        end
-    end
-end
-
 ---Apply friction to velocity
 ---@param dt number Delta time
 function Movement:applyFriction(dt)
