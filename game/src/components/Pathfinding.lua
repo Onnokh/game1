@@ -73,18 +73,22 @@ function Pathfinding:findWanderTarget(currentX, currentY)
         local dy = targetY - currentY
         local distanceFromCurrent = math.sqrt(dx * dx + dy * dy)
 
-        if distanceFromCurrent >= self.minWanderDistance * 16 then -- Convert tiles to pixels
+        -- Validate that target is within world bounds
+        if distanceFromCurrent >= self.minWanderDistance * 16 and self:isWithinWorldBounds(targetX, targetY) then -- Convert tiles to pixels
             return targetX, targetY
         end
 
         attempts = attempts + 1
     end
 
-    -- If we can't find a good target, just return a random one
+    -- If we can't find a good target, just return a random one within bounds
     local angle = math.random() * 2 * math.pi
     local distance = math.random() * self.wanderRadius * 16 -- Convert tiles to pixels
     local targetX = self.spawnX + math.cos(angle) * distance
     local targetY = self.spawnY + math.sin(angle) * distance
+
+    -- Clamp to world bounds if outside
+    targetX, targetY = self:clampToWorldBounds(targetX, targetY)
     return targetX, targetY
 end
 
@@ -98,6 +102,49 @@ function Pathfinding:isWithinRadius(x, y)
     local dy = y - self.spawnY
     local distance = math.sqrt(dx * dx + dy * dy)
     return distance <= self.wanderRadius
+end
+
+---Check if a world position is within the world bounds
+---@param worldX number World X coordinate
+---@param worldY number World Y coordinate
+---@return boolean
+function Pathfinding:isWithinWorldBounds(worldX, worldY)
+    if not self.grid then
+        return false
+    end
+
+    local GameConstants = require("src.constants")
+    local tileSize = GameConstants.TILE_SIZE
+    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
+    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+
+    -- Check world pixel bounds first (more efficient)
+    if worldX < 0 or worldX >= worldWidthPixels or worldY < 0 or worldY >= worldHeightPixels then
+        return false
+    end
+
+    -- Additional grid bounds check for safety
+    local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY, tileSize)
+    local minX, minY, maxX, maxY = self.grid:getBounds()
+
+    return gridX >= minX and gridX <= maxX and gridY >= minY and gridY <= maxY
+end
+
+---Clamp world coordinates to world bounds
+---@param worldX number World X coordinate
+---@param worldY number World Y coordinate
+---@return number clampedX
+---@return number clampedY
+function Pathfinding:clampToWorldBounds(worldX, worldY)
+    local GameConstants = require("src.constants")
+    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
+    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+
+    -- Clamp to world pixel bounds (0 to worldSize-1)
+    local clampedX = math.max(0, math.min(worldX, worldWidthPixels - 1))
+    local clampedY = math.max(0, math.min(worldY, worldHeightPixels - 1))
+
+    return clampedX, clampedY
 end
 
 ---Get the next position in the current path
@@ -143,13 +190,23 @@ function Pathfinding:startPathTo(currentX, currentY, targetX, targetY, tileSize)
         return false
     end
 
+    -- CRITICAL FIX: Clamp current position to world bounds before using it
+    local GameConstants = require("src.constants")
+    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
+    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+
+    if currentX < 0 or currentX >= worldWidthPixels or currentY < 0 or currentY >= worldHeightPixels then
+        currentX = math.max(0, math.min(currentX, worldWidthPixels - 1))
+        currentY = math.max(0, math.min(currentY, worldHeightPixels - 1))
+    end
+
+    -- Validate that both current and target positions are within world bounds
+    if not self:isWithinWorldBounds(currentX, currentY) or not self:isWithinWorldBounds(targetX, targetY) then
+        return false
+    end
+
     local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
     local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
-
-    -- Clamp to grid bounds
-    local minX, minY, maxX, maxY = self.grid:getBounds()
-    targetGridX = math.max(minX, math.min(targetGridX, maxX))
-    targetGridY = math.max(minY, math.min(targetGridY, maxY))
 
     local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
     if path and path._nodes and #path._nodes > 0 then
@@ -174,17 +231,25 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
         return false
     end
 
-    -- Find a new wander target
+    -- CRITICAL FIX: Clamp current position to world bounds before using it
+    local GameConstants = require("src.constants")
+    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
+    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+
+    if currentX < 0 or currentX >= worldWidthPixels or currentY < 0 or currentY >= worldHeightPixels then
+        currentX = math.max(0, math.min(currentX, worldWidthPixels - 1))
+        currentY = math.max(0, math.min(currentY, worldHeightPixels - 1))
+    end
+
+    -- Find a new wander target (already validated in findWanderTarget)
     local targetX, targetY = self:findWanderTarget(currentX, currentY)
 
     -- Convert to grid coordinates
     local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
     local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
 
-    -- Ensure target is within grid bounds
+    -- Double-check that target is within grid bounds (should already be validated)
     local minX, minY, maxX, maxY = self.grid:getBounds()
-    local gridWidth = maxX - minX + 1
-    local gridHeight = maxY - minY + 1
     targetGridX = math.max(minX, math.min(targetGridX, maxX))
     targetGridY = math.max(minY, math.min(targetGridY, maxY))
 
