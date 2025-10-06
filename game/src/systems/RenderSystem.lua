@@ -6,6 +6,9 @@ local RenderSystem = System:extend("RenderSystem", {"Position", "SpriteRenderer"
 
 ---Draw all entities with Position and SpriteRenderer components
 function RenderSystem:draw()
+    -- Draw oxygen safe zone at tile level (behind entities)
+    self:drawOxygenSafeZone()
+
     -- Use the depth sorting utility for proper 2D layering
     local sortedEntities = DepthSorting.sortEntities(self.entities)
 
@@ -82,9 +85,6 @@ function RenderSystem:draw()
 
     -- Draw attack hit areas for entities that are attacking
     self:drawAttackHitAreas()
-
-    -- Draw oxygen safe zone around reactor
-    self:drawOxygenSafeZone()
 end
 
 ---Draw entity with flash shader
