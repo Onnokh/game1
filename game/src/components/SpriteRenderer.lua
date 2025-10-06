@@ -33,6 +33,7 @@ function SpriteRenderer.new(sprite, width, height)
     self.offsetX = 0
     self.offsetY = 0
     self.facingMouse = false
+    self.spriteIndex = nil
 
     return self
 end

@@ -27,6 +27,7 @@ local AttackSystem = require("src.systems.AttackSystem")
 local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
+local LootSystem = require("src.systems.LootSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -78,6 +79,7 @@ function GameScene.load()
   physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
 
+
   -- Initialize Shädows lighting system via WorldLight manager
   lightWorld = WorldLight.init()
   GameScene.lightWorld = lightWorld
@@ -89,6 +91,7 @@ function GameScene.load()
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
   ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Manage ephemeral attack colliders
   ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
+  ecsWorld:addSystem(LootSystem.new())                 -- Sixth: handle loot drops when entities die
   ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
   ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
   ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles

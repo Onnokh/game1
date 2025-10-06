@@ -47,6 +47,9 @@ function IffySprites.load()
   -- Load reactor spritesheet (1x1 grid, 64x64)
   loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 4, 1)
 
+  -- Load coin spritesheet (1x9 grid, 9 frames)
+  loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)
+
   -- Load menu background as a standalone image (not using iffy)
   local okBg, imgOrErr = pcall(function()
     local img = love.graphics.newImage("resources/menu/background.jpg")

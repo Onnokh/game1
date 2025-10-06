@@ -11,6 +11,7 @@ local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
 local Attack = require("src.components.Attack")
 local Health = require("src.components.Health")
 local HealthBar = require("src.components.HealthBar")
+local DropTable = require("src.components.DropTable")
 local DepthSorting = require("src.utils.depthSorting")
 
 
@@ -80,6 +81,10 @@ function Skeleton.create(x, y, world, physicsWorld)
     -- Create health bar component (16x2 pixels, positioned above skeleton)
     local healthBar = HealthBar.new(16, 2, 0)
 
+    -- Create drop table component for loot drops (0-3 coins)
+    local dropTable = DropTable.new()
+    dropTable:addDrop("coin", 0, 3, 1.0) -- 100% chance to drop 0-3 coins
+
      -- Create state machine with priority-based state selection
      local stateMachine = StateMachine.new("idle", {
       stateSelector = function(entity, dt)
@@ -104,6 +109,7 @@ function Skeleton.create(x, y, world, physicsWorld)
     skeleton:addComponent("Health", health)
     skeleton:addComponent("HealthBar", healthBar)
     skeleton:addComponent("Attack", attack)
+    skeleton:addComponent("DropTable", dropTable)
 
     if world then
         world:addEntity(skeleton)
