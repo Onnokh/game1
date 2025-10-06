@@ -18,9 +18,9 @@ function CoinCounterSystem.new()
     do
         local h = self.coinCounter.font and self.coinCounter.font:getHeight() or 36
         local elemHeight = math.max(h, 36)
-        local screenH = love.graphics.getHeight()
-        self.coinCounter.x = 32
-        self.coinCounter.y = screenH - elemHeight - 32
+        local screenH, screenW = love.graphics.getHeight(), love.graphics.getWidth()
+        self.coinCounter.x = screenW / 2 + 332
+        self.coinCounter.y = screenH - elemHeight - 72
     end
 
     -- Listen for coin pickup events to update UI immediately

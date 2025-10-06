@@ -30,7 +30,7 @@ function HealthBarHUD.draw(world)
     end
 
     local health = player:getComponent("Health")
-    if not health or health.isDead then
+    if not health then
         return
     end
 
