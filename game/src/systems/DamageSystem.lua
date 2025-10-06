@@ -88,7 +88,6 @@ function DamageSystem:handleEntityDeath(entity, damageEvent)
     -- Check if this is a skeleton that should go into dying state
     local stateMachine = entity:getComponent("StateMachine")
     if stateMachine and stateMachine.states and stateMachine.states["dying"] then
-        -- Set skeleton to dying state instead of immediately deactivating
         stateMachine:changeState("dying", entity)
         print("Skeleton entering dying state")
     end

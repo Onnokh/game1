@@ -7,13 +7,14 @@ Dying.__index = Dying
 setmetatable(Dying, {__index = require("src.core.State")})
 
 local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local EventBus = require("src.utils.EventBus")
 
 ---Create a new Dying state
 ---@return Dying
 function Dying.new()
     local self = setmetatable({}, Dying)
-    self.duration = 2.0 -- 2 seconds total
-    self.fadeSpeed = 1.5 -- Fade out over 1.5 seconds
+    self.duration = .5 -- 2 seconds total
+    self.fadeSpeed = .5 -- Fade out over 1.5 seconds
     self.currentAlpha = 1.0
     return self
 end
@@ -101,6 +102,9 @@ function Dying:onUpdate(stateMachine, entity, dt)
         if not stateMachine:getGlobalData("deathMessageShown") then
             print("Skeleton has died and been removed from the world")
             stateMachine:setGlobalData("deathMessageShown", true)
+
+            -- Emit a final despawn event before removal so systems (e.g., loot) can react
+            EventBus.emit("entityDropLoot", { entity = entity })
 
             -- Properly remove the entity from the world
             local world = entity._world

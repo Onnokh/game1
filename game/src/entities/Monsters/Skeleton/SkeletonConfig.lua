@@ -30,7 +30,7 @@ SkeletonConfig.ATTACK_KNOCKBACK = 4
 
 SkeletonConfig.DYING_ANIMATION = {
     frames = {37, 38, 39, 40}, -- Row 7 (0-indexed as 6), columns 1-4 (6*6+1 = 37)
-    fps = 2,
+    fps = 8, -- 8 frames per second - 4 frames - 0.5 seconds
     loop = false
 }
 

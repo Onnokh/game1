@@ -15,31 +15,25 @@ function LootSystem.new(physicsWorld)
     setmetatable(self, LootSystem)
     self.physicsWorld = physicsWorld
 
-    -- Subscribe to entityDied events
-    EventBus.subscribe("entityDied", function(payload)
-        self:onEntityDied(payload)
+    -- Subscribe to entityDespawned events to spawn loot after death animation completes
+    EventBus.subscribe("entityDropLoot", function(payload)
+        self:onEntityDropLoot(payload)
     end)
 
     return self
 end
 
----Update the loot system (no longer needed for polling, but kept for System compatibility)
----@param dt number Delta time
-function LootSystem:update(dt)
-    -- No longer polling for dead entities - using events instead
-end
-
----Handle entity death events
----@param payload table Event payload containing entity, amount, and source
-function LootSystem:onEntityDied(payload)
+---Handle entity despawn events (post-death, after animation)
+---@param payload table Event payload containing entity
+function LootSystem:onEntityDropLoot(payload)
     local entity = payload.entity
+    if not entity then return end
     local dropTable = entity:getComponent("DropTable")
     local position = entity:getComponent("Position")
 
-    -- Check if entity has a drop table and hasn't already dropped loot
     if dropTable and position and not entity.hasDroppedLoot then
         self:dropLoot(entity, dropTable, position)
-        entity.hasDroppedLoot = true -- Mark as having dropped loot
+        entity.hasDroppedLoot = true
     end
 end
 
@@ -58,9 +52,18 @@ function LootSystem:dropLoot(entity, dropTable, position)
                 local angle = math.random() * 2 * math.pi -- Random angle in radians
                 local distance = math.random(0, 4) -- Distance from entity center
 
+                -- Base spawn position: center of PathfindingCollision if available; otherwise use Position
+                local baseX, baseY = position.x, position.y
+                local pcol = entity:getComponent("PathfindingCollision")
+                if pcol and pcol.hasCollider and pcol.getCenterPosition then
+                    if pcol:hasCollider() then
+                        baseX, baseY = pcol:getCenterPosition()
+                    end
+                end
+
                 -- Calculate spawn position
-                local coinX = position.x + math.cos(angle) * distance
-                local coinY = position.y + math.sin(angle) * distance
+                local coinX = baseX + math.cos(angle) * distance
+                local coinY = baseY + math.sin(angle) * distance
 
                 -- Calculate velocity to make coins fly out (with some randomness)
                 local baseSpeed = math.random(5, 15) -- Base speed range (reduced from 80-150)
