@@ -8,7 +8,7 @@ function Siege.onEnter(gameState)
   local GameScene = require("src.scenes.game")
   if GameScene and GameScene.setAmbientColor then
     -- dusk-night tone over 0.8s
-    GameScene.setAmbientColor(70, 90, 140, 255, 0.8)
+    GameScene.setAmbientColor(70, 90, 140, 255, 5)
   end
 
   -- Spawn one skeleton at a random position (y < 400) using the scene's helper
