@@ -84,6 +84,15 @@ function GameState.update(dt)
   end
 end
 
+---Update only UI systems (used when game is paused)
+---@param dt number Delta time
+function GameState.updateUI(dt)
+  -- Update current scene's UI world only
+  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].updateUI then
+    GameState.scenes[GameState.currentScene].updateUI(dt, GameState)
+  end
+end
+
 ---Draw the game state
 function GameState.draw()
   -- Draw current scene

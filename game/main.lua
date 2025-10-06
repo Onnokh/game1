@@ -53,11 +53,15 @@ end
 
 function love.keypressed(key)
   if key == "escape" and love.system.getOS() ~= "Web" then
-    love.event.quit()
+    -- Let GameController handle escape for pause/unpause first
+    local handled = GameController.keypressed(key)
+    if not handled then
+      love.event.quit()
+    end
   else
     GameController.keypressed(key)
-    overlayStats.handleKeyboard(key) -- Should always be called last
   end
+  overlayStats.handleKeyboard(key) -- Should always be called last
 end
 
 function love.keyreleased(key)

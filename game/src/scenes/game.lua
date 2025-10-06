@@ -96,6 +96,7 @@ function GameScene.load()
   local PhaseTextSystem = require("src.systems.UISystems.PhaseTextSystem")
   local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
+  local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
@@ -103,6 +104,7 @@ function GameScene.load()
   uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(MenuSystem.new())
+  uiWorld:addSystem(PauseMenuSystem.new())
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do
@@ -210,14 +212,18 @@ function GameScene.update(dt, gameState)
       uiWorld = World.new()
       local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
       local HUDSystem = require("src.systems.UISystems.HUDSystem")
+      local PhaseTextSystem = require("src.systems.UISystems.PhaseTextSystem")
       local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
       local MenuSystem = require("src.systems.UISystems.MenuSystem")
+      local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
 
       local healthBarSystem = HealthBarSystem.new(ecsWorld)
       uiWorld:addSystem(healthBarSystem)
       uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+      uiWorld:addSystem(PhaseTextSystem.new())
       uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
       uiWorld:addSystem(MenuSystem.new())
+      uiWorld:addSystem(PauseMenuSystem.new())
     end
 
   end
@@ -299,6 +305,14 @@ function GameScene.update(dt, gameState)
   end
 end
 
+-- Update only UI systems (used when game is paused)
+function GameScene.updateUI(dt, gameState)
+  -- Update UI world separate from camera/lighting
+  if uiWorld then
+    uiWorld:update(dt)
+  end
+end
+
 -- Add a new monster at the specified position
 function GameScene.addMonster(x, y)
   if ecsWorld and physicsWorld then
@@ -310,6 +324,19 @@ end
 
 -- Handle mouse clicks for debugging
 function GameScene.mousepressed(x, y, button, gameState)
+  -- First check if pause menu can handle the click
+  if uiWorld then
+    for _, system in ipairs(uiWorld.systems) do
+      if system.handleMouseClick then
+        local handled = system:handleMouseClick(x, y, button)
+        if handled then
+          return -- Pause menu handled the click, don't process further
+        end
+      end
+    end
+  end
+
+  -- If not handled by UI systems, process game logic
   if button == 2 then -- Right click
     print("Right click at:", x, y)
     -- Add a monster at click position (convert screen to world coordinates)

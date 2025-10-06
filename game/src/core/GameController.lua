@@ -28,7 +28,6 @@ function GameController.load()
     GameController.phases[GameController.currentPhase].onEnter(GameState)
   end
 
-  -- overlayStats.load() is called from main.lua last, per existing behavior
 end
 
 ---Update flow: controller -> current phase -> GameState (scene + systems)
@@ -43,6 +42,10 @@ function GameController.update(dt)
     -- Maintain existing update behavior in GameState (updates scene and systems)
     GameState.updateMousePosition()
     GameState.update(dt)
+  else
+    -- When paused, still update UI systems so pause menu can respond
+    GameState.updateMousePosition()
+    GameState.updateUI(dt)
   end
 end
 
@@ -79,7 +82,7 @@ end
 -- Input delegation (phases may intercept if needed, but systems stay in scenes)
 function GameController.keypressed(key)
   -- Controller-level bindings
-  if key == "p" then
+  if key == "escape" then
     GameController.togglePause()
     return true
   elseif key == "1" then
