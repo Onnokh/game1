@@ -259,6 +259,7 @@ function GameScene.update(dt, gameState)
     local position = playerEntity:getComponent("Position")
     local movement = playerEntity:getComponent("Movement")
     local collision = playerEntity:getComponent("Collision")
+    local spriteRenderer = playerEntity:getComponent("SpriteRenderer")
 
     if position then
       gameState.player.x = position.x
@@ -274,10 +275,15 @@ function GameScene.update(dt, gameState)
       playerCollider = collision.collider
       GameScene.playerCollider = playerCollider
     end
+
+    -- Set camera position centered on player sprite
+    if position and spriteRenderer then
+      local centerX = position.x + spriteRenderer.width / 2
+      local centerY = position.y + spriteRenderer.height / 2
+      gameState.camera:setPosition(centerX, centerY)
+    end
   end
 
-  -- Set camera position directly
-  gameState.camera:setPosition(gameState.player.x, gameState.player.y)
   gameState.camera:setScale(GameConstants.CAMERA_SCALE)
 
   -- Update world light (position and ambient tween)
