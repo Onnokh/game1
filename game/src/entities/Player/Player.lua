@@ -39,7 +39,6 @@ function Player.create(x, y, world, physicsWorld)
     local spriteRenderer = SpriteRenderer.new(nil, PlayerConfig.SPRITE_WIDTH, PlayerConfig.SPRITE_HEIGHT)
     spriteRenderer.facingMouse = true -- Enable mouse-facing
 
-
     -- PathfindingCollision component (for pathfinding and physics collision)
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
     local colliderWidth, colliderHeight = PlayerConfig.COLLIDER_WIDTH, PlayerConfig.COLLIDER_HEIGHT
@@ -119,20 +118,6 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("ParticleSystem", particleSystem)
 
-    -- Add a light component to follow the player
-    local light = Light.new({
-      radius = 160,
-      r = 255,
-      g = 200,
-      b = 120,
-      a = 160,
-      offsetX = PlayerConfig.SPRITE_WIDTH/2,
-      offsetY = PlayerConfig.SPRITE_HEIGHT/2,
-      flicker = false
-    })
-    playerEntity:addComponent("Light", light)
-
-    -- Add the player to the world
     if world then
         world:addEntity(playerEntity)
     end

@@ -6,7 +6,7 @@ local world = {}
 local tileVariants = {} -- Store sprite variants for each tile
 local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
-local LightWorld = require "shadows.LightWorld"
+local WorldLight = require("src.utils.worldlight")
 
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -51,6 +51,7 @@ GameScene.playerCollider = playerCollider
 GameScene.borderColliders = borderColliders
 GameScene.ecsWorld = ecsWorld
 GameScene.monsters = monsters
+GameScene.lightWorld = nil
 
 -- Initialize the game scene
 function GameScene.load()
@@ -77,10 +78,8 @@ function GameScene.load()
   physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
 
-  -- Initialize Shädows lighting system
-  lightWorld = LightWorld:new()
-  -- Dusk ambient lighting: cooler, slightly darker blue
-  lightWorld:SetColor(70, 90, 140, 255)
+  -- Initialize Shädows lighting system via WorldLight manager
+  lightWorld = WorldLight.init()
   GameScene.lightWorld = lightWorld
 
   -- Add systems to the ECS world (order matters!)
@@ -163,6 +162,11 @@ function GameScene.load()
   -- Add pathfinding system after static collision objects are added
   ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize)) -- Pathfinding system
 end
+-- Allow other modules (phases, etc.) to set ambient color safely
+function GameScene.setAmbientColor(r, g, b, a, duration)
+  WorldLight.setAmbientColor(r, g, b, a, duration)
+end
+
 
 -- Create static colliders for world border tiles
 function GameScene.createBorderColliders()
@@ -264,19 +268,8 @@ function GameScene.update(dt, gameState)
   gameState.camera:setPosition(gameState.player.x, gameState.player.y)
   gameState.camera:setScale(GameConstants.CAMERA_SCALE)
 
-  -- Update light world to render lighting
-  if lightWorld then
-    -- Align LightWorld with camera so lights can use WORLD coordinates
-    local camX, camY, scale = gameState.camera.x, gameState.camera.y, gameState.camera.scale
-    local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
-    -- Shädows does: translate(-x*z, -y*z); scale(z,z)
-    -- origin at camera top-left in world units
-    local lwX = camX - (halfW / scale)
-    local lwY = camY - (halfH / scale)
-
-    lightWorld:SetPosition(lwX, lwY, scale)
-    lightWorld:Update()
-  end
+  -- Update world light (position and ambient tween)
+  WorldLight.update(dt, gameState.camera)
 end
 
 -- Update only UI systems (used when game is paused)
@@ -378,24 +371,9 @@ function GameScene.cleanup()
     GameScene.physicsWorld = nil
   end
 
-  -- Cleanup light world
+  -- Cleanup light world via manager
   if lightWorld then
-    -- Remove all lights from the light world to clean up their canvases
-    if lightWorld.Lights then
-      local lightCount = 0
-      for id, light in pairs(lightWorld.Lights) do
-        if light and light.Remove then
-          light:Remove()
-          lightCount = lightCount + 1
-        end
-      end
-    end
-
-    -- Try to explicitly release the LightWorld canvas
-    if lightWorld.Canvas then
-      lightWorld.Canvas:release()
-      print("GameScene: Released LightWorld canvas")
-    end
+    WorldLight.cleanup()
     lightWorld = nil
     GameScene.lightWorld = nil
   end

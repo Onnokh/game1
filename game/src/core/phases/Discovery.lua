@@ -2,7 +2,12 @@
 local Discovery = {}
 
 function Discovery.onEnter(gameState)
-  -- Initialize discovery state if needed
+  -- Bright, warmer ambient for exploration
+  local GameScene = require("src.scenes.game")
+  if GameScene and GameScene.setAmbientColor then
+    -- brighter daylight
+    GameScene.setAmbientColor(255, 240, 255, 255, 1)
+  end
 end
 
 function Discovery.update(dt, gameState)
