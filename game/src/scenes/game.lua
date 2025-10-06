@@ -33,6 +33,7 @@ local CoinPickupSystem = require("src.systems.CoinPickupSystem")
 local CoinAttractionSystem = require("src.systems.CoinAttractionSystem")
 local AttackColliderSystem = require("src.systems.AttackColliderSystem")
 local LightSystem = require("src.systems.LightSystem")
+local OxygenSystem = require("src.systems.OxygenSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -87,6 +88,7 @@ function GameScene.load()
   ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die
   ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
   ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
+  ecsWorld:addSystem(OxygenSystem.new()) -- Handle oxygen decay when outside reactor zone
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
   ecsWorld:addSystem(ParticleRenderSystem.new()) -- Update particles
@@ -106,11 +108,13 @@ function GameScene.load()
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
+  local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
   uiWorld:addSystem(CoinCounterSystem.new())
+  uiWorld:addSystem(OxygenCounterSystem.new(ecsWorld))
   uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(LootPickupLabelSystem.new(ecsWorld))

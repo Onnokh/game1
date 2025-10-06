@@ -26,10 +26,15 @@ GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 80 -- Match working implementation
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the world
+GameConstants.CAMERA_SCALE = 4 -- Zoomed out to see more of the world
 
 -- Feature toggles
 GameConstants.ENABLE_KNOCKBACK = true
+
+-- Oxygen system constants
+GameConstants.OXYGEN_MAX = 100
+GameConstants.OXYGEN_DECAY_RATE = 1 -- oxygen per second when outside safe zone
+GameConstants.REACTOR_SAFE_RADIUS = 200 -- radius around reactor where oxygen doesn't decay
 
 -- Collision categories for Love2D physics
 GameConstants.COLLISION_CATEGORIES = {

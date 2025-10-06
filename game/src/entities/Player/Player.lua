@@ -7,6 +7,7 @@ local PhysicsCollision = require("src.components.PhysicsCollision")
 local StateMachine = require("src.components.StateMachine")
 local Attack = require("src.components.Attack")
 local Health = require("src.components.Health")
+local Oxygen = require("src.components.Oxygen")
 local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
 local GameConstants = require("src.constants")
@@ -105,6 +106,9 @@ function Player.create(x, y, world, physicsWorld)
     -- Create health component
     local health = Health.new(100) -- 100 max health
 
+    -- Create oxygen component
+    local oxygen = Oxygen.new(100) -- 100 max oxygen
+
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
     local groundShadow = GroundShadow.new({ alpha = .5, widthFactor = 0.8, heightFactor = 0.18, offsetY = 0 })
@@ -118,6 +122,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("StateMachine", stateMachine)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
+    playerEntity:addComponent("Oxygen", oxygen)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("GroundShadow", groundShadow)
 
