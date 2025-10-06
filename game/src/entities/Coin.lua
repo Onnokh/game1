@@ -16,18 +16,20 @@ local CoinEntity = {}
 ---@param x number X position
 ---@param y number Y position
 ---@param value number|nil Coin value, defaults to 1
+---@param attractorRadius number|nil Attractor radius, defaults to 64
 ---@param world World|nil The ECS world to add the coin to
 ---@param physicsWorld table|nil The physics world for collision
 ---@param velocityX number|nil Initial X velocity, defaults to 0
 ---@param velocityY number|nil Initial Y velocity, defaults to 0
 ---@return Entity The created coin entity
-function CoinEntity.create(x, y, value, world, physicsWorld, velocityX, velocityY)
+function CoinEntity.create(x, y, value, attractorRadius, world, physicsWorld, velocityX, velocityY)
+    ---@class CoinEntity : Entity
     local coin = Entity.new()
-    coin.isCoin = true -- Flag to identify coin entities
+    coin:addTag("Coin") -- Tag to identify coin entities
 
     -- Create components
     local position = Position.new(x, y, DepthSorting.getLayerZ("LOOT")) -- Coins at loot level
-    local coinComponent = Coin.new(value)
+    local coinComponent = Coin.new(value, attractorRadius)
 
     -- Create movement component for coin physics (low max speed, very high friction to stop quickly)
     local movement = Movement.new(100, 0, 0.9) -- maxSpeed=200, no acceleration, very high friction

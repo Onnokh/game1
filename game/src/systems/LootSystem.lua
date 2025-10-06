@@ -76,7 +76,7 @@ function LootSystem:dropLoot(entity, dropTable, position)
                 -- Create coin entity with momentum
                 local world = entity._world
                 if world then
-                    Coin.create(coinX, coinY, 1, world, self.physicsWorld, velocityX, velocityY)
+                    Coin.create(coinX, coinY, 1, nil, world, self.physicsWorld, velocityX, velocityY)
                 end
             end
         end

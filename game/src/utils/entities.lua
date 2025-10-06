@@ -29,37 +29,6 @@ function EntityUtils.findReactor(world)
     return nil
 end
 
----Find entities by type in the world
----@param world World The ECS world to search in
----@param entityType string The type identifier (e.g., "isPlayer", "isSkeleton")
----@return table Array of entities matching the type
-function EntityUtils.findEntitiesByType(world, entityType)
-    local result = {}
-    if world then
-        for _, entity in ipairs(world.entities) do
-            if entity[entityType] then
-                table.insert(result, entity)
-            end
-        end
-    end
-    return result
-end
-
----Get the first entity of a specific type
----@param world World The ECS world to search in
----@param entityType string The type identifier (e.g., "isPlayer", "isSkeleton")
----@return Entity|nil The first entity of the specified type, or nil if not found
-function EntityUtils.findFirstEntityByType(world, entityType)
-    if world then
-        for _, entity in ipairs(world.entities) do
-            if entity[entityType] then
-                return entity
-            end
-        end
-    end
-    return nil
-end
-
 ---Get the visual center of an entity (accounting for sprite size)
 ---@param entity Entity The entity to get the center of
 ---@param position Position The position component

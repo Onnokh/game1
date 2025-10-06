@@ -30,6 +30,9 @@ local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
 local LootSystem = require("src.systems.LootSystem")
 local CoinPickupSystem = require("src.systems.CoinPickupSystem")
+local CoinAttractionSystem = require("src.systems.CoinAttractionSystem")
+local AttackColliderSystem = require("src.systems.AttackColliderSystem")
+local LightSystem = require("src.systems.LightSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -91,17 +94,18 @@ function GameScene.load()
   ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
   ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
   ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-  ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Manage ephemeral attack colliders
+  ecsWorld:addSystem(AttackColliderSystem.new()) -- Manage ephemeral attack colliders
   ecsWorld:addSystem(DamageSystem.new())               -- Fifth: process damage events (includes knockback)
   ecsWorld:addSystem(LootSystem.new(physicsWorld))     -- Sixth: handle loot drops when entities die
   ecsWorld:addSystem(CoinPickupSystem.new())          -- Seventh: handle coin pickup collisions
-  ecsWorld:addSystem(FlashEffectSystem.new())         -- Eighth: update flash effects
-  ecsWorld:addSystem(AnimationSystem.new())           -- Ninth: advance animations
-  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Tenth: update particles
-  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Eleventh: update shadow bodies
-  ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Twelfth: manage dynamic lights
-  ecsWorld:addSystem(GroundShadowSystem.new())        -- Thirteenth: draw ground shadows beneath sprites
-  ecsWorld:addSystem(RenderSystem.new())              -- Fourteenth: render sprites and debug visuals
+  ecsWorld:addSystem(CoinAttractionSystem.new(ecsWorld))      -- Eighth: handle coin attraction to player
+  ecsWorld:addSystem(FlashEffectSystem.new())         -- Ninth: update flash effects
+  ecsWorld:addSystem(AnimationSystem.new())           -- Tenth: advance animations
+  ecsWorld:addSystem(ParticleRenderSystem.new())      -- Eleventh: update particles
+  ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Twelfth: update shadow bodies
+  ecsWorld:addSystem(LightSystem.new(lightWorld)) -- Thirteenth: manage dynamic lights
+  ecsWorld:addSystem(GroundShadowSystem.new())        -- Fourteenth: draw ground shadows beneath sprites
+  ecsWorld:addSystem(RenderSystem.new())              -- Fifteenth: render sprites and debug visuals
 
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
