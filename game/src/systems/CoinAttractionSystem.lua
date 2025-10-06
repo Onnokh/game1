@@ -2,7 +2,7 @@ local System = require("src.core.System")
 local EntityUtils = require("src.utils.entities")
 
 ---@class CoinAttractionSystem : System
-local CoinAttractionSystem = System:extend("CoinAttractionSystem")
+local CoinAttractionSystem = System:extend("CoinAttractionSystem", {"Position", "Movement", "Coin"})
 
 ---Update the coin attraction system
 ---@param dt number Delta time
@@ -26,35 +26,57 @@ function CoinAttractionSystem:update(dt)
         local coinMovement = coinEntity:getComponent("Movement")
         local coinComponent = coinEntity:getComponent("Coin")
 
-        if coinPosition and coinMovement and coinComponent then
-            -- Calculate distance to player
-            local dx = playerPosition.x - coinPosition.x
-            local dy = playerPosition.y - coinPosition.y
-            local distance = math.sqrt(dx * dx + dy * dy)
+        if coinPosition and coinMovement and coinComponent and coinMovement.enabled then
+            -- Check if enough time has passed since coin spawn (250ms delay)
+            local currentTime = love.timer.getTime()
+            local timeSinceSpawn = currentTime - coinComponent.spawnTime
+            local attractionDelay = 0.25 -- 250ms delay
 
-            -- Get the coin's specific attractor radius
-            local attractorRadius = coinComponent:getAttractorRadius()
+            if timeSinceSpawn >= attractionDelay then
+                -- Calculate distance to player
+                local dx = playerPosition.x - coinPosition.x
+                local dy = playerPosition.y - coinPosition.y
+                local distance = math.sqrt(dx * dx + dy * dy)
 
-            -- If player is within attraction radius, apply attraction force
-            if distance <= attractorRadius and distance > 0 then
-                -- Calculate attraction force (stronger when closer)
-                local attractionStrength = 1.0 - (distance / attractorRadius) -- 0 to 1, stronger when closer
-                local attractionForce = attractionStrength * 200 -- Base attraction force
+                -- Get the coin's specific attractor radius
+                local attractorRadius = coinComponent:getAttractorRadius()
 
-                -- Calculate direction to player (normalized)
-                local dirX = dx / distance
-                local dirY = dy / distance
+                -- If player is within attraction radius, move directly towards player
+                if distance <= attractorRadius and distance > 0 then
+                    -- Calculate movement speed with ease-in effect
+                    local movementSpeed = self:calculateMovementSpeed(distance, attractorRadius)
 
-                -- Apply attraction force to coin's velocity
-                local currentVelX = coinMovement.velocityX
-                local currentVelY = coinMovement.velocityY
-                local newVelX = currentVelX + (dirX * attractionForce * dt)
-                local newVelY = currentVelY + (dirY * attractionForce * dt)
+                    -- Calculate direction to player (normalized)
+                    local dirX = dx / distance
+                    local dirY = dy / distance
 
-                coinMovement:setVelocity(newVelX, newVelY)
+                    -- Set velocity directly towards player (overrides any existing momentum/friction)
+                    coinMovement:setVelocity(dirX * movementSpeed, dirY * movementSpeed)
+                end
             end
         end
     end
+end
+
+---Calculate movement speed with ease-in effect for direct movement
+---@param distance number Current distance to player
+---@param maxRadius number Maximum attraction radius
+---@return number Movement speed
+function CoinAttractionSystem:calculateMovementSpeed(distance, maxRadius)
+    -- Base movement speed
+    local baseSpeed = 80 -- Base movement speed
+
+    -- Calculate normalized distance (0 at player, 1 at edge of radius)
+    local normalizedDistance = distance / maxRadius
+
+    -- Ease-in effect: faster movement as coin gets closer
+    -- Using a quadratic ease-in: 1 - (1 - t)^2
+    local easeInFactor = 1 - (1 - (1 - normalizedDistance)) ^ 2
+
+    -- Apply ease-in to movement speed (starts slow, gets faster as it approaches)
+    local speed = baseSpeed * (0.3 + 0.7 * easeInFactor)
+
+    return speed
 end
 
 return CoinAttractionSystem
