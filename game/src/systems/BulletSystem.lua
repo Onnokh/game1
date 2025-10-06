@@ -113,6 +113,13 @@ function BulletSystem:removeBullet(bulletEntity, physicsCollision)
     -- Mark as dead first to prevent double-removal
     bulletEntity.isDead = true
 
+    -- Remove light if attached
+    local lightComp = bulletEntity:getComponent("Light")
+    if lightComp and lightComp.lightRef then
+        lightComp.lightRef:Remove()
+        lightComp.lightRef = nil
+    end
+
     -- Remove entity from the world
     -- Entity:destroy() will automatically clean up all components
     local world = bulletEntity._world

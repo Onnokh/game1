@@ -36,7 +36,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     local position = Position.new(x, y, DepthSorting.getLayerZ("FOREGROUND"))
 
     -- Small sprite for bullet visualization (you can customize this)
-    local spriteRenderer = SpriteRenderer.new(nil, 4, 4)
+    local spriteRenderer = SpriteRenderer.new(nil, 4, 2)
     spriteRenderer.color = {r = 1, g = 1, b = 0.2, a = 1} -- Yellow color for bullets
 
     -- Create bullet component
@@ -76,7 +76,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     bullet:addComponent("SpriteRenderer", spriteRenderer)
     bullet:addComponent("Bullet", bulletComponent)
     bullet:addComponent("PhysicsCollision", physicsCollision)
-    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 0.8, heightFactor = 0.18, offsetY = 2 }))
+    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 0.8, heightFactor = 0.25, offsetY = 2 }))
 
     -- Add to world
     if world then
