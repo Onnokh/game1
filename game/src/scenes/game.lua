@@ -199,41 +199,9 @@ end
 -- Update the game scene
 function GameScene.update(dt, gameState)
 
-  -- Ensure ECS world is initialized
-  if not ecsWorld then
-    ecsWorld = World.new()
-    ecsWorld:addSystem(CollisionSystem.new(physicsWorld)) -- First: ensure colliders exist
-    ecsWorld:addSystem(StateMachineSystem.new())         -- Second: update state machines
-    ecsWorld:addSystem(MovementSystem.new())              -- Third: handle movement and collision
-    ecsWorld:addSystem(AttackSystem.new())               -- Fourth: handle attacks
-    ecsWorld:addSystem(require("src.systems.AttackColliderSystem").new()) -- Fifth: manage ephemeral attack colliders
-    ecsWorld:addSystem(DamageSystem.new())               -- Sixth: process damage events (includes knockback)
-    ecsWorld:addSystem(FlashEffectSystem.new())         -- Seventh: update flash effects
-    ecsWorld:addSystem(AnimationSystem.new())           -- Eighth: advance animations
-    ecsWorld:addSystem(ParticleRenderSystem.new())      -- Ninth: update particles
-    ecsWorld:addSystem(ShadowSystem.new(lightWorld))    -- Tenth: update shadow bodies
-    ecsWorld:addSystem(require("src.systems.LightSystem").new(lightWorld)) -- Eleventh: manage dynamic lights
-    ecsWorld:addSystem(RenderSystem.new())              -- Twelfth: render everything
-    -- Damage numbers are now handled by UISystems.DamagePopupSystem
-
-    if not uiWorld then
-      uiWorld = World.new()
-      local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
-      local HUDSystem = require("src.systems.UISystems.HUDSystem")
-      local PhaseTextSystem = require("src.systems.UISystems.PhaseTextSystem")
-      local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
-      local MenuSystem = require("src.systems.UISystems.MenuSystem")
-      local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
-
-      local healthBarSystem = HealthBarSystem.new(ecsWorld)
-      uiWorld:addSystem(healthBarSystem)
-      uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
-      uiWorld:addSystem(PhaseTextSystem.new())
-      uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
-      uiWorld:addSystem(MenuSystem.new())
-      uiWorld:addSystem(PauseMenuSystem.new())
-    end
-
+  -- If the scene hasn't been loaded yet, skip updating
+  if not ecsWorld or not uiWorld or not physicsWorld then
+    return
   end
 
   -- Create player entity if it doesn't exist
@@ -400,10 +368,6 @@ end
 function GameScene.cleanup()
   print("GameScene: Cleaning up...")
 
-  -- Debug: Show canvas count before cleanup
-  local canvasCount = love.graphics.getStats().canvases
-  print("GameScene: Canvas count before cleanup:", canvasCount)
-
   -- Clear monsters array
   monsters = {}
 
@@ -476,20 +440,6 @@ function GameScene.cleanup()
 
   -- Force garbage collection to clean up any remaining references
   collectgarbage("collect")
-
-  -- Debug: Show canvas count after cleanup
-  local canvasCountAfter = love.graphics.getStats().canvases
-  print("GameScene: Canvas count after cleanup:", canvasCountAfter)
-
-  -- Debug: Show comprehensive graphics stats
-  local stats = love.graphics.getStats()
-  print("GameScene: Graphics stats after cleanup:")
-  print("  - Canvases:", stats.canvases)
-  print("  - Images:", stats.images)
-  print("  - Textures:", stats.textures)
-  print("  - Draw calls:", stats.drawcalls)
-  print("  - Canvas switches:", stats.canvasswitches)
-  print("  - Shader switches:", stats.shaderswitches)
 
   print("GameScene: Cleanup complete")
 end
