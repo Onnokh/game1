@@ -41,6 +41,7 @@ local GameState = {
     shift = false,
     attack = false,
     interact = false,
+    switchWeapon = false,
     mouseX = 0,
     mouseY = 0
   },
@@ -177,6 +178,8 @@ function GameState.handleKeyPressed(key)
     GameState.input.shift = true
   elseif key == "e" then
     GameState.input.interact = true
+  elseif key == "q" then
+    GameState.input.switchWeapon = true
   end
 
   -- Pass to current scene
@@ -204,6 +207,8 @@ function GameState.handleKeyReleased(key)
     GameState.input.shift = false
   elseif key == "e" then
     GameState.input.interact = false
+  elseif key == "q" then
+    GameState.input.switchWeapon = false
   end
 end
 

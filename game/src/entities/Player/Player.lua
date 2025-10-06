@@ -6,6 +6,7 @@ local PathfindingCollision = require("src.components.PathfindingCollision")
 local PhysicsCollision = require("src.components.PhysicsCollision")
 local StateMachine = require("src.components.StateMachine")
 local Attack = require("src.components.Attack")
+local Weapon = require("src.components.Weapon")
 local Health = require("src.components.Health")
 local Oxygen = require("src.components.Oxygen")
 local ParticleSystem = require("src.components.ParticleSystem")
@@ -100,8 +101,33 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("running", Running.new())
     stateMachine:addState("dash", Dash.new())
 
-    -- Create attack component
-    local attack = Attack.new(32, 15, 0.5, "melee", 6) -- damage, range, cooldown, type, knockback
+    -- Create weapon component with weapon inventory
+    local weaponInventory = {
+        melee = {
+            name = "Sword",
+            type = "melee",
+            damage = 32,
+            range = 15,
+            cooldown = 0.5,
+            knockback = 6
+        },
+        ranged = {
+            name = "Pistol",
+            type = "ranged",
+            damage = 20,
+            range = 300,
+            cooldown = 0.3,
+            knockback = 3,
+            bulletSpeed = 300,
+            bulletLifetime = 3,
+            piercing = false
+        }
+    }
+    local weapon = Weapon.new("ranged", weaponInventory)
+
+    -- Create attack component (tracks attack execution state)
+    -- Actual weapon stats come from Weapon component
+    local attack = Attack.new()
 
     -- Create health component
     local health = Health.new(100) -- 100 max health
@@ -120,6 +146,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("PathfindingCollision", pathfindingCollision)
     playerEntity:addComponent("PhysicsCollision", physicsCollision)
     playerEntity:addComponent("StateMachine", stateMachine)
+    playerEntity:addComponent("Weapon", weapon)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("Oxygen", oxygen)

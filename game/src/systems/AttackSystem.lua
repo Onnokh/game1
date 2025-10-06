@@ -1,25 +1,25 @@
 local System = require("src.core.System")
 local GameState = require("src.core.GameState")
 local EntityUtils = require("src.utils.entities")
+local Knockback = require("src.components.Knockback")
 
 ---@class AttackSystem : System
+---Handles attacks for entities with Attack component
+---If entity has Weapon component, uses weapon stats; otherwise uses Attack component stats
 local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
 
----Update all entities with Position and Attack components
+---Update all entities with Position, Attack, and Weapon components
 ---@param dt number Delta time
 function AttackSystem:update(dt)
     local currentTime = love.timer.getTime()
 
     for _, entity in ipairs(self.entities) do
-        local position = entity:getComponent("Position")
         local attack = entity:getComponent("Attack")
-        local physicsCollision = entity:getComponent("PhysicsCollision")
 
-        if position and attack and attack.enabled then
-            -- Check for attack input (this assumes the entity has input handling)
-            -- For now, we'll check if the entity is the player and handle input
+        if attack and attack.enabled then
+            -- Check for attack input
             if self:shouldAttack(entity, currentTime) then
-                self:performAttack(entity, position, attack, physicsCollision, currentTime)
+                self:performAttack(entity, currentTime)
             end
         end
     end
@@ -31,7 +31,24 @@ end
 ---@return boolean True if the entity should attack
 function AttackSystem:shouldAttack(entity, currentTime)
     local attack = entity:getComponent("Attack")
-    if not attack or not attack:isReady(currentTime) then
+
+    if not attack then
+        return false
+    end
+
+    -- Get cooldown from Weapon component if available, otherwise from Attack component
+    local cooldown = attack.cooldown
+    local weapon = entity:getComponent("Weapon")
+    if weapon then
+        local weaponData = weapon:getCurrentWeapon()
+        if weaponData then
+            cooldown = weaponData.cooldown
+        end
+    end
+
+    -- Check cooldown
+    local timeSinceLastAttack = currentTime - attack.lastAttackTime
+    if timeSinceLastAttack < cooldown then
         return false
     end
 
@@ -52,44 +69,66 @@ end
 
 ---Perform an attack for an entity
 ---@param entity Entity The attacking entity
----@param position Position The position component
----@param attack Attack The attack component
----@param physicsCollision PhysicsCollision|nil The physics collision component
 ---@param currentTime number Current game time
-function AttackSystem:performAttack(entity, position, attack, physicsCollision, currentTime)
+function AttackSystem:performAttack(entity, currentTime)
+    local attack = entity:getComponent("Attack")
+    local position = entity:getComponent("Position")
+
+    if not attack or not position then
+        return
+    end
+
     if not attack:performAttack(currentTime) then
         return
     end
 
+    -- Get attack stats from Weapon component if available, otherwise from Attack component
+    local attackType = attack.attackType
+    local weapon = entity:getComponent("Weapon")
+    if weapon then
+        local weaponData = weapon:getCurrentWeapon()
+        if weaponData then
+            attackType = weaponData.type
+        end
+    end
+
     -- Calculate attack direction for player entities
     if EntityUtils.isPlayer(entity) then
-        self:calculatePlayerAttackDirection(entity, position, attack)
+        self:calculatePlayerAttackDirection(entity)
     end
 
-    -- Spawn a short-lived attack collider sensor (no fallback path)
-    local AttackCollider = require("src.components.AttackCollider")
-    local attackerPhys = entity:getComponent("PhysicsCollision")
-    local physicsWorld = attackerPhys and attackerPhys.physicsWorld or nil
-    if not physicsWorld then return end
-    local ac = AttackCollider.new(entity, attack.damage, attack.knockback, 0.05)
-    ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
-    -- Rotate collider to match attack angle if available
-    if attack.attackAngleRad and ac.setAngle then
-        ac:setAngle(attack.attackAngleRad)
+    -- Check attack type and perform appropriate attack
+    if attackType == "ranged" then
+        -- Spawn a bullet entity for ranged attacks
+        self:spawnBullet(entity)
+    else
+        -- Spawn a short-lived attack collider sensor for melee attacks
+        self:spawnMeleeAttack(entity)
     end
-    entity:addComponent("AttackCollider", ac)
-
-    -- Apply knockback if specified
-    -- Knockback is handled in DamageSystem during queue processing
 end
 
 ---Calculate attack direction for player based on mouse position
 ---@param entity Entity The attacking entity
----@param position Position The attacker's position
----@param attack Attack The attack component
-function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
+function AttackSystem:calculatePlayerAttackDirection(entity)
     if not GameState or not GameState.input then
         return
+    end
+
+    local position = entity:getComponent("Position")
+    local attack = entity:getComponent("Attack")
+
+    if not position or not attack then
+        return
+    end
+
+    -- Get range from Weapon if available, otherwise from Attack
+    local range = attack.range
+    local weapon = entity:getComponent("Weapon")
+    if weapon then
+        local weaponData = weapon:getCurrentWeapon()
+        if weaponData then
+            range = weaponData.range
+        end
     end
 
     -- Get mouse position in world coordinates
@@ -106,8 +145,8 @@ function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
     -- Set the attack direction
     attack:setDirection(directionX, directionY)
 
-    -- Calculate hit area position using player center
-    attack:calculateHitArea(playerCenterX, playerCenterY)
+    -- Calculate hit area position using player center and weapon range
+    attack:calculateHitArea(playerCenterX, playerCenterY, range)
 end
 
 ---Find all targets within attack area using PhysicsCollision overlap detection
@@ -133,7 +172,7 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
     local usePhysicsQuery = physicsWorld ~= nil
     local fixturesInArea = nil
 
-    if usePhysicsQuery then
+    if usePhysicsQuery and physicsWorld then
         fixturesInArea = {}
         local minX = attack.hitAreaX
         local minY = attack.hitAreaY
@@ -153,7 +192,7 @@ function AttackSystem:findTargetsInAttackArea(attacker, position, attack)
         if target.id ~= attacker.id and not target.isDead then
             local targetPhysicsCollision = target:getComponent("PhysicsCollision")
             if targetPhysicsCollision and targetPhysicsCollision:hasCollider() then
-                if usePhysicsQuery then
+                if usePhysicsQuery and fixturesInArea then
                     -- Filter using physics query results first
                     local targetFixture = targetPhysicsCollision.collider and targetPhysicsCollision.collider.fixture
                     if targetFixture and fixturesInArea[targetFixture] then
@@ -214,5 +253,117 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
     end
 end
 
+---Spawn a bullet for ranged attacks
+---@param entity Entity The attacking entity
+function AttackSystem:spawnBullet(entity)
+    local world = entity._world
+    if not world then return end
+
+    local position = entity:getComponent("Position")
+    local attack = entity:getComponent("Attack")
+    local attackerPhys = entity:getComponent("PhysicsCollision")
+
+    if not position or not attack then
+        return
+    end
+
+    local physicsWorld = attackerPhys and attackerPhys.physicsWorld or nil
+    if not physicsWorld then return end
+
+    -- Get attack stats from Weapon if available, otherwise from Attack component
+    local damage = attack.damage
+    local knockback = attack.knockback
+    local bulletSpeed = 300
+    local bulletLifetime = 3
+    local piercing = false
+
+    local weapon = entity:getComponent("Weapon")
+    if weapon then
+        local weaponData = weapon:getCurrentWeapon()
+        if weaponData then
+            damage = weaponData.damage
+            knockback = weaponData.knockback
+            bulletSpeed = weaponData.bulletSpeed or bulletSpeed
+            bulletLifetime = weaponData.bulletLifetime or bulletLifetime
+            piercing = weaponData.piercing or piercing
+        end
+    end
+
+    -- Get spawn position (center of attacker)
+    local spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
+
+    -- Get bullet direction (normalized attack direction)
+    local directionX = attack.attackDirectionX
+    local directionY = attack.attackDirectionY
+    local directionLength = math.sqrt(directionX * directionX + directionY * directionY)
+
+    if directionLength > 0 then
+        -- Normalize direction
+        directionX = directionX / directionLength
+        directionY = directionY / directionLength
+
+        -- Offset spawn position slightly in front of attacker to avoid self-collision
+        local spawnOffset = 16
+        spawnX = spawnX + directionX * spawnOffset
+        spawnY = spawnY + directionY * spawnOffset
+
+        -- Create bullet entity
+        local BulletEntity = require("src.entities.Bullet")
+
+        BulletEntity.create(
+            spawnX,
+            spawnY,
+            directionX,
+            directionY,
+            bulletSpeed,
+            damage,
+            entity, -- owner
+            world,
+            physicsWorld,
+            knockback,
+            bulletLifetime,
+            piercing
+        )
+    end
+end
+
+---Spawn a melee attack collider
+---@param entity Entity The attacking entity
+function AttackSystem:spawnMeleeAttack(entity)
+    local attack = entity:getComponent("Attack")
+    local attackerPhys = entity:getComponent("PhysicsCollision")
+
+    if not attack then
+        return
+    end
+
+    local physicsWorld = attackerPhys and attackerPhys.physicsWorld or nil
+    if not physicsWorld then return end
+
+    -- Get attack stats from Weapon if available, otherwise from Attack component
+    local damage = attack.damage
+    local knockback = attack.knockback
+
+    local weapon = entity:getComponent("Weapon")
+    if weapon then
+        local weaponData = weapon:getCurrentWeapon()
+        if weaponData then
+            damage = weaponData.damage
+            knockback = weaponData.knockback
+        end
+    end
+
+    -- Spawn a short-lived attack collider sensor for melee attacks
+    local AttackCollider = require("src.components.AttackCollider")
+    local ac = AttackCollider.new(entity, damage, knockback, 0.05)
+    ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
+
+    -- Rotate collider to match attack angle if available
+    if attack.attackAngleRad and ac.setAngle then
+        ac:setAngle(attack.attackAngleRad)
+    end
+
+    entity:addComponent("AttackCollider", ac)
+end
 
 return AttackSystem

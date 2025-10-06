@@ -25,6 +25,8 @@ local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
+local BulletSystem = require("src.systems.BulletSystem")
+local WeaponSystem = require("src.systems.WeaponSystem")
 local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
@@ -83,7 +85,9 @@ function GameScene.load()
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
+  ecsWorld:addSystem(WeaponSystem.new()) -- Handle weapon switching and syncing
   ecsWorld:addSystem(AttackSystem.new()) -- Handle attacks
+  ecsWorld:addSystem(BulletSystem.new()) -- Handle bullet movement and collision
   ecsWorld:addSystem(AttackColliderSystem.new()) -- Manage ephemeral attack colliders
   ecsWorld:addSystem(DamageSystem.new()) -- Process damage events (includes knockback)
   ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die

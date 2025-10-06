@@ -19,29 +19,39 @@ local Attack = {}
 Attack.__index = Attack
 
 ---Create a new Attack component
----@param damage number|nil Amount of damage this attack deals
----@param range number|nil Range of the attack
----@param cooldown number|nil Cooldown time between attacks in seconds
----@param attackType string|nil Type of attack ("melee", "ranged", etc.)
----@param knockback number|nil Knockback force applied to targets
+---Used to track attack execution state (timing, direction, hit area)
+---For entities with Weapon component: actual attack stats come from Weapon
+---For entities without Weapon: attack stats stored here (legacy mode)
+---@param damage number|nil Amount of damage this attack deals (optional, for entities without Weapon)
+---@param range number|nil Range of the attack (optional)
+---@param cooldown number|nil Cooldown time between attacks (optional)
+---@param attackType string|nil Type of attack (optional)
+---@param knockback number|nil Knockback force (optional)
 ---@return Component|Attack
 function Attack.new(damage, range, cooldown, attackType, knockback)
     local self = setmetatable(Component.new("Attack"), Attack)
 
-    self.damage = damage or 10
-    self.range = range or 32
-    self.cooldown = cooldown or 1.0
+    -- Attack execution state
     self.lastAttackTime = 0
     self.enabled = true
-    self.attackType = attackType or "melee"
-    self.knockback = knockback or 0
+
+    -- Attack direction (calculated when attacking)
     self.attackDirectionX = 0
     self.attackDirectionY = 0
     self.attackAngleRad = 0
+
+    -- Hit area (calculated when attacking)
     self.hitAreaX = 0
     self.hitAreaY = 0
     self.hitAreaWidth = 8
     self.hitAreaHeight = 8
+
+    -- Attack stats (for entities without Weapon component)
+    self.damage = damage or 0
+    self.range = range or 0
+    self.cooldown = cooldown or 0
+    self.attackType = attackType or "melee"
+    self.knockback = knockback or 0
 
     return self
 end
@@ -127,7 +137,13 @@ end
 ---Calculate and set the hit area based on attacker position and direction
 ---@param attackerX number Attacker X position
 ---@param attackerY number Attacker Y position
-function Attack:calculateHitArea(attackerX, attackerY)
+---@param range number|nil Range to use (optional, uses self.range if not provided)
+function Attack:calculateHitArea(attackerX, attackerY, range)
+    -- Use provided range or fall back to self.range (must be > 0)
+    local attackRange = range or self.range
+    if attackRange <= 0 then
+        attackRange = 15 -- Fallback
+    end
     -- Normalize direction
     local length = math.sqrt(self.attackDirectionX * self.attackDirectionX + self.attackDirectionY * self.attackDirectionY)
     if length > 0 then
@@ -136,7 +152,7 @@ function Attack:calculateHitArea(attackerX, attackerY)
 
         -- Use an oriented rectangle: length along local X, small thickness along local Y
         -- Make the length equal to the attack range for clear rotation visibility
-        local orientedLength = self.range
+        local orientedLength = attackRange
         local orientedThickness = self.hitAreaHeight > 0 and self.hitAreaHeight or 8
         self.hitAreaWidth = orientedLength
         self.hitAreaHeight = orientedThickness
@@ -151,7 +167,7 @@ function Attack:calculateHitArea(attackerX, attackerY)
         self.hitAreaY = centerY - (self.hitAreaHeight / 2)
     else
         -- Default to a horizontal blade to the right if no direction
-        local orientedLength = self.range
+        local orientedLength = attackRange
         local orientedThickness = self.hitAreaHeight > 0 and self.hitAreaHeight or 8
         self.hitAreaWidth = orientedLength
         self.hitAreaHeight = orientedThickness
