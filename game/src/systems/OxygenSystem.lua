@@ -7,6 +7,10 @@ local OxygenSystem = System:extend("OxygenSystem", {"Position", "Oxygen"})
 ---Update all entities with Position and Oxygen components
 ---@param dt number Delta time
 function OxygenSystem:update(dt)
+    -- Get current phase from GameState
+    local GameState = require("src.core.GameState")
+    local currentPhase = GameState and GameState.phase
+
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
         local oxygen = entity:getComponent("Oxygen")
@@ -14,11 +18,19 @@ function OxygenSystem:update(dt)
         if position and oxygen then
             -- Check if entity is in the reactor's safe zone
             local isInSafeZone = self:isInReactorSafeZone(position.x, position.y)
-            
-            -- Only decay oxygen if outside the safe zone
-            if not isInSafeZone then
-                local decayAmount = GameConstants.OXYGEN_DECAY_RATE * dt
-                oxygen:reduce(decayAmount)
+
+            if currentPhase == "Siege" then
+                -- During Siege: restore oxygen when in safe zone, decay when outside
+                if isInSafeZone then
+                    oxygen:restore(GameConstants.OXYGEN_RESTORE_RATE * dt)
+                else
+                    oxygen:reduce(GameConstants.OXYGEN_DECAY_RATE * dt)
+                end
+            else
+                -- During Discovery: only decay oxygen if outside the safe zone
+                if not isInSafeZone then
+                    oxygen:reduce(GameConstants.OXYGEN_DECAY_RATE * dt)
+                end
             end
         end
     end
@@ -31,22 +43,22 @@ end
 function OxygenSystem:isInReactorSafeZone(x, y)
     -- Find the reactor entity in the world
     local reactor = self:findReactorEntity()
-    
+
     if not reactor then
         -- If no reactor found, assume we're always in danger
         return false
     end
-    
+
     local reactorPosition = reactor:getComponent("Position")
     if not reactorPosition then
         return false
     end
-    
+
     -- Calculate distance to reactor
     local dx = x - reactorPosition.x
     local dy = y - reactorPosition.y
     local distance = math.sqrt(dx * dx + dy * dy)
-    
+
     return distance <= GameConstants.REACTOR_SAFE_RADIUS
 end
 
@@ -56,14 +68,15 @@ function OxygenSystem:findReactorEntity()
     if not self.world then
         return nil
     end
-    
+
     -- Search through all entities to find the reactor
+    -- To do: Fix this to use the world:getEntityByTag("Reactor") method
     for _, entity in ipairs(self.world.entities) do
         if entity:hasTag("Reactor") then
             return entity
         end
     end
-    
+
     return nil
 end
 

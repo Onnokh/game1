@@ -10,8 +10,22 @@ function Discovery.onEnter(gameState)
   end
 end
 
+
 function Discovery.update(dt, gameState)
-  -- Discovery phase logic
+  -- When oxygen is depleted, switch to Siege phase
+  local GameScene = require("src.scenes.game")
+  local ecsWorld = GameScene and GameScene.ecsWorld
+  if not ecsWorld then return end
+
+  local player = ecsWorld:getPlayer()
+  if player then
+    local oxygen = player:getComponent("Oxygen")
+    if oxygen and oxygen.isDepleted then
+      local GameController = require("src.core.GameController")
+      GameController.switchPhase("Siege")
+    end
+  end
+
 end
 
 function Discovery.draw(gameState)

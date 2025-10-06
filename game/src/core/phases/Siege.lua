@@ -31,6 +31,7 @@ function Siege.update(dt, gameState)
   local ecsWorld = GameScene and GameScene.ecsWorld
   if not ecsWorld then return end
 
+  -- Check if all siege attackers are defeated
   local remaining = 0
   for _, entity in ipairs(ecsWorld.entities or {}) do
     if entity:hasTag("SiegeAttacker") then
