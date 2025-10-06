@@ -4,35 +4,21 @@ local EntityUtils = require("src.utils.entities")
 ---@class CoinAttractionSystem : System
 local CoinAttractionSystem = System:extend("CoinAttractionSystem")
 
----Create a new CoinAttractionSystem
----@return CoinAttractionSystem
-function CoinAttractionSystem.new()
-    ---@class CoinAttractionSystem
-    local self = System.new()
-    setmetatable(self, CoinAttractionSystem)
-    return self
-end
-
 ---Update the coin attraction system
 ---@param dt number Delta time
 function CoinAttractionSystem:update(dt)
+    if not self.world then return end
+
+     -- Get all coin entities using the tag system
+     local coinEntities = self.world:getEntitiesWithTag("Coin")
+     if #coinEntities == 0 then return end
+
     -- Get player entity using helper function
     local playerEntity = EntityUtils.findPlayer(self.world)
     if not playerEntity then return end
 
     local playerPosition = playerEntity:getComponent("Position")
     if not playerPosition then return end
-
-    -- Get all coin entities using the tag system
-    local coinEntities = self.world:getEntitiesWithTag("Coin")
-
-    -- Debug: Check if we're finding coins
-    if #coinEntities == 0 then
-        print("CoinAttractionSystem: No coins found with tag 'Coin'")
-        return
-    else
-        print("CoinAttractionSystem: Found " .. #coinEntities .. " coins")
-    end
 
     -- Process each coin for attraction
     for _, coinEntity in ipairs(coinEntities) do

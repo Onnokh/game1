@@ -4,25 +4,22 @@ local System = require("src.core.System")
 ---@field lightWorld any
 local LightSystem = System:extend("LightSystem", {"Position", "Light"})
 
----Create a new LightSystem
----@return LightSystem
-function LightSystem.new()
-    ---@class LightSystem
-    local self = System.new({"Position", "Light"})
-    setmetatable(self, LightSystem)
-    return self
+---Initialize light world reference when world is set
+function LightSystem:setWorld(world)
+    System.setWorld(self, world)
+    self.lightWorld = world and world.lightWorld or nil
 end
 
 ---Ensure a light exists on the entity
 ---@param entity Entity
 local function ensureLightCreated(self, entity)
-    if not entity or not self or not self.world or not self.world.lightWorld then return end
+    if not entity or not self or not self.lightWorld then return end
     local lightComp = entity:getComponent("Light")
     if not lightComp or lightComp.enabled == false then return end
     if lightComp.lightRef then return end
 
     local Light = require("shadows.Light")
-    local light = Light:new(self.world.lightWorld, lightComp.radius)
+    local light = Light:new(self.lightWorld, lightComp.radius)
     light:SetColor(lightComp.r, lightComp.g, lightComp.b, lightComp.a)
     lightComp.lightRef = light
 end

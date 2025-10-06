@@ -6,19 +6,17 @@ local EventBus = require("src.utils.EventBus")
 ---@field physicsWorld love.World|nil
 local LootSystem = System:extend("LootSystem", {"DropTable", "Position"})
 
----Create a new LootSystem
----@return LootSystem
-function LootSystem.new()
-    ---@class LootSystem
-    local self = System.new({"DropTable", "Position"})
-    setmetatable(self, LootSystem)
-
-    -- Subscribe to entityDespawned events to spawn loot after death animation completes
-    EventBus.subscribe("entityDropLoot", function(payload)
-        self:onEntityDropLoot(payload)
-    end)
-
-    return self
+---Initialize references and subscribe when world is set
+function LootSystem:setWorld(world)
+    System.setWorld(self, world)
+    self.physicsWorld = world and world.physicsWorld or nil
+    if not self._subscribed then
+        self._subscribed = true
+        EventBus.subscribe("entityDropLoot", function(payload)
+            -- Use current system instance to handle drop
+            self:onEntityDropLoot(payload)
+        end)
+    end
 end
 
 ---Handle entity despawn events (post-death, after animation)
@@ -72,9 +70,10 @@ function LootSystem:dropLoot(entity, dropTable, position)
                 local velocityY = math.sin(angle) * finalSpeed
 
                 -- Create coin entity with momentum
-                local world = entity._world
+                local world = self.world or entity._world
+                local physicsWorld = self.physicsWorld or (world and world.physicsWorld) or nil
                 if world then
-                    Coin.create(coinX, coinY, 1, nil, world, world.physicsWorld, velocityX, velocityY)
+                    Coin.create(coinX, coinY, 1, nil, world, physicsWorld, velocityX, velocityY)
                 end
             end
         end

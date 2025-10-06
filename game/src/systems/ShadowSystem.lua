@@ -1,26 +1,16 @@
 local System = require("src.core.System")
 
 ---@class ShadowSystem : System
----@field lightWorld any
 local ShadowSystem = System:extend("ShadowSystem", {"Position", "CastableShadow"})
-
----Create a new ShadowSystem
----@return ShadowSystem
-function ShadowSystem.new()
-	---@class ShadowSystem
-	local self = System.new({"Position", "CastableShadow"})
-	setmetatable(self, ShadowSystem)
-	return self
-end
 
 ---Ensure bodies/shapes exist for entity shadows
 ---@param entity Entity
-local function ensureShadowCreated(self, entity)
+function ShadowSystem:ensureShadowCreated(entity)
 	if not entity then return end
 	local CastableShadow = entity:getComponent("CastableShadow")
 	if not CastableShadow or CastableShadow.enabled == false then return end
 	if CastableShadow.body then return end
-	if not self or not self.world or not self.world.lightWorld then return end
+	if not self.world or not self.world.lightWorld then return end
 
 	local Body = require("shadows.Body")
 	local PolygonShadow = require("shadows.ShadowShapes.PolygonShadow")
@@ -41,19 +31,13 @@ local function ensureShadowCreated(self, entity)
 	end
 end
 
----Update all entities (sync body positions)
----@param dt number
 function ShadowSystem:update(dt)
-	if not self or not self.entities then return end
 	for _, entity in ipairs(self.entities) do
-		local position = nil
-		local shadow = nil
-		if entity and entity.getComponent then
-			position = entity:getComponent("Position")
-			shadow = entity:getComponent("CastableShadow")
-		end
+		local position = entity:getComponent("Position")
+		local shadow = entity:getComponent("CastableShadow")
+
 		if position and shadow and shadow.enabled ~= false then
-			ensureShadowCreated(self, entity)
+			self:ensureShadowCreated(entity)
 			if shadow.body then
 				local px = position.x or 0
 				local py = position.y or 0

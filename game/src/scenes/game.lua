@@ -61,19 +61,8 @@ GameScene.lightWorld = nil
 
 -- Initialize the game scene
 function GameScene.load()
-  -- Debug: Show canvas count at start of load
-  local canvasCountStart = love.graphics.getStats().canvases
-  print("GameScene: Canvas count at start of load:", canvasCountStart)
-
-  -- Load sprites with Iffy
-  local canvasCountAfterSprites = love.graphics.getStats().canvases
-  print("GameScene: Canvas count after sprites load:", canvasCountAfterSprites)
   sprites.load()
-
-  -- Load shaders
   ShaderManager.loadDefaultShaders()
-  local canvasCountAfterShaders = love.graphics.getStats().canvases
-  print("GameScene: Canvas count after shaders load:", canvasCountAfterShaders)
 
   -- Initialize physics world (gravity: 0, 0 for top-down game)
   physicsWorld = love.physics.newWorld(0, 0, true)
@@ -178,6 +167,7 @@ function GameScene.load()
   -- Add pathfinding system after static collision objects are added
   ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize)) -- Pathfinding system
 end
+
 -- Allow other modules (phases, etc.) to set ambient color safely
 function GameScene.setAmbientColor(r, g, b, a, duration)
   WorldLight.setAmbientColor(r, g, b, a, duration)

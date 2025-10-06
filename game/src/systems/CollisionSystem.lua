@@ -1,24 +1,16 @@
 local System = require("src.core.System")
 
 ---@class CollisionSystem : System
----@field physicsWorld love.World
+---@field physicsWorld love.World|nil
 local CollisionSystem = System:extend("CollisionSystem", {"Position"})
-
----Create a new CollisionSystem
----@return CollisionSystem
-function CollisionSystem.new()
-    ---@class CollisionSystem
-    local self = System.new({"Position"})
-    setmetatable(self, CollisionSystem)
-    -- Physics world will be set when the world is assigned to this system
-    return self
-end
 
 ---Initialize physics callbacks when world is set
 function CollisionSystem:setWorld(world)
     System.setWorld(self, world) -- Call parent setWorld
-    if self.world and self.world.physicsWorld then
-        self.world.physicsWorld:setCallbacks(
+    -- Cache physics world reference for convenience
+    self.physicsWorld = world and world.physicsWorld or nil
+    if self.world and self.physicsWorld then
+        self.physicsWorld:setCallbacks(
             function(a, b, contact)
                 -- beginContact
                 local ua = a and a:getUserData() or nil
@@ -45,7 +37,9 @@ function CollisionSystem:setWorld(world)
                 if ub and type(ub) == "table" and ub.kind == "attack" then handle(b, a) end
 
             end,
-            nil, nil, nil
+            function() end, -- endContact
+            function() end, -- preSolve
+            function() end  -- postSolve
         )
     end
 end
@@ -53,17 +47,18 @@ end
 ---On update, ensure colliders exist for entities lacking one
 ---@param dt number
 function CollisionSystem:update(dt)
+	if not self.world or not self.physicsWorld then return end
 	if not self or not self.entities then return end
 	for _, entity in ipairs(self.entities) do
 		local position = entity:getComponent("Position")
 		local movement = entity:getComponent("Movement")
 		local knockback = entity:getComponent("Knockback")
-		if position and self.world and self.world.physicsWorld then
+		if position and self.world and self.physicsWorld then
 			-- Handle PathfindingCollision component (for pathfinding and physics collision)
 			local pathfindingCollision = entity:getComponent("PathfindingCollision")
 			if pathfindingCollision then
 				if not pathfindingCollision:hasCollider() then
-					pathfindingCollision:createCollider(self.world.physicsWorld, position.x, position.y)
+					pathfindingCollision:createCollider(self.physicsWorld, position.x, position.y)
 				end
 				-- Tag fixture with entity reference for contact handlers (for both new and existing colliders)
 				if pathfindingCollision.collider and pathfindingCollision.collider.fixture then
@@ -74,7 +69,7 @@ function CollisionSystem:update(dt)
 			-- Handle PhysicsCollision component (for physics only)
 			local physicsCollision = entity:getComponent("PhysicsCollision")
 			if physicsCollision and not physicsCollision:hasCollider() then
-				physicsCollision:createCollider(self.world.physicsWorld, position.x, position.y)
+				physicsCollision:createCollider(self.physicsWorld, position.x, position.y)
 				-- Tag fixture with entity reference for contact handlers
 				if physicsCollision.collider and physicsCollision.collider.fixture then
 					physicsCollision.collider.fixture:setUserData({ kind = "entity", entity = entity })

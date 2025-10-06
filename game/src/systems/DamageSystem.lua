@@ -92,16 +92,8 @@ function DamageSystem:handleEntityDeath(entity, damageEvent)
         print("Skeleton entering dying state")
     end
 
-    -- You can add death effects here:
-    -- - Play death animation
-    -- - Drop items
-    -- - Spawn particles
-    -- - Play death sound
+    -- To do: Fix the death animation/dying state duration and properly handle it.
 
-    -- If this was a monster, you might want to:
-    -- - Add score
-    -- - Spawn loot
-    -- - Trigger events
 end
 
 ---Apply additional damage effects

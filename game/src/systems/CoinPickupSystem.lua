@@ -6,29 +6,13 @@ local CollisionUtils = require("src.utils.collision")
 ---@class CoinPickupSystem : System
 local CoinPickupSystem = System:extend("CoinPickupSystem", {"PhysicsCollision", "Coin"})
 
----Create a new CoinPickupSystem
----@return CoinPickupSystem
-function CoinPickupSystem.new()
-    ---@class CoinPickupSystem
-    local self = System.new({"PhysicsCollision", "Coin"})
-    setmetatable(self, CoinPickupSystem)
-    return self
-end
-
 ---Update the coin pickup system
 ---@param dt number Delta time
 function CoinPickupSystem:update(dt)
-    -- Get player entity via world's cached lookup
-    local playerEntity = nil
-    local world = nil
-    if self.entities[1] and self.entities[1]._world then
-        world = self.entities[1]._world
-        if world.getPlayer then
-            playerEntity = world:getPlayer()
-        end
-    end
+  if not self.world then return end
 
-    if not playerEntity then return end
+  local playerEntity = self.world:getPlayer()
+  if not playerEntity then return end
 
 	local playerPhysics = playerEntity:getComponent("PhysicsCollision")
 	if not playerPhysics or not playerPhysics:hasCollider() then return end
@@ -57,8 +41,8 @@ function CoinPickupSystem:update(dt)
                     total = GameState.getTotalCoins()
                 })
 
-                if world then
-                    world:removeEntity(coinEntity)
+                if self.world then
+                    self.world:removeEntity(coinEntity)
                 end
 
                 print(string.format("Picked up %d coin(s)! Total: %d", coinValue, GameState.getTotalCoins()))

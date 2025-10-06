@@ -3,6 +3,8 @@
 ---@field systems table Array of all systems in the world
 ---@field nextEntityId number Next available entity ID
 ---@field tagIndex table<string, table<number, Entity>> Index of entities by tag
+---@field physicsWorld love.World|nil The physics world (optional)
+---@field lightWorld table|nil The light world (optional)
 local World = {}
 World.__index = World
 

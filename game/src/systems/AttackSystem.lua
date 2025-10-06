@@ -1,6 +1,4 @@
 local System = require("src.core.System")
-local CoordinateUtils = require("src.utils.coordinates")
-local DamageQueue = require("src.DamageQueue")
 local GameState = require("src.core.GameState")
 local EntityUtils = require("src.utils.entities")
 
