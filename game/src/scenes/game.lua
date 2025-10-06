@@ -117,10 +117,12 @@ function GameScene.load()
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
   local SafezoneVignetteSystem = require("src.systems.UISystems.SafezoneVignetteSystem")
+  local WeaponIndicatorSystem = require("src.systems.UISystems.WeaponIndicatorSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+  uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
   uiWorld:addSystem(CoinCounterSystem.new())
   uiWorld:addSystem(OxygenCounterSystem.new(ecsWorld))
   uiWorld:addSystem(PhaseTextSystem.new())
