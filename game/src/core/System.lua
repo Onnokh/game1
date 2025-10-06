@@ -1,6 +1,5 @@
 ---@class System
 ---@field requiredComponents table Array of component types this system requires
----@field requiredTags table Array of tags this system requires (optional)
 ---@field entities table Array of entities that match the required components
 local System = {}
 System.__index = System
@@ -10,7 +9,6 @@ System.__index = System
 function System.new()
     local self = setmetatable({}, System)
     self.requiredComponents = {}
-    self.requiredTags = {}
     self.entities = {}
     return self
 end
@@ -31,11 +29,6 @@ function System:entityMatches(entity)
 
     for _, componentType in ipairs(self.requiredComponents) do
         if not entity:hasComponent(componentType) then
-            return false
-        end
-    end
-    for _, tag in ipairs(self.requiredTags) do
-        if not entity.hasTag or not entity:hasTag(tag) then
             return false
         end
     end
@@ -81,9 +74,8 @@ end
 ---Create a new system class that extends this System
 ---@param className string The name of the new system class
 ---@param requiredComponents table|nil Array of component types the new system requires
----@param requiredTags table|nil Array of tags the new system requires
 ---@return table The new system class
-function System:extend(className, requiredComponents, requiredTags)
+function System:extend(className, requiredComponents)
     local NewSystem = {}
     NewSystem.__index = NewSystem
 
@@ -98,9 +90,6 @@ function System:extend(className, requiredComponents, requiredTags)
         -- Set component requirements if provided
         if requiredComponents then
             self.requiredComponents = requiredComponents
-        end
-        if requiredTags then
-            self.requiredTags = requiredTags
         end
         return self
     end
