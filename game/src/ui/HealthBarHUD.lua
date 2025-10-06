@@ -10,7 +10,7 @@ local lastPlayerDamage = { amount = 0, timestamp = -math.huge }
 EventBus.subscribe("entityDamaged", function(payload)
     local target = payload and payload.target or nil
     local amount = payload and payload.amount or 0
-    if target and target.isPlayer then
+    if target and target.hasTag and target:hasTag("Player") then
         lastPlayerDamage.amount = amount
         lastPlayerDamage.timestamp = love.timer.getTime()
     end
@@ -25,11 +25,9 @@ function HealthBarHUD.draw(world)
 
     -- Find player
     local player = nil
-    for _, entity in ipairs(world.entities) do
-        if entity.isPlayer then
-            player = entity
-            break
-        end
+    local list = world:getEntitiesWithTag("Player") or nil
+    if list and #list > 0 then
+        player = list[1]
     end
     if not player then
         return

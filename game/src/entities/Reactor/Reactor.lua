@@ -20,7 +20,6 @@ local Reactor = {}
 function Reactor.create(x, y, world, physicsWorld)
 
     local reactor = Entity.new()
-    reactor.isReactor = true -- Flag to identify reactor entities
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
     local animator = Animator.new("reactor", {1, 2, 3, 4}, 4, true)
@@ -50,6 +49,9 @@ function Reactor.create(x, y, world, physicsWorld)
     reactor:addComponent("Health", health)
     reactor:addComponent("HealthBar", healthBar)
     reactor:addComponent("Light", light)
+
+    -- Tag for easy querying
+    reactor:addTag("Reactor")
 
 
     if world then

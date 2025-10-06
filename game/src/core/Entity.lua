@@ -3,6 +3,7 @@
 ---@field components table Table of components attached to this entity
 ---@field active boolean Whether this entity is active
 ---@field isDead boolean Whether this entity is dead
+---@field tags table<string, boolean> Set of tags applied to this entity
 local Entity = {}
 Entity.__index = Entity
 
@@ -18,6 +19,7 @@ function Entity.new()
     self.components = {}
     self.active = true
     self.isDead = false
+    self.tags = {}
     return self
 end
 
@@ -38,6 +40,13 @@ end
 ---@param world World The world this entity belongs to
 function Entity:setWorld(world)
     self._world = world
+    if self.tags and self._world and self._world._registerTag then
+        for tag, present in pairs(self.tags) do
+            if present then
+                self._world:_registerTag(self, tag)
+            end
+        end
+    end
 end
 
 ---Get a component from this entity
@@ -58,6 +67,41 @@ end
 ---@param componentType string The type of component
 function Entity:removeComponent(componentType)
     self.components[componentType] = nil
+end
+
+---Add a tag to this entity
+---@param tag string
+function Entity:addTag(tag)
+    if not self.tags[tag] then
+        self.tags[tag] = true
+        if self._world and self._world._registerTag then
+            self._world:_registerTag(self, tag)
+        end
+        if self._world then
+            self._world:notifySystemsOfEntityChange(self)
+        end
+    end
+end
+
+---Remove a tag from this entity
+---@param tag string
+function Entity:removeTag(tag)
+    if self.tags[tag] then
+        self.tags[tag] = nil
+        if self._world and self._world._unregisterTag then
+            self._world:_unregisterTag(self, tag)
+        end
+        if self._world then
+            self._world:notifySystemsOfEntityChange(self)
+        end
+    end
+end
+
+---Check if this entity has a specific tag
+---@param tag string
+---@return boolean
+function Entity:hasTag(tag)
+    return self.tags[tag] == true
 end
 
 ---Destroy this entity (mark as inactive)

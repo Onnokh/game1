@@ -1,15 +1,18 @@
 ---@class System
 ---@field requiredComponents table Array of component types this system requires
+---@field requiredTags table Array of tags this system requires (optional)
 ---@field entities table Array of entities that match the required components
 local System = {}
 System.__index = System
 
 ---Create a new system
 ---@param requiredComponents table Array of component types this system requires
+---@param requiredTags table|nil Array of tags this system requires
 ---@return System
-function System.new(requiredComponents)
+function System.new(requiredComponents, requiredTags)
     local self = setmetatable({}, System)
     self.requiredComponents = requiredComponents or {}
+    self.requiredTags = requiredTags or {}
     self.entities = {}
     return self
 end
@@ -24,6 +27,11 @@ function System:entityMatches(entity)
 
     for _, componentType in ipairs(self.requiredComponents) do
         if not entity:hasComponent(componentType) then
+            return false
+        end
+    end
+    for _, tag in ipairs(self.requiredTags) do
+        if not entity.hasTag or not entity:hasTag(tag) then
             return false
         end
     end
@@ -69,8 +77,9 @@ end
 ---Create a new system class that extends this System
 ---@param className string The name of the new system class
 ---@param requiredComponents table Array of component types the new system requires
+---@param requiredTags table|nil Array of tags the new system requires
 ---@return table The new system class
-function System:extend(className, requiredComponents)
+function System:extend(className, requiredComponents, requiredTags)
     local NewSystem = {}
     NewSystem.__index = NewSystem
 
@@ -80,7 +89,7 @@ function System:extend(className, requiredComponents)
     ---Create a new instance of the extended system
     ---@return table The new system instance
     function NewSystem.new()
-        local self = System.new(requiredComponents)
+        local self = System.new(requiredComponents, requiredTags)
         setmetatable(self, NewSystem)
         return self
     end

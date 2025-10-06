@@ -33,7 +33,7 @@ function GameController.load()
   -- Subscribe once for game-over trigger on reactor death
   EventBus.subscribe("entityDied", function(payload)
     local entity = payload and payload.entity
-    if entity and entity.isReactor then
+    if entity and entity:hasTag("Reactor") then
       -- Ensure reactor-specific visual shutdown runs
       Reactor.handleDeath(entity)
       -- Then enter game-over state via controller

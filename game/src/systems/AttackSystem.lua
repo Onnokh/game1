@@ -28,7 +28,7 @@ function AttackSystem:update(dt)
 end
 
 ---Check if an entity should attack
----@param entity Entity|{isPlayer:boolean} The entity to check
+---@param entity Entity The entity to check
 ---@param currentTime number Current game time
 ---@return boolean True if the entity should attack
 function AttackSystem:shouldAttack(entity, currentTime)
@@ -38,7 +38,7 @@ function AttackSystem:shouldAttack(entity, currentTime)
     end
 
     -- Check if this is the player entity and handle input
-    if entity.isPlayer then
+    if entity.hasTag and entity:hasTag("Player") then
         -- Get input state from game state
         local GameState = require("src.core.GameState")
         if GameState and GameState.input then
@@ -53,7 +53,7 @@ function AttackSystem:shouldAttack(entity, currentTime)
 end
 
 ---Perform an attack for an entity
----@param entity Entity|{isPlayer:boolean} The attacking entity
+---@param entity Entity The attacking entity
 ---@param position Position The position component
 ---@param attack Attack The attack component
 ---@param physicsCollision PhysicsCollision|nil The physics collision component
@@ -64,7 +64,7 @@ function AttackSystem:performAttack(entity, position, attack, physicsCollision, 
     end
 
     -- Calculate attack direction for player entities
-    if entity.isPlayer then
+    if entity.hasTag and entity:hasTag("Player") then
         self:calculatePlayerAttackDirection(entity, position, attack)
     end
 
@@ -86,7 +86,7 @@ function AttackSystem:performAttack(entity, position, attack, physicsCollision, 
 end
 
 ---Calculate attack direction for player based on mouse position
----@param entity Entity|{isPlayer:boolean} The attacking entity
+---@param entity Entity The attacking entity
 ---@param position Position The attacker's position
 ---@param attack Attack The attack component
 function AttackSystem:calculatePlayerAttackDirection(entity, position, attack)
@@ -178,7 +178,7 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
         local knockbackX, knockbackY = 0, 0
 
         -- For directional attacks, use the attack direction for knockback
-        if attacker.isPlayer and attack.attackDirectionX ~= 0 and attack.attackDirectionY ~= 0 then
+        if attacker.hasTag and attacker:hasTag("Player") and attack.attackDirectionX ~= 0 and attack.attackDirectionY ~= 0 then
             -- Use the attack direction (normalized)
             local directionLength = math.sqrt(attack.attackDirectionX * attack.attackDirectionX + attack.attackDirectionY * attack.attackDirectionY)
             if directionLength > 0 then

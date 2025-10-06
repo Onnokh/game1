@@ -2,6 +2,7 @@
 ---@field entities table Array of all entities in the world
 ---@field systems table Array of all systems in the world
 ---@field nextEntityId number Next available entity ID
+---@field tagIndex table<string, table<number, Entity>> Index of entities by tag
 local World = {}
 World.__index = World
 
@@ -11,6 +12,7 @@ function World.new()
     local self = setmetatable({}, World)
     self.entities = {}
     self.systems = {}
+    self.tagIndex = {}
     return self
 end
 
@@ -46,6 +48,29 @@ end
 function World:notifySystemsOfEntityChange(entity)
     for _, system in ipairs(self.systems) do
         system:addEntity(entity)
+    end
+end
+
+---Internal: register a tag for an entity
+---@param entity Entity
+---@param tag string
+function World:_registerTag(entity, tag)
+    local bucket = self.tagIndex[tag]
+    if not bucket then
+        bucket = {}
+        self.tagIndex[tag] = bucket
+    end
+    bucket[entity.id] = entity
+end
+
+---Internal: unregister a tag for an entity
+---@param entity Entity
+---@param tag string
+function World:_unregisterTag(entity, tag)
+    local bucket = self.tagIndex[tag]
+    if bucket then
+        bucket[entity.id] = nil
+        -- optional cleanup left out for performance
     end
 end
 
@@ -108,6 +133,42 @@ function World:getEntitiesWith(componentTypes)
             if hasAll then
                 table.insert(result, entity)
             end
+        end
+    end
+    return result
+end
+
+---Get all active entities that have the given tag
+---@param tag string
+---@return table
+function World:getEntitiesWithTag(tag)
+    local bucket = self.tagIndex[tag]
+    if not bucket then return {} end
+    local result = {}
+    for _, entity in pairs(bucket) do
+        if entity.active then
+            table.insert(result, entity)
+        end
+    end
+    return result
+end
+
+---Get all active entities that have all of the given tags
+---@param tags table
+---@return table
+function World:getEntitiesWithAllTags(tags)
+    if not tags or #tags == 0 then return {} end
+    -- Build intersection over buckets
+    local firstBucket = self.tagIndex[tags[1]] or {}
+    local result = {}
+    for id, entity in pairs(firstBucket) do
+        local ok = true
+        for i = 2, #tags do
+            local b = self.tagIndex[tags[i]]
+            if not (b and b[id]) then ok = false break end
+        end
+        if ok and entity.active then
+            table.insert(result, entity)
         end
     end
     return result

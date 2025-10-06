@@ -30,7 +30,7 @@ function Siege.update(dt, gameState)
 
   local remaining = 0
   for _, entity in ipairs(ecsWorld.entities or {}) do
-    if entity.isSkeleton then
+    if entity:hasTag("Skeleton") then
       remaining = remaining + 1
       if remaining > 0 then break end
     end

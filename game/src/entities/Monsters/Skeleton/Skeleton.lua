@@ -9,7 +9,6 @@ local Pathfinding = require("src.components.Pathfinding")
 local GameConstants = require("src.constants")
 local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
 local Attack = require("src.components.Attack")
-local CastableShadow = require("src.components.CastableShadow")
 local Health = require("src.components.Health")
 local HealthBar = require("src.components.HealthBar")
 local DepthSorting = require("src.utils.depthSorting")
@@ -28,7 +27,7 @@ function Skeleton.create(x, y, world, physicsWorld)
 
     -- Create the skeleton entity
     local skeleton = Entity.new()
-    skeleton.isSkeleton = true -- Flag to identify skeleton entities
+    skeleton:addTag("Skeleton")
     skeleton.target = nil -- Current target (player or reactor)
 
     -- Create components

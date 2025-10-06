@@ -11,7 +11,6 @@ local ParticleSystem = require("src.components.ParticleSystem")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
-local Light = require("src.components.Light")
 
 
 ---@class Player
@@ -27,10 +26,12 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Create the player entity
     local player = Entity.new()
+
     ---@class PlayerEntity : Entity
-    ---@field isPlayer boolean
     local playerEntity = player
-    playerEntity.isPlayer = true -- Mark as player for attack system
+
+    -- Tag for easy querying/filters
+    playerEntity:addTag("Player")
 
     -- Create components
     local position = Position.new(x, y, DepthSorting.getLayerZ("PLAYER")) -- Player layer

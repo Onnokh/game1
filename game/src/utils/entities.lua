@@ -7,11 +7,8 @@ local EntityUtils = {}
 ---@return Entity|nil The player entity if found
 function EntityUtils.findPlayer(world)
     if world then
-        for _, entity in ipairs(world.entities) do
-            if entity.isPlayer then
-                return entity
-            end
-        end
+        local list = world:getEntitiesWithTag("Player") or {}
+        return list[1]
     end
     return nil
 end
@@ -21,11 +18,7 @@ end
 ---@return Entity|nil The reactor entity if found
 function EntityUtils.findReactor(world)
     if world then
-        for _, entity in ipairs(world.entities) do
-            if entity.isReactor then
-                return entity
-            end
-        end
+      return world:getEntitiesWithTag("Reactor")[1]
     end
     return nil
 end

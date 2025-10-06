@@ -646,7 +646,7 @@ function overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
 
   -- Draw state overlays for skeleton entities
   for _, entity in ipairs(entitiesWithSprites) do
-    if entity.isSkeleton then
+    if entity:hasTag("Skeleton") then
       local position = entity:getComponent("Position")
       local spriteRenderer = entity:getComponent("SpriteRenderer")
       local stateMachine = entity:getComponent("StateMachine")
@@ -677,9 +677,9 @@ function overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
           -- Draw target info to the right of state
           if target then
             local targetInfo = "?"
-            if target.isPlayer then
+            if target:hasTag("Player") then
               targetInfo = "p"
-            elseif target.isReactor then
+            elseif target:hasTag("Reactor") then
               targetInfo = "r"
             end
 
