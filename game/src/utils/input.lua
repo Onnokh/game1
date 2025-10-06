@@ -44,4 +44,11 @@ function InputHelpers.isSecondaryAttackInput(input)
     return input.secondaryAttack
 end
 
+---Check if interact input is pressed (E key)
+---@param input table Input state table with interact field
+---@return boolean True if interact key is pressed
+function InputHelpers.isInteractInput(input)
+    return input.interact
+end
+
 return InputHelpers

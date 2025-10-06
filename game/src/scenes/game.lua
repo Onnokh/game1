@@ -34,6 +34,7 @@ local CoinAttractionSystem = require("src.systems.CoinAttractionSystem")
 local AttackColliderSystem = require("src.systems.AttackColliderSystem")
 local LightSystem = require("src.systems.LightSystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
+local InteractionSystem = require("src.systems.InteractionSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -89,6 +90,7 @@ function GameScene.load()
   ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
   ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
   ecsWorld:addSystem(OxygenSystem.new()) -- Handle oxygen decay when outside reactor zone
+  ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
   ecsWorld:addSystem(ParticleRenderSystem.new()) -- Update particles
@@ -109,6 +111,7 @@ function GameScene.load()
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
+  local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(healthBarSystem)
@@ -122,6 +125,7 @@ function GameScene.load()
   uiWorld:addSystem(PauseMenuSystem.new())
   uiWorld:addSystem(GameOverSystem.new())
   uiWorld:addSystem(SiegeCounterSystem.new())
+  uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
 
   -- Create a simple tile-based world
   for x = 1, worldWidth do

@@ -6,6 +6,7 @@ local PathfindingCollision = require("src.components.PathfindingCollision")
 local Health = require("src.components.Health")
 local HealthBar = require("src.components.HealthBar")
 local Light = require("src.components.Light")
+local Interactable = require("src.components.Interactable")
 local EventBus = require("src.utils.EventBus")
 
 ---@class Reactor
@@ -42,6 +43,19 @@ function Reactor.create(x, y, world, physicsWorld)
         flickerRadiusAmplitude = 20,     -- gentle size pulsing
         flickerAlphaAmplitude = 25       -- gentle brightness pulsing
     })
+
+    -- Create interactable component for reactor
+    local interactable = Interactable.new(
+        60, -- interaction range (larger than default since reactor is big)
+        function(playerEntity, reactorEntity)
+            -- Switch to Siege phase
+            local GameController = require("src.core.GameController")
+            GameController.switchPhase("Siege")
+            print("Switched to Siege phase!")
+        end,
+        "Press E to skip the day" -- interaction text
+    )
+
     reactor:addComponent("Position", position)
     reactor:addComponent("SpriteRenderer", spriteRenderer)
     reactor:addComponent("Animator", animator)
@@ -49,6 +63,7 @@ function Reactor.create(x, y, world, physicsWorld)
     reactor:addComponent("Health", health)
     reactor:addComponent("HealthBar", healthBar)
     reactor:addComponent("Light", light)
+    reactor:addComponent("Interactable", interactable)
 
     -- Tag for easy querying
     reactor:addTag("Reactor")

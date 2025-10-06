@@ -40,6 +40,7 @@ local GameState = {
     cancel = false,
     shift = false,
     attack = false,
+    interact = false,
     mouseX = 0,
     mouseY = 0
   },
@@ -174,6 +175,8 @@ function GameState.handleKeyPressed(key)
     GameState.input.cancel = true
   elseif key == "lshift" or key == "rshift" then
     GameState.input.shift = true
+  elseif key == "e" then
+    GameState.input.interact = true
   end
 
   -- Pass to current scene
@@ -199,6 +202,8 @@ function GameState.handleKeyReleased(key)
     GameState.input.cancel = false
   elseif key == "lshift" or key == "rshift" then
     GameState.input.shift = false
+  elseif key == "e" then
+    GameState.input.interact = false
   end
 end
 
