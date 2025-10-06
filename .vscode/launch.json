@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "Debug",
       "program": {
-        "command": "love"
+        "command": "C:\\Program Files\\LOVE\\love.exe"
       },
       "args": [
         "game/",
@@ -22,7 +22,7 @@
       "request": "launch",
       "name": "Release",
       "program": {
-        "command": "love"
+        "command": "C:\\Program Files\\LOVE\\love.exe"
       },
       "args": [
         "game/",
