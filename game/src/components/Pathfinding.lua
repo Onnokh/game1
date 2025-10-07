@@ -188,10 +188,8 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
     local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
     local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
 
-    -- Ensure target is within grid bounds
-    local minX, minY, maxX, maxY = self.grid:getBounds()
-    targetGridX = math.max(minX, math.min(targetGridX, maxX))
-    targetGridY = math.max(minY, math.min(targetGridY, maxY))
+    -- Ensure target is within grid bounds using coordinate utilities
+    targetGridX, targetGridY = CoordinateUtils.clampToGridBounds(targetGridX, targetGridY, self.grid)
 
     -- Find path with clearance
     local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)

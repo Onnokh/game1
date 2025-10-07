@@ -90,4 +90,22 @@ function CoordinateUtils.clampToWorldBounds(worldX, worldY)
     return clampedX, clampedY
 end
 
+---Clamp grid coordinates to grid bounds
+---@param gridX number Grid X coordinate
+---@param gridY number Grid Y coordinate
+---@param grid table Grid object with getBounds method
+---@return number clampedGridX
+---@return number clampedGridY
+function CoordinateUtils.clampToGridBounds(gridX, gridY, grid)
+    if not grid or not grid.getBounds then
+        return gridX, gridY
+    end
+
+    local minX, minY, maxX, maxY = grid:getBounds()
+    local clampedGridX = math.max(minX, math.min(gridX, maxX))
+    local clampedGridY = math.max(minY, math.min(gridY, maxY))
+
+    return clampedGridX, clampedGridY
+end
+
 return CoordinateUtils
