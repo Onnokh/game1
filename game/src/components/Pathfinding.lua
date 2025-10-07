@@ -100,6 +100,7 @@ function Pathfinding:isWithinRadius(x, y)
     return distance <= self.wanderRadius
 end
 
+
 ---Get the next position in the current path
 ---@param tileSize number Size of each tile
 ---@return number|nil nextX
@@ -143,13 +144,16 @@ function Pathfinding:startPathTo(currentX, currentY, targetX, targetY, tileSize)
         return false
     end
 
+    -- Clamp current position to world bounds before using it
+    currentX, currentY = CoordinateUtils.clampToWorldBounds(currentX, currentY)
+
+    -- Validate that both current and target positions are within world bounds
+    if not CoordinateUtils.isWithinWorldBounds(currentX, currentY, self.grid) or not CoordinateUtils.isWithinWorldBounds(targetX, targetY, self.grid) then
+        return false
+    end
+
     local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
     local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
-
-    -- Clamp to grid bounds
-    local minX, minY, maxX, maxY = self.grid:getBounds()
-    targetGridX = math.max(minX, math.min(targetGridX, maxX))
-    targetGridY = math.max(minY, math.min(targetGridY, maxY))
 
     local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
     if path and path._nodes and #path._nodes > 0 then
@@ -174,19 +178,18 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
         return false
     end
 
-    -- Find a new wander target
+    -- Clamp current position to world bounds before using it
+    currentX, currentY = CoordinateUtils.clampToWorldBounds(currentX, currentY)
+
+    -- Find a new wander target (already validated in findWanderTarget)
     local targetX, targetY = self:findWanderTarget(currentX, currentY)
 
     -- Convert to grid coordinates
     local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
     local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
 
-    -- Ensure target is within grid bounds
-    local minX, minY, maxX, maxY = self.grid:getBounds()
-    local gridWidth = maxX - minX + 1
-    local gridHeight = maxY - minY + 1
-    targetGridX = math.max(minX, math.min(targetGridX, maxX))
-    targetGridY = math.max(minY, math.min(targetGridY, maxY))
+    -- Ensure target is within grid bounds using coordinate utilities
+    targetGridX, targetGridY = CoordinateUtils.clampToGridBounds(targetGridX, targetGridY, self.grid)
 
     -- Find path with clearance
     local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
