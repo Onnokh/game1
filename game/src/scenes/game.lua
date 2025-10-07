@@ -2,11 +2,11 @@
 local GameScene = {}
 
 -- Scene state
-local world = {}
-local tileVariants = {} -- Store sprite variants for each tile
+local world = {} -- For pathfinding and collision detection
 local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
+local cartographer = require("lib.cartographer")
 
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -50,6 +50,7 @@ local playerCollider = nil
 local lightWorld = nil
 local testBoxEntity = nil
 local testBoxOverlayRegistered = false
+local tiledMap = nil -- Cartographer map object
 
 -- Physics
 local physicsWorld = nil
@@ -135,37 +136,38 @@ function GameScene.load()
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(SafezoneVignetteSystem.new(ecsWorld))
 
-  -- Create a simple tile-based world
+  -- Load Tiled map using Cartographer
+  tiledMap = cartographer.load("resources/maps/level1.lua")
+
+  -- Set pixel-perfect filtering for all tileset images
+  if tiledMap and tiledMap._images then
+    for _, image in pairs(tiledMap._images) do
+      image:setFilter("nearest", "nearest")
+    end
+  end
+
+  -- Update world dimensions to match the map
+  worldWidth = tiledMap.width
+  worldHeight = tiledMap.height
+  tileSize = tiledMap.tilewidth
+
+  -- Create world data for pathfinding and collision detection
   for x = 1, worldWidth do
     world[x] = {}
-    tileVariants[x] = {}
     for y = 1, worldHeight do
-      -- Create a more interesting pattern with different tile types
-      if x == 1 or x == worldWidth or y == 1 or y == worldHeight then
-        world[x][y] = 3 -- Wall border
-        -- Select appropriate cliff tile based on position (3x6 grid)
-        if x == 1 and y == 1 then
-          tileVariants[x][y] = 1 -- Top-left corner
-        elseif x == worldWidth and y == 1 then
-          tileVariants[x][y] = 3 -- Top-right corner
-        elseif x == 1 and y == worldHeight then
-          tileVariants[x][y] = 7 -- Bottom-left corner (row 5, col 1)
-        elseif x == worldWidth and y == worldHeight then
-          tileVariants[x][y] = 9 -- Bottom-right corner (row 5, col 3)
-        elseif y == 1 then
-          tileVariants[x][y] = 2 -- Top edge
-        elseif y == worldHeight then
-          tileVariants[x][y] = 8 -- Bottom edge (row 6, col 2)
-        elseif x == 1 then
-          tileVariants[x][y] = 4 -- Left edge (row 2, col 1)
-        elseif x == worldWidth then
-          tileVariants[x][y] = 6 -- Right edge (row 2, col 3)
-        else
-          tileVariants[x][y] = 8 -- Center (row 3, col 2)
-        end
+      local gid = tiledMap.layers[1].data[(y - 1) * worldWidth + x]
+      if gid == 0 then
+        world[x][y] = 0 -- Empty
+      elseif gid >= 1 and gid < 65 then
+        world[x][y] = 1 -- Grass tileset (walkable)
+      elseif gid >= 65 and gid < 321 then
+        world[x][y] = 3 -- Wall tileset (collision)
+      elseif gid >= 321 and gid < 385 then
+        world[x][y] = 2 -- Stone ground tileset (walkable)
+      elseif gid >= 385 then
+        world[x][y] = 4 -- Structure tileset (collision)
       else
-        world[x][y] = 1        -- Grass
-        tileVariants[x][y] = 1 -- Single grass tile variant
+        world[x][y] = 1 -- Default to grass
       end
     end
   end
@@ -176,7 +178,7 @@ function GameScene.load()
 
   -- Add a Reactor entity (64x64 = 4x4 tiles) via factory
   do
-    local reactorTileX, reactorTileY = 24, 12 -- choose a free spot
+    local reactorTileX, reactorTileY = math.floor(worldWidth / 2), 8
     local reactorX = (reactorTileX - 1) * tileSize
     local reactorY = (reactorTileY - 1) * tileSize
     Reactor.create(reactorX, reactorY, ecsWorld, physicsWorld)
@@ -197,14 +199,14 @@ function GameScene.createBorderColliders()
   -- Clear existing border colliders
   borderColliders = {}
 
-  -- Create colliders for border tiles
+  -- Create colliders for wall tiles (tile type 3) and structure tiles (tile type 4)
   for x = 1, worldWidth do
     for y = 1, worldHeight do
-      if world[x][y] == 3 then -- Wall border tiles
+      if world[x][y] == 3 or world[x][y] == 4 then -- Wall or structure tiles
         local tileX = (x - 1) * tileSize
         local tileY = (y - 1) * tileSize
 
-        -- Create a rectangular collider for each border tile
+        -- Create a rectangular collider for each wall/structure tile
         if physicsWorld then
           local body = love.physics.newBody(physicsWorld,
             tileX + tileSize / 2, tileY + tileSize / 2, "static")
@@ -238,6 +240,11 @@ function GameScene.update(dt, gameState)
 
     -- Add mouse facing system (needs gameState)
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
+  end
+
+  -- Update Tiled map (for animations)
+  if tiledMap then
+    tiledMap:update(dt)
   end
 
   -- Update ECS world (handles movement, collision, rendering)
@@ -349,8 +356,10 @@ end
 function GameScene.draw(gameState)
   -- Draw the world first
   gameState.camera:draw(function()
-    -- Draw the world using Iffy (normal colors)
-    sprites.drawWorld(world, worldWidth, worldHeight, tileSize, tileVariants)
+    -- Draw the Tiled map using Cartographer
+    if tiledMap then
+      tiledMap:draw()
+    end
 
     -- Draw ECS entities
     if ecsWorld then
@@ -441,6 +450,7 @@ function GameScene.cleanup()
   GameScene.playerCollider = nil
   GameScene.borderColliders = nil
   GameScene.monsters = nil
+  tiledMap = nil
 
   -- Force Love2D to reset graphics state and release canvases
   love.graphics.reset()

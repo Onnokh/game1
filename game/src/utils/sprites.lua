@@ -31,12 +31,7 @@ function IffySprites.load()
   if assetsLoaded then return end
   print("Loading sprites with Iffy...")
 
-  -- 1x1 grid (16x16 tiles)
-  iffy.newTileset("grass", "resources/tileset/Grass_Middle.png", 16, 16, 0, 0, 16, 16)
-
-  -- 3x6 grid (16x16 tiles)
-  -- 48x96 total spritesheet size
-  iffy.newTileset("wall", "resources/tileset/Cliff_Tile.png", 16, 16, 0, 0, 48, 96)
+  -- Note: World tiles are now handled by Cartographer, not Iffy
 
   -- Load character spritesheet (8x6 grid)
   loadSpritesheet("character", "resources/character/AnimationSheet.png", 8, 6)
@@ -120,7 +115,7 @@ function IffySprites.drawTile(tileType, x, y, variant)
 
   -- Use pcall to catch any errors
   local success, err = pcall(function()
-    if tileType == "wall" or tileType == "grass" then
+    if tileType == "wall" or tileType == "grass" or tileType == "stone" or tileType == "structure" then
       iffy.draw(tileType, variant, x, y)
     end
   end)
@@ -194,13 +189,15 @@ function IffySprites.drawWorld(world, worldWidth, worldHeight, tileSize, tileVar
       if world[x][y] == 1 then
         -- Grass tile
         IffySprites.drawTile("grass", tileX, tileY, variant)
+      elseif world[x][y] == 2 then
+        -- Stone ground tile
+        IffySprites.drawTile("stone", tileX, tileY, variant)
       elseif world[x][y] == 3 then
         -- Wall tile
         IffySprites.drawTile("wall", tileX, tileY, variant)
       elseif world[x][y] == 4 then
-        -- Plant tile (draw grass first, then plant on top)
-        IffySprites.drawTile("grass", tileX, tileY, variant)
-        IffySprites.drawTile("plant", tileX, tileY, variant)
+        -- Structure tile
+        IffySprites.drawTile("structure", tileX, tileY, variant)
       end
     end
   end

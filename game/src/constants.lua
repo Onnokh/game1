@@ -11,10 +11,10 @@
 ---@field CAMERA_SCALE number
 local GameConstants = {}
 
--- World dimensions
-GameConstants.TILE_SIZE = 16  -- Larger tiles
-GameConstants.WORLD_WIDTH = 50
-GameConstants.WORLD_HEIGHT = 50
+-- World dimensions (will be updated by Cartographer map)
+GameConstants.TILE_SIZE = 32  -- Match Tiled map tile size
+GameConstants.WORLD_WIDTH = 24  -- Will be updated by map
+GameConstants.WORLD_HEIGHT = 24  -- Will be updated by map
 
 -- Calculate pixel dimensions
 GameConstants.WORLD_WIDTH_PIXELS = GameConstants.WORLD_WIDTH * GameConstants.TILE_SIZE
@@ -26,7 +26,7 @@ GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 80 -- Match working implementation
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 4 -- Zoomed out to see more of the worldw
+GameConstants.CAMERA_SCALE = 5 -- Zoomed out to see more of the worldw
 
 -- Feature toggles
 GameConstants.ENABLE_KNOCKBACK = true
