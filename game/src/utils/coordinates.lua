@@ -47,4 +47,47 @@ function CoordinateUtils.calculateDistanceBetweenPoints(x1, y1, x2, y2)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+---Check if a world position is within the world bounds
+---@param worldX number World X coordinate
+---@param worldY number World Y coordinate
+---@param grid table|nil Optional grid object for additional bounds checking
+---@return boolean
+function CoordinateUtils.isWithinWorldBounds(worldX, worldY, grid)
+    local GameConstants = require("src.constants")
+    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
+    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+
+    -- Check world pixel bounds first (more efficient)
+    if worldX < 0 or worldX >= worldWidthPixels or worldY < 0 or worldY >= worldHeightPixels then
+        return false
+    end
+
+    -- Additional grid bounds check for safety if grid is provided
+    if grid and grid.getBounds then
+        local tileSize = GameConstants.TILE_SIZE
+        local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY, tileSize)
+        local minX, minY, maxX, maxY = grid:getBounds()
+        return gridX >= minX and gridX <= maxX and gridY >= minY and gridY <= maxY
+    end
+
+    return true
+end
+
+---Clamp world coordinates to world bounds
+---@param worldX number World X coordinate
+---@param worldY number World Y coordinate
+---@return number clampedX
+---@return number clampedY
+function CoordinateUtils.clampToWorldBounds(worldX, worldY)
+    local GameConstants = require("src.constants")
+    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
+    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+
+    -- Clamp to world pixel bounds (0 to worldSize-1)
+    local clampedX = math.max(0, math.min(worldX, worldWidthPixels - 1))
+    local clampedY = math.max(0, math.min(worldY, worldHeightPixels - 1))
+
+    return clampedX, clampedY
+end
+
 return CoordinateUtils
