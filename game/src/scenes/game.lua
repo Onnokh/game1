@@ -313,14 +313,6 @@ end
 -- Add a new monster at the specified position
 function GameScene.addMonster(x, y)
   if ecsWorld and physicsWorld then
-    -- Validate spawn coordinates are within world bounds
-    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
-    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
-
-    -- Clamp coordinates to world bounds (0 to worldSize-1)
-    x = math.max(0, math.min(x, worldWidthPixels - 1))
-    y = math.max(0, math.min(y, worldHeightPixels - 1))
-
     local skeleton = Skeleton.create(x, y, ecsWorld, physicsWorld)
     table.insert(monsters, skeleton)
     print("Added monster at:", x, y, "Total monsters:", #monsters)

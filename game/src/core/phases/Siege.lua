@@ -14,9 +14,8 @@ function Siege.onEnter(gameState)
   -- Spawn one skeleton at a random position (y < 400) using the scene's helper
   local GameScene = require("src.scenes.game")
   if GameScene and GameScene.addMonster then
-    local maxX = GameConstants.WORLD_WIDTH_PIXELS
-    local maxY = GameConstants.WORLD_HEIGHT_PIXELS
-    -- Ensure spawn position is within world bounds
+    local maxX = (GameConstants and GameConstants.WORLD_WIDTH_PIXELS) or 800
+    local maxY = 500
     local x = math.random(0, math.max(0, maxX - 1))
     local y = math.random(401, math.max(401, maxY - 1))
     local enemy = GameScene.addMonster(x, y)

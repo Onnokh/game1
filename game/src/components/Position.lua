@@ -27,14 +27,8 @@ end
 ---@param y number Y position
 ---@param z number|nil Z position
 function Position:setPosition(x, y, z)
-    local GameConstants = require("src.constants")
-    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
-    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
-
-
-    -- Clamp to world bounds
-    self.x = math.max(0, math.min(x, worldWidthPixels - 1))
-    self.y = math.max(0, math.min(y, worldHeightPixels - 1))
+    self.x = x
+    self.y = y
     if z then
         self.z = z
     end
@@ -45,20 +39,11 @@ end
 ---@param deltaY number Y delta
 ---@param deltaZ number|nil Z delta
 function Position:move(deltaX, deltaY, deltaZ)
-    local GameConstants = require("src.constants")
-    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
-    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
-
-    -- Apply movement
     self.x = self.x + deltaX
     self.y = self.y + deltaY
     if deltaZ then
         self.z = self.z + deltaZ
     end
-
-    -- Clamp to world bounds to prevent entities from moving outside the world
-    self.x = math.max(0, math.min(self.x, worldWidthPixels - 1))
-    self.y = math.max(0, math.min(self.y, worldHeightPixels - 1))
 end
 
 ---Get the distance to another position
