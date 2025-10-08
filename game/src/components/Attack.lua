@@ -158,9 +158,10 @@ function Attack:calculateHitArea(attackerX, attackerY, range)
         self.hitAreaHeight = orientedThickness
 
         -- Place the rectangle center halfway along the direction from the attacker
-        -- so the blade spans from near the attacker outwards
-        local centerX = attackerX + normalizedX * (orientedLength / 2)
-        local centerY = attackerY + normalizedY * (orientedLength / 2)
+        -- with an 8px offset to push it away from the player center
+        local offset = 8
+        local centerX = attackerX + normalizedX * (orientedLength / 2 + offset)
+        local centerY = attackerY + normalizedY * (orientedLength / 2 + offset)
 
         -- Store as AABB top-left, since fixture creation uses x+w/2/y+h/2 for body center
         self.hitAreaX = centerX - (self.hitAreaWidth / 2)

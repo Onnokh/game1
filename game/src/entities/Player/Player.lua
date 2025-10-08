@@ -107,7 +107,7 @@ function Player.create(x, y, world, physicsWorld)
             name = "Sword",
             type = "melee",
             damage = 12,
-            range = 15,
+            range = 30,
             cooldown = 0.5,
             knockback = 6
         },

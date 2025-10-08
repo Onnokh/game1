@@ -111,11 +111,19 @@ function AttackSystem:performAttack(entity, currentTime)
         self:spawnMeleeAttack(entity)
 
         -- Register this melee attack for debug visualization
+        -- Store attack parameters to recalculate position each frame
         local attackDuration = 0.2 -- Show hit area for 0.2 seconds
         table.insert(self.activeMeleeAttacks, {
             entity = entity,
             startTime = currentTime,
-            endTime = currentTime + attackDuration
+            endTime = currentTime + attackDuration,
+            -- Store attack parameters for recalculation
+            directionX = attack.attackDirectionX,
+            directionY = attack.attackDirectionY,
+            angle = attack.attackAngleRad,
+            width = attack.hitAreaWidth,
+            height = attack.hitAreaHeight,
+            range = attack.range or 15
         })
     end
 end
@@ -400,34 +408,45 @@ function AttackSystem:draw()
         else
             -- Draw active attack
             local entity = attackData.entity
-            local attack = entity:getComponent("Attack")
             local position = entity:getComponent("Position")
 
-            if attack and position and attack.enabled then
-                -- Draw the attack hit area as a rotated rectangle
-                -- Use the exact same position calculation as the actual AttackCollider
-                local angle = attack.attackAngleRad or 0
+            if position then
+                -- Recalculate hit area position based on entity's current position
+                -- This makes the visualization follow the entity as it moves
+                local EntityUtils = require("src.utils.entities")
+                local playerCenterX, playerCenterY = EntityUtils.getEntityVisualCenter(entity, position)
 
-                -- The AttackCollider body is created at (hitAreaX + width/2, hitAreaY + height/2)
-                -- So we use the same center point for the debug visualization
-                local cx = attack.hitAreaX + attack.hitAreaWidth * 0.5
-                local cy = attack.hitAreaY + attack.hitAreaHeight * 0.5
+                -- Normalize direction
+                local dirX = attackData.directionX
+                local dirY = attackData.directionY
+                local length = math.sqrt(dirX * dirX + dirY * dirY)
 
-                love.graphics.push()
-                love.graphics.translate(cx, cy)
-                love.graphics.rotate(angle)
+                if length > 0 then
+                    local normalizedX = dirX / length
+                    local normalizedY = dirY / length
 
-                love.graphics.setColor(1, 0, 0, 0.5) -- Red semi-transparent fill
-                love.graphics.rectangle("fill", -attack.hitAreaWidth * 0.5, -attack.hitAreaHeight * 0.5, attack.hitAreaWidth, attack.hitAreaHeight)
+                    -- Calculate center of hit area relative to current position
+                    -- Add 8px offset to push the attack further away from player center
+                    local offset = 8
+                    local centerX = playerCenterX + normalizedX * (attackData.width / 2 + offset)
+                    local centerY = playerCenterY + normalizedY * (attackData.width / 2 + offset)
 
-                -- Draw outline
-                love.graphics.setColor(1, 0, 0, 1) -- Red solid outline
-                love.graphics.rectangle("line", -attack.hitAreaWidth * 0.5, -attack.hitAreaHeight * 0.5, attack.hitAreaWidth, attack.hitAreaHeight)
+                    love.graphics.push()
+                    love.graphics.translate(centerX, centerY)
+                    love.graphics.rotate(attackData.angle)
 
-                love.graphics.pop()
+                    love.graphics.setColor(1, 0, 0, 0.5) -- Red semi-transparent fill
+                    love.graphics.rectangle("fill", -attackData.width * 0.5, -attackData.height * 0.5, attackData.width, attackData.height)
 
-                -- Reset color
-                love.graphics.setColor(1, 1, 1, 1)
+                    -- Draw outline
+                    love.graphics.setColor(1, 0, 0, 1) -- Red solid outline
+                    love.graphics.rectangle("line", -attackData.width * 0.5, -attackData.height * 0.5, attackData.width, attackData.height)
+
+                    love.graphics.pop()
+
+                    -- Reset color
+                    love.graphics.setColor(1, 1, 1, 1)
+                end
             end
 
             i = i + 1
