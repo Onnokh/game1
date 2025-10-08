@@ -89,10 +89,6 @@ function PhysicsCollision:createCollider(physicsWorld, x, y, entity)
         })
     end
 
-    -- No collision filtering - let PhysicsCollision collide with everything (but it's a sensor so won't block)
-    -- fixture:setCategory(GameConstants.COLLISION_CATEGORIES.PHYSICS)
-    -- fixture:setMask(GameConstants.COLLISION_MASKS.PHYSICS)
-
     -- Set body properties
     body:setLinearDamping(self.linearDamping)
     body:setFixedRotation(true) -- Prevent the collider from rotating

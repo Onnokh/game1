@@ -85,10 +85,6 @@ function PathfindingCollision:createCollider(physicsWorld, x, y)
     fixture:setFriction(self.friction)
     fixture:setDensity(1.0)
 
-    -- No collision filtering - let PathfindingCollision collide with everything
-    -- fixture:setCategory(GameConstants.COLLISION_CATEGORIES.PATHFINDING)
-    -- fixture:setMask(GameConstants.COLLISION_MASKS.PATHFINDING)
-
     -- Set body properties
     body:setLinearDamping(self.linearDamping)
     body:setFixedRotation(true) -- Prevent the collider from rotating
