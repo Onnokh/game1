@@ -83,8 +83,8 @@ function GameState.load()
   GameState.camera = gamera.new(
     0,  -- left
     0,  -- top
-    GameConstants.WORLD_WIDTH_PIXELS,  -- width
-    GameConstants.WORLD_HEIGHT_PIXELS  -- height
+    1,  -- width
+    1  -- height
   )
 
   -- Initialize scenes
@@ -290,6 +290,30 @@ end
 ---Reset session coins (keep total, reset session counter)
 function GameState.resetSessionCoins()
   GameState.coins.collectedThisSession = 0
+end
+
+---Update camera bounds based on the current level dimensions
+---@param width number World width in pixels
+---@param height number World height in pixels
+function GameState.updateCameraBounds(width, height)
+  if GameState.camera then
+    -- Create a new camera with the updated bounds
+    local currentX, currentY = GameState.camera:getPosition()
+    GameState.camera = gamera.new(0, 0, width, height)
+    GameState.camera:setPosition(currentX, currentY)
+  end
+end
+
+---Get the current world bounds in pixels
+---@return number width World width in pixels
+---@return number height World height in pixels
+function GameState.getWorldBounds()
+  if GameState.camera then
+    local l, t, r, b = GameState.camera:getWorld()
+    return r - l, b - t
+  end
+  -- Fallback to default if camera not initialized
+  return 768, 768
 end
 
 return GameState

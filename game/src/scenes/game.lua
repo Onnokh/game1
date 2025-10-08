@@ -7,11 +7,12 @@ local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
 local cartographer = require("lib.cartographer")
+local GameState = require("src.core.GameState")
 
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
-local worldWidth = GameConstants.WORLD_WIDTH
-local worldHeight = GameConstants.WORLD_HEIGHT
+local worldWidth = 0  -- Will be set by loaded map
+local worldHeight = 0  -- Will be set by loaded map
 
 -- ECS System
 local World = require("src.core.World")
@@ -137,7 +138,7 @@ function GameScene.load()
   uiWorld:addSystem(SafezoneVignetteSystem.new(ecsWorld))
 
   -- Load Tiled map using Cartographer
-  tiledMap = cartographer.load("resources/maps/level1.lua")
+  tiledMap = cartographer.load("resources/tiled/maps/level1.lua")
 
   -- Set pixel-perfect filtering for all tileset images
   if tiledMap and tiledMap._images then
@@ -150,6 +151,11 @@ function GameScene.load()
   worldWidth = tiledMap.width
   worldHeight = tiledMap.height
   tileSize = tiledMap.tilewidth
+
+  -- Update camera bounds to match the loaded level
+  local levelWidthPixels = worldWidth * tileSize
+  local levelHeightPixels = worldHeight * tileSize
+  GameState.updateCameraBounds(levelWidthPixels, levelHeightPixels)
 
   -- Create world data for pathfinding and collision detection
   for x = 1, worldWidth do

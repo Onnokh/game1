@@ -53,9 +53,9 @@ end
 ---@param grid table|nil Optional grid object for additional bounds checking
 ---@return boolean
 function CoordinateUtils.isWithinWorldBounds(worldX, worldY, grid)
+    local GameState = require("src.core.GameState")
     local GameConstants = require("src.constants")
-    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
-    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+    local worldWidthPixels, worldHeightPixels = GameState.getWorldBounds()
 
     -- Check world pixel bounds first (more efficient)
     if worldX < 0 or worldX >= worldWidthPixels or worldY < 0 or worldY >= worldHeightPixels then
@@ -79,9 +79,8 @@ end
 ---@return number clampedX
 ---@return number clampedY
 function CoordinateUtils.clampToWorldBounds(worldX, worldY)
-    local GameConstants = require("src.constants")
-    local worldWidthPixels = GameConstants.WORLD_WIDTH_PIXELS
-    local worldHeightPixels = GameConstants.WORLD_HEIGHT_PIXELS
+    local GameState = require("src.core.GameState")
+    local worldWidthPixels, worldHeightPixels = GameState.getWorldBounds()
 
     -- Clamp to world pixel bounds (0 to worldSize-1)
     local clampedX = math.max(0, math.min(worldX, worldWidthPixels - 1))

@@ -1,24 +1,14 @@
 ---@class GameConstants
 ---Global game constants shared across all modules
 ---@field TILE_SIZE number
----@field WORLD_WIDTH number
----@field WORLD_HEIGHT number
----@field WORLD_WIDTH_PIXELS number
----@field WORLD_HEIGHT_PIXELS number
 ---@field PLAYER_WIDTH number
 ---@field PLAYER_HEIGHT number
 ---@field PLAYER_SPEED number
 ---@field CAMERA_SCALE number
 local GameConstants = {}
 
--- World dimensions (will be updated by Cartographer map)
+-- Tile size (used for coordinate conversion)
 GameConstants.TILE_SIZE = 32  -- Match Tiled map tile size
-GameConstants.WORLD_WIDTH = 24  -- Will be updated by map
-GameConstants.WORLD_HEIGHT = 24  -- Will be updated by map
-
--- Calculate pixel dimensions
-GameConstants.WORLD_WIDTH_PIXELS = GameConstants.WORLD_WIDTH * GameConstants.TILE_SIZE
-GameConstants.WORLD_HEIGHT_PIXELS = GameConstants.WORLD_HEIGHT * GameConstants.TILE_SIZE
 
 -- Player constants
 GameConstants.PLAYER_WIDTH = 24
