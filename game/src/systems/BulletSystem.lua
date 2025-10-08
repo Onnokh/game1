@@ -38,13 +38,16 @@ end
 ---@param physicsCollision PhysicsCollision The physics collision component
 ---@param dt number Delta time
 function BulletSystem:moveBullet(position, bullet, physicsCollision, dt)
-    -- Update position
-    position.x = position.x + bullet.velocityX * dt
-    position.y = position.y + bullet.velocityY * dt
-
-    -- Sync physics collider position if it exists
+    -- Use physics engine for movement so CCD (continuous collision detection) works properly
+    -- When setBullet(true) is set, the physics engine uses CCD to prevent tunneling,
+    -- but this only works when moving via physics velocity, not manual position updates
     if physicsCollision and physicsCollision:hasCollider() then
-        physicsCollision:setPosition(position.x, position.y)
+        -- Set the linear velocity on the physics body
+        physicsCollision:setLinearVelocity(bullet.velocityX, bullet.velocityY)
+
+        -- Read back the position from the physics body to keep ECS position in sync
+        local x, y = physicsCollision:getPosition()
+        position:setPosition(x, y)
     end
 end
 
