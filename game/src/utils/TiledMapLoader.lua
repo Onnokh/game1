@@ -4,21 +4,25 @@
 --- Simple utility for extracting data from Tiled maps loaded via Cartographer
 local TiledMapLoader = {}
 
---- Get tile collision type from properties or GID fallback
-local function getTileType(tiledMap, gid)
+-- Tile type constants
+TiledMapLoader.TILE_EMPTY = 0
+TiledMapLoader.TILE_GRASS = 1
+TiledMapLoader.TILE_STONE = 2
+TiledMapLoader.TILE_WALL = 3
+TiledMapLoader.TILE_STRUCTURE = 4
+
+--- Check if a tile type is walkable
+function TiledMapLoader.isWalkable(tileType)
+  return tileType == TiledMapLoader.TILE_GRASS or tileType == TiledMapLoader.TILE_STONE
+end
+
+--- Get tile collision type from GID
+local function getTileType(gid)
   if gid == 0 then return 0 end
-
-  -- Try tile properties first (set these in Tiled for flexibility)
-  local collision = tiledMap:getTileProperty(gid, "collision")
-  if collision ~= nil then
-    return collision and 3 or 1
-  end
-
-  -- Fallback to GID ranges (project-specific)
-  if gid >= 1 and gid < 65 then return 1      -- Grass
-  elseif gid >= 65 and gid < 321 then return 3 -- Walls
-  elseif gid >= 321 and gid < 385 then return 2 -- Stone
-  elseif gid >= 385 then return 4              -- Structure
+  if gid >= 1 and gid < 65 then return 1      -- Grass (walkable)
+  elseif gid >= 65 and gid < 321 then return 3 -- Walls (collision)
+  elseif gid >= 321 and gid < 385 then return 2 -- Stone (walkable)
+  elseif gid >= 385 then return 4              -- Structure (collision)
   else return 1 end
 end
 
@@ -35,7 +39,7 @@ function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
     grid[x] = {}
     for y = 1, height do
       local gid = layer.data[(y - 1) * width + x]
-      grid[x][y] = getTileType(tiledMap, gid)
+      grid[x][y] = getTileType(gid)
     end
   end
 

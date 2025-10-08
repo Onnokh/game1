@@ -1,13 +1,15 @@
+local GameConstants = require("src.constants")
+local tileSize = GameConstants.TILE_SIZE
+
 ---@class CoordinateUtils
 local CoordinateUtils = {}
 
 ---Convert world coordinates to grid coordinates
 ---@param worldX number World X coordinate
 ---@param worldY number World Y coordinate
----@param tileSize number Size of each tile
 ---@return number gridX
 ---@return number gridY
-function CoordinateUtils.worldToGrid(worldX, worldY, tileSize)
+function CoordinateUtils.worldToGrid(worldX, worldY)
     local gridX = math.floor(worldX / tileSize) + 1
     local gridY = math.floor(worldY / tileSize) + 1
     return gridX, gridY
@@ -19,7 +21,7 @@ end
 ---@param tileSize number Size of each tile
 ---@return number worldX
 ---@return number worldY
-function CoordinateUtils.gridToWorld(gridX, gridY, tileSize)
+function CoordinateUtils.gridToWorld(gridX, gridY)
     local worldX = (gridX - 1) * tileSize + tileSize / 2
     local worldY = (gridY - 1) * tileSize + tileSize / 2
     return worldX, worldY
@@ -64,8 +66,7 @@ function CoordinateUtils.isWithinWorldBounds(worldX, worldY, grid)
 
     -- Additional grid bounds check for safety if grid is provided
     if grid and grid.getBounds then
-        local tileSize = GameConstants.TILE_SIZE
-        local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY, tileSize)
+        local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY)
         local minX, minY, maxX, maxY = grid:getBounds()
         return gridX >= minX and gridX <= maxX and gridY >= minY and gridY <= maxY
     end

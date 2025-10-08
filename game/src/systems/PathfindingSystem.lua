@@ -1,4 +1,5 @@
 local System = require("src.core.System")
+local TiledMapLoader = require("src.utils.TiledMapLoader")
 
 ---@class PathfindingSystem : System
 ---@field worldMap table The 2D world map array
@@ -76,8 +77,8 @@ function PathfindingSystem:initializePathfinding()
     for x = 1, self.worldWidth do
         collisionMap[x] = {}
         for y = 1, self.worldHeight do
-            -- 1 = walkable (grass), 0 = blocked (walls)
-            collisionMap[x][y] = self.worldMap[x][y] == 1 and 1 or 0
+            local tileType = self.worldMap[x][y]
+            collisionMap[x][y] = TiledMapLoader.isWalkable(tileType) and 1 or 0
         end
     end
 
@@ -163,8 +164,8 @@ function PathfindingSystem:rebuildPathfindingGrid()
     for x = 1, self.worldWidth do
         collisionMap[x] = {}
         for y = 1, self.worldHeight do
-            -- 1 = walkable (grass), 0 = blocked (walls)
-            collisionMap[x][y] = self.worldMap[x][y] == 1 and 1 or 0
+            local tileType = self.worldMap[x][y]
+            collisionMap[x][y] = TiledMapLoader.isWalkable(tileType) and 1 or 0
         end
     end
 
@@ -233,8 +234,7 @@ function PathfindingSystem:update(dt)
 
             -- Steering toward waypoint: compute desired velocity here
             if not pathfinding:isPathComplete() and not knockback then
-                local tileSize = self.tileSize
-                local nextX, nextY = pathfinding:getNextPathPosition(tileSize)
+                local nextX, nextY = pathfinding:getNextPathPosition()
                 if nextX and nextY then
                     local pathfindingCollision = entity:getComponent("PathfindingCollision")
                     local cx, cy = position.x, position.y
@@ -263,7 +263,7 @@ end
 function PathfindingSystem:updateEntityPathfinding(entity, position, pathfinding, dt)
     -- If we have a path, only manage progression along waypoints; do not set velocity here
     if not pathfinding:isPathComplete() then
-        local nextX, nextY = pathfinding:getNextPathPosition(self.tileSize)
+        local nextX, nextY = pathfinding:getNextPathPosition()
         if nextX and nextY then
             local pathfindingCollision = entity:getComponent("PathfindingCollision")
             local currentX, currentY = position.x, position.y

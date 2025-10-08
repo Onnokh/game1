@@ -1,4 +1,5 @@
 local CoordinateUtils = require("src.utils.coordinates")
+local GameConstants = require("src.constants")
 
 ---@class Pathfinding : Component
 ---Component for pathfinding and AI behavior
@@ -56,15 +57,18 @@ end
 ---Find a random wander target within the radius
 ---@param currentX number Current X position
 ---@param currentY number Current Y position
+---@param tileSize number Size of each tile in pixels
 ---@return number targetX
 ---@return number targetY
 function Pathfinding:findWanderTarget(currentX, currentY)
+    local tileSize = GameConstants.TILE_SIZE
+
     local attempts = 0
     local maxAttempts = 10
 
     while attempts < maxAttempts do
         local angle = math.random() * 2 * math.pi
-        local distance = math.random() * self.wanderRadius * 16 -- Convert tiles to pixels
+        local distance = math.random() * self.wanderRadius * tileSize
         local targetX = self.spawnX + math.cos(angle) * distance
         local targetY = self.spawnY + math.sin(angle) * distance
 
@@ -73,7 +77,7 @@ function Pathfinding:findWanderTarget(currentX, currentY)
         local dy = targetY - currentY
         local distanceFromCurrent = math.sqrt(dx * dx + dy * dy)
 
-        if distanceFromCurrent >= self.minWanderDistance * 16 then -- Convert tiles to pixels
+        if distanceFromCurrent >= self.minWanderDistance * tileSize then
             return targetX, targetY
         end
 
@@ -82,7 +86,7 @@ function Pathfinding:findWanderTarget(currentX, currentY)
 
     -- If we can't find a good target, just return a random one
     local angle = math.random() * 2 * math.pi
-    local distance = math.random() * self.wanderRadius * 16 -- Convert tiles to pixels
+    local distance = math.random() * self.wanderRadius * tileSize
     local targetX = self.spawnX + math.cos(angle) * distance
     local targetY = self.spawnY + math.sin(angle) * distance
     return targetX, targetY
@@ -102,10 +106,9 @@ end
 
 
 ---Get the next position in the current path
----@param tileSize number Size of each tile
 ---@return number|nil nextX
 ---@return number|nil nextY
-function Pathfinding:getNextPathPosition(tileSize)
+function Pathfinding:getNextPathPosition()
     if not self.currentPath or self.pathIndex > #self.currentPath._nodes then
         return nil, nil
     end
@@ -116,7 +119,7 @@ function Pathfinding:getNextPathPosition(tileSize)
     end
 
     local gridX, gridY = node._x, node._y
-    return CoordinateUtils.gridToWorld(gridX, gridY, tileSize)
+    return CoordinateUtils.gridToWorld(gridX, gridY)
 end
 
 ---Move to the next position in the path
@@ -173,7 +176,8 @@ end
 ---@param currentY number Current Y position
 ---@param tileSize number Size of each tile
 ---@return boolean success
-function Pathfinding:startWander(currentX, currentY, tileSize)
+function Pathfinding:startWander(currentX, currentY)
+
     if not self.pathfinder or not self.grid then
         return false
     end
@@ -181,12 +185,12 @@ function Pathfinding:startWander(currentX, currentY, tileSize)
     -- Clamp current position to world bounds before using it
     currentX, currentY = CoordinateUtils.clampToWorldBounds(currentX, currentY)
 
-    -- Find a new wander target (already validated in findWanderTarget)
+    -- Find a new wander target
     local targetX, targetY = self:findWanderTarget(currentX, currentY)
 
     -- Convert to grid coordinates
-    local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
-    local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
+    local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY)
+    local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY)
 
     -- Ensure target is within grid bounds using coordinate utilities
     targetGridX, targetGridY = CoordinateUtils.clampToGridBounds(targetGridX, targetGridY, self.grid)
