@@ -310,6 +310,11 @@ function AttackSystem:spawnBullet(entity)
         end
     end
 
+    -- Play gunshot sound
+    if _G.SoundManager then
+      _G.SoundManager.play("gunshot", .75, 1)
+    end
+
     -- Get spawn position (center of attacker)
     local spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
 

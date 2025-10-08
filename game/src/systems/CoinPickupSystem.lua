@@ -24,6 +24,12 @@ function CoinPickupSystem:update(dt)
             local coinPhysics = coinEntity:getComponent("PhysicsCollision")
             if coinComponent and CollisionUtils.aabbOverlaps(playerPhysics, coinPhysics) then
                 coinEntity.isPickedUp = true
+
+            -- Play coin pickup sound
+            if _G.SoundManager then
+              _G.SoundManager.play("coin", 0.3, .7) -- Play at 50% volume to avoid being too loud
+            end
+
             end
         end
     end

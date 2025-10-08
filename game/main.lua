@@ -1,13 +1,18 @@
 local overlayStats = require("lib.overlayStats")
 local GameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
+local SoundManager = require("src.utils.SoundManager")
 
 _G.gameController = GameController
+_G.SoundManager = SoundManager -- Make SoundManager globally accessible
 
 -- Load Lovebird for debugging
 local lovebird = require("lovebird")
 
 function love.load()
+  -- Initialize sound manager
+  SoundManager.load()
+
   -- Initialize controller (which initializes GameState and scenes)
   local success, err = pcall(function()
     GameController.load()

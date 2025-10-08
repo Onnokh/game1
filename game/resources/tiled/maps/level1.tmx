@@ -45,9 +45,9 @@
 </data>
  </layer>
  <objectgroup id="5" name="Objects">
-  <object id="23" name="Spawn" x="496.848" y="245.33">
+  <object id="23" name="Spawn" x="527.788" y="274.925">
    <point/>
   </object>
-  <object id="35" template="../objects/Reactor.tx" x="576" y="288"/>
+  <object id="35" template="../objects/Reactor.tx" x="352" y="288"/>
  </objectgroup>
 </map>
