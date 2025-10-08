@@ -59,6 +59,8 @@ function BulletSystem:checkCollisions(bulletEntity, position, bullet, physicsCol
     -- Check if bullet hit a static object (wall)
     -- Bullets are ALWAYS removed when hitting walls, regardless of piercing
     if bulletEntity._hitStatic then
+        -- Create wall impact particles
+        self:createImpactParticles(position.x, position.y, bullet.velocityX, bullet.velocityY)
         self:removeBullet(bulletEntity, physicsCollision)
         return
     end
@@ -99,7 +101,8 @@ function BulletSystem:hitTarget(bulletEntity, target, bullet, bulletPosition)
     -- The DamageSystem calculates knockback direction from source to target automatically
     DamageQueue:push(target, bullet.damage, bullet.owner, "physical", bullet.knockback, nil)
 
-    -- TODO: Add particle effects for bullet impact
+    -- Create impact particles
+    self:createImpactParticles(bulletPosition.x, bulletPosition.y, bullet.velocityX, bullet.velocityY)
 end
 
 ---Remove a bullet from the world
@@ -126,6 +129,55 @@ function BulletSystem:removeBullet(bulletEntity, physicsCollision)
     local world = bulletEntity._world
     if world then
         world:removeEntity(bulletEntity)
+    end
+end
+
+---Create impact particles when bullet hits something
+---@param x number Impact X position
+---@param y number Impact Y position
+---@param velocityX number Bullet velocity X
+---@param velocityY number Bullet velocity Y
+function BulletSystem:createImpactParticles(x, y, velocityX, velocityY)
+    if not self.world then return end
+
+    -- Find the global particle entity
+    local particleEntity = nil
+    for _, entity in ipairs(self.world.entities) do
+        if entity:hasTag("GlobalParticles") then
+            particleEntity = entity
+            break
+        end
+    end
+
+    if not particleEntity then return end
+
+    local particleSystem = particleEntity:getComponent("ParticleSystem")
+    if not particleSystem then return end
+
+    -- Calculate impact direction (opposite of bullet velocity)
+    local speed = math.sqrt(velocityX * velocityX + velocityY * velocityY)
+    if speed > 0 then
+        velocityX = velocityX / speed
+        velocityY = velocityY / speed
+    end
+
+    -- Create a small burst of particles
+    local particleCount = 8
+    for i = 1, particleCount do
+        local angle = math.atan2(velocityY, velocityX) + (math.random() - 0.5) * math.pi
+        local particleSpeed = 50 + math.random() * 50
+        local vx = math.cos(angle) * particleSpeed
+        local vy = math.sin(angle) * particleSpeed
+
+        -- Mix of gray and yellow particles
+        local color
+        if math.random() > 0.5 then
+            color = {r = 0.3, g = 0.3, b = 0.3, a = 1} -- Gray
+        else
+            color = {r = 1, g = 1, b = 0.2, a = 1} -- Yellow
+        end
+
+        particleSystem:addParticle(x, y, vx, vy, 0.3 + math.random() * 0.2, color, 1 + math.random())
     end
 end
 

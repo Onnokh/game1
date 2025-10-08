@@ -101,11 +101,11 @@ function GameScene.load()
   ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
-  ecsWorld:addSystem(ParticleRenderSystem.new()) -- Update particles
   ecsWorld:addSystem(ShadowSystem.new()) -- Update shadow bodies
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
   ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
+  ecsWorld:addSystem(ParticleRenderSystem.new()) -- Render particles above sprites
   ecsWorld:addSystem(AimLineRenderSystem.new()) -- Draw aiming line for ranged weapons
 
   -- Add UI systems to separate world
@@ -176,6 +176,16 @@ function GameScene.load()
     local reactorX = (reactorTileX - 1) * tileSize
     local reactorY = (reactorTileY - 1) * tileSize
     Reactor.create(reactorX, reactorY, ecsWorld, physicsWorld)
+  end
+
+  -- Create global particle entity for bullet impacts and other effects
+  do
+    local Entity = require("src.core.Entity")
+    local ParticleSystem = require("src.components.ParticleSystem")
+    local particleEntity = Entity.new()
+    particleEntity:addTag("GlobalParticles")
+    particleEntity:addComponent("ParticleSystem", ParticleSystem.new(200, 0, 0))
+    ecsWorld:addEntity(particleEntity)
   end
 
   -- Add pathfinding system after static collision objects are added
