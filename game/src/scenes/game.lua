@@ -330,6 +330,15 @@ function GameScene.updateUI(dt, gameState)
   end
 end
 
+-- Get map data (collision grid and dimensions)
+function GameScene.getMapData()
+  return {
+    collisionGrid = world,
+    width = worldWidth,
+    height = worldHeight
+  }
+end
+
 -- Add a new monster at the specified position
 function GameScene.addMonster(x, y)
   if ecsWorld and physicsWorld then

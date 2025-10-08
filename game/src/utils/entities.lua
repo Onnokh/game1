@@ -103,4 +103,35 @@ function EntityUtils.getClosestPointOnTarget(fromX, fromY, target)
     return targetPos.x, targetPos.y
 end
 
+---Find a valid walkable spawn position in world coordinates
+---@param minX number Min X in tiles
+---@param maxX number Max X in tiles
+---@param minY number Min Y in tiles
+---@param maxY number Max Y in tiles
+---@return number|nil worldX
+---@return number|nil worldY
+function EntityUtils.findValidSpawnPosition(minX, maxX, minY, maxY)
+    local CoordinateUtils = require("src.utils.coordinates")
+    local TiledMapLoader = require("src.utils.TiledMapLoader")
+    local GameScene = require("src.scenes.game")
+
+    local mapData = GameScene.getMapData()
+    if not mapData or not mapData.collisionGrid then
+        return nil, nil
+    end
+
+    local maxAttempts = 5
+
+    for i = 1, maxAttempts do
+        local tileX = math.random(minX, maxX)
+        local tileY = math.random(minY, maxY)
+
+        if mapData.collisionGrid[tileX] and TiledMapLoader.isWalkable(mapData.collisionGrid[tileX][tileY]) then
+            return CoordinateUtils.gridToWorld(tileX, tileY)
+        end
+    end
+
+    return nil, nil
+end
+
 return EntityUtils

@@ -9,17 +9,25 @@ function Siege.onEnter(gameState)
     GameScene.setAmbientColor(70, 90, 140, 255, 5)
   end
 
-  -- Spawn one skeleton at a random position using the scene's helper
+  -- Spawn enemies equal to the current day number
   local GameScene = require("src.scenes.game")
-  if GameScene and GameScene.addMonster then
-    local GameStateModule = require("src.core.GameState")
-    local maxX, maxY = GameStateModule.getWorldBounds()
-    -- Spawn in the bottom half of the map
-    local x = math.random(0, math.max(0, maxX - 1))
-    local y = math.random(math.floor(maxY / 2), math.max(math.floor(maxY / 2), maxY - 1))
-    local enemy = GameScene.addMonster(x, y)
-    if enemy and enemy.addTag then
-      enemy:addTag("SiegeAttacker")
+  local EntityUtils = require("src.utils.entities")
+
+  if GameScene and GameScene.addMonster and GameScene.getMapData then
+    local mapData = GameScene.getMapData()
+    local numEnemies = gameState.day or 1
+
+    for i = 1, numEnemies do
+      -- Spawn in the bottom half of the map
+      local minY = math.floor(mapData.height / 2)
+      local x, y = EntityUtils.findValidSpawnPosition(1, mapData.width, minY, mapData.height)
+
+      if x and y then
+        local enemy = GameScene.addMonster(x, y)
+        if enemy and enemy.addTag then
+          enemy:addTag("SiegeAttacker")
+        end
+      end
     end
   end
 end
