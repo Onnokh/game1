@@ -60,6 +60,7 @@ function GameState.load()
   GameState.player = runCopy.player
   GameState.phase = runCopy.phase
   GameState.day = runCopy.day
+  GameState.coins = runCopy.coins
 
   -- Apply runtime constants to the copied player block
   local playerWidth = GameConstants.PLAYER_WIDTH

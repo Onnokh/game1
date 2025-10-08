@@ -34,6 +34,7 @@ local AttackColliderSystem = require("src.systems.AttackColliderSystem")
 local LightSystem = require("src.systems.LightSystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
+local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
@@ -105,6 +106,7 @@ function GameScene.load()
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
   ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
+  ecsWorld:addSystem(AimLineRenderSystem.new()) -- Draw aiming line for ranged weapons
 
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")

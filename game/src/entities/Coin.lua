@@ -66,7 +66,7 @@ function CoinEntity.create(x, y, value, attractorRadius, world, physicsWorld, ve
     coin:addComponent("Movement", movement)
     coin:addComponent("SpriteRenderer", spriteRenderer)
     coin:addComponent("GroundShadow", groundShadow)
-    coin:addComponent("Animator", Animator.new("coin", {1, 2, 3, 4, 5, 6, 7, 8, 9}, 8, true))
+    coin:addComponent("Animator", Animator.new("coin", {1, 2, 3, 4, 5, 6, 7, 8, 9}, 12, true))
     coin:addComponent("PathfindingCollision", pathfindingCollision)
     coin:addComponent("PhysicsCollision", physicsCollision)
     coin:addComponent("Coin", coinComponent)
