@@ -36,7 +36,7 @@ WarhogConfig.DEATH_ANIMATION = {
 }
 
 -- Chase behavior
-WarhogConfig.CHASE_RANGE = 10 -- tiles
+WarhogConfig.CHASE_RANGE = 5 -- tiles
 WarhogConfig.ATTACK_RANGE_TILES = .8 -- stop within this many tiles of target
 
 -- Attack settings

@@ -22,8 +22,13 @@ SkeletonConfig.WALKING_ANIMATION = {
 }
 
 -- Chase behavior
-SkeletonConfig.CHASE_RANGE = 10 -- tiles
-SkeletonConfig.ATTACK_RANGE_TILES = .8 -- stop within this many tiles of target
+SkeletonConfig.CHASE_RANGE = 5 -- tiles
+SkeletonConfig.ATTACK_RANGE_TILES = 3.5 -- Ranged attack - can attack from distance
+SkeletonConfig.PREFERRED_CHASE_RANGE_TILES = 3 -- Maintains 3 tiles distance (inside attack range)
+
+-- Projectile settings
+SkeletonConfig.PROJECTILE_SPEED = 200
+SkeletonConfig.PROJECTILE_LIFETIME = 2.0
 
 -- Attack settings
 SkeletonConfig.ATTACK_COOLDOWN = 1.2 -- seconds

@@ -1,35 +1,36 @@
----@class Chasing : State
----Chasing state for warhog - pursue the player using pathfinding
-local Chasing = {}
-Chasing.__index = Chasing
-setmetatable(Chasing, {__index = require("src.core.State")})
+---@class GenericChasing : State
+---Generic chasing state for monsters - pursue the target using direct line of sight
+local GenericChasing = {}
+GenericChasing.__index = GenericChasing
+setmetatable(GenericChasing, {__index = require("src.core.State")})
 
-local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
 local GameConstants = require("src.constants")
 
----@return Chasing The created chasing state
-function Chasing.new()
-    local self = setmetatable({}, Chasing)
+---Create a new generic chasing state
+---@param config table Monster configuration (must have WALKING_ANIMATION and ATTACK_RANGE_TILES)
+---@return GenericChasing The created chasing state
+function GenericChasing.new(config)
+    local self = setmetatable({}, GenericChasing)
+    self.config = config
     return self
 end
 
 ---Called when entering this state
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
-function Chasing:onEnter(stateMachine, entity)
+function GenericChasing:onEnter(stateMachine, entity)
     -- Set walk animation
     local animator = entity:getComponent("Animator")
-    if animator then
-        animator:setAnimation(WarhogConfig.WALKING_ANIMATION)
+    if animator and self.config.WALKING_ANIMATION then
+        animator:setAnimation(self.config.WALKING_ANIMATION)
     end
-
 end
 
 ---Called every frame while in this state
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
-function Chasing:onUpdate(stateMachine, entity, dt)
+function GenericChasing:onUpdate(stateMachine, entity, dt)
     local position = entity:getComponent("Position")
     local movement = entity:getComponent("Movement")
     local pathfinding = entity:getComponent("Pathfinding")
@@ -68,17 +69,50 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         local dx = tx - sx
         local dy = ty - sy
         local dist = math.sqrt(dx*dx + dy*dy)
-        -- Stop moving within attack range
+
+        -- Determine stop range and preferred range based on behavior config
         local tileSize = (GameConstants.TILE_SIZE or 16)
-        local stopRange = (require("src.entities.Monsters.Warhog.WarhogConfig").ATTACK_RANGE_TILES or 0.8) * tileSize
-        if dist <= stopRange then
-            movement.velocityX = 0
-            movement.velocityY = 0
+        local stopRange = (self.config.ATTACK_RANGE_TILES or 0.8) * tileSize
+
+        -- Support for ranged behavior: maintain distance from target
+        local preferredRange = self.config.PREFERRED_CHASE_RANGE_TILES
+        if preferredRange then
+            preferredRange = preferredRange * tileSize
+
+            if dist <= stopRange then
+                -- Too close, move away
+                movement.velocityX = 0
+                movement.velocityY = 0
+            elseif dist < preferredRange then
+                -- Too close to preferred range, move away from target
+                if dist > 0 then
+                    local desiredSpeed = movement.maxSpeed * 0.6
+                    movement.velocityX = -(dx / dist) * desiredSpeed
+                    movement.velocityY = -(dy / dist) * desiredSpeed
+                end
+            elseif dist > preferredRange + tileSize then
+                -- Too far from preferred range, move toward target
+                if dist > 0 then
+                    local desiredSpeed = movement.maxSpeed * 0.9
+                    movement.velocityX = (dx / dist) * desiredSpeed
+                    movement.velocityY = (dy / dist) * desiredSpeed
+                end
+            else
+                -- Within acceptable range, stop moving
+                movement.velocityX = 0
+                movement.velocityY = 0
+            end
         else
-            if dist > 0 then
-                local desiredSpeed = movement.maxSpeed * 0.9
-                movement.velocityX = (dx / dist) * desiredSpeed
-                movement.velocityY = (dy / dist) * desiredSpeed
+            -- Default melee behavior: chase until in attack range
+            if dist <= stopRange then
+                movement.velocityX = 0
+                movement.velocityY = 0
+            else
+                if dist > 0 then
+                    local desiredSpeed = movement.maxSpeed * 0.9
+                    movement.velocityX = (dx / dist) * desiredSpeed
+                    movement.velocityY = (dy / dist) * desiredSpeed
+                end
             end
         end
         -- Clear any existing path to avoid PathfindingSystem steering
@@ -111,6 +145,5 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     end
 end
 
-return Chasing
-
+return GenericChasing
 

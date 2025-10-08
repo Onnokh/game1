@@ -1,20 +1,22 @@
----@class Dying : State
+---@class GenericDying : State
+---Generic dying state for monsters
 ---@field duration number How long the dying state lasts
----@field fadeSpeed number How fast the skeleton fades out
+---@field fadeSpeed number How fast the monster fades out
 ---@field currentAlpha number Current alpha value for fading
-local Dying = {}
-Dying.__index = Dying
-setmetatable(Dying, {__index = require("src.core.State")})
+local GenericDying = {}
+GenericDying.__index = GenericDying
+setmetatable(GenericDying, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
 local EventBus = require("src.utils.EventBus")
 
----Create a new Dying state
----@return Dying
-function Dying.new()
-    local self = setmetatable({}, Dying)
-    self.duration = .5 -- 2 seconds total
-    self.fadeSpeed = .5 -- Fade out over 1.5 seconds
+---Create a new GenericDying state
+---@param config table Monster configuration (optionally has DYING_ANIMATION or DEATH_ANIMATION)
+---@return GenericDying
+function GenericDying.new(config)
+    local self = setmetatable({}, GenericDying)
+    self.config = config
+    self.duration = .5 -- 0.5 seconds total
+    self.fadeSpeed = .5 -- Fade out over 0.5 seconds
     self.currentAlpha = 1.0
     return self
 end
@@ -22,7 +24,7 @@ end
 ---Called when entering this state
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
-function Dying:onEnter(stateMachine, entity)
+function GenericDying:onEnter(stateMachine, entity)
     -- Check if we've already started dying to prevent multiple triggers
     if stateMachine:getGlobalData("isDying") then
         return
@@ -33,7 +35,6 @@ function Dying:onEnter(stateMachine, entity)
         return
     end
 
-    print("Skeleton is dying...")
     stateMachine:setGlobalData("isDying", true)
 
     -- Stop any movement
@@ -56,10 +57,13 @@ function Dying:onEnter(stateMachine, entity)
         collision.enabled = false
     end
 
-    -- Set death animation
+    -- Set death animation (try both DYING_ANIMATION and DEATH_ANIMATION for compatibility)
     local animator = entity:getComponent("Animator")
     if animator then
-        animator:setAnimation(SkeletonConfig.DYING_ANIMATION)
+        local deathAnim = self.config.DYING_ANIMATION or self.config.DEATH_ANIMATION
+        if deathAnim then
+            animator:setAnimation(deathAnim)
+        end
     end
 
     -- Start the death timer
@@ -71,7 +75,7 @@ end
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
-function Dying:onUpdate(stateMachine, entity, dt)
+function GenericDying:onUpdate(stateMachine, entity, dt)
     local deathTimer = stateMachine:getGlobalData("deathTimer") or 0
     local fadeTimer = stateMachine:getGlobalData("fadeTimer") or 0
 
@@ -95,7 +99,6 @@ function Dying:onUpdate(stateMachine, entity, dt)
     -- Check if death animation is complete
     if deathTimer >= self.duration then
         if not stateMachine:getGlobalData("deathMessageShown") then
-            print("Skeleton has died and been removed from the world")
             stateMachine:setGlobalData("deathMessageShown", true)
 
             -- Emit a final despawn event before removal so systems (e.g., loot) can react
@@ -116,7 +119,7 @@ end
 ---Called when exiting this state
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
-function Dying:onExit(stateMachine, entity)
+function GenericDying:onExit(stateMachine, entity)
     -- Clean up any death-specific data
     stateMachine:setGlobalData("deathTimer", nil)
     stateMachine:setGlobalData("fadeTimer", nil)
@@ -124,4 +127,5 @@ function Dying:onExit(stateMachine, entity)
     stateMachine:setGlobalData("deathMessageShown", nil)
 end
 
-return Dying
+return GenericDying
+

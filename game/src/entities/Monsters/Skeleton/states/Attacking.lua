@@ -1,11 +1,12 @@
 ---@class Attacking : State
----Attacking state for skeleton - perform melee when in range
+---Ranged attacking state for skeleton - fires projectiles from distance
 local Attacking = {}
 Attacking.__index = Attacking
 setmetatable(Attacking, {__index = require("src.core.State")})
 
 local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
 local GameConstants = require("src.constants")
+local BulletEntity = require("src.entities.Bullet")
 
 ---@return Attacking The created attacking state
 function Attacking.new()
@@ -20,7 +21,6 @@ function Attacking:onEnter(stateMachine, entity)
         movement.velocityX = 0
         movement.velocityY = 0
     end
-    -- Optional: set attack animation here if available
 end
 
 function Attacking:onUpdate(stateMachine, entity, dt)
@@ -50,48 +50,72 @@ function Attacking:onUpdate(stateMachine, entity, dt)
     local dx, dy = tx - ex, ty - ey
     local dist = math.sqrt(dx*dx + dy*dy)
 
-    -- Check if we need to move closer to target or can attack
-    local attackRange = (require("src.entities.Monsters.Skeleton.SkeletonConfig").ATTACK_RANGE_TILES or 1.2) * (require("src.constants").TILE_SIZE or 16)
+    local attackRange = SkeletonConfig.ATTACK_RANGE_TILES * GameConstants.TILE_SIZE
+    local preferredRange = SkeletonConfig.PREFERRED_CHASE_RANGE_TILES * GameConstants.TILE_SIZE
 
-    if dist <= attackRange then
-        -- Close enough to attack - stop movement
+    -- Ranged attacking behavior: maintain distance while attacking
+    if dist < preferredRange * 0.8 then
+        -- Target too close - move away while attacking (kiting)
+        if movement and dist > 0 then
+            local desiredSpeed = movement.maxSpeed * 0.5
+            movement.velocityX = -(dx / dist) * desiredSpeed
+            movement.velocityY = -(dy / dist) * desiredSpeed
+        end
+    elseif dist > attackRange then
+        -- Target out of attack range - move closer
+        if movement and dist > 0 then
+            local desiredSpeed = movement.maxSpeed * 0.7
+            movement.velocityX = (dx / dist) * desiredSpeed
+            movement.velocityY = (dy / dist) * desiredSpeed
+        end
+    else
+        -- In good position - stay still and attack
         if movement then
             movement.velocityX = 0
             movement.velocityY = 0
-        end
-    else
-        -- Too far to attack - move toward target
-        if movement and dist > 0 then
-            local desiredSpeed = movement.maxSpeed * 0.8
-            movement.velocityX = (dx / dist) * desiredSpeed
-            movement.velocityY = (dy / dist) * desiredSpeed
         end
     end
 
     -- Try to attack when cooldown ready and in range
     local now = love.timer.getTime()
     if dist <= attackRange and attack:isReady(now) then
-        -- Set attack direction and hit area using attacker center
-        attack:setDirection(dx, dy)
-        attack:calculateHitArea(ex, ey)
-
-        -- Spawn attack collider via AttackSystem by adding AttackCollider component
-        local AttackCollider = require("src.components.AttackCollider")
+        -- Fire a projectile towards the target
         local attackerPhys = entity:getComponent("PhysicsCollision")
         local physicsWorld = attackerPhys and attackerPhys.physicsWorld or (pfc and pfc.physicsWorld) or nil
+
         if physicsWorld then
-            local ac = AttackCollider.new(entity, attack.damage, attack.knockback, 0.06)
-            ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
-            -- Rotate collider to face the player
-            if attack.attackAngleRad and ac.setAngle then
-                ac:setAngle(attack.attackAngleRad)
-            end
-            entity:addComponent("AttackCollider", ac)
+            -- Spawn projectile from skeleton's position
+            local bulletSpeed = SkeletonConfig.PROJECTILE_SPEED or 200
+            local bulletLifetime = SkeletonConfig.PROJECTILE_LIFETIME or 2.0
+
+            -- Create bullet moving towards target
+            BulletEntity.create(
+                ex, ey,           -- Start position (skeleton center)
+                dx, dy,           -- Direction (towards target)
+                bulletSpeed,      -- Speed
+                attack.damage,    -- Damage
+                entity,           -- Owner (skeleton)
+                entity._world,    -- World
+                physicsWorld,     -- Physics world
+                attack.knockback, -- Knockback
+                bulletLifetime,   -- Lifetime
+                false             -- Not piercing
+            )
+
             attack:performAttack(now)
+        end
+    end
+
+    -- Flip sprite based on target direction
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    if spriteRenderer then
+        if dx < -0.1 then
+            spriteRenderer.scaleX = -1
+        elseif dx > 0.1 then
+            spriteRenderer.scaleX = 1
         end
     end
 end
 
 return Attacking
-
 

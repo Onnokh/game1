@@ -1,28 +1,29 @@
----@class Idle : State
----Idle state for skeleton
-local Idle = {}
-Idle.__index = Idle
-setmetatable(Idle, {__index = require("src.core.State")})
+---@class GenericIdle : State
+---Generic idle state for monsters
+local GenericIdle = {}
+GenericIdle.__index = GenericIdle
+setmetatable(GenericIdle, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
-
----@return Idle The created idle state
-function Idle.new()
-    local self = setmetatable({}, Idle)
+---Create a new generic idle state
+---@param config table Monster configuration (must have IDLE_ANIMATION)
+---@return GenericIdle The created idle state
+function GenericIdle.new(config)
+    local self = setmetatable({}, GenericIdle)
+    self.config = config
     return self
 end
 
 ---Called when entering this state
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
-function Idle:onEnter(stateMachine, entity)
+function GenericIdle:onEnter(stateMachine, entity)
     stateMachine:setStateData("idleTime", 0)
-    stateMachine:setStateData("targetIdleTime", math.random(1, 5)) -- Random idle time between 1-3 seconds
+    stateMachine:setStateData("targetIdleTime", math.random(1, 5)) -- Random idle time between 1-5 seconds
 
     -- Set idle animation when entering state
     local animator = entity:getComponent("Animator")
-    if animator then
-        animator:setAnimation(SkeletonConfig.IDLE_ANIMATION)
+    if animator and self.config.IDLE_ANIMATION then
+        animator:setAnimation(self.config.IDLE_ANIMATION)
     end
 end
 
@@ -30,7 +31,7 @@ end
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
-function Idle:onUpdate(stateMachine, entity, dt)
+function GenericIdle:onUpdate(stateMachine, entity, dt)
     -- Update idle timer
     local idleTime = stateMachine:getStateData("idleTime") or 0
     stateMachine:setStateData("idleTime", idleTime + dt)
@@ -43,4 +44,5 @@ function Idle:onUpdate(stateMachine, entity, dt)
     end
 end
 
-return Idle
+return GenericIdle
+

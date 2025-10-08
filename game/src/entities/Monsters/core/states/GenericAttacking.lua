@@ -1,36 +1,35 @@
----@class Attacking : State
----Attacking state for warhog - perform melee when in range
-local Attacking = {}
-Attacking.__index = Attacking
-setmetatable(Attacking, {__index = require("src.core.State")})
+---@class GenericAttacking : State
+---Generic attacking state for monsters - perform melee when in range
+local GenericAttacking = {}
+GenericAttacking.__index = GenericAttacking
+setmetatable(GenericAttacking, {__index = require("src.core.State")})
 
-local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
 local GameConstants = require("src.constants")
 
----@return Attacking The created attacking state
-function Attacking.new()
-    local self = setmetatable({}, Attacking)
+---Create a new generic attacking state
+---@param config table Monster configuration (must have ATTACK_RANGE_TILES, and optionally ATTACK_ANIMATION)
+---@return GenericAttacking The created attacking state
+function GenericAttacking.new(config)
+    local self = setmetatable({}, GenericAttacking)
+    self.config = config
     return self
 end
 
-function Attacking:onEnter(stateMachine, entity)
+function GenericAttacking:onEnter(stateMachine, entity)
     -- Stop movement when starting attack
     local movement = entity:getComponent("Movement")
     if movement then
         movement.velocityX = 0
         movement.velocityY = 0
     end
-
-    print("Attacking state entered")
-
-    -- Set attack animation
+    -- Optional: set attack animation here if available
     local animator = entity:getComponent("Animator")
-    if animator then
-        animator:setAnimation(WarhogConfig.ATTACK_ANIMATION)
+    if animator and self.config.ATTACK_ANIMATION then
+        animator:setAnimation(self.config.ATTACK_ANIMATION)
     end
 end
 
-function Attacking:onUpdate(stateMachine, entity, dt)
+function GenericAttacking:onUpdate(stateMachine, entity, dt)
     local position = entity:getComponent("Position")
     local attack = entity:getComponent("Attack")
     local movement = entity:getComponent("Movement")
@@ -58,7 +57,7 @@ function Attacking:onUpdate(stateMachine, entity, dt)
     local dist = math.sqrt(dx*dx + dy*dy)
 
     -- Check if we need to move closer to target or can attack
-    local attackRange = (require("src.entities.Monsters.Warhog.WarhogConfig").ATTACK_RANGE_TILES or 1.2) * (require("src.constants").TILE_SIZE or 16)
+    local attackRange = (self.config.ATTACK_RANGE_TILES or 1.2) * (GameConstants.TILE_SIZE or 16)
 
     if dist <= attackRange then
         -- Close enough to attack - stop movement
@@ -99,6 +98,5 @@ function Attacking:onUpdate(stateMachine, entity, dt)
     end
 end
 
-return Attacking
-
+return GenericAttacking
 

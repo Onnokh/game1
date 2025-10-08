@@ -1,26 +1,26 @@
----@class Wandering : State
----Wandering state for skeleton
-local Wandering = {}
-Wandering.__index = Wandering
-setmetatable(Wandering, {__index = require("src.core.State")})
+---@class GenericWandering : State
+---Generic wandering state for monsters
+local GenericWandering = {}
+GenericWandering.__index = GenericWandering
+setmetatable(GenericWandering, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
-local GameConstants = require("src.constants")
-
----@return Wandering The created wandering state
-function Wandering.new()
-    local self = setmetatable({}, Wandering)
+---Create a new generic wandering state
+---@param config table Monster configuration (must have WALKING_ANIMATION)
+---@return GenericWandering The created wandering state
+function GenericWandering.new(config)
+    local self = setmetatable({}, GenericWandering)
+    self.config = config
     return self
 end
 
 ---Called when entering this state
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
-function Wandering:onEnter(stateMachine, entity)
+function GenericWandering:onEnter(stateMachine, entity)
     -- Set walking animation when entering state
     local animator = entity:getComponent("Animator")
-    if animator then
-        animator:setAnimation(SkeletonConfig.WALKING_ANIMATION)
+    if animator and self.config.WALKING_ANIMATION then
+        animator:setAnimation(self.config.WALKING_ANIMATION)
     end
 
     -- Get wander path
@@ -37,7 +37,7 @@ function Wandering:onEnter(stateMachine, entity)
         end
 
         -- Start a new wander from current position
-        pathfinding:startWander(currentX, currentY) -- 16 is tile size
+        pathfinding:startWander(currentX, currentY)
     end
 end
 
@@ -45,7 +45,7 @@ end
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
-function Wandering:onUpdate(stateMachine, entity, dt)
+function GenericWandering:onUpdate(stateMachine, entity, dt)
     local pathfinding = entity:getComponent("Pathfinding")
     local movement = entity:getComponent("Movement")
     local spriteRenderer = entity:getComponent("SpriteRenderer")
@@ -75,9 +75,10 @@ function Wandering:onUpdate(stateMachine, entity, dt)
             if pathfindingCollision and pathfindingCollision:hasCollider() then
                 currentX, currentY = pathfindingCollision:getCenterPosition()
             end
-            pathfinding:startWander(currentX, currentY) -- 16 is tile size
+            pathfinding:startWander(currentX, currentY)
         end
     end
 end
 
-return Wandering
+return GenericWandering
+

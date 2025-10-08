@@ -64,21 +64,54 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     end
 
     if directLOS then
-        -- Direct chase: set velocity straight towards target
+        -- Ranged chase: maintain distance from target
         local dx = tx - sx
         local dy = ty - sy
         local dist = math.sqrt(dx*dx + dy*dy)
-        -- Stop moving within attack range
-        local tileSize = (GameConstants.TILE_SIZE or 16)
-        local stopRange = (require("src.entities.Monsters.Skeleton.SkeletonConfig").ATTACK_RANGE_TILES or 0.8) * tileSize
-        if dist <= stopRange then
-            movement.velocityX = 0
-            movement.velocityY = 0
+
+        local tileSize = GameConstants.TILE_SIZE
+        local stopRange = SkeletonConfig.ATTACK_RANGE_TILES * tileSize
+
+        -- Skeleton maintains preferred range instead of chasing all the way
+        local preferredRange = SkeletonConfig.PREFERRED_CHASE_RANGE_TILES
+        if preferredRange then
+            preferredRange = preferredRange * tileSize
+            local tolerance = tileSize * 0.3 -- Small tolerance to stay within attack range
+
+            if dist <= stopRange then
+                -- Too close to attack, don't move
+                movement.velocityX = 0
+                movement.velocityY = 0
+            elseif dist < preferredRange - tolerance then
+                -- Too close to preferred range, move away from target (kiting)
+                if dist > 0 then
+                    local desiredSpeed = movement.maxSpeed * 0.6
+                    movement.velocityX = -(dx / dist) * desiredSpeed
+                    movement.velocityY = -(dy / dist) * desiredSpeed
+                end
+            elseif dist > preferredRange + tolerance then
+                -- Too far from preferred range, move toward target
+                if dist > 0 then
+                    local desiredSpeed = movement.maxSpeed * 0.9
+                    movement.velocityX = (dx / dist) * desiredSpeed
+                    movement.velocityY = (dy / dist) * desiredSpeed
+                end
+            else
+                -- Within acceptable range (2.7 - 3.3 tiles), stop moving
+                movement.velocityX = 0
+                movement.velocityY = 0
+            end
         else
-            if dist > 0 then
-                local desiredSpeed = movement.maxSpeed * 0.9
-                movement.velocityX = (dx / dist) * desiredSpeed
-                movement.velocityY = (dy / dist) * desiredSpeed
+            -- Fallback to default melee behavior if no preferred range set
+            if dist <= stopRange then
+                movement.velocityX = 0
+                movement.velocityY = 0
+            else
+                if dist > 0 then
+                    local desiredSpeed = movement.maxSpeed * 0.9
+                    movement.velocityX = (dx / dist) * desiredSpeed
+                    movement.velocityY = (dy / dist) * desiredSpeed
+                end
             end
         end
         -- Clear any existing path to avoid PathfindingSystem steering
