@@ -9,8 +9,8 @@ return {
   height = 25,
   tilewidth = 32,
   tileheight = 32,
-  nextlayerid = 6,
-  nextobjectid = 8,
+  nextlayerid = 8,
+  nextobjectid = 28,
   properties = {},
   tilesets = {
     {
@@ -133,27 +133,14 @@ return {
       properties = {},
       objects = {
         {
-          id = 2,
+          id = 23,
           name = "Spawn",
           type = "",
-          shape = "rectangle",
-          x = 576,
-          y = 224,
-          width = 32,
-          height = 32,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 7,
-          name = "Reactor",
-          type = "",
-          shape = "rectangle",
-          x = 352,
-          y = 192,
-          width = 96,
-          height = 96,
+          shape = "point",
+          x = 464.348,
+          y = 206.33,
+          width = 0,
+          height = 0,
           rotation = 0,
           visible = true,
           properties = {}

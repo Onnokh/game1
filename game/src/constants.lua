@@ -20,12 +20,12 @@ GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 80 -- Match working implementation
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 5 -- Zoomed out to see more of the worldw
+GameConstants.CAMERA_SCALE = 6 -- Zoomed out to see more of the worldw
 
 -- Oxygen system constants
 GameConstants.OXYGEN_MAX = 100
 GameConstants.OXYGEN_DECAY_RATE = 3 -- oxygen per second when outside safe zone
 GameConstants.OXYGEN_RESTORE_RATE = 20 -- oxygen per second when inside safe zone during Siege
-GameConstants.REACTOR_SAFE_RADIUS = 200 -- radius around reactor where oxygen doesn't decay
+GameConstants.REACTOR_SAFE_RADIUS = 150 -- radius around reactor where oxygen doesn't decay
 
 return GameConstants

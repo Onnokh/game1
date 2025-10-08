@@ -5,6 +5,9 @@
         "maps"
     ],
     "fileStates": {
+        "": {
+            "scaleInDock": 1
+        },
         "maps/level1.tmx": {
             "scale": 1.5486979166666666,
             "selectedLayer": 0,
@@ -13,6 +16,9 @@
                 "y": 383.8708592567681
             }
         },
+        "maps/level1.tmx#Reactor": {
+            "scaleInEditor": 1
+        },
         "maps/level1.tmx#TX Tileset Grass": {
             "scaleInDock": 1,
             "scaleInEditor": 1
@@ -20,15 +26,24 @@
         "maps/level1.tmx#TX Tileset Wall": {
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "objects/reactor.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
         }
     },
     "last.exportedFilePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/maps",
+    "last.imagePath": "C:/Users/Onno/Sites/game1/game/resources/reactor",
+    "last.objectTemplatePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/objects",
     "map.lastUsedExportFilter": "Lua files (*.lua)",
     "openFiles": [
         "maps/level1.tmx"
     ],
     "project": "game1.tiled-project",
     "recentFiles": [
+        "objects/reactor.tsx",
         "maps/level1.tmx"
-    ]
+    ],
+    "tileset.embedInMap": true,
+    "tileset.lastUsedFormat": "tsx"
 }

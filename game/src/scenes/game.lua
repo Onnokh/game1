@@ -7,12 +7,8 @@ local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
 local cartographer = require("lib.cartographer")
+local TiledMapLoader = require("src.utils.TiledMapLoader")
 local GameState = require("src.core.GameState")
-
--- Use constants from the global constants module
-local tileSize = GameConstants.TILE_SIZE
-local worldWidth = 0  -- Will be set by loaded map
-local worldHeight = 0  -- Will be set by loaded map
 
 -- ECS System
 local World = require("src.core.World")
@@ -43,6 +39,10 @@ local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
 local Reactor = require("src.entities.Reactor.Reactor")
 
+-- Use constants from the global constants module
+local tileSize = GameConstants.TILE_SIZE
+local worldWidth = 0  -- Will be set by loaded map
+local worldHeight = 0  -- Will be set by loaded map
 local ecsWorld = nil
 local uiWorld = nil
 local playerEntity = nil
@@ -52,6 +52,7 @@ local lightWorld = nil
 local testBoxEntity = nil
 local testBoxOverlayRegistered = false
 local tiledMap = nil -- Cartographer map object
+local mapData = nil -- Parsed map data from TiledMapLoader
 
 -- Physics
 local physicsWorld = nil
@@ -147,36 +148,21 @@ function GameScene.load()
     end
   end
 
-  -- Update world dimensions to match the map
-  worldWidth = tiledMap.width
-  worldHeight = tiledMap.height
-  tileSize = tiledMap.tilewidth
+  -- Parse map data using TiledMapLoader
+  mapData = TiledMapLoader.loadMapData(tiledMap)
+
+  -- Extract data from parsed map
+  worldWidth = mapData.width
+  worldHeight = mapData.height
+  tileSize = mapData.tileSize
+  world = mapData.collisionGrid
 
   -- Update camera bounds to match the loaded level
   local levelWidthPixels = worldWidth * tileSize
   local levelHeightPixels = worldHeight * tileSize
   GameState.updateCameraBounds(levelWidthPixels, levelHeightPixels)
 
-  -- Create world data for pathfinding and collision detection
-  for x = 1, worldWidth do
-    world[x] = {}
-    for y = 1, worldHeight do
-      local gid = tiledMap.layers[1].data[(y - 1) * worldWidth + x]
-      if gid == 0 then
-        world[x][y] = 0 -- Empty
-      elseif gid >= 1 and gid < 65 then
-        world[x][y] = 1 -- Grass tileset (walkable)
-      elseif gid >= 65 and gid < 321 then
-        world[x][y] = 3 -- Wall tileset (collision)
-      elseif gid >= 321 and gid < 385 then
-        world[x][y] = 2 -- Stone ground tileset (walkable)
-      elseif gid >= 385 then
-        world[x][y] = 4 -- Structure tileset (collision)
-      else
-        world[x][y] = 1 -- Default to grass
-      end
-    end
-  end
+
 
   -- Create physics colliders for world borders
   GameScene.createBorderColliders()
@@ -242,6 +228,12 @@ function GameScene.update(dt, gameState)
 
   -- Create player entity if it doesn't exist
   if not playerEntity and ecsWorld then
+    -- Use spawn point from map if available
+    if mapData and mapData.spawnPoint then
+      gameState.player.x = mapData.spawnPoint.x
+      gameState.player.y = mapData.spawnPoint.y
+    end
+
     playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld)
 
     -- Add mouse facing system (needs gameState)
@@ -457,6 +449,7 @@ function GameScene.cleanup()
   GameScene.borderColliders = nil
   GameScene.monsters = nil
   tiledMap = nil
+  mapData = nil
 
   -- Force Love2D to reset graphics state and release canvases
   love.graphics.reset()
