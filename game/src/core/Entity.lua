@@ -104,6 +104,18 @@ function Entity:hasTag(tag)
     return self.tags[tag] == true
 end
 
+---Get a human-readable name for this entity
+---Returns the first tag if available, otherwise returns "Entity #[id]"
+---@return string The entity's name
+function Entity:getName()
+    -- Try to return a meaningful tag name
+    for tag, _ in pairs(self.tags) do
+        return tag
+    end
+    -- Fall back to entity ID
+    return "Entity #" .. tostring(self.id)
+end
+
 ---Destroy this entity and clean up all components
 function Entity:destroy()
     self.active = false

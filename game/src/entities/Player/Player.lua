@@ -11,6 +11,7 @@ local Health = require("src.components.Health")
 local Oxygen = require("src.components.Oxygen")
 local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
+local Animator = require("src.components.Animator")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -139,6 +140,9 @@ function Player.create(x, y, world, physicsWorld)
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
     local groundShadow = GroundShadow.new({ alpha = .5, widthFactor = 0.8, heightFactor = 0.25, offsetY = 0 })
 
+    -- Create animator component with idle animation
+    local animator = Animator.new(PlayerConfig.IDLE_ANIMATION)
+
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
     playerEntity:addComponent("Movement", movement)
@@ -146,6 +150,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("PathfindingCollision", pathfindingCollision)
     playerEntity:addComponent("PhysicsCollision", physicsCollision)
     playerEntity:addComponent("StateMachine", stateMachine)
+    playerEntity:addComponent("Animator", animator)
     playerEntity:addComponent("Weapon", weapon)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)

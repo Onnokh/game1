@@ -19,18 +19,10 @@ function Moving:onEnter(stateMachine, entity)
     stateMachine:setStateData("walkTime", 0)
     stateMachine:setStateData("lastParticleSpawn", 0) -- Track last particle spawn time
 
-    -- Create and set walking animation when entering state
-    if entity then
-        local Animator = require("src.components.Animator")
-        local animator = entity:getComponent("Animator")
-
-        if not animator then
-            -- Create animator if it doesn't exist
-            animator = Animator.new("character", PlayerConfig.WALKING_ANIMATION.frames, PlayerConfig.WALKING_ANIMATION.fps, PlayerConfig.WALKING_ANIMATION.loop)
-            entity:addComponent("Animator", animator)
-        else
-            animator:setAnimation(PlayerConfig.WALKING_ANIMATION.frames, PlayerConfig.WALKING_ANIMATION.fps, PlayerConfig.WALKING_ANIMATION.loop)
-        end
+    -- Set walking animation when entering state
+    local animator = entity:getComponent("Animator")
+    if animator then
+        animator:setAnimation(PlayerConfig.WALKING_ANIMATION)
     end
 end
 

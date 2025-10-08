@@ -1,10 +1,10 @@
 ---@class Chasing : State
----Chasing state for skeleton - pursue the player using pathfinding
+---Chasing state for warhog - pursue the player using pathfinding
 local Chasing = {}
 Chasing.__index = Chasing
 setmetatable(Chasing, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
 local GameConstants = require("src.constants")
 
 ---@return Chasing The created chasing state
@@ -20,7 +20,7 @@ function Chasing:onEnter(stateMachine, entity)
     -- Set walk animation
     local animator = entity:getComponent("Animator")
     if animator then
-        animator:setAnimation(SkeletonConfig.WALKING_ANIMATION)
+        animator:setAnimation(WarhogConfig.WALKING_ANIMATION)
     end
 
 end
@@ -70,7 +70,7 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         local dist = math.sqrt(dx*dx + dy*dy)
         -- Stop moving within attack range
         local tileSize = (GameConstants.TILE_SIZE or 16)
-        local stopRange = (require("src.entities.Monsters.Skeleton.SkeletonConfig").ATTACK_RANGE_TILES or 0.8) * tileSize
+        local stopRange = (require("src.entities.Monsters.Warhog.WarhogConfig").ATTACK_RANGE_TILES or 0.8) * tileSize
         if dist <= stopRange then
             movement.velocityX = 0
             movement.velocityY = 0

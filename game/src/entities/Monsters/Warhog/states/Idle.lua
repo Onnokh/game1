@@ -1,10 +1,10 @@
 ---@class Idle : State
----Idle state for skeleton
+---Idle state for warhog
 local Idle = {}
 Idle.__index = Idle
 setmetatable(Idle, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
 
 ---@return Idle The created idle state
 function Idle.new()
@@ -22,7 +22,7 @@ function Idle:onEnter(stateMachine, entity)
     -- Set idle animation when entering state
     local animator = entity:getComponent("Animator")
     if animator then
-        animator:setAnimation(SkeletonConfig.IDLE_ANIMATION)
+        animator:setAnimation(WarhogConfig.IDLE_ANIMATION)
     end
 end
 

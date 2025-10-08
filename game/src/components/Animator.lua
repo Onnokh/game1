@@ -9,19 +9,16 @@ local Animator = {}
 Animator.__index = Animator
 
 ---Create a new Animator component
----@param sheet string Name of the iffy tileset/spritesheet
----@param frames table|nil List of frame indices
----@param fps number|nil Frames per second
----@param loop boolean|nil Loop animation
+---@param config table Animation config table with {sheet, frames, fps, loop}
 ---@return Component|Animator
-function Animator.new(sheet, frames, fps, loop)
+function Animator.new(config)
     local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Animator"), Animator)
 
-    self.sheet = sheet
-    self.frames = frames or {1}
-    self.fps = fps or 6
-    self.loop = loop ~= false
+    self.sheet = config.sheet
+    self.frames = config.frames or {1}
+    self.fps = config.fps or 6
+    self.loop = config.loop ~= false
     self.time = 0
     self.playing = true
 
@@ -56,13 +53,12 @@ function Animator:getCurrentFrame()
 end
 
 ---Change the active animation
----@param frames table
----@param fps number|nil
----@param loop boolean|nil
-function Animator:setAnimation(frames, fps, loop)
-    self.frames = frames or self.frames
-    if fps then self.fps = fps end
-    if loop ~= nil then self.loop = loop end
+---@param config table Animation config table with {sheet, frames, fps, loop}
+function Animator:setAnimation(config)
+    self.sheet = config.sheet
+    self.frames = config.frames or self.frames
+    self.fps = config.fps or self.fps
+    if config.loop ~= nil then self.loop = config.loop end
     self.time = 0
     self.playing = true
 end

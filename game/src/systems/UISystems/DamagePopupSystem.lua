@@ -24,15 +24,37 @@ function DamagePopupSystem.new(ecsWorld)
 		local amount = payload and payload.amount or 0
 		if not target then return end
 		local pos = target:getComponent("Position")
-		local sr = target:getComponent("SpriteRenderer")
 		if not pos then return end
 
-    if target.isPlayer then
+    if target:hasTag("Player") then
       return
     end
 
+		-- Calculate spawn position anchored to the healthbar
+		local worldX, worldY, entityWidth
+		local healthBar = target:getComponent("HealthBar")
+
+		if healthBar then
+			-- Get entity position (same logic as HealthBarSystem)
+			local entityX, entityY
+			local physicsCollision = target:getComponent("PhysicsCollision")
+			if physicsCollision and physicsCollision:hasCollider() then
+				-- Get the actual physics body center position
+				local bodyX, bodyY = physicsCollision.collider.body:getPosition()
+				local w = physicsCollision.width
+				local h = physicsCollision.height
+				entityX = bodyX - w * 0.5
+				entityY = bodyY - h * 0.5
+				entityWidth = w
+			end
+
+			-- Get healthbar position and spawn above it
+			local hbX, hbY = healthBar:getPosition(entityX, entityY, entityWidth)
+			worldX = hbX + healthBar.width * 0.5 -- Center of healthbar
+			worldY = hbY - 6 -- 6 pixels above healthbar
+		end
+
 		-- Create advanced damage number with same features as original system
-		local entityWidth = (sr and sr.width) or 24
 		table.insert(self.popups, {
 			text = tostring(math.floor(amount + 0.5)),
 			owner = target,
@@ -40,8 +62,8 @@ function DamagePopupSystem.new(ecsWorld)
 			offsetY = -8,
 			localX = 0,
 			localY = 0,
-			worldX = pos.x + entityWidth * 0.5,
-			worldY = pos.y - 4,
+			worldX = worldX,
+			worldY = worldY - 4,
 			vx = 0,
 			vy = -32, -- float upward
 			ttl = 0.8, -- seconds
@@ -63,11 +85,38 @@ function DamagePopupSystem:update(dt)
 		-- Follow owner if available
 		if p.owner and p.stickToOwner and p.owner.active ~= false then
 			local pos = p.owner:getComponent("Position")
-			local sr = p.owner:getComponent("SpriteRenderer")
 			if pos then
-				local w, h = (sr and sr.width) or 24, (sr and sr.height) or 24
-				p.worldX = pos.x + w * 0.5 + p.offsetX + p.localX
-				p.worldY = pos.y - 4 + p.offsetY + p.localY
+				local healthBar = p.owner:getComponent("HealthBar")
+
+				if healthBar then
+					-- Anchor to healthbar position
+					local entityX, entityY, entityWidth
+					local physicsCollision = p.owner:getComponent("PhysicsCollision")
+					if physicsCollision and physicsCollision:hasCollider() then
+						local bodyX, bodyY = physicsCollision.collider.body:getPosition()
+						local w = physicsCollision.width
+						local h = physicsCollision.height
+						entityX = bodyX - w * 0.5
+						entityY = bodyY - h * 0.5
+						entityWidth = w
+					else
+						local sr = p.owner:getComponent("SpriteRenderer")
+						entityX = pos.x
+						entityY = pos.y
+						entityWidth = (sr and sr.width) or 24
+					end
+
+					-- Get healthbar position and position above it
+					local hbX, hbY = healthBar:getPosition(entityX, entityY, entityWidth)
+					p.worldX = hbX + healthBar.width * 0.5 + p.offsetX + p.localX
+					p.worldY = hbY - 6 + p.offsetY + p.localY
+				else
+					-- Fallback: use SpriteRenderer
+					local sr = p.owner:getComponent("SpriteRenderer")
+					local w = (sr and sr.width) or 24
+					p.worldX = pos.x + w * 0.5 + p.offsetX + p.localX
+					p.worldY = pos.y - 4 + p.offsetY + p.localY
+				end
 			end
 		end
 

@@ -19,18 +19,10 @@ function Running:onEnter(stateMachine, entity)
     stateMachine:setStateData("runTime", 0)
     stateMachine:setStateData("lastParticleSpawn", 0) -- Track last particle spawn time
 
-    -- Create and set running animation when entering state
-    if entity then
-        local Animator = require("src.components.Animator")
-        local animator = entity:getComponent("Animator")
-
-        if not animator then
-            -- Create animator if it doesn't exist
-            animator = Animator.new("character", PlayerConfig.RUNNING_ANIMATION.frames, PlayerConfig.RUNNING_ANIMATION.fps, PlayerConfig.RUNNING_ANIMATION.loop)
-            entity:addComponent("Animator", animator)
-        else
-            animator:setAnimation(PlayerConfig.RUNNING_ANIMATION.frames, PlayerConfig.RUNNING_ANIMATION.fps, PlayerConfig.RUNNING_ANIMATION.loop)
-        end
+    -- Set running animation when entering state
+    local animator = entity:getComponent("Animator")
+    if animator then
+        animator:setAnimation(PlayerConfig.RUNNING_ANIMATION)
     end
 end
 

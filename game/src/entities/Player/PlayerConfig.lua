@@ -13,24 +13,28 @@ PlayerConfig.DASH_COOLDOWN = 3        -- Cooldown between dashes (seconds)
 
 -- Animation settings
 PlayerConfig.IDLE_ANIMATION = {
+    sheet = "character",
     frames = {1, 2},
     fps = 4,
     loop = true
 }
 
 PlayerConfig.WALKING_ANIMATION = {
+    sheet = "character",
     frames = {9, 10, 11, 12},
     fps = 8,
     loop = true
 }
 
 PlayerConfig.RUNNING_ANIMATION = {
+    sheet = "character",
     frames = {13, 14, 15, 16},
     fps = 8,
     loop = true
 }
 
 PlayerConfig.DASH_ANIMATION = {
+    sheet = "character",
     frames = {41, 42},
     fps = 12,
     loop = false

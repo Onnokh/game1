@@ -1,12 +1,12 @@
 ---@class Dying : State
 ---@field duration number How long the dying state lasts
----@field fadeSpeed number How fast the skeleton fades out
+---@field fadeSpeed number How fast the warhog fades out
 ---@field currentAlpha number Current alpha value for fading
 local Dying = {}
 Dying.__index = Dying
 setmetatable(Dying, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
 local EventBus = require("src.utils.EventBus")
 
 ---Create a new Dying state
@@ -33,7 +33,7 @@ function Dying:onEnter(stateMachine, entity)
         return
     end
 
-    print("Skeleton is dying...")
+    print("Warhog is dying...")
     stateMachine:setGlobalData("isDying", true)
 
     -- Stop any movement
@@ -59,7 +59,7 @@ function Dying:onEnter(stateMachine, entity)
     -- Set death animation
     local animator = entity:getComponent("Animator")
     if animator then
-        animator:setAnimation(SkeletonConfig.DYING_ANIMATION)
+        animator:setAnimation(WarhogConfig.DEATH_ANIMATION)
     end
 
     -- Start the death timer
@@ -95,7 +95,7 @@ function Dying:onUpdate(stateMachine, entity, dt)
     -- Check if death animation is complete
     if deathTimer >= self.duration then
         if not stateMachine:getGlobalData("deathMessageShown") then
-            print("Skeleton has died and been removed from the world")
+            print("Warhog has died and been removed from the world")
             stateMachine:setGlobalData("deathMessageShown", true)
 
             -- Emit a final despawn event before removal so systems (e.g., loot) can react

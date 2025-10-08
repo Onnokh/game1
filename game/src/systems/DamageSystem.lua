@@ -89,7 +89,8 @@ function DamageSystem:handleEntityDeath(entity, damageEvent)
     local stateMachine = entity:getComponent("StateMachine")
     if stateMachine and stateMachine.states and stateMachine.states["dying"] then
         stateMachine:changeState("dying", entity)
-        print("Skeleton entering dying state")
+        -- print the entity name
+        print("Entity entering dying state: " .. entity:getName())
     end
 
     -- To do: Fix the death animation/dying state duration and properly handle it.

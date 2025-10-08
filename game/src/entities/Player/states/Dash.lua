@@ -45,18 +45,10 @@ function Dash:onEnter(stateMachine, entity)
     stateMachine:setStateData("dashDirX", dashDirX)
     stateMachine:setStateData("dashDirY", dashDirY)
 
-    -- Create and set dash animation when entering state
-    if entity then
-        local Animator = require("src.components.Animator")
-        local animator = entity:getComponent("Animator")
-
-        if not animator then
-            -- Create animator if it doesn't exist
-            animator = Animator.new("character", PlayerConfig.DASH_ANIMATION.frames, PlayerConfig.DASH_ANIMATION.fps, PlayerConfig.DASH_ANIMATION.loop)
-            entity:addComponent("Animator", animator)
-        else
-            animator:setAnimation(PlayerConfig.DASH_ANIMATION.frames, PlayerConfig.DASH_ANIMATION.fps, PlayerConfig.DASH_ANIMATION.loop)
-        end
+    -- Set dash animation when entering state
+    local animator = entity:getComponent("Animator")
+    if animator then
+        animator:setAnimation(PlayerConfig.DASH_ANIMATION)
     end
 end
 

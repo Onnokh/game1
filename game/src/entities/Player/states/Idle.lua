@@ -18,18 +18,10 @@ end
 function Idle:onEnter(stateMachine, entity)
     stateMachine:setStateData("idleTime", 0)
 
-    -- Create and set idle animation when entering state
-    if entity then
-        local Animator = require("src.components.Animator")
-        local animator = entity:getComponent("Animator")
-
-        if not animator then
-            -- Create animator if it doesn't exist
-            animator = Animator.new("character", PlayerConfig.IDLE_ANIMATION.frames, PlayerConfig.IDLE_ANIMATION.fps, PlayerConfig.IDLE_ANIMATION.loop)
-            entity:addComponent("Animator", animator)
-        else
-            animator:setAnimation(PlayerConfig.IDLE_ANIMATION.frames, PlayerConfig.IDLE_ANIMATION.fps, PlayerConfig.IDLE_ANIMATION.loop)
-        end
+    -- Set idle animation when entering state
+    local animator = entity:getComponent("Animator")
+    if animator then
+        animator:setAnimation(PlayerConfig.IDLE_ANIMATION)
     end
 end
 

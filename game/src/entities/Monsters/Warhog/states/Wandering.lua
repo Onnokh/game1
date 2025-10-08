@@ -1,10 +1,10 @@
 ---@class Wandering : State
----Wandering state for skeleton
+---Wandering state for warhog
 local Wandering = {}
 Wandering.__index = Wandering
 setmetatable(Wandering, {__index = require("src.core.State")})
 
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
 local GameConstants = require("src.constants")
 
 ---@return Wandering The created wandering state
@@ -20,7 +20,7 @@ function Wandering:onEnter(stateMachine, entity)
     -- Set walking animation when entering state
     local animator = entity:getComponent("Animator")
     if animator then
-        animator:setAnimation(SkeletonConfig.WALKING_ANIMATION)
+        animator:setAnimation(WarhogConfig.WALKING_ANIMATION)
     end
 
     -- Get wander path
@@ -37,7 +37,7 @@ function Wandering:onEnter(stateMachine, entity)
         end
 
         -- Start a new wander from current position
-        pathfinding:startWander(currentX, currentY) -- 16 is tile size
+        pathfinding:startWander(currentX, currentY) -- 32 is tile size
     end
 end
 

@@ -23,7 +23,7 @@ function Siege.onEnter(gameState)
       local x, y = EntityUtils.findValidSpawnPosition(1, mapData.width, minY, mapData.height)
 
       if x and y then
-        local enemy = GameScene.addMonster(x, y)
+        local enemy = GameScene.addMonster(x, y, "skeleton")
         if enemy and enemy.addTag then
           enemy:addTag("SiegeAttacker")
         end

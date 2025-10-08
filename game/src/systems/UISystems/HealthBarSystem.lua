@@ -23,16 +23,33 @@ function HealthBarSystem:draw()
 		local position = entity:getComponent("Position")
 		local health = entity:getComponent("Health")
 		local healthBar = entity:getComponent("HealthBar")
-		local spriteRenderer = entity:getComponent("SpriteRenderer")
 
-    		if position and health and healthBar and healthBar.visible and not health.isDead then
-    			local healthPercentage = health:getHealthPercentage()
-    			if healthBar.alwaysVisible or healthPercentage < 1.0 then
-    				local entityWidth = spriteRenderer and spriteRenderer.width or 32
-    				local x, y = healthBar:getPosition(position.x, position.y, entityWidth)
-    				healthBar:draw(x, y, healthPercentage)
-    			end
-    		end
+		if position and health and healthBar and healthBar.visible and not health.isDead then
+			local healthPercentage = health:getHealthPercentage()
+			if healthBar.alwaysVisible or healthPercentage < 1.0 then
+				-- Use PhysicsCollision position if available
+				local entityX, entityY, entityWidth
+				local physicsCollision = entity:getComponent("PhysicsCollision")
+				if physicsCollision and physicsCollision:hasCollider() then
+					-- Get the actual physics body center position
+					local bodyX, bodyY = physicsCollision.collider.body:getPosition()
+					local w = physicsCollision.width
+					local h = physicsCollision.height
+					entityX = bodyX - w * 0.5
+					entityY = bodyY - h * 0.5
+					entityWidth = w
+				else
+					-- Fall back to Position + SpriteRenderer
+					local spriteRenderer = entity:getComponent("SpriteRenderer")
+					entityX = position.x
+					entityY = position.y
+					entityWidth = spriteRenderer and spriteRenderer.width or 32
+				end
+
+				local x, y = healthBar:getPosition(entityX, entityY, entityWidth)
+				healthBar:draw(x, y, healthPercentage)
+			end
+		end
 	end
 end
 

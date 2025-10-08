@@ -45,6 +45,12 @@ function IffySprites.load()
   -- Load coin spritesheet (1x9 grid, 9 frames)
   loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)
 
+  -- load warhog spritesheets (4x4 grid, 64x64 per frame)
+  loadSpritesheet("Warhog_Attack", "resources/warhog/Warhog_Attack.png", 4, 4)
+  loadSpritesheet("Warhog_Death", "resources/warhog/Warhog_Death.png", 4, 4)
+  loadSpritesheet("Warhog_Idle", "resources/warhog/Warhog_Idle.png", 4, 4)
+  loadSpritesheet("Warhog_Walk", "resources/warhog/Warhog_Walk.png", 4, 4)
+
   -- Load menu background as a standalone image (not using iffy)
   local okBg, imgOrErr = pcall(function()
     local img = love.graphics.newImage("resources/menu/background.jpg")

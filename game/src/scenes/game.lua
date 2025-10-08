@@ -38,6 +38,7 @@ local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
+local Warhog = require("src.entities.Monsters.Warhog.Warhog")
 local Reactor = require("src.entities.Reactor.Reactor")
 
 -- Use constants from the global constants module
@@ -340,12 +341,23 @@ function GameScene.getMapData()
 end
 
 -- Add a new monster at the specified position
-function GameScene.addMonster(x, y)
-  if ecsWorld and physicsWorld then
+function GameScene.addMonster(x, y, type)
+
+  if not ecsWorld or not physicsWorld then
+    return nil
+  end
+
+  if type == "skeleton" then
     local skeleton = Skeleton.create(x, y, ecsWorld, physicsWorld)
     table.insert(monsters, skeleton)
-    print("Added monster at:", x, y, "Total monsters:", #monsters)
+    print("Added skeleton at:", x, y, "Total monsters:", #monsters)
     return skeleton
+  end
+  if type == "warhog" then
+    local warhog = Warhog.create(x, y, ecsWorld, physicsWorld)
+    table.insert(monsters, warhog)
+    print("Added monster at:", x, y, "Total monsters:", #monsters)
+    return warhog
   end
   return nil
 end
@@ -370,7 +382,7 @@ function GameScene.mousepressed(x, y, button, gameState)
     -- Add a monster at click position (convert screen to world coordinates)
     local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
-    GameScene.addMonster(worldX, worldY)
+    GameScene.addMonster(worldX, worldY, "warhog")
   end
 end
 
