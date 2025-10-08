@@ -1,10 +1,22 @@
 local System = require("src.core.System")
 local EntityUtils = require("src.utils.entities")
 local GameState = require("src.core.GameState")
+local ShaderManager = require("src.utils.ShaderManager")
 
 ---@class AimLineRenderSystem : System
 ---Renders an aiming line for ranged weapons from player to mouse cursor
 local AimLineRenderSystem = System:extend("AimLineRenderSystem", {})
+
+-- Store the original new function
+local originalNew = AimLineRenderSystem.new
+
+---Create a new AimLineRenderSystem instance
+---@return AimLineRenderSystem
+function AimLineRenderSystem.new()
+    local self = originalNew()
+    self.isWorldSpace = false -- This system draws in screen space with world-to-screen conversion
+    return self
+end
 
 ---Draw the aiming line
 function AimLineRenderSystem:draw()
@@ -72,23 +84,49 @@ function AimLineRenderSystem:draw()
         end)
     end
 
-    -- Draw the aiming line
-    love.graphics.setColor(1, 1, 1, 1) -- Yellow with 50% opacity
-    love.graphics.setLineWidth(1)
-    love.graphics.line(playerX, playerY, endX, endY)
+    -- Convert world coordinates to screen coordinates
+    local screenStartX, screenStartY = playerX, playerY
+    local screenEndX, screenEndY = endX, endY
 
-    -- Draw different indicator based on whether we hit something
-    if hitSomething then
-        -- Draw an X or impact marker at the collision point
-        love.graphics.setColor(1, 1, 1, 1) -- Yellow
-        love.graphics.circle("fill", endX, endY, 2)
-    else
-      love.graphics.circle("fill", endX, endY, 1)
+    if GameState.camera and GameState.camera.toScreen then
+        screenStartX, screenStartY = GameState.camera:toScreen(playerX, playerY)
+        screenEndX, screenEndY = GameState.camera:toScreen(endX, endY)
     end
+
+    -- Get the shader
+    local shader = ShaderManager.getShader("aim_line")
+    if not shader then
+        return -- Shader not loaded
+    end
+
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
+    local minX = 0
+    local minY = 0
+    local width = screenWidth
+    local height = screenHeight
+
+    -- Draw in screen space (outside camera transform)
+    love.graphics.push()
+    love.graphics.origin()
+
+    -- Set shader uniforms
+    shader:send("startPos", {screenStartX, screenStartY})
+    shader:send("endPos", {screenEndX, screenEndY})
+    shader:send("targetPos", {screenEndX, screenEndY})
+    shader:send("time", love.timer.getTime())
+    shader:send("isHit", hitSomething)
+
+    -- Draw rectangle covering the line area with shader
+    love.graphics.setShader(shader)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("fill", minX, minY, width, height)
+    love.graphics.setShader()
+
+    love.graphics.pop()
 
     -- Reset graphics state
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setLineWidth(1)
 end
 
 return AimLineRenderSystem
