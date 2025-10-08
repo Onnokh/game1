@@ -46,24 +46,15 @@ local GameState = {
     mouseY = 0
   },
   camera = nil, -- Will be initialized with gamera
-  player = {
-    x = DEFAULT_RUN.player.x,  -- Tile (10, 10)
-    y = DEFAULT_RUN.player.y,  -- Tile (10, 10)
-    width = 16,
-    height = 24,
-    speed = 300,
-    direction = DEFAULT_RUN.player.direction
-  },
-  coins = {
-    total = DEFAULT_RUN.coins.total,
-    collectedThisSession = DEFAULT_RUN.coins.collectedThisSession
-  },
-  phase = DEFAULT_RUN.phase,
-  day = DEFAULT_RUN.day
+  player = {},
+  coins = {},
+  phase = nil,
+  day = nil
 }
 
 ---Initialize the game state
 function GameState.load()
+
   -- Start from a fresh deep copy of defaults for a clean run
   local runCopy = TableUtils.deepCopy(DEFAULT_RUN)
   GameState.player = runCopy.player
@@ -75,16 +66,19 @@ function GameState.load()
   local playerHeight = GameConstants.PLAYER_HEIGHT
   local playerSpeed = GameConstants.PLAYER_SPEED
 
-  GameState.player.width = playerWidth
-  GameState.player.height = playerHeight
-  GameState.player.speed = playerSpeed
+  GameState.player = {
+    width = playerWidth,
+    height = playerHeight,
+    speed = playerSpeed,
+    direction = runCopy.player.direction
+  }
 
   -- Initialize gamera camera with proper bounds starting at (0,0)
   GameState.camera = gamera.new(
     0,  -- left
     0,  -- top
-    1,  -- width
-    1  -- height
+    1,  -- -- will be updated in setCameraBounds when scene is loaded
+    1  -- -- will be updated in setCameraBounds when scene is loaded
   )
 
   -- Initialize scenes
@@ -115,9 +109,12 @@ function GameState.resetRunState()
   end
 
   -- Reapply constants for player block
-  GameState.player.width = GameConstants.PLAYER_WIDTH
-  GameState.player.height = GameConstants.PLAYER_HEIGHT
-  GameState.player.speed = GameConstants.PLAYER_SPEED
+  GameState.player = {
+    width = GameConstants.PLAYER_WIDTH,
+    height = GameConstants.PLAYER_HEIGHT,
+    speed = GameConstants.PLAYER_SPEED,
+    direction = GameState.player.direction
+  }
 
   -- Recenter camera
   if GameState.camera then
