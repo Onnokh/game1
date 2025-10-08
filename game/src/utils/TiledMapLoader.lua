@@ -78,6 +78,19 @@ function TiledMapLoader.parseObjects(tiledMap)
   return objects
 end
 
+--- Normalize object position (Tiled objects use bottom-left origin for y)
+local function normalizeObjectPosition(obj)
+  return {
+    x = obj.x,
+    y = obj.y - (obj.height or 0),
+    width = obj.width,
+    height = obj.height,
+    name = obj.name,
+    type = obj.type,
+    properties = obj.properties
+  }
+end
+
 --- Load and parse all map data
 function TiledMapLoader.loadMapData(tiledMap)
   local mapData = {
@@ -99,7 +112,40 @@ function TiledMapLoader.loadMapData(tiledMap)
   mapData.objects = objects
   mapData.spawnPoint = objects.spawn
 
+  -- Hide the Objects layer so we don't render object tiles (we spawn entities instead)
+  if tiledMap.layers then
+    local objectsLayer = tiledMap:getLayer("Objects")
+    if objectsLayer then
+      objectsLayer.visible = false
+    end
+  end
+
   return mapData
+end
+
+--- Spawn entities from map objects using provided factory functions
+-- @param mapData The map data returned from loadMapData
+-- @param factories Table mapping object types to factory functions
+--   Example: { reactors = function(obj) ... end, enemies = function(obj) ... end }
+function TiledMapLoader.spawnEntities(mapData, factories)
+  if not mapData or not mapData.objects then return end
+
+  for objectType, objectList in pairs(mapData.objects) do
+    local factory = factories[objectType]
+    if factory and type(objectList) == "table" then
+      -- Handle single object (like spawn point)
+      if objectList.x then
+        local normalized = normalizeObjectPosition(objectList)
+        factory(normalized)
+      -- Handle array of objects
+      else
+        for _, obj in ipairs(objectList) do
+          local normalized = normalizeObjectPosition(obj)
+          factory(normalized)
+        end
+      end
+    end
+  end
 end
 
 return TiledMapLoader

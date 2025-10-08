@@ -9,8 +9,8 @@ return {
   height = 25,
   tilewidth = 32,
   tileheight = 32,
-  nextlayerid = 8,
-  nextobjectid = 28,
+  nextlayerid = 9,
+  nextobjectid = 37,
   properties = {},
   tilesets = {
     {
@@ -70,6 +70,41 @@ return {
       wangsets = {},
       tilecount = 256,
       tiles = {}
+    },
+    {
+      name = "Objects",
+      firstgid = 321,
+      class = "",
+      tilewidth = 64,
+      tileheight = 64,
+      spacing = 0,
+      margin = 0,
+      columns = 0,
+      objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      wangsets = {},
+      tilecount = 1,
+      tiles = {
+        {
+          id = 1,
+          image = "../../reactor/reactor-Sheet.png",
+          x = 0,
+          y = 0,
+          width = 64,
+          height = 64
+        }
+      }
     }
   },
   layers = {
@@ -142,6 +177,20 @@ return {
           width = 0,
           height = 0,
           rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 35,
+          name = "Reactor",
+          type = "",
+          shape = "rectangle",
+          x = 576,
+          y = 288,
+          width = 64,
+          height = 64,
+          rotation = 0,
+          gid = 322,
           visible = true,
           properties = {}
         }

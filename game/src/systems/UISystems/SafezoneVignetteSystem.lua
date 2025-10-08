@@ -1,6 +1,6 @@
 local System = require("src.core.System")
 local ShaderManager = require("src.utils.ShaderManager")
-local GameConstants = require("src.constants")
+local EntityUtils = require("src.utils.entities")
 
 ---@class SafezoneVignetteSystem : System
 ---Renders a vignette effect when player is outside the reactor safezone
@@ -8,12 +8,14 @@ local SafezoneVignetteSystem = System:extend("SafezoneVignetteSystem", {})
 
 ---Create a new SafezoneVignetteSystem
 ---@param ecsWorld World
+---@param oxygenSystem OxygenSystem|nil Optional reference to OxygenSystem
 ---@return SafezoneVignetteSystem
-function SafezoneVignetteSystem.new(ecsWorld)
+function SafezoneVignetteSystem.new(ecsWorld, oxygenSystem)
     ---@class SafezoneVignetteSystem
     local self = System.new()
     setmetatable(self, SafezoneVignetteSystem)
     self.ecsWorld = ecsWorld
+    self.oxygenSystem = oxygenSystem or nil -- Direct reference to OxygenSystem
     self.isWorldSpace = false -- Screen space rendering
     self.vignetteOpacity = 0.0 -- 0 = no vignette, 1 = full vignette
     self.targetOpacity = 0.0 -- Target opacity to fade to
@@ -24,22 +26,31 @@ end
 ---Update the vignette based on player position
 ---@param dt number Delta time
 function SafezoneVignetteSystem:update(dt)
+    -- Check if we have the OxygenSystem reference
+    if not self.oxygenSystem then
+        self.targetOpacity = 0.0
+        return
+    end
+
     -- Find the player entity
-    local player = self:findPlayerEntity()
+    local player = EntityUtils.findPlayer(self.ecsWorld)
     if not player then
         self.targetOpacity = 0.0
-    else
-        local position = player:getComponent("Position")
-        if not position then
-            self.targetOpacity = 0.0
-        else
-            -- Check if player is in safezone
-            local isInSafeZone = self:isInReactorSafeZone(position.x, position.y)
-
-            -- Show vignette when OUTSIDE safezone
-            self.targetOpacity = isInSafeZone and 0.0 or 1.0
-        end
+        return
     end
+
+    local position = player:getComponent("Position")
+    if not position then
+        self.targetOpacity = 0.0
+        return
+    end
+
+    -- Use OxygenSystem's safe zone check (using player center)
+    local playerCenterX, playerCenterY = EntityUtils.getEntityVisualCenter(player, position)
+    local isInSafeZone = self.oxygenSystem:isInReactorSafeZone(playerCenterX, playerCenterY)
+
+    -- Show vignette when OUTSIDE safezone
+    self.targetOpacity = isInSafeZone and 0.0 or 1.0
 
     -- Smoothly interpolate current opacity towards target
     if self.vignetteOpacity < self.targetOpacity then
@@ -49,63 +60,6 @@ function SafezoneVignetteSystem:update(dt)
         -- Fade out
         self.vignetteOpacity = math.max(self.vignetteOpacity - self.fadeSpeed * dt, self.targetOpacity)
     end
-end
-
----Check if position is within reactor safe zone
----@param x number X coordinate
----@param y number Y coordinate
----@return boolean True if in safe zone
-function SafezoneVignetteSystem:isInReactorSafeZone(x, y)
-    local reactor = self:findReactorEntity()
-    if not reactor then
-        return false
-    end
-
-    local reactorPosition = reactor:getComponent("Position")
-    if not reactorPosition then
-        return false
-    end
-
-    -- Calculate distance to reactor center (reactor sprite is 64x64)
-    local reactorCenterX = reactorPosition.x + 32
-    local reactorCenterY = reactorPosition.y + 32
-    local dx = x - reactorCenterX
-    local dy = y - reactorCenterY
-    local distance = math.sqrt(dx * dx + dy * dy)
-
-    return distance <= GameConstants.REACTOR_SAFE_RADIUS
-end
-
----Find the player entity
----@return Entity|nil
-function SafezoneVignetteSystem:findPlayerEntity()
-    if not self.ecsWorld then
-        return nil
-    end
-
-    for _, entity in ipairs(self.ecsWorld.entities) do
-        if entity:hasTag("Player") then
-            return entity
-        end
-    end
-
-    return nil
-end
-
----Find the reactor entity
----@return Entity|nil
-function SafezoneVignetteSystem:findReactorEntity()
-    if not self.ecsWorld then
-        return nil
-    end
-
-    for _, entity in ipairs(self.ecsWorld.entities) do
-        if entity:hasTag("Reactor") then
-            return entity
-        end
-    end
-
-    return nil
 end
 
 ---Draw the vignette effect using shader

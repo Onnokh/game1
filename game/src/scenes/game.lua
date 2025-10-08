@@ -97,7 +97,8 @@ function GameScene.load()
   ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die
   ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
   ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
-  ecsWorld:addSystem(OxygenSystem.new()) -- Handle oxygen decay when outside reactor zone
+  local oxygenSystem = OxygenSystem.new() -- Store reference for SafezoneVignetteSystem
+  ecsWorld:addSystem(oxygenSystem) -- Handle oxygen decay when outside reactor zone
   ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
@@ -138,7 +139,7 @@ function GameScene.load()
   uiWorld:addSystem(GameOverSystem.new())
   uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
-  uiWorld:addSystem(SafezoneVignetteSystem.new(ecsWorld))
+  uiWorld:addSystem(SafezoneVignetteSystem.new(ecsWorld, oxygenSystem)) -- Pass OxygenSystem reference
 
   -- Load Tiled map using Cartographer
   tiledMap = cartographer.load("resources/tiled/maps/level1.lua")
@@ -170,13 +171,15 @@ function GameScene.load()
   GameScene.createBorderColliders()
   GameScene.borderColliders = borderColliders
 
-  -- Add a Reactor entity (64x64 = 4x4 tiles) via factory
-  do
-    local reactorTileX, reactorTileY = math.floor(worldWidth / 2), 8
-    local reactorX = (reactorTileX - 1) * tileSize
-    local reactorY = (reactorTileY - 1) * tileSize
-    Reactor.create(reactorX, reactorY, ecsWorld, physicsWorld)
-  end
+  -- Spawn entities from map objects using factory pattern
+  TiledMapLoader.spawnEntities(mapData, {
+    reactors = function(obj)
+      Reactor.create(obj.x, obj.y, ecsWorld, physicsWorld)
+    end,
+    -- Add more entity types here as needed:
+    -- enemies = function(obj) ... end,
+    -- items = function(obj) ... end,
+  })
 
   -- Create global particle entity for bullet impacts and other effects
   do
