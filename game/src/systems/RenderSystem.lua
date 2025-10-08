@@ -4,6 +4,31 @@ local DepthSorting = require("src.utils.depthSorting")
 ---@class RenderSystem : System
 local RenderSystem = System:extend("RenderSystem", {"Position", "SpriteRenderer"})
 
+---Draw a rectangle with rotation and scale
+---@param x number X position
+---@param y number Y position
+---@param spriteRenderer SpriteRenderer The sprite renderer component
+---@param isBullet boolean|nil Whether this is a bullet (to add glow effect)
+local function drawRectangle(x, y, spriteRenderer, isBullet)
+    love.graphics.push()
+    love.graphics.translate(x + spriteRenderer.width / 2, y + spriteRenderer.height / 2)
+    love.graphics.rotate(spriteRenderer.rotation)
+    love.graphics.scale(spriteRenderer.scaleX, spriteRenderer.scaleY)
+
+    -- Draw main body
+    love.graphics.rectangle("fill", -spriteRenderer.width / 2, -spriteRenderer.height / 2, spriteRenderer.width, spriteRenderer.height)
+
+    -- Add glowing yellow tail for bullets
+    if isBullet then
+        love.graphics.setColor(1, 1, 0.2, 1)
+        love.graphics.rectangle("fill", -spriteRenderer.width / 2, -spriteRenderer.height / 2, 1.5, spriteRenderer.height)
+        -- Restore the original color
+        love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
+    end
+
+    love.graphics.pop()
+end
+
 ---Draw all entities with Position and SpriteRenderer components
 function RenderSystem:draw()
     -- Draw oxygen safe zone at tile level (behind entities)
@@ -26,25 +51,17 @@ function RenderSystem:draw()
 
             -- If Animator exists and sheet is loaded with Iffy, draw that frame
             local animator = entity:getComponent("Animator")
+            local isBullet = entity:hasTag("Bullet")
+
             if animator and animator.sheet then
                 local iffy = require("lib.iffy")
                 local current = animator:getCurrentFrame()
 
-                -- Debug output
-                if not iffy.spritesheets[animator.sheet] then
-                    print(string.format("ERROR: Spritesheet '%s' not found!", animator.sheet))
-                elseif not iffy.spritesheets[animator.sheet][current] then
-                    print(string.format("ERROR: Frame %d not found in spritesheet '%s' (total frames: %d)", current, animator.sheet, #iffy.spritesheets[animator.sheet]))
-                end
-
                 if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-                    -- Use the sprite renderer's color settings
-                    love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
-
                     -- Get the actual sprite frame dimensions from Iffy tileset
-                    local frameWidth = 24 -- Default to 24x24 for character sprites
+                    local frameWidth = 24
                     if iffy.tilesets[animator.sheet] then
-                        frameWidth = iffy.tilesets[animator.sheet][1] -- tile width
+                        frameWidth = iffy.tilesets[animator.sheet][1]
                     end
 
                     -- Adjust position for horizontal flipping to keep sprite centered
@@ -54,22 +71,11 @@ function RenderSystem:draw()
                     end
 
                     love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-
                 else
-                    -- Adjust rectangle position for horizontal flipping
-                    local drawX = x
-                    if spriteRenderer.scaleX < 0 then
-                        drawX = x + spriteRenderer.width
-                    end
-                    love.graphics.rectangle("fill", drawX, y, spriteRenderer.width, spriteRenderer.height)
+                    drawRectangle(x, y, spriteRenderer, isBullet)
                 end
             else
-                -- Adjust rectangle position for horizontal flipping
-                local drawX = x
-                if spriteRenderer.scaleX < 0 then
-                    drawX = x + spriteRenderer.width
-                end
-                love.graphics.rectangle("fill", drawX, y, spriteRenderer.width, spriteRenderer.height)
+                drawRectangle(x, y, spriteRenderer, isBullet)
             end
 
             -- Draw with flash shader if entity is flashing
@@ -121,15 +127,17 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
     love.graphics.translate(-centerX, -centerY)
 
     -- Draw the sprite normally (shader will handle the flash effect)
+    local isBullet = entity:hasTag("Bullet")
+
     if animator and animator.sheet then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
 
         if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
             -- Get the actual sprite frame dimensions from Iffy tileset
-            local frameWidth = 24 -- Default to 24x24 for character sprites
+            local frameWidth = 24
             if iffy.tilesets[animator.sheet] then
-                frameWidth = iffy.tilesets[animator.sheet][1] -- tile width
+                frameWidth = iffy.tilesets[animator.sheet][1]
             end
 
             -- Adjust position for horizontal flipping to keep sprite centered
@@ -140,20 +148,10 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
 
             love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
         else
-            -- Draw rectangle fallback
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + spriteRenderer.width
-            end
-            love.graphics.rectangle("fill", drawX, y, spriteRenderer.width, spriteRenderer.height)
+            drawRectangle(x, y, spriteRenderer, isBullet)
         end
     else
-        -- Draw rectangle fallback
-        local drawX = x
-        if spriteRenderer.scaleX < 0 then
-            drawX = x + spriteRenderer.width
-        end
-        love.graphics.rectangle("fill", drawX, y, spriteRenderer.width, spriteRenderer.height)
+        drawRectangle(x, y, spriteRenderer, isBullet)
     end
 
     -- Reset shader

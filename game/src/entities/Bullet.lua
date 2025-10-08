@@ -35,11 +35,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     -- Create components
     local position = Position.new(x, y, DepthSorting.getLayerZ("FOREGROUND"))
 
-    -- Small sprite for bullet visualization (you can customize this)
-    local spriteRenderer = SpriteRenderer.new(nil, 4, 2)
-    spriteRenderer.color = {r = 1, g = 1, b = 0.2, a = 1} -- Yellow color for bullets
-
-    -- Create bullet component
+    -- Create bullet component first (so we can get the angle)
     local bulletComponent = Bullet.new(
         velocityX,
         velocityY,
@@ -50,6 +46,12 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
         knockback,
         piercing
     )
+
+    -- Small sprite for bullet visualization (you can customize this)
+    local spriteRenderer = SpriteRenderer.new(nil, 6, 2)
+    spriteRenderer.color = {r = 0.1, g = 0.1, b = 0.1, a = 1} -- Dark gray body
+    -- Rotate sprite to match bullet direction
+    spriteRenderer:setRotation(bulletComponent:getAngle())
 
     -- Small physics collider for bullet collision detection (sensor)
     -- PhysicsCollision already creates sensors by default (non-blocking)
@@ -76,7 +78,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     bullet:addComponent("SpriteRenderer", spriteRenderer)
     bullet:addComponent("Bullet", bulletComponent)
     bullet:addComponent("PhysicsCollision", physicsCollision)
-    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 0.8, heightFactor = 0.25, offsetY = 2 }))
+    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .89, widthFactor = 1, heightFactor = 0.35, offsetY = 2 }))
 
     -- Add to world
     if world then
