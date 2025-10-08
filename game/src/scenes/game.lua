@@ -257,6 +257,11 @@ function GameScene.update(dt, gameState)
     tiledMap:update(dt)
   end
 
+  -- Update physics world FIRST so positions are current
+  if physicsWorld then
+    physicsWorld:update(dt)
+  end
+
   -- Update ECS world (handles movement, collision, rendering)
   if ecsWorld then
     ecsWorld:update(dt)
@@ -267,11 +272,6 @@ function GameScene.update(dt, gameState)
   -- Update UI world separate from camera/lighting
   if uiWorld then
     uiWorld:update(dt)
-  end
-
-  -- Update physics world for collision detection only
-  if physicsWorld then
-    physicsWorld:update(dt)
   end
 
   -- Register test wall collider into debug overlay once created by CollisionSystem
