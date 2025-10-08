@@ -65,6 +65,7 @@ function AimLineRenderSystem:draw()
     -- Perform raycasting to find collision point
     local endX, endY = mouseX, mouseY
     local hitSomething = false
+    local closestFraction = 1.0
 
     if world.physicsWorld then
         -- Raycast from player to mouse position
@@ -72,12 +73,15 @@ function AimLineRenderSystem:draw()
             -- Check if this is a static object (walls, obstacles)
             local body = fixture:getBody()
             if body:getType() == "static" then
-                -- Hit a wall! Update the end point
-                endX = x
-                endY = y
-                hitSomething = true
-                -- Return 0 to stop the raycast (we found the first collision)
-                return 0
+                -- Only update if this is closer than previous hits
+                if fraction < closestFraction then
+                    endX = x
+                    endY = y
+                    hitSomething = true
+                    closestFraction = fraction
+                end
+                -- Return the fraction to continue checking for closer hits
+                return fraction
             end
             -- Return 1 to continue the raycast (ignore dynamic objects like enemies)
             return 1
@@ -99,6 +103,7 @@ function AimLineRenderSystem:draw()
         return -- Shader not loaded
     end
 
+    -- Calculate bounding box covering entire screen for infinite line
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     local minX = 0
@@ -116,6 +121,13 @@ function AimLineRenderSystem:draw()
     shader:send("targetPos", {screenEndX, screenEndY})
     shader:send("time", love.timer.getTime())
     shader:send("isHit", hitSomething)
+
+    -- Animation and style parameters
+    shader:send("animationSpeed", 50.0)
+    shader:send("dotRadius", 5.0)
+    shader:send("dotSpacing", 32.0)
+    shader:send("targetDotRadius", 6.0)
+    shader:send("targetCrossThickness", 15.0)
 
     -- Draw rectangle covering the line area with shader
     love.graphics.setShader(shader)

@@ -402,6 +402,38 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
     end
   end
 
+  -- Draw tilemap wall colliders (borderColliders) from the game scene
+  if gameScene.borderColliders then
+    love.graphics.setColor(0, 1, 0, 0.8) -- Green for tilemap walls (static colliders)
+    love.graphics.setLineWidth(2)
+
+    for _, collider in ipairs(gameScene.borderColliders) do
+      if collider.body and collider.shape then
+        local body = collider.body
+        local shape = collider.shape
+        local bodyX, bodyY = body:getPosition()
+        local bodyAngle = body:getAngle()
+
+        love.graphics.push()
+        love.graphics.translate(bodyX, bodyY)
+        love.graphics.rotate(bodyAngle)
+
+        if shape:getType() == "rectangle" then
+          local w, h = shape:getDimensions()
+          love.graphics.rectangle("line", -w/2, -h/2, w, h)
+        elseif shape:getType() == "polygon" then
+          local points = {shape:getPoints()}
+          love.graphics.polygon("line", points)
+        elseif shape:getType() == "circle" then
+          local radius = shape:getRadius()
+          love.graphics.circle("line", 0, 0, radius)
+        end
+
+        love.graphics.pop()
+      end
+    end
+  end
+
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
 
@@ -819,6 +851,7 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   -- Display collider count using ECS system (both types)
   local pathfindingColliderCount = 0
   local physicsColliderCount = 0
+  local borderColliderCount = 0
   if cameraX and cameraY then
     local gameState = require("src.core.GameState")
     if gameState and gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
@@ -826,11 +859,18 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
       local entitiesWithPhysicsCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PhysicsCollision"})
       pathfindingColliderCount = #entitiesWithPathfindingCollision
       physicsColliderCount = #entitiesWithPhysicsCollision
+
+      -- Count border colliders (tilemap walls)
+      if gameState.scenes.game.borderColliders then
+        borderColliderCount = #gameState.scenes.game.borderColliders
+      end
     end
   end
   love.graphics.print(string.format("Pathfinding Colliders: %d", pathfindingColliderCount), 20, y)
   y = y + 20
   love.graphics.print(string.format("Physics Colliders: %d", physicsColliderCount), 20, y)
+  y = y + 20
+  love.graphics.print(string.format("Tilemap Walls: %d", borderColliderCount), 20, y)
   y = y + 20
 
   -- Reset color to white
