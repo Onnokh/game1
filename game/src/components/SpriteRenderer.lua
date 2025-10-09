@@ -10,6 +10,7 @@
 ---@field offsetX number X offset from entity position
 ---@field offsetY number Y offset from entity position
 ---@field facingMouse boolean Whether the sprite should face the mouse
+---@field outline table|nil Outline configuration {enabled, color, thickness}
 local SpriteRenderer = {}
 SpriteRenderer.__index = SpriteRenderer
 
@@ -34,6 +35,7 @@ function SpriteRenderer.new(sprite, width, height)
     self.offsetY = 0
     self.facingMouse = false
     self.spriteIndex = nil
+    self.outline = nil -- Outline configuration {enabled, color, thickness}
 
     return self
 end
@@ -70,6 +72,20 @@ end
 function SpriteRenderer:setOffset(offsetX, offsetY)
     self.offsetX = offsetX
     self.offsetY = offsetY
+end
+
+---Enable outline effect
+---@param color table RGB color table {r, g, b}
+function SpriteRenderer:setOutline(color)
+    self.outline = {
+        enabled = true,
+        color = color or {r = 1, g = 1, b = 1}
+    }
+end
+
+---Disable outline effect
+function SpriteRenderer:clearOutline()
+    self.outline = nil
 end
 
 return SpriteRenderer

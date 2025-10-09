@@ -20,24 +20,24 @@ PlayerConfig.IDLE_ANIMATION = {
 }
 
 PlayerConfig.WALKING_ANIMATION = {
-    sheet = "character",
-    frames = {9, 10, 11, 12},
-    fps = 8,
-    loop = true
+  sheet = "new",
+  frames = {1, 2, 3, 4},
+  fps = 4,
+  loop = true
 }
 
 PlayerConfig.RUNNING_ANIMATION = {
-    sheet = "character",
-    frames = {13, 14, 15, 16},
-    fps = 8,
-    loop = true
+  sheet = "new",
+  frames = {1, 2, 3, 4},
+  fps = 4,
+  loop = true
 }
 
 PlayerConfig.DASH_ANIMATION = {
-    sheet = "character",
-    frames = {41, 42},
-    fps = 12,
-    loop = false
+  sheet = "new",
+  frames = {1, 2, 3, 4},
+  fps = 4,
+  loop = true
 }
 
 -- Physics settings

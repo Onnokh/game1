@@ -56,6 +56,7 @@ function ShaderManager.loadDefaultShaders()
     ShaderManager.loadShader("damage_number", "src/shaders/damage_number_shader.vert", "src/shaders/damage_number_shader.frag")
     ShaderManager.loadShader("vignette", "src/shaders/vignette_shader.vert", "src/shaders/vignette_shader.frag")
     ShaderManager.loadShader("aim_line", "src/shaders/aim_line_shader.vert", "src/shaders/aim_line_shader.frag")
+    ShaderManager.loadShader("outline", "src/shaders/outline_shader.vert", "src/shaders/outline_shader.frag")
 end
 
 return ShaderManager

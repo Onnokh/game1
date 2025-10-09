@@ -53,29 +53,35 @@ function RenderSystem:draw()
             local animator = entity:getComponent("Animator")
             local isBullet = entity:hasTag("Bullet")
 
-            if animator and animator.sheet then
-                local iffy = require("lib.iffy")
-                local current = animator:getCurrentFrame()
+            -- Apply outline shader if configured
+            if spriteRenderer.outline and spriteRenderer.outline.enabled then
+                self:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
+            else
+                -- Normal drawing without outline
+                if animator and animator.sheet then
+                    local iffy = require("lib.iffy")
+                    local current = animator:getCurrentFrame()
 
-                if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-                    -- Get the actual sprite frame dimensions from Iffy tileset
-                    local frameWidth = 24
-                    if iffy.tilesets[animator.sheet] then
-                        frameWidth = iffy.tilesets[animator.sheet][1]
+                    if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+                        -- Get the actual sprite frame dimensions from Iffy tileset
+                        local frameWidth = 24
+                        if iffy.tilesets[animator.sheet] then
+                            frameWidth = iffy.tilesets[animator.sheet][1]
+                        end
+
+                        -- Adjust position for horizontal flipping to keep sprite centered
+                        local drawX = x
+                        if spriteRenderer.scaleX < 0 then
+                            drawX = x + frameWidth
+                        end
+
+                        love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                    else
+                        drawRectangle(x, y, spriteRenderer, isBullet)
                     end
-
-                    -- Adjust position for horizontal flipping to keep sprite centered
-                    local drawX = x
-                    if spriteRenderer.scaleX < 0 then
-                        drawX = x + frameWidth
-                    end
-
-                    love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
                 else
                     drawRectangle(x, y, spriteRenderer, isBullet)
                 end
-            else
-                drawRectangle(x, y, spriteRenderer, isBullet)
             end
 
             -- Draw with flash shader if entity is flashing
@@ -88,6 +94,85 @@ function RenderSystem:draw()
             love.graphics.setColor(1, 1, 1, 1)
         end
     end
+end
+
+---Draw entity with outline shader
+---@param entity Entity The entity to draw
+---@param x number X position
+---@param y number Y position
+---@param spriteRenderer SpriteRenderer The sprite renderer component
+---@param animator Animator|nil The animator component
+function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
+    local ShaderManager = require("src.utils.ShaderManager")
+    local outlineShader = ShaderManager.getShader("outline")
+
+    if not outlineShader then
+        return
+    end
+
+    -- Get outline configuration
+    local outline = spriteRenderer.outline
+
+    -- Validate outline configuration
+    if not outline or not outline.color then
+        return
+    end
+
+    -- Set the outline shader
+    love.graphics.setShader(outlineShader)
+
+    -- Set shader uniforms with safe defaults
+    local color = outline.color or {r = 1, g = 1, b = 1}
+    outlineShader:send("OutlineColor", {color.r or 1, color.g or 1, color.b or 1})
+
+    -- Get the actual texture dimensions from the image being drawn
+    local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
+
+    if animator and animator.sheet then
+        local iffy = require("lib.iffy")
+        local current = animator:getCurrentFrame()
+
+        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+            -- Get the actual image dimensions
+            local image = iffy.images[animator.sheet]
+            if image then
+                textureWidth, textureHeight = image:getDimensions()
+            end
+        end
+    end
+
+    outlineShader:send("TextureSize", {textureWidth, textureHeight})
+
+    -- Draw the sprite (shader will handle the outline effect)
+    local isBullet = entity:hasTag("Bullet")
+
+    if animator and animator.sheet then
+        local iffy = require("lib.iffy")
+        local current = animator:getCurrentFrame()
+
+        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+            -- Get the actual sprite frame dimensions from Iffy tileset
+            local frameWidth = 24
+            if iffy.tilesets[animator.sheet] then
+                frameWidth = iffy.tilesets[animator.sheet][1]
+            end
+
+            -- Adjust position for horizontal flipping to keep sprite centered
+            local drawX = x
+            if spriteRenderer.scaleX < 0 then
+                drawX = x + frameWidth
+            end
+
+            love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+        else
+            drawRectangle(x, y, spriteRenderer, isBullet)
+        end
+    else
+        drawRectangle(x, y, spriteRenderer, isBullet)
+    end
+
+    -- Reset shader
+    love.graphics.setShader()
 end
 
 ---Draw entity with flash shader
