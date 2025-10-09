@@ -48,14 +48,14 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     )
 
     -- Small sprite for bullet visualization (you can customize this)
-    local spriteRenderer = SpriteRenderer.new(nil, 6, 2)
-    spriteRenderer.color = {r = 0.1, g = 0.1, b = 0.1, a = 1} -- Dark gray body
+    local spriteRenderer = SpriteRenderer.new(nil, 10, 2)
+    spriteRenderer.color = {r = 0.4, g = 0.6, b = 1, a = 1} -- Blue body
     -- Rotate sprite to match bullet direction
     spriteRenderer:setRotation(bulletComponent:getAngle())
 
     -- Small physics collider for bullet collision detection (sensor)
     -- PhysicsCollision already creates sensors by default (non-blocking)
-    local physicsCollision = PhysicsCollision.new(4, 4, "dynamic", 1, -1, "circle")
+    local physicsCollision = PhysicsCollision.new(10, 4, "dynamic", 1, -1, "rectangle")
 
     -- Create collider if physics world is available
     if physicsWorld then
@@ -79,6 +79,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     bullet:addComponent("Bullet", bulletComponent)
     bullet:addComponent("PhysicsCollision", physicsCollision)
     bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .89, widthFactor = 1, heightFactor = 0.35, offsetY = 2 }))
+    bullet:addComponent("Light", Light.new({ r = 100, g = 150, b = 255, a = 255, radius = 15 }))
 
     -- Add to world
     if world then

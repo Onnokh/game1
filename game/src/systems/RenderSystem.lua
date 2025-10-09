@@ -20,7 +20,7 @@ local function drawRectangle(x, y, spriteRenderer, isBullet)
 
     -- Add glowing yellow tail for bullets
     if isBullet then
-        love.graphics.setColor(1, 1, 0.2, 1)
+        love.graphics.setColor(1, 1, 1, 1)
         love.graphics.rectangle("fill", -spriteRenderer.width / 2, -spriteRenderer.height / 2, 1.5, spriteRenderer.height)
         -- Restore the original color
         love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)

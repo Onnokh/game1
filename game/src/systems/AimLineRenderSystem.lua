@@ -125,7 +125,7 @@ function AimLineRenderSystem:draw()
     -- Animation and style parameters
     shader:send("animationSpeed", 50.0)
     shader:send("dotRadius", 5.0)
-    shader:send("dotSpacing", 32.0)
+    shader:send("dotSpacing", 64.0)
     shader:send("targetDotRadius", 6.0)
     shader:send("targetCrossThickness", 15.0)
 
