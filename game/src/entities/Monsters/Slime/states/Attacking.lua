@@ -27,8 +27,6 @@ function Attacking:onEnter(stateMachine, entity)
         if animator then
             animator:setAnimation(SlimeConfig.WALKING_ANIMATION)
         end
-        print(string.format("[SLIME %d] Entered ATTACKING state MID-JUMP (timer=%.2fs, duration=%.2fs)",
-            entity.id, jc.jumpTimer, jc.jumpDuration))
     else
         -- Set ready to reposition immediately if needed (only if out of combat)
         jc:resetToReady()
@@ -43,9 +41,6 @@ function Attacking:onEnter(stateMachine, entity)
         if animator then
             animator:setAnimation(SlimeConfig.IDLE_ANIMATION)
         end
-
-        print(string.format("[SLIME %d] Entered ATTACKING state (isJumping=%s, cooldown: %.2fs -> %.2fs, canJump=%s)",
-            entity.id, tostring(jc:isCurrentlyJumping()), timerBefore, jc.jumpTimer, tostring(jc:canJump())))
     end
 end
 
@@ -117,7 +112,6 @@ function Attacking:onUpdate(stateMachine, entity, dt)
     -- Jumping behavior for repositioning
     if jc:isJumpFinished() then
         -- Jump finished - enter cooldown
-        print(string.format("[SLIME %d] Attack-Jump FINISHED, dist=%.2f tiles", entity.id, dist / GameConstants.TILE_SIZE))
         jc:finishJump()
         movement.velocityX = 0
         movement.velocityY = 0
@@ -135,10 +129,6 @@ function Attacking:onUpdate(stateMachine, entity, dt)
         -- Start new jump
         local tileSize = GameConstants.TILE_SIZE
         jc:startJump(dx, dy, dist, tileSize, moveAwayFromTarget)
-
-        local direction = moveAwayFromTarget and "AWAY" or "TOWARD"
-        print(string.format("[SLIME %d] Attack-Jump START %s target, dist=%.2f tiles, jumpDist=%.2f tiles, speed=%.1f, duration=%.2fs",
-            entity.id, direction, dist / tileSize, jc.jumpDistance / tileSize, jc.jumpSpeed, jc.jumpDuration))
 
         -- Switch to jump animation
         if animator then
@@ -161,8 +151,6 @@ function Attacking:onUpdate(stateMachine, entity, dt)
             -- Spawn projectile from slime's position
             local bulletSpeed = SlimeConfig.PROJECTILE_SPEED or 180
             local bulletLifetime = SlimeConfig.PROJECTILE_LIFETIME or 2.5
-
-            print(string.format("[SLIME %d] FIRING projectile at dist=%.2f tiles", entity.id, dist / GameConstants.TILE_SIZE))
 
             -- Create bullet moving towards target
             BulletEntity.create(

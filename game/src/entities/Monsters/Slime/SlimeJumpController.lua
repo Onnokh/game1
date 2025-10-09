@@ -26,8 +26,6 @@ function SlimeJumpController.new()
     self.jumpArcHeight = 16 -- Peak height of jump arc in pixels
     self.baseSpeed = SlimeConfig.JUMP_SPEED -- Use absolute jump speed from config
 
-    print(string.format("[JUMP CONTROLLER INIT] JUMP_SPEED=%.2f px/s", self.baseSpeed))
-
     return self
 end
 
@@ -88,10 +86,6 @@ function SlimeJumpController:startJump(dx, dy, dist, tileSize, moveAway)
 
         -- Calculate duration based on distance and speed: time = distance / speed
         self.jumpDuration = self.jumpDistance / self.jumpSpeed
-
-        print(string.format("[JUMP DEBUG] baseSpeed=%.2f, jumpSpeed=%.2f, jumpDist=%.2f tiles (min=%.1f, max=%.1f), duration=%.2fs",
-            self.baseSpeed, self.jumpSpeed, self.jumpDistance / tileSize,
-            SlimeConfig.MIN_JUMP_DISTANCE, SlimeConfig.MAX_JUMP_DISTANCE, self.jumpDuration))
     else
         self.jumpDirectionX = 0
         self.jumpDirectionY = 0

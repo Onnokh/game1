@@ -13,8 +13,8 @@ PlayerConfig.DASH_COOLDOWN = 3        -- Cooldown between dashes (seconds)
 
 -- Animation settings
 PlayerConfig.IDLE_ANIMATION = {
-    sheet = "character",
-    frames = {1, 2},
+    sheet = "new",
+    frames = {1, 2, 3, 4},
     fps = 4,
     loop = true
 }
@@ -49,8 +49,8 @@ PlayerConfig.COLLIDER_FRICTION = 0.3
 PlayerConfig.COLLIDER_DAMPING = 0
 
 -- Sprite settings
-PlayerConfig.SPRITE_WIDTH = 24
-PlayerConfig.SPRITE_HEIGHT = 24
+PlayerConfig.SPRITE_WIDTH = 32
+PlayerConfig.SPRITE_HEIGHT = 32
 
 -- Walking particle effects
 PlayerConfig.WALKING_PARTICLES = {

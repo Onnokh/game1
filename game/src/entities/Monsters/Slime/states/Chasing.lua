@@ -29,8 +29,6 @@ function Chasing:onEnter(stateMachine, entity)
         if animator then
             animator:setAnimation(SlimeConfig.WALKING_ANIMATION)
         end
-        print(string.format("[SLIME %d] Entered CHASING state MID-JUMP (timer=%.2fs, duration=%.2fs)",
-            entity.id, jc.jumpTimer, jc.jumpDuration))
     else
         -- Start with idle animation
         if animator then
@@ -38,9 +36,6 @@ function Chasing:onEnter(stateMachine, entity)
         end
         -- Set ready to jump immediately when needed (only if out of combat)
         jc:resetToReady()
-
-        print(string.format("[SLIME %d] Entered CHASING state (isJumping=%s, cooldown: %.2fs -> %.2fs, canJump=%s)",
-            entity.id, tostring(jc:isCurrentlyJumping()), timerBefore, jc.jumpTimer, tostring(jc:canJump())))
     end
 end
 
@@ -144,7 +139,6 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         -- Jumping behavior
         if jc:isJumpFinished() then
             -- Jump finished - enter cooldown
-            print(string.format("[SLIME %d] Jump FINISHED, dist=%.2f tiles", entity.id, dist / tileSize))
             jc:finishJump()
             movement.velocityX = 0
             movement.velocityY = 0
@@ -161,10 +155,6 @@ function Chasing:onUpdate(stateMachine, entity, dt)
         elseif shouldMove and jc:canJump() then
             -- Start new jump
             jc:startJump(dx, dy, dist, tileSize, moveAwayFromTarget)
-
-            local direction = moveAwayFromTarget and "AWAY" or "TOWARD"
-            print(string.format("[SLIME %d] Jump START %s target, dist=%.2f tiles, jumpDist=%.2f tiles, speed=%.1f, duration=%.2fs",
-                entity.id, direction, dist / tileSize, jc.jumpDistance / tileSize, jc.jumpSpeed, jc.jumpDuration))
 
             -- Switch to jump animation (using walking animation)
             if animator then

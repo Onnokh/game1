@@ -23,7 +23,6 @@ function Wandering:onEnter(stateMachine, entity)
 
     if jc:isCurrentlyJumping() then
         -- Mid-jump transition - preserve the jump
-        print(string.format("[SLIME %d] Entered WANDERING state MID-JUMP", entity.id))
     else
         -- Normal wandering - pick a new wander target
         local pathfinding = entity:getComponent("Pathfinding")
@@ -38,9 +37,6 @@ function Wandering:onEnter(stateMachine, entity)
             end
 
             pathfinding:startWander(currentX, currentY)
-
-            print(string.format("[SLIME %d] Entered WANDERING state, target=(%.1f, %.1f), current=(%.1f, %.1f)",
-                entity.id, pathfinding.targetX or -1, pathfinding.targetY or -1, currentX, currentY))
         end
 
         -- Reset to ready so slime can jump immediately when wandering starts
@@ -102,7 +98,6 @@ function Wandering:onUpdate(stateMachine, entity, dt)
     -- Jumping behavior for wandering
     if jc:isJumpFinished() then
         -- Jump finished
-        print(string.format("[SLIME %d] Wander-Jump FINISHED", entity.id))
         jc:finishJump()
         movement.velocityX = 0
         movement.velocityY = 0
@@ -115,8 +110,6 @@ function Wandering:onUpdate(stateMachine, entity, dt)
         local vx, vy = jc:getJumpVelocity()
         movement.velocityX = vx
         movement.velocityY = vy
-        print(string.format("[SLIME %d] Wander-Jumping: timer=%.2fs/%.2fs, vel=(%.1f, %.1f)",
-            entity.id, jc.jumpTimer, jc.jumpDuration, vx, vy))
     else
         -- Not jumping - check if we should jump toward wander target
         if wanderTarget.x and wanderTarget.y then
@@ -128,7 +121,6 @@ function Wandering:onUpdate(stateMachine, entity, dt)
 
             -- If close enough to target (within min jump distance), we're done wandering
             if dist < minJumpDistance then
-                print(string.format("[SLIME %d] Wander COMPLETE, dist=%.2f tiles < min", entity.id, dist / tileSize))
                 movement.velocityX = 0
                 movement.velocityY = 0
                 -- Mark wander as complete by clearing target
@@ -142,23 +134,16 @@ function Wandering:onUpdate(stateMachine, entity, dt)
                 -- Jump toward wander target
                 jc:startJump(dx, dy, dist, tileSize, false)
 
-                print(string.format("[SLIME %d] Wander-Jump START, dist=%.2f tiles, canJump=%s",
-                    entity.id, dist / tileSize, tostring(jc:canJump())))
-
                 if animator then
                     animator:setAnimation(SlimeConfig.WALKING_ANIMATION)
                 end
             else
                 -- Waiting for cooldown
-                print(string.format("[SLIME %d] Wander WAITING for cooldown (%.2fs / %.2fs)",
-                    entity.id, jc.jumpTimer, jc.jumpCooldown))
                 movement.velocityX = 0
                 movement.velocityY = 0
             end
         else
             -- No wander target
-            print(string.format("[SLIME %d] Wander NO TARGET (tx=%s, ty=%s)",
-                entity.id, tostring(pathfinding.targetX), tostring(pathfinding.targetY)))
             movement.velocityX = 0
             movement.velocityY = 0
         end

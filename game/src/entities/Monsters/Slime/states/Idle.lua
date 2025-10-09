@@ -21,8 +21,6 @@ end
 function Idle:onEnter(stateMachine, entity)
     local jc = self.jumpController
 
-    print(string.format("[SLIME %d] Entered IDLE state (isJumping=%s)", entity.id, tostring(jc:isCurrentlyJumping())))
-
     -- Set idle animation (unless mid-jump)
     local animator = entity:getComponent("Animator")
     if animator and not jc:isCurrentlyJumping() then
@@ -72,7 +70,6 @@ function Idle:onUpdate(stateMachine, entity, dt)
 
         if jc:isJumpFinished() then
             -- Jump finished during idle
-            print(string.format("[SLIME %d] Jump FINISHED during idle", entity.id))
             jc:finishJump()
             if movement then
                 movement.velocityX = 0
