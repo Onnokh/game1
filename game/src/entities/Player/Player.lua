@@ -61,7 +61,7 @@ function Player.create(x, y, world, physicsWorld)
     pathfindingCollision.linearDamping = PlayerConfig.COLLIDER_DAMPING
 
     -- PhysicsCollision component (for physics interactions only) - use sprite size, force rectangle shape
-    local physicsCollision = PhysicsCollision.new(12, 16, "dynamic", 6, 6, "rectangle")
+    local physicsCollision = PhysicsCollision.new(12, 26, "dynamic", 10, 6, "rectangle")
     physicsCollision.restitution = PlayerConfig.COLLIDER_RESTITUTION
     physicsCollision.friction = PlayerConfig.COLLIDER_FRICTION
     physicsCollision.linearDamping = PlayerConfig.COLLIDER_DAMPING
