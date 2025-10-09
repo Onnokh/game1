@@ -47,15 +47,7 @@ function CollisionSystem:setWorld(world)
                         local bulletComp = bulletEntity:getComponent("Bullet")
                         if not bulletComp then return end
 
-                        -- Check if hitting a static wall
-                        local otherBody = otherFixture:getBody()
-                        if otherBody and otherBody:getType() == "static" then
-                            -- Mark bullet for removal (will be handled by BulletSystem)
-                            bulletEntity._hitStatic = true
-                            return
-                        end
-
-                        -- Check if hitting an entity
+                        -- Check if hitting an entity first
                         local otherU = otherFixture:getUserData()
                         if otherU and type(otherU) == "table" and otherU.entity then
                             local otherEntity = otherU.entity
@@ -67,6 +59,14 @@ function CollisionSystem:setWorld(world)
                                     bulletEntity._hitEntities = {}
                                 end
                                 table.insert(bulletEntity._hitEntities, otherEntity)
+                            end
+                        else
+                            -- Only treat as static wall if it's NOT an entity
+                            local otherBody = otherFixture:getBody()
+                            if otherBody and otherBody:getType() == "static" then
+                                -- Mark bullet for removal (will be handled by BulletSystem)
+                                bulletEntity._hitStatic = true
+                                return
                             end
                         end
                     end

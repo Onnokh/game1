@@ -38,6 +38,7 @@ local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
+local Slime = require("src.entities.Monsters.Slime.Slime")
 local Warhog = require("src.entities.Monsters.Warhog.Warhog")
 local Reactor = require("src.entities.Reactor.Reactor")
 
@@ -353,6 +354,12 @@ function GameScene.addMonster(x, y, type)
     print("Added skeleton at:", x, y, "Total monsters:", #monsters)
     return skeleton
   end
+  if type == "slime" then
+    local slime = Slime.create(x, y, ecsWorld, physicsWorld)
+    table.insert(monsters, slime)
+    print("Added slime at:", x, y, "Total monsters:", #monsters)
+    return slime
+  end
   if type == "warhog" then
     local warhog = Warhog.create(x, y, ecsWorld, physicsWorld)
     table.insert(monsters, warhog)
@@ -382,7 +389,7 @@ function GameScene.mousepressed(x, y, button, gameState)
     -- Add a monster at click position (convert screen to world coordinates)
     local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
-    GameScene.addMonster(worldX, worldY, "warhog")
+    GameScene.addMonster(worldX, worldY, "slime")
   end
 end
 

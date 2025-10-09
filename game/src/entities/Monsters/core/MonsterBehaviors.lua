@@ -44,21 +44,17 @@ function MonsterBehaviors.updateTarget(entity, config)
         reactorHasLOS = true
     end
 
-    -- Choose target based on distance and line of sight
-    -- Priority: closest target within chase range with line of sight
+    -- Choose target based on priority, then distance
+    -- Priority 1: Player (always preferred)
+    -- Priority 2: Reactor (only if player is not available)
     local chosenTarget = nil
-    local chosenDistance = math.huge
 
-    -- Check player first (higher priority if both are valid)
-    if player and playerDistance <= chaseRange and playerHasLOS and playerDistance < chosenDistance then
+    -- Check player first (HIGHEST PRIORITY - always prefer player over reactor)
+    if player and playerDistance <= chaseRange and playerHasLOS then
         chosenTarget = player
-        chosenDistance = playerDistance
-    end
-
-    -- Check reactor (lower priority but still valid)
-    if reactor and reactorDistance <= chaseRange and reactorHasLOS and reactorDistance < chosenDistance then
+    -- Only target reactor if player is not available
+    elseif reactor and reactorDistance <= chaseRange and reactorHasLOS then
         chosenTarget = reactor
-        chosenDistance = reactorDistance
     end
 
     entity.target = chosenTarget

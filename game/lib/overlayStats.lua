@@ -646,12 +646,12 @@ function overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
   love.graphics.pop()
 end
 
----Draws skeleton state overlays in screen space at skeleton positions
+---Draws entity state overlays in screen space at entity positions
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
 ---@param cameraScale number Camera scale factor (optional)
 ---@return nil
-function overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
+function overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
   -- Try to access the game scene's ECS world
   local gameState = require("src.core.GameState")
   if not gameState or not gameState.scenes or not gameState.scenes.game then
@@ -676,37 +676,33 @@ function overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
     love.graphics.setFont(overlayFontMain)
   end
 
-  -- Draw state overlays for skeleton entities
+  -- Draw state overlays for all entities with state machines
   for _, entity in ipairs(entitiesWithSprites) do
-    if entity:hasTag("Skeleton") then
-      local position = entity:getComponent("Position")
-      local spriteRenderer = entity:getComponent("SpriteRenderer")
-      local stateMachine = entity:getComponent("StateMachine")
+    local position = entity:getComponent("Position")
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    local stateMachine = entity:getComponent("StateMachine")
 
-      if position and spriteRenderer and stateMachine then
-        local currentState = stateMachine:getCurrentState()
-        local target = entity.target
+    if position and spriteRenderer and stateMachine then
+      local currentState = stateMachine:getCurrentState()
 
-        -- Color code the state
-        local stateColor = {1, 1, 1, 1} -- Default white
+      -- Color code the state based on entity type
+      local stateColor = {1, 1, 1, 1} -- Default white
 
-        -- Convert world position to screen position
-        local worldX = position.x + spriteRenderer.offsetX + (spriteRenderer.width / 2)
-        local worldY = position.y + spriteRenderer.offsetY
+      -- Convert world position to screen position
+      local worldX = position.x + spriteRenderer.offsetX + (spriteRenderer.width / 2)
+      local worldY = position.y + spriteRenderer.offsetY
 
-        -- Convert to screen coordinates (camera is centered)
-        local screenX = halfW + (worldX - cameraX) * scale
-        local screenY = halfH + (worldY - cameraY) * scale
+      -- Convert to screen coordinates (camera is centered)
+      local screenX = halfW + (worldX - cameraX) * scale
+      local screenY = halfH + (worldY - cameraY) * scale
 
-        -- Only draw if skeleton is on screen
-        if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
-          local textY = screenY - 20 -- Above skeleton
+      -- Only draw if entity is on screen
+      if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
+        local textY = screenY - 20 -- Above entity
 
-          -- Set color and draw state text (can show full state name now)
-          love.graphics.setColor(stateColor)
-          love.graphics.print(currentState, screenX - 15, textY) -- Full state name
-
-        end
+        -- Set color and draw state text
+        love.graphics.setColor(stateColor)
+        love.graphics.print(currentState, screenX - 15, textY)
       end
     end
   end
@@ -748,8 +744,8 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
     overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
     -- Draw pathfinding debug in world space
     overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
-    -- Draw skeleton state overlays in world space
-    overlayStats.drawSkeletonStateOverlays(cameraX, cameraY, cameraScale)
+    -- Draw entity state overlays in world space
+    overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
   end
 
 

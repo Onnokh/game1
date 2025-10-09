@@ -39,6 +39,9 @@ function IffySprites.load()
   -- Load skeleton spritesheet (6x10 grid - 6 columns, 10 rows)
   loadSpritesheet("skeleton", "resources/skeleton/Skeleton.png", 6, 10)
 
+  -- Load slime spritesheet (8x3 grid - 8 columns, 3 rows)
+  loadSpritesheet("slime", "resources/slime/Slime_Green.png", 8, 3)
+
   -- Load reactor spritesheet (1x1 grid, 64x64)
   loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 4, 1)
 
