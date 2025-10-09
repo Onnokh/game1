@@ -22,7 +22,7 @@ PlayerConfig.IDLE_ANIMATION = {
 PlayerConfig.WALKING_ANIMATION = {
   sheet = "new_walk",
   frames = {1, 2, 3, 4, 5, 6},
-  fps = 6,
+  fps = 10,
   loop = true
 }
 
@@ -66,11 +66,5 @@ PlayerConfig.WALKING_PARTICLES = {
     },
     spawnRate = 0.15        -- How often to spawn particles (seconds)
 }
-
--- Future expansion - you can add more attributes here:
--- PlayerConfig.HEALTH = 100
--- PlayerConfig.MAX_HEALTH = 100
--- PlayerConfig.ATTACK_DAMAGE = 10
--- PlayerConfig.ATTACK_RANGE = 32
 
 return PlayerConfig
