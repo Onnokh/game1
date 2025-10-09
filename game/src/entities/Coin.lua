@@ -39,8 +39,8 @@ function CoinEntity.create(x, y, value, attractorRadius, world, physicsWorld, ve
 
     -- Create sprite renderer for coin spritesheet (9 frames)
     local spriteRenderer = SpriteRenderer.new("coin", 16, 16) -- Original 16x16 coin sprites
-    spriteRenderer.scaleX = 0.75 -- Scale down to 8x8 visual size
-    spriteRenderer.scaleY = 0.75 -- Scale down to 8x8 visual size
+    spriteRenderer.scaleX = .5 -- Scale down to 8x8 visual size
+    spriteRenderer.scaleY = .5 -- Scale down to 8x8 visual size
 
     -- Small subtle ground shadow for coin
     local groundShadow = GroundShadow.new({ alpha = .75, widthFactor = 0.8, heightFactor = 0.18, offsetY = 2 })

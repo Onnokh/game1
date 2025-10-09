@@ -37,7 +37,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
 
     // If we found a neighboring opaque pixel, draw the outline
     if (maxAlpha > 0.5) {
-        return vec4(OutlineColor, 0.5);
+        return vec4(OutlineColor, .75);
     }
 
     // Otherwise, return transparent

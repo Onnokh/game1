@@ -20,16 +20,16 @@ PlayerConfig.IDLE_ANIMATION = {
 }
 
 PlayerConfig.WALKING_ANIMATION = {
-  sheet = "new",
-  frames = {1, 2, 3, 4},
-  fps = 4,
+  sheet = "new_walk",
+  frames = {1, 2, 3, 4, 5, 6},
+  fps = 6,
   loop = true
 }
 
 PlayerConfig.RUNNING_ANIMATION = {
-  sheet = "new",
-  frames = {1, 2, 3, 4},
-  fps = 4,
+  sheet = "new_walk",
+  frames = {1, 2, 3, 4, 5, 6},
+  fps = 12,
   loop = true
 }
 

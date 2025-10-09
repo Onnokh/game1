@@ -47,7 +47,6 @@ function Player.create(x, y, world, physicsWorld)
 
     local spriteRenderer = SpriteRenderer.new(nil, PlayerConfig.SPRITE_WIDTH, PlayerConfig.SPRITE_HEIGHT)
     spriteRenderer.facingMouse = true -- Enable mouse-facing
-    -- Add outline effect to the player
     spriteRenderer:setOutline({r = 0.0, g = 0.0, b = 0.0}) -- White outline
 
     -- PathfindingCollision component (for pathfinding and physics collision)
