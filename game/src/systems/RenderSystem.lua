@@ -79,6 +79,28 @@ function RenderSystem:draw()
                     else
                         drawRectangle(x, y, spriteRenderer, isBullet)
                     end
+                elseif spriteRenderer.sprite then
+                    -- Draw static sprite from SpriteRenderer.sprite (no animator needed)
+                    local iffy = require("lib.iffy")
+                    local spriteSheet = spriteRenderer.sprite
+
+                    if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+                        -- Get the actual sprite frame dimensions from Iffy tileset
+                        local frameWidth = spriteRenderer.width
+                        if iffy.tilesets[spriteSheet] then
+                            frameWidth = iffy.tilesets[spriteSheet][1]
+                        end
+
+                        -- Adjust position for horizontal flipping to keep sprite centered
+                        local drawX = x
+                        if spriteRenderer.scaleX < 0 then
+                            drawX = x + frameWidth
+                        end
+
+                        love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                    else
+                        drawRectangle(x, y, spriteRenderer, isBullet)
+                    end
                 else
                     drawRectangle(x, y, spriteRenderer, isBullet)
                 end
@@ -124,6 +146,7 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
     -- Set shader uniforms with safe defaults
     local color = outline.color or {r = 1, g = 1, b = 1}
     outlineShader:send("OutlineColor", {color.r or 1, color.g or 1, color.b or 1})
+    outlineShader:send("OutlineAlpha", color.a or 0.75)
 
     -- Get the actual texture dimensions from the image being drawn
     local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
@@ -138,6 +161,14 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
             if image then
                 textureWidth, textureHeight = image:getDimensions()
             end
+        end
+    elseif spriteRenderer.sprite then
+        local iffy = require("lib.iffy")
+        local spriteSheet = spriteRenderer.sprite
+
+        if iffy.images[spriteSheet] then
+            -- Get the actual image dimensions
+            textureWidth, textureHeight = iffy.images[spriteSheet]:getDimensions()
         end
     end
 
@@ -167,7 +198,30 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
         else
             drawRectangle(x, y, spriteRenderer, isBullet)
         end
+    elseif spriteRenderer.sprite then
+        -- Draw static sprite from SpriteRenderer.sprite (no animator needed)
+        local iffy = require("lib.iffy")
+        local spriteSheet = spriteRenderer.sprite
+
+        if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+            -- Get the actual sprite frame dimensions from Iffy tileset
+            local frameWidth = spriteRenderer.width
+            if iffy.tilesets[spriteSheet] then
+                frameWidth = iffy.tilesets[spriteSheet][1]
+            end
+
+            -- Adjust position for horizontal flipping to keep sprite centered
+            local drawX = x
+            if spriteRenderer.scaleX < 0 then
+                drawX = x + frameWidth
+            end
+
+            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+        else
+            drawRectangle(x, y, spriteRenderer, isBullet)
+        end
     else
+      -- Fallback render a square (white default color)
         drawRectangle(x, y, spriteRenderer, isBullet)
     end
 
@@ -232,6 +286,28 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
             end
 
             love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+        else
+            drawRectangle(x, y, spriteRenderer, isBullet)
+        end
+    elseif spriteRenderer.sprite then
+        -- Draw static sprite from SpriteRenderer.sprite (no animator needed)
+        local iffy = require("lib.iffy")
+        local spriteSheet = spriteRenderer.sprite
+
+        if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+            -- Get the actual sprite frame dimensions from Iffy tileset
+            local frameWidth = spriteRenderer.width
+            if iffy.tilesets[spriteSheet] then
+                frameWidth = iffy.tilesets[spriteSheet][1]
+            end
+
+            -- Adjust position for horizontal flipping to keep sprite centered
+            local drawX = x
+            if spriteRenderer.scaleX < 0 then
+                drawX = x + frameWidth
+            end
+
+            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
         else
             drawRectangle(x, y, spriteRenderer, isBullet)
         end

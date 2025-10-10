@@ -38,7 +38,7 @@ local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
 local Reactor = require("src.entities.Reactor.Reactor")
-
+local Tree = require("src.entities.Decoration.Tree")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
 local worldWidth = 0  -- Will be set by loaded map
@@ -178,6 +178,12 @@ function GameScene.load()
     end,
     reactors = function(obj)
       Reactor.create(obj.x, obj.y, ecsWorld, physicsWorld)
+    end,
+    other = function(obj)
+      print('spawning other at:', obj.x, obj.y, obj.name)
+      if obj.name == "Tree" then
+        Tree.create(obj.x, obj.y, ecsWorld, physicsWorld)
+      end
     end,
     -- Add more entity types here as needed:
     -- enemies = function(obj) ... end,

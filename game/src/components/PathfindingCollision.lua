@@ -1,5 +1,4 @@
 local Component = require("src.core.Component")
-local GameConstants = require("src.constants")
 
 ---@class PathfindingCollision : Component
 ---@field collider table|nil The physics collider object

@@ -1,5 +1,6 @@
 // Outline shader fragment shader
 uniform vec3 OutlineColor = vec3(1.0, 1.0, 1.0); // Default white outline
+uniform float OutlineAlpha = 0.75; // Default outline alpha
 uniform vec2 TextureSize; // Size of the texture being rendered
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
@@ -37,7 +38,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
 
     // If we found a neighboring opaque pixel, draw the outline
     if (maxAlpha > 0.5) {
-        return vec4(OutlineColor, .75);
+        return vec4(OutlineColor, OutlineAlpha);
     }
 
     // Otherwise, return transparent

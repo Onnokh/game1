@@ -11,6 +11,38 @@ DepthSorting.LAYERS = {
     UI = 2             -- User interface elements
 }
 
+---Get the bottom-center Y position for depth sorting
+---@param entity Entity Entity to get depth position for
+---@return number Bottom-center Y position
+local function getDepthY(entity)
+    local position = entity:getComponent("Position")
+    if not position then
+        return 0
+    end
+
+    local bottomY = position.y
+
+    -- Try to get height from SpriteRenderer first
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    if spriteRenderer then
+        bottomY = bottomY + spriteRenderer.height
+    else
+        -- Fall back to PathfindingCollision if no sprite renderer
+        local pathfindingCollision = entity:getComponent("PathfindingCollision")
+        if pathfindingCollision then
+            bottomY = bottomY + pathfindingCollision.height + pathfindingCollision.offsetY
+        else
+            -- Fall back to PhysicsCollision if available
+            local physicsCollision = entity:getComponent("PhysicsCollision")
+            if physicsCollision then
+                bottomY = bottomY + physicsCollision.height + physicsCollision.offsetY
+            end
+        end
+    end
+
+    return bottomY
+end
+
 ---Sort entities by depth for proper 2D rendering
 ---@param entities table Array of entities with Position components
 ---@return table Sorted array of entities
@@ -22,7 +54,7 @@ function DepthSorting.sortEntities(entities)
         table.insert(sortedEntities, entity)
     end
 
-    -- Sort by depth: Y-coordinate first, then Z-index
+    -- Sort by depth: Bottom-center Y-coordinate first, then Z-index
     table.sort(sortedEntities, function(a, b)
         local posA = a:getComponent("Position")
         local posB = b:getComponent("Position")
@@ -31,9 +63,12 @@ function DepthSorting.sortEntities(entities)
             return false
         end
 
-        -- Primary sort: Y-coordinate (lower Y renders first)
-        if posA.y ~= posB.y then
-            return posA.y < posB.y
+        -- Primary sort: Bottom-center Y-coordinate (lower Y renders first)
+        local bottomYA = getDepthY(a)
+        local bottomYB = getDepthY(b)
+
+        if bottomYA ~= bottomYB then
+            return bottomYA < bottomYB
         end
 
         -- Secondary sort: Z-index (lower Z renders first)
@@ -74,9 +109,12 @@ function DepthSorting.shouldRenderBefore(entityA, entityB)
         return false
     end
 
-    -- Primary sort: Y-coordinate
-    if posA.y ~= posB.y then
-        return posA.y < posB.y
+    -- Primary sort: Bottom-center Y-coordinate
+    local bottomYA = getDepthY(entityA)
+    local bottomYB = getDepthY(entityB)
+
+    if bottomYA ~= bottomYB then
+        return bottomYA < bottomYB
     end
 
     -- Secondary sort: Z-index
@@ -109,10 +147,11 @@ end
 function DepthSorting.getDepthInfo(entity)
     local position = entity:getComponent("Position")
     if not position then
-        return {y = 0, z = 0, depth = 0, layer = "UNKNOWN"}
+        return {y = 0, bottomY = 0, z = 0, depth = 0, layer = "UNKNOWN"}
     end
 
     local y = position.y
+    local bottomY = getDepthY(entity)
     local z = position.z or 0
     local depth = position:getDepth()
 
@@ -127,6 +166,7 @@ function DepthSorting.getDepthInfo(entity)
 
     return {
         y = y,
+        bottomY = bottomY,
         z = z,
         depth = depth,
         layer = layer

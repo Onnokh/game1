@@ -75,12 +75,16 @@ function SpriteRenderer:setOffset(offsetX, offsetY)
 end
 
 ---Enable outline effect
----@param color table RGB color table {r, g, b}
+---@param color table RGBA color table {r, g, b, a} (a is optional, defaults to 0.75)
 function SpriteRenderer:setOutline(color)
     self.outline = {
         enabled = true,
-        color = color or {r = 1, g = 1, b = 1}
+        color = color or {r = 1, g = 1, b = 1, a = 0.75}
     }
+    -- Ensure alpha has a default value
+    if self.outline.color.a == nil then
+        self.outline.color.a = 0.75
+    end
 end
 
 ---Disable outline effect

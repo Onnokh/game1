@@ -68,9 +68,10 @@
     },
     "frame.defaultDuration": 100,
     "last.exportedFilePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/maps",
-    "last.imagePath": "C:/Sites/game1/game/resources",
+    "last.imagePath": "C:/Users/Onno/Sites/game1/game/resources/objects",
     "last.objectTemplatePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/objects",
     "map.lastUsedExportFilter": "Lua files (*.lua)",
+    "map.lastUsedFormat": "tmx",
     "openFiles": [
         "maps/level1.tmx",
         "maps/test.tsx"

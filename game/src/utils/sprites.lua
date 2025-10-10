@@ -50,6 +50,9 @@ function IffySprites.load()
   -- Load coin spritesheet (1x9 grid, 9 frames)
   loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)
 
+  -- Load tree spritesheet (1x1 grid, 48x64)
+  loadSpritesheet("tree", "resources/objects/tree.png", 1, 1)
+
   -- load warhog spritesheets (4x4 grid, 64x64 per frame)
   loadSpritesheet("Warhog_Attack", "resources/warhog/Warhog_Attack.png", 4, 4)
   loadSpritesheet("Warhog_Death", "resources/warhog/Warhog_Death.png", 4, 4)
@@ -69,13 +72,6 @@ function IffySprites.load()
   end
 
   print("Iffy sprites loaded successfully")
-
-  -- Debug: Check tilesets
-  if iffy.spritesheets["wall"] then
-    print(string.format("Wall tileset loaded with %d variants", #iffy.spritesheets["wall"]))
-  else
-    print("ERROR: Wall tileset not found!")
-  end
 
   if iffy.spritesheets["character"] then
     print(string.format("Character tileset loaded with %d variants", #iffy.spritesheets["character"]))
