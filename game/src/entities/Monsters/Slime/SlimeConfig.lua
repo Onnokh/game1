@@ -50,7 +50,7 @@ SlimeConfig.DYING_ANIMATION = {
 }
 
 -- Physics settings
-SlimeConfig.COLLIDER_WIDTH = 18
+SlimeConfig.COLLIDER_WIDTH = 16
 SlimeConfig.COLLIDER_HEIGHT = 10
 SlimeConfig.COLLIDER_SHAPE = "circle" -- "rectangle" or "circle"
 SlimeConfig.COLLIDER_RESTITUTION = 0.1

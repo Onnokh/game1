@@ -61,23 +61,6 @@ function GenericWandering:onUpdate(stateMachine, entity, dt)
         end
         -- If velocityX is very small, keep current orientation
     end
-
-    -- Check if we've reached the wander target
-    if pathfinding and pathfinding:isPathComplete() and movement then
-        -- Clear the current path to allow new wandering
-        pathfinding.currentPath = nil
-        pathfinding.currentPathIndex = 1
-        -- Start a new wander from current position
-        local position = entity:getComponent("Position")
-        if position then
-            local currentX, currentY = position.x, position.y
-            local pathfindingCollision = entity:getComponent("PathfindingCollision")
-            if pathfindingCollision and pathfindingCollision:hasCollider() then
-                currentX, currentY = pathfindingCollision:getCenterPosition()
-            end
-            pathfinding:startWander(currentX, currentY)
-        end
-    end
 end
 
 return GenericWandering

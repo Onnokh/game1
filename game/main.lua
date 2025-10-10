@@ -21,7 +21,7 @@ local parallaxBg = {
   animationSpeed = 0.25, -- Seconds per frame (4fps = 0.25s)
   offsetX = 0,
   speed = 20, -- Pixels per second scrolling to the right
-  scale = 5,  -- Scale factor for the background
+  scale = 3,  -- Scale factor for the background
   parallaxFactorX = 0.2, -- Camera movement influence (0.2 = moves 20% of camera speed)
   parallaxFactorY = 1.5 -- Vertical parallax factor
 }

@@ -83,8 +83,8 @@ local function slimeStateSelector(entity, dt)
         end
     elseif currentState == "wandering" then
         local pathfinding = entity:getComponent("Pathfinding")
-        -- Check if wander target is reached (targetX/targetY cleared)
-        if pathfinding and not pathfinding.targetX and not pathfinding.targetY then
+        -- Check if wander target is reached (path is complete)
+        if pathfinding and pathfinding:isPathComplete() then
             return "idle"
         end
     end
