@@ -95,8 +95,7 @@ function GameScene.load()
   ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die
   ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
   ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
-  local oxygenSystem = OxygenSystem.new() -- Store reference for SafezoneVignetteSystem
-  ecsWorld:addSystem(oxygenSystem) -- Handle oxygen decay when outside reactor zone
+  ecsWorld:addSystem(OxygenSystem.new()) -- Handle oxygen decay when outside reactor zone
   ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
@@ -120,7 +119,7 @@ function GameScene.load()
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
-  local SafezoneVignetteSystem = require("src.systems.UISystems.SafezoneVignetteSystem")
+  local AggroVignetteSystem = require("src.systems.UISystems.AggroVignetteSystem")
   local WeaponIndicatorSystem = require("src.systems.UISystems.WeaponIndicatorSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
@@ -137,7 +136,7 @@ function GameScene.load()
   uiWorld:addSystem(GameOverSystem.new())
   uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
-  uiWorld:addSystem(SafezoneVignetteSystem.new(ecsWorld, oxygenSystem)) -- Pass OxygenSystem reference
+  uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
 
   -- Load Tiled map using Cartographer
   tiledMap = cartographer.load("resources/tiled/maps/level1.lua")

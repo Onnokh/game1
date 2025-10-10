@@ -2,20 +2,18 @@ local System = require("src.core.System")
 local ShaderManager = require("src.utils.ShaderManager")
 local EntityUtils = require("src.utils.entities")
 
----@class SafezoneVignetteSystem : System
----Renders a vignette effect when player is outside the reactor safezone
-local SafezoneVignetteSystem = System:extend("SafezoneVignetteSystem", {})
+---@class AggroVignetteSystem : System
+---Renders a vignette effect when mobs are chasing or attacking the player
+local AggroVignetteSystem = System:extend("AggroVignetteSystem", {})
 
----Create a new SafezoneVignetteSystem
+---Create a new AggroVignetteSystem
 ---@param ecsWorld World
----@param oxygenSystem OxygenSystem|nil Optional reference to OxygenSystem
----@return SafezoneVignetteSystem
-function SafezoneVignetteSystem.new(ecsWorld, oxygenSystem)
-    ---@class SafezoneVignetteSystem
+---@return AggroVignetteSystem
+function AggroVignetteSystem.new(ecsWorld)
+    ---@class AggroVignetteSystem
     local self = System.new()
-    setmetatable(self, SafezoneVignetteSystem)
+    setmetatable(self, AggroVignetteSystem)
     self.ecsWorld = ecsWorld
-    self.oxygenSystem = oxygenSystem or nil -- Direct reference to OxygenSystem
     self.isWorldSpace = false -- Screen space rendering
     self.vignetteOpacity = 0.0 -- 0 = no vignette, 1 = full vignette
     self.targetOpacity = 0.0 -- Target opacity to fade to
@@ -23,34 +21,44 @@ function SafezoneVignetteSystem.new(ecsWorld, oxygenSystem)
     return self
 end
 
----Update the vignette based on player position
----@param dt number Delta time
-function SafezoneVignetteSystem:update(dt)
-    -- Check if we have the OxygenSystem reference
-    if not self.oxygenSystem then
-        self.targetOpacity = 0.0
-        return
-    end
-
+---Check if any mobs are actively chasing or attacking the player
+---@return boolean True if player is being targeted by mobs
+function AggroVignetteSystem:isPlayerBeingTargeted()
     -- Find the player entity
     local player = EntityUtils.findPlayer(self.ecsWorld)
     if not player then
-        self.targetOpacity = 0.0
-        return
+        return false
     end
 
-    local position = player:getComponent("Position")
-    if not position then
-        self.targetOpacity = 0.0
-        return
+    -- Check all entities in the world
+    for _, entity in ipairs(self.ecsWorld.entities) do
+        -- Skip if this is the player itself or entity is dead
+        if entity ~= player and entity.active and not entity.isDead then
+            local stateMachine = entity:getComponent("StateMachine")
+
+            -- Check if entity has a state machine and is in chasing or attacking state
+            if stateMachine then
+                local currentState = stateMachine:getCurrentState()
+
+                if currentState == "chasing" or currentState == "attacking" then
+                    -- Check if this entity is targeting the player
+                    if entity.target == player then
+                        return true -- Found at least one mob targeting the player
+                    end
+                end
+            end
+        end
     end
 
-    -- Use OxygenSystem's safe zone check (using player center)
-    local playerCenterX, playerCenterY = EntityUtils.getEntityVisualCenter(player, position)
-    local isInSafeZone = self.oxygenSystem:isInReactorSafeZone(playerCenterX, playerCenterY)
+    return false -- No mobs are actively targeting the player
+end
 
-    -- Show vignette when OUTSIDE safezone
-    self.targetOpacity = isInSafeZone and 0.0 or 1.0
+---Update the vignette based on mob aggro status
+---@param dt number Delta time
+function AggroVignetteSystem:update(dt)
+    -- Show vignette when player is being targeted by mobs
+    local isBeingTargeted = self:isPlayerBeingTargeted()
+    self.targetOpacity = isBeingTargeted and 1.0 or 0.0
 
     -- Smoothly interpolate current opacity towards target
     if self.vignetteOpacity < self.targetOpacity then
@@ -63,7 +71,7 @@ function SafezoneVignetteSystem:update(dt)
 end
 
 ---Draw the vignette effect using shader
-function SafezoneVignetteSystem:draw()
+function AggroVignetteSystem:draw()
     -- Only draw if there's some visible opacity
     if self.vignetteOpacity <= 0.0 then
         return
@@ -97,5 +105,5 @@ function SafezoneVignetteSystem:draw()
     love.graphics.pop()
 end
 
-return SafezoneVignetteSystem
+return AggroVignetteSystem
 
