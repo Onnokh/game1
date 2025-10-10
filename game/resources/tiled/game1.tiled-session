@@ -1,4 +1,8 @@
 {
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
     "activeFile": "maps/level1.tmx",
     "expandedProjectPaths": [
         ".",
@@ -20,11 +24,14 @@
             "scaleInEditor": 1
         },
         "maps/level1.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                5
+            ],
+            "scale": 0.75,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 405.33333333333337,
-                "y": 380.6666666666667
+                "x": 581.3333333333333,
+                "y": 298.66666666666663
             }
         },
         "maps/level1.tmx#Objects": {
@@ -64,14 +71,19 @@
         "objects/reactor.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "tilemaps/Objects.tsx": {
+            "dynamicWrapping": true
         }
     },
     "frame.defaultDuration": 100,
-    "last.exportedFilePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/maps",
+    "last.exportedFilePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/maps/islands",
+    "last.externalTilesetPath": "C:/Users/Onno/Sites/game1/game/resources/tiled/tilemaps",
     "last.imagePath": "C:/Users/Onno/Sites/game1/game/resources/objects",
     "last.objectTemplatePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/objects",
     "map.lastUsedExportFilter": "Lua files (*.lua)",
     "map.lastUsedFormat": "tmx",
+    "map.width": 20,
     "openFiles": [
         "maps/level1.tmx"
     ],

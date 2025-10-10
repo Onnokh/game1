@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="45" height="25" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="48">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="45" height="25" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="50">
  <editorsettings>
   <export target="level1.lua" format="lua"/>
  </editorsettings>
@@ -9,18 +9,8 @@
  <tileset firstgid="65" name="TX Tileset Wall" tilewidth="32" tileheight="32" tilecount="256" columns="16">
   <image source="../../tileset/TX Tileset Wall.png" width="512" height="512"/>
  </tileset>
- <tileset firstgid="321" name="Objects" tilewidth="96" tileheight="96" tilecount="2" columns="0">
-  <grid orientation="orthogonal" width="32" height="32"/>
-  <tile id="1">
-   <image source="../../reactor/reactor-Sheet.png" width="96" height="96"/>
-  </tile>
-  <tile id="2">
-   <image source="../../objects/tree.png" width="48" height="96"/>
-  </tile>
- </tileset>
- <tileset firstgid="324" name="test" tilewidth="32" tileheight="32" tilecount="225" columns="15">
-  <image source="../../world.png" width="480" height="480"/>
- </tileset>
+ <tileset firstgid="321" source="../tilemaps/Objects.tsx"/>
+ <tileset firstgid="324" source="../tilemaps/test.tsx"/>
  <layer id="1" name="Tile Layer 1" width="45" height="25" opacity="0.99">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -57,7 +47,7 @@
   <object id="37" name="Tree" gid="323" x="417.364" y="484.151" width="48" height="96"/>
   <object id="38" name="Tree" gid="323" x="528.5" y="168" width="48" height="96"/>
   <object id="39" name="Tree" gid="323" x="477.667" y="331" width="48" height="96"/>
-  <object id="40" name="Tree" gid="323" x="704" y="250.5" width="48" height="96"/>
+  <object id="40" name="Tree" gid="323" x="856" y="298.5" width="48" height="96"/>
   <object id="41" name="Tree" gid="323" x="758.5" y="298.833" width="48" height="96"/>
   <object id="42" name="Tree" gid="323" x="526" y="574" width="48" height="96"/>
   <object id="43" name="Tree" gid="323" x="354.667" y="567.333" width="48" height="96"/>
