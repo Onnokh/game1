@@ -27,6 +27,12 @@ function OxygenSystem:init()
     self.snapDuration = 0.15 -- Duration of snap animation in seconds
     self.snapStartPos = {x = 0, y = 0} -- Where the snap animation starts from
     self.snapEndPos = {x = 0, y = 0} -- Where it snaps to (reactor)
+
+    -- Liquid flow effect
+    self.flowPulses = {} -- Array of pulses traveling along the line
+    self.flowTimer = 0 -- Time until next pulse
+    self.flowInterval = 0.2 -- Time between pulses (seconds)
+    self.flowSpeed = .1 -- Speed of pulse travel (0 to 1 per second)
 end
 
 ---Update all entities with Position and Oxygen components
@@ -39,6 +45,10 @@ function OxygenSystem:update(dt)
         self.snapDuration = 0.15
         self.snapStartPos = {x = 0, y = 0}
         self.snapEndPos = {x = 0, y = 0}
+        self.flowPulses = {} -- Array of pulses traveling along the line
+        self.flowTimer = 0 -- Time until next pulse
+        self.flowInterval = .5 -- Time between pulses (seconds)
+        self.flowSpeed = 1.2 -- Speed of pulse travel (0 to 1 per second)
     end
 
     -- Update snap animation timer
@@ -47,6 +57,29 @@ function OxygenSystem:update(dt)
         if self.snapTimer < 0 then
             self.snapTimer = 0
         end
+    end
+
+    -- Update liquid flow effect (only when tether is connected)
+    if self.tetherWasConnected then
+        -- Update flow timer and spawn new pulses
+        self.flowTimer = self.flowTimer + dt
+        if self.flowTimer >= self.flowInterval then
+            self.flowTimer = self.flowTimer - self.flowInterval
+            table.insert(self.flowPulses, 0) -- Start at position 0 (reactor end)
+        end
+
+        -- Update existing pulses
+        for i = #self.flowPulses, 1, -1 do
+            self.flowPulses[i] = self.flowPulses[i] + dt * self.flowSpeed
+            -- Remove pulses that have reached the end
+            if self.flowPulses[i] > 1 then
+                table.remove(self.flowPulses, i)
+            end
+        end
+    else
+        -- Clear pulses when disconnected
+        self.flowPulses = {}
+        self.flowTimer = 0
     end
 
     -- Get current phase from GameState
@@ -318,8 +351,45 @@ function OxygenSystem:drawTether()
 
         -- Draw the elastic tether line on top
         love.graphics.setLineWidth(2)
-        love.graphics.setColor(0.8, 0.8, 1.0, 1) -- Cyan/light blue matching safe zone
+        love.graphics.setColor(0.8, 1.0, 1.0, 0.9) -- Cyan/light blue matching safe zone
         love.graphics.line(points)
+
+        -- Draw liquid flow pulses as ovals
+        for _, pulsePos in ipairs(self.flowPulses) do
+            -- Calculate position along the Bezier curve
+            local t = pulsePos
+            local pulseX = (1 - t) * (1 - t) * reactorAttachX +
+                          2 * (1 - t) * t * sagMidX +
+                          t * t * playerAttachX
+            local pulseY = (1 - t) * (1 - t) * reactorAttachY +
+                          2 * (1 - t) * t * sagMidY +
+                          t * t * playerAttachY
+
+            -- Calculate the direction/angle of the line at this point for oval orientation
+            -- Get tangent by differentiating the Bezier curve
+            local epsilon = 0.001
+            local t_next = math.min(1, t + epsilon)
+            local nextX = (1 - t_next) * (1 - t_next) * reactorAttachX +
+                         2 * (1 - t_next) * t_next * sagMidX +
+                         t_next * t_next * playerAttachX
+            local nextY = (1 - t_next) * (1 - t_next) * reactorAttachY +
+                         2 * (1 - t_next) * t_next * sagMidY +
+                         t_next * t_next * playerAttachY
+
+            -- Calculate angle of the line at this point
+            local angle = math.atan2(nextY - pulseY, nextX - pulseX)
+
+            -- Draw oval (ellipse) aligned with the curve direction
+            love.graphics.push()
+            love.graphics.translate(pulseX, pulseY)
+            love.graphics.rotate(angle)
+
+            -- Draw the oval pulse (elongated along the line direction)
+            love.graphics.setColor(0.8, 1.0, 1.0, 0.9) -- Bright white for the liquid
+            love.graphics.ellipse("fill", 0, 0, 6, 2) -- radiusX=8, radiusY=4 for oval shape
+
+            love.graphics.pop()
+        end
 
         -- Reset graphics state
         love.graphics.setColor(1, 1, 1, 1)
