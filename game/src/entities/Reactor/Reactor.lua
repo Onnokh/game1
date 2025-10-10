@@ -21,7 +21,7 @@ function Reactor.create(x, y, world, physicsWorld)
 
     local reactor = Entity.new()
     local position = Position.new(x, y, 0)
-    local spriteRenderer = SpriteRenderer.new(nil, 96, 96)
+    local spriteRenderer = SpriteRenderer.new('reactor-light', 96, 96)
     local animator = Animator.new({ sheet = "reactor", frames = {1}, fps = 4, loop = true })
     local health = Health.new(1000)
     local healthBar = HealthBar.new(48, 4, -6)
@@ -32,15 +32,28 @@ function Reactor.create(x, y, world, physicsWorld)
         collider:createCollider(physicsWorld, x, y)
     end
     local light = Light.new({
-        radius = 420,
+      {
+        radius = 140,
         r = 180,
         g = 220,
         b = 255,
-        a = 200,
+        a = 120,
+        offsetX = 20,
+        offsetY = 40,
         flicker = true,
-        flickerSpeed = 2.2,              -- slow breathing
-        flickerRadiusAmplitude = 20,     -- gentle size pulsing
-        flickerAlphaAmplitude = 25       -- gentle brightness pulsing
+        flickerRadiusAmplitude = 15,     -- gentle size pulsing
+    },
+    {
+      radius = 140,
+      r = 180,
+      g = 220,
+      b = 255,
+      a = 120,
+      offsetX = 76,
+      offsetY = 40,
+      flicker = true,
+      flickerRadiusAmplitude = 20,     -- gentle size pulsing
+  }
     })
 
     -- Create interactable component for reactor
@@ -56,8 +69,8 @@ function Reactor.create(x, y, world, physicsWorld)
     )
 
     reactor:addComponent("Position", position)
-    reactor:addComponent("SpriteRenderer", spriteRenderer)
     reactor:addComponent("Animator", animator)
+    reactor:addComponent("SpriteRenderer", spriteRenderer)
     reactor:addComponent("PathfindingCollision", collider)
     reactor:addComponent("Health", health)
     reactor:addComponent("HealthBar", healthBar)

@@ -31,8 +31,9 @@ end
 
 ---Draw all entities with Position and SpriteRenderer components
 function RenderSystem:draw()
+
     -- Draw oxygen safe zone at tile level (behind entities)
-    self:drawOxygenSafeZone()
+    -- self:drawOxygenSafeZone()
 
     -- Use the depth sorting utility for proper 2D layering
     local sortedEntities = DepthSorting.sortEntities(self.entities)
@@ -58,6 +59,9 @@ function RenderSystem:draw()
                 self:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
             else
                 -- Normal drawing without outline
+                local hasDrawnSomething = false
+
+                -- First, draw animation if it exists
                 if animator and animator.sheet then
                     local iffy = require("lib.iffy")
                     local current = animator:getCurrentFrame()
@@ -76,11 +80,26 @@ function RenderSystem:draw()
                         end
 
                         love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-                    else
-                        drawRectangle(x, y, spriteRenderer, isBullet)
+                        hasDrawnSomething = true
                     end
-                elseif spriteRenderer.sprite then
-                    -- Draw static sprite from SpriteRenderer.sprite (no animator needed)
+                end
+
+                -- Draw oxygen tether between animation and static sprite layers (only for reactor)
+                if entity:hasTag("Reactor") then
+                    -- Find OxygenSystem in the world and call its tether drawing method
+                    if self.world then
+                        for _, system in ipairs(self.world.systems) do
+                            -- Check if this system has the drawTether method (it's the OxygenSystem)
+                            if system.drawTether then
+                                system:drawTether()
+                                break
+                            end
+                        end
+                    end
+                end
+
+                -- Then, draw static sprite overlay if it exists (can be on top of animation)
+                if spriteRenderer.sprite then
                     local iffy = require("lib.iffy")
                     local spriteSheet = spriteRenderer.sprite
 
@@ -98,10 +117,12 @@ function RenderSystem:draw()
                         end
 
                         love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-                    else
-                        drawRectangle(x, y, spriteRenderer, isBullet)
+                        hasDrawnSomething = true
                     end
-                else
+                end
+
+                -- Fallback: draw rectangle if nothing was drawn
+                if not hasDrawnSomething then
                     drawRectangle(x, y, spriteRenderer, isBullet)
                 end
             end
@@ -176,7 +197,9 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
 
     -- Draw the sprite (shader will handle the outline effect)
     local isBullet = entity:hasTag("Bullet")
+    local hasDrawnSomething = false
 
+    -- First, draw animation if it exists
     if animator and animator.sheet then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
@@ -195,11 +218,12 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
             end
 
             love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-        else
-            drawRectangle(x, y, spriteRenderer, isBullet)
+            hasDrawnSomething = true
         end
-    elseif spriteRenderer.sprite then
-        -- Draw static sprite from SpriteRenderer.sprite (no animator needed)
+    end
+
+    -- Then, draw static sprite overlay if it exists
+    if spriteRenderer.sprite then
         local iffy = require("lib.iffy")
         local spriteSheet = spriteRenderer.sprite
 
@@ -217,11 +241,12 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
             end
 
             love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-        else
-            drawRectangle(x, y, spriteRenderer, isBullet)
+            hasDrawnSomething = true
         end
-    else
-      -- Fallback render a square (white default color)
+    end
+
+    -- Fallback: draw rectangle if nothing was drawn
+    if not hasDrawnSomething then
         drawRectangle(x, y, spriteRenderer, isBullet)
     end
 
@@ -267,7 +292,9 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
 
     -- Draw the sprite normally (shader will handle the flash effect)
     local isBullet = entity:hasTag("Bullet")
+    local hasDrawnSomething = false
 
+    -- First, draw animation if it exists
     if animator and animator.sheet then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
@@ -286,11 +313,12 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
             end
 
             love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-        else
-            drawRectangle(x, y, spriteRenderer, isBullet)
+            hasDrawnSomething = true
         end
-    elseif spriteRenderer.sprite then
-        -- Draw static sprite from SpriteRenderer.sprite (no animator needed)
+    end
+
+    -- Then, draw static sprite overlay if it exists
+    if spriteRenderer.sprite then
         local iffy = require("lib.iffy")
         local spriteSheet = spriteRenderer.sprite
 
@@ -308,10 +336,12 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
             end
 
             love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-        else
-            drawRectangle(x, y, spriteRenderer, isBullet)
+            hasDrawnSomething = true
         end
-    else
+    end
+
+    -- Fallback: draw rectangle if nothing was drawn
+    if not hasDrawnSomething then
         drawRectangle(x, y, spriteRenderer, isBullet)
     end
 
@@ -324,6 +354,7 @@ end
 
 
 ---Draw oxygen safe zone around the reactor
+--- This can be removed when we implement the tethered oxygen system
 function RenderSystem:drawOxygenSafeZone()
     -- Get world reference
     local world = nil
