@@ -119,9 +119,13 @@ function BulletSystem:removeBullet(bulletEntity, physicsCollision)
 
     -- Remove light if attached
     local lightComp = bulletEntity:getComponent("Light")
-    if lightComp and lightComp.lightRef then
-        lightComp.lightRef:Remove()
-        lightComp.lightRef = nil
+    if lightComp and lightComp.lights then
+        for i, lightConfig in ipairs(lightComp.lights) do
+            if lightConfig.lightRef then
+                lightConfig.lightRef:Remove()
+                lightConfig.lightRef = nil
+            end
+        end
     end
 
     -- Remove entity from the world

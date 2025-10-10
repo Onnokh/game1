@@ -10,18 +10,17 @@ function LightSystem:setWorld(world)
     self.lightWorld = world and world.lightWorld or nil
 end
 
----Ensure a light exists on the entity
----@param entity Entity
-local function ensureLightCreated(self, entity)
-    if not entity or not self or not self.lightWorld then return end
-    local lightComp = entity:getComponent("Light")
-    if not lightComp or lightComp.enabled == false then return end
-    if lightComp.lightRef then return end
+---Ensure a light exists for a specific light config
+---@param lightConfig table Single light configuration from the lights array
+local function ensureLightCreated(self, lightConfig)
+    if not self or not self.lightWorld then return end
+    if not lightConfig or lightConfig.enabled == false then return end
+    if lightConfig.lightRef then return end
 
     local Light = require("shadows.Light")
-    local light = Light:new(self.lightWorld, lightComp.radius)
-    light:SetColor(lightComp.r, lightComp.g, lightComp.b, lightComp.a)
-    lightComp.lightRef = light
+    local light = Light:new(self.lightWorld, lightConfig.radius)
+    light:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, lightConfig.a)
+    lightConfig.lightRef = light
 end
 
 ---Update
@@ -33,45 +32,47 @@ function LightSystem:update(dt)
         local lightComp = entity:getComponent("Light")
         local spriteRenderer = entity:getComponent("SpriteRenderer")
 
-        if position and lightComp then
-            -- If light is disabled and has a lightRef, remove it
-            if lightComp.enabled == false and lightComp.lightRef then
-                lightComp.lightRef:Remove()
-                lightComp.lightRef = nil
-                print("Light removed from world")
-            elseif lightComp.enabled ~= false then
-                ensureLightCreated(self, entity)
-                if lightComp.lightRef then
-                    local defaultOX = spriteRenderer and (spriteRenderer.width or 0) / 2 or 0
-                    local defaultOY = spriteRenderer and (spriteRenderer.height or 0) / 2 or 0
-                    local x = position.x + (lightComp.offsetX ~= nil and lightComp.offsetX or defaultOX)
-                    local y = position.y + (lightComp.offsetY ~= nil and lightComp.offsetY or defaultOY)
-                    lightComp.lightRef:SetPosition(x, y, 1)
+        if position and lightComp and lightComp.lights then
+            -- Iterate through all lights in the component
+            for i, lightConfig in ipairs(lightComp.lights) do
+                -- If light is disabled and has a lightRef, remove it
+                if lightConfig.enabled == false and lightConfig.lightRef then
+                    lightConfig.lightRef:Remove()
+                    lightConfig.lightRef = nil
+                elseif lightConfig.enabled ~= false then
+                    ensureLightCreated(self, lightConfig)
+                    if lightConfig.lightRef then
+                        local defaultOX = spriteRenderer and (spriteRenderer.width or 0) / 2 or 0
+                        local defaultOY = spriteRenderer and (spriteRenderer.height or 0) / 2 or 0
+                        local x = position.x + (lightConfig.offsetX ~= nil and lightConfig.offsetX or defaultOX)
+                        local y = position.y + (lightConfig.offsetY ~= nil and lightConfig.offsetY or defaultOY)
+                        lightConfig.lightRef:SetPosition(x, y, 1)
 
-                    -- Apply flicker if enabled
-                    if lightComp.flicker then
-                        local t = love.timer.getTime()
-                        local speed = lightComp.flickerSpeed or 8
-                        local rAmp = lightComp.flickerRadiusAmplitude or 10
-                        local aAmp = lightComp.flickerAlphaAmplitude or 20
-                        local baseRadius = lightComp.radius or 400
-                        local baseA = lightComp.a or 255
+                        -- Apply flicker if enabled
+                        if lightConfig.flicker then
+                            local t = love.timer.getTime()
+                            local speed = lightConfig.flickerSpeed or 8
+                            local rAmp = lightConfig.flickerRadiusAmplitude or 10
+                            local aAmp = lightConfig.flickerAlphaAmplitude or 20
+                            local baseRadius = lightConfig.radius or 400
+                            local baseA = lightConfig.a or 255
 
-                        -- Simple layered noise using sines for organic flicker
-                        local n = math.sin(t * speed) * 0.6 + math.sin(t * (speed * 1.7) + 1.3) * 0.4
-                        local radius = baseRadius + n * rAmp
-                        local alpha = math.max(0, math.min(255, baseA + n * aAmp))
+                            -- Simple layered noise using sines for organic flicker
+                            local n = math.sin(t * speed) * 0.6 + math.sin(t * (speed * 1.7) + 1.3) * 0.4
+                            local radius = baseRadius + n * rAmp
+                            local alpha = math.max(0, math.min(255, baseA + n * aAmp))
 
-                        lightComp.lightRef:SetRadius(radius)
-                        lightComp.lightRef:SetColor(lightComp.r, lightComp.g, lightComp.b, alpha)
-                    else
-                        -- Ensure base properties when not flickering
-                        if lightComp.lightRef.GetRadius and lightComp.lightRef:GetRadius() ~= lightComp.radius then
-                            lightComp.lightRef:SetRadius(lightComp.radius)
-                        end
-                        local cr, cg, cb, ca = lightComp.lightRef:GetColor()
-                        if cr ~= lightComp.r or cg ~= lightComp.g or cb ~= lightComp.b or ca ~= lightComp.a then
-                            lightComp.lightRef:SetColor(lightComp.r, lightComp.g, lightComp.b, lightComp.a)
+                            lightConfig.lightRef:SetRadius(radius)
+                            lightConfig.lightRef:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, alpha)
+                        else
+                            -- Ensure base properties when not flickering
+                            if lightConfig.lightRef.GetRadius and lightConfig.lightRef:GetRadius() ~= lightConfig.radius then
+                                lightConfig.lightRef:SetRadius(lightConfig.radius)
+                            end
+                            local cr, cg, cb, ca = lightConfig.lightRef:GetColor()
+                            if cr ~= lightConfig.r or cg ~= lightConfig.g or cb ~= lightConfig.b or ca ~= lightConfig.a then
+                                lightConfig.lightRef:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, lightConfig.a)
+                            end
                         end
                     end
                 end
@@ -85,9 +86,13 @@ function LightSystem:cleanup()
     if not self or not self.entities then return end
     for _, entity in ipairs(self.entities) do
         local lightComp = entity:getComponent("Light")
-        if lightComp and lightComp.lightRef then
-            lightComp.lightRef:Remove()
-            lightComp.lightRef = nil
+        if lightComp and lightComp.lights then
+            for i, lightConfig in ipairs(lightComp.lights) do
+                if lightConfig.lightRef then
+                    lightConfig.lightRef:Remove()
+                    lightConfig.lightRef = nil
+                end
+            end
         end
     end
 end

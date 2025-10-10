@@ -80,11 +80,13 @@ end
 ---@param entity Entity The reactor entity that died
 function Reactor.handleDeath(entity)
     print("Reactor has died - turning off light")
-    -- Turn off the reactor's light
+    -- Turn off the reactor's light(s)
     local light = entity:getComponent("Light")
-    if light then
-        light.enabled = false
-        print("Reactor light disabled")
+    if light and light.lights then
+        for i, lightConfig in ipairs(light.lights) do
+            lightConfig.enabled = false
+        end
+        print("Reactor light(s) disabled")
     end
 end
 
