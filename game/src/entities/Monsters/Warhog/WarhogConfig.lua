@@ -59,6 +59,9 @@ WarhogConfig.SPRITE_HEIGHT = 64
 WarhogConfig.DRAW_WIDTH = 34
 WarhogConfig.DRAW_HEIGHT = 16
 
+-- Pathfinding collision offset
+WarhogConfig.PATHFINDING_OFFSET_Y = WarhogConfig.SPRITE_HEIGHT - WarhogConfig.COLLIDER_HEIGHT - 18
+
 -- Combat settings
 WarhogConfig.HEALTH = 50
 WarhogConfig.MAX_HEALTH = 50

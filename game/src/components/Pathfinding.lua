@@ -13,7 +13,6 @@ local GameConstants = require("src.constants")
 ---@field lastWanderTime number Time since last wander
 ---@field wanderCooldown number Cooldown between wanders
 ---@field isWandering boolean Whether currently wandering
----@field minWanderDistance number Minimum distance for new wander targets
 ---@field pathfinder table|nil Jumper pathfinder object
 ---@field grid table|nil Jumper grid object
 ---@field clearance number Clearance value for pathfinding
@@ -38,7 +37,6 @@ function Pathfinding.new(spawnX, spawnY, wanderRadius)
     self.lastWanderTime = 0
     self.wanderCooldown = 2.0 -- Wait 5 seconds between wandering
     self.isWandering = false
-    self.minWanderDistance = 1.0 -- Minimum distance in tiles for new destinations
     self.pathfinder = nil
     self.grid = nil
     return self
@@ -57,50 +55,16 @@ end
 ---Find a random wander target within the radius
 ---@param currentX number Current X position
 ---@param currentY number Current Y position
----@param tileSize number Size of each tile in pixels
----@return number targetX
----@return number targetY
+---@return number|nil targetX
+---@return number|nil targetY
 function Pathfinding:findWanderTarget(currentX, currentY)
-    local tileSize = GameConstants.TILE_SIZE
+    local EntityUtils = require("src.utils.entities")
 
-    -- Convert spawn position and current position to grid coordinates
+    -- Convert spawn position to grid coordinates
     local spawnGridX, spawnGridY = CoordinateUtils.worldToGrid(self.spawnX, self.spawnY)
-    local currentGridX, currentGridY = CoordinateUtils.worldToGrid(currentX, currentY)
 
-    -- Calculate grid radius (in tiles)
-    local gridRadius = self.wanderRadius
-
-    -- Collect all valid walkable tiles within the radius
-    local validTiles = {}
-
-    for gx = spawnGridX - gridRadius, spawnGridX + gridRadius do
-        for gy = spawnGridY - gridRadius, spawnGridY + gridRadius do
-            -- Check if within bounds
-            if gx >= 1 and gx <= self.grid:getWidth() and
-               gy >= 1 and gy <= self.grid:getHeight() then
-
-                -- Check if within circular radius from spawn
-                local dx = gx - spawnGridX
-                local dy = gy - spawnGridY
-                local distFromSpawn = math.sqrt(dx * dx + dy * dy)
-
-                if distFromSpawn <= gridRadius then
-                    -- Check if far enough from current position
-                    local dcx = gx - currentGridX
-                    local dcy = gy - currentGridY
-                    local distFromCurrent = math.sqrt(dcx * dcx + dcy * dcy)
-
-                    if distFromCurrent >= self.minWanderDistance then
-                        -- Check if the tile is walkable with required clearance
-                        -- The third parameter is walkable value (1), fourth is clearance
-                        if self.grid:isWalkableAt(gx, gy, 1, self.clearance) then
-                            table.insert(validTiles, {x = gx, y = gy})
-                        end
-                    end
-                end
-            end
-        end
-    end
+    -- Find all walkable tiles in radius
+    local validTiles = EntityUtils.findValidTilesInRadius(spawnGridX, spawnGridY, self.wanderRadius)
 
     -- If no valid tiles found, return nil
     if #validTiles == 0 then
@@ -164,9 +128,8 @@ end
 ---@param currentY number Current Y position (world pixels)
 ---@param targetX number Target X position (world pixels)
 ---@param targetY number Target Y position (world pixels)
----@param tileSize number Tile size in pixels
 ---@return boolean success
-function Pathfinding:startPathTo(currentX, currentY, targetX, targetY, tileSize)
+function Pathfinding:startPathTo(currentX, currentY, targetX, targetY)
     if not self.pathfinder or not self.grid then
         return false
     end
@@ -179,8 +142,8 @@ function Pathfinding:startPathTo(currentX, currentY, targetX, targetY, tileSize)
         return false
     end
 
-    local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY, tileSize)
-    local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY, tileSize)
+    local startGridX, startGridY = CoordinateUtils.worldToGrid(currentX, currentY)
+    local targetGridX, targetGridY = CoordinateUtils.worldToGrid(targetX, targetY)
 
     local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
     if path and path._nodes and #path._nodes > 0 then
@@ -198,7 +161,6 @@ end
 ---Start a new wander to a random target
 ---@param currentX number Current X position
 ---@param currentY number Current Y position
----@param tileSize number Size of each tile
 ---@return boolean success
 function Pathfinding:startWander(currentX, currentY)
 

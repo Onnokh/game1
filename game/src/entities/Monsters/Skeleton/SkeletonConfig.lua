@@ -57,6 +57,9 @@ SkeletonConfig.SPRITE_HEIGHT = 32
 SkeletonConfig.DRAW_WIDTH = 12
 SkeletonConfig.DRAW_HEIGHT = 22
 
+-- Pathfinding collision offset
+SkeletonConfig.PATHFINDING_OFFSET_Y = SkeletonConfig.SPRITE_HEIGHT - SkeletonConfig.COLLIDER_HEIGHT - 8
+
 -- Combat settings
 SkeletonConfig.HEALTH = 50
 SkeletonConfig.MAX_HEALTH = 50

@@ -109,7 +109,6 @@ function Slime.create(x, y, world, physicsWorld)
         physicsWorld = physicsWorld,
         config = SlimeConfig,
         tag = "Slime",
-        pathfindingOffsetY = SlimeConfig.SPRITE_HEIGHT - SlimeConfig.COLLIDER_HEIGHT - 24,
         physicsOffsetX = SlimeConfig.SPRITE_WIDTH / 2 - SlimeConfig.DRAW_WIDTH / 2,
         physicsOffsetY = SlimeConfig.SPRITE_HEIGHT / 2 - SlimeConfig.DRAW_HEIGHT / 2,
         -- Use custom states for ranged behavior and jump controller

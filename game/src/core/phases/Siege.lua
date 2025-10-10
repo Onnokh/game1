@@ -19,8 +19,7 @@ function Siege.onEnter(gameState)
 
     for i = 1, numEnemies do
       -- Spawn in the bottom half of the map
-      local minY = math.floor(mapData.height / 2)
-      local x, y = EntityUtils.findValidSpawnPosition(1, mapData.width, minY, mapData.height)
+      local x, y = EntityUtils.findValidSpawnPosition(1, mapData.width, 1, mapData.height)
 
       if x and y then
         -- random enemy type

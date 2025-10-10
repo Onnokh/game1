@@ -18,7 +18,6 @@ function Warhog.create(x, y, world, physicsWorld)
         physicsWorld = physicsWorld,
         config = WarhogConfig,
         tag = "Warhog",
-        pathfindingOffsetY = WarhogConfig.SPRITE_HEIGHT - WarhogConfig.COLLIDER_HEIGHT - 18,
         physicsOffsetX = WarhogConfig.SPRITE_WIDTH / 2 - WarhogConfig.DRAW_WIDTH / 2 - 2,
         physicsOffsetY = WarhogConfig.SPRITE_HEIGHT / 2 - WarhogConfig.DRAW_HEIGHT / 2 + 8
     })

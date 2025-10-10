@@ -41,7 +41,7 @@ function MonsterFactory.create(options)
 
     -- Optional overrides
     local pathfindingOffsetX = options.pathfindingOffsetX
-    local pathfindingOffsetY = options.pathfindingOffsetY
+    local pathfindingOffsetY = options.pathfindingOffsetY or config.PATHFINDING_OFFSET_Y
     local physicsOffsetX = options.physicsOffsetX
     local physicsOffsetY = options.physicsOffsetY
 

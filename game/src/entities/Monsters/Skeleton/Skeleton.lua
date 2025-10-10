@@ -20,7 +20,6 @@ function Skeleton.create(x, y, world, physicsWorld)
         physicsWorld = physicsWorld,
         config = SkeletonConfig,
         tag = "Skeleton",
-        pathfindingOffsetY = SkeletonConfig.SPRITE_HEIGHT - SkeletonConfig.COLLIDER_HEIGHT - 8,
 
         -- Use custom states for ranged behavior
         customStates = {

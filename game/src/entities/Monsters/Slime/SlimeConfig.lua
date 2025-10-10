@@ -64,6 +64,9 @@ SlimeConfig.SPRITE_HEIGHT = 64
 SlimeConfig.DRAW_WIDTH = 16
 SlimeConfig.DRAW_HEIGHT = 16
 
+-- Pathfinding collision offset
+SlimeConfig.PATHFINDING_OFFSET_Y = SlimeConfig.SPRITE_HEIGHT - SlimeConfig.COLLIDER_HEIGHT - 24
+
 -- Combat settings
 SlimeConfig.HEALTH = 40
 SlimeConfig.MAX_HEALTH = 40

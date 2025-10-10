@@ -37,9 +37,6 @@ local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local ShaderManager = require("src.utils.ShaderManager")
 local Player = require("src.entities.Player.Player")
-local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
-local Slime = require("src.entities.Monsters.Slime.Slime")
-local Warhog = require("src.entities.Monsters.Warhog.Warhog")
 local Reactor = require("src.entities.Reactor.Reactor")
 
 -- Use constants from the global constants module
@@ -291,31 +288,22 @@ function GameScene.getMapData()
 end
 
 -- Add a new monster at the specified position
+-- x, y should be the desired PathfindingCollision center position
 function GameScene.addMonster(x, y, type)
 
   if not ecsWorld or not physicsWorld then
     return nil
   end
 
-  if type == "skeleton" then
-    local skeleton = Skeleton.create(x, y, ecsWorld, physicsWorld)
-    table.insert(monsters, skeleton)
-    print("Added skeleton at:", x, y, "Total monsters:", #monsters)
-    return skeleton
+  local EntityUtils = require("src.utils.entities")
+  local monster = EntityUtils.spawnMonster(x, y, type, ecsWorld, physicsWorld)
+
+  if monster then
+    table.insert(monsters, monster)
+    print("Added", type, "at:", x, y, "Total monsters:", #monsters)
   end
-  if type == "slime" then
-    local slime = Slime.create(x, y, ecsWorld, physicsWorld)
-    table.insert(monsters, slime)
-    print("Added slime at:", x, y, "Total monsters:", #monsters)
-    return slime
-  end
-  if type == "warhog" then
-    local warhog = Warhog.create(x, y, ecsWorld, physicsWorld)
-    table.insert(monsters, warhog)
-    print("Added monster at:", x, y, "Total monsters:", #monsters)
-    return warhog
-  end
-  return nil
+
+  return monster
 end
 
 -- Handle mouse press for debugging

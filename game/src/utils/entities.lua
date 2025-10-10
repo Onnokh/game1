@@ -2,6 +2,14 @@
 ---Utility functions for working with entities
 local EntityUtils = {}
 
+-- Monster requires
+local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
+local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
+local Slime = require("src.entities.Monsters.Slime.Slime")
+local SlimeConfig = require("src.entities.Monsters.Slime.SlimeConfig")
+local Warhog = require("src.entities.Monsters.Warhog.Warhog")
+local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
+
 ---Check whether an entity is the Player
 ---@param entity Entity|nil
 ---@return boolean
@@ -103,6 +111,80 @@ function EntityUtils.getClosestPointOnTarget(fromX, fromY, target)
     return targetPos.x, targetPos.y
 end
 
+---Find valid walkable tiles in a rectangle area
+---@param minX number Min X in tiles
+---@param maxX number Max X in tiles
+---@param minY number Min Y in tiles
+---@param maxY number Max Y in tiles
+---@return table Array of valid tiles {x=gridX, y=gridY}
+function EntityUtils.findValidTilesInRectangle(minX, maxX, minY, maxY)
+    local GameScene = require("src.scenes.game")
+
+    local mapData = GameScene.getMapData()
+    if not mapData or not mapData.collisionGrid then
+        return {}
+    end
+
+    local validTiles = {}
+
+    for x = minX, maxX do
+        for y = minY, maxY do
+            if mapData.collisionGrid[x] and mapData.collisionGrid[x][y] then
+                local tileData = mapData.collisionGrid[x][y]
+                if tileData.walkable then
+                    table.insert(validTiles, {x = x, y = y})
+                end
+            end
+        end
+    end
+
+    return validTiles
+end
+
+---Find valid walkable tiles in a circular radius
+---@param centerX number Center X in tiles
+---@param centerY number Center Y in tiles
+---@param radius number Radius in tiles
+---@return table Array of valid tiles {x=gridX, y=gridY}
+function EntityUtils.findValidTilesInRadius(centerX, centerY, radius)
+    local GameScene = require("src.scenes.game")
+
+    local mapData = GameScene.getMapData()
+    if not mapData or not mapData.collisionGrid then
+        return {}
+    end
+
+    local validTiles = {}
+
+    -- Calculate bounding box
+    local minX = math.max(1, math.floor(centerX - radius))
+    local maxX = math.ceil(centerX + radius)
+    local minY = math.max(1, math.floor(centerY - radius))
+    local maxY = math.ceil(centerY + radius)
+
+    for x = minX, maxX do
+        for y = minY, maxY do
+            if mapData.collisionGrid[x] and mapData.collisionGrid[x][y] then
+                local tileData = mapData.collisionGrid[x][y]
+
+                -- Check if walkable
+                if tileData.walkable then
+                    -- Check if within circular radius
+                    local dx = x - centerX
+                    local dy = y - centerY
+                    local dist = math.sqrt(dx * dx + dy * dy)
+
+                    if dist <= radius then
+                        table.insert(validTiles, {x = x, y = y})
+                    end
+                end
+            end
+        end
+    end
+
+    return validTiles
+end
+
 ---Find a valid walkable spawn position in world coordinates
 ---@param minX number Min X in tiles
 ---@param maxX number Max X in tiles
@@ -112,26 +194,72 @@ end
 ---@return number|nil worldY
 function EntityUtils.findValidSpawnPosition(minX, maxX, minY, maxY)
     local CoordinateUtils = require("src.utils.coordinates")
-    local TiledMapLoader = require("src.utils.TiledMapLoader")
-    local GameScene = require("src.scenes.game")
 
-    local mapData = GameScene.getMapData()
-    if not mapData or not mapData.collisionGrid then
+    -- Find all valid tiles in rectangle
+    local validTiles = EntityUtils.findValidTilesInRectangle(minX, maxX, minY, maxY)
+
+    -- If no valid tiles found, return nil
+    if #validTiles == 0 then
         return nil, nil
     end
 
-    local maxAttempts = 5
+    -- Pick a random valid tile
+    local randomTile = validTiles[math.random(#validTiles)]
 
-    for i = 1, maxAttempts do
-        local tileX = math.random(minX, maxX)
-        local tileY = math.random(minY, maxY)
+    -- Convert to world coordinates (center of tile)
+    return CoordinateUtils.gridToWorld(randomTile.x, randomTile.y)
+end
 
-        if mapData.collisionGrid[tileX] and TiledMapLoader.isWalkable(mapData.collisionGrid[tileX][tileY]) then
-            return CoordinateUtils.gridToWorld(tileX, tileY)
-        end
+-- Monster factory registry
+local monsterFactories = {
+    skeleton = {
+        factory = Skeleton.create,
+        config = SkeletonConfig
+    },
+    slime = {
+        factory = Slime.create,
+        config = SlimeConfig
+    },
+    warhog = {
+        factory = Warhog.create,
+        config = WarhogConfig
+    }
+}
+
+---Spawn a monster at the specified position
+---@param x number PathfindingCollision center X position
+---@param y number PathfindingCollision center Y position
+---@param monsterType string Monster type (e.g., "skeleton", "slime", "warhog")
+---@param world World The ECS world
+---@param physicsWorld table The physics world
+---@return Entity|nil The created monster entity
+function EntityUtils.spawnMonster(x, y, monsterType, world, physicsWorld)
+    -- Get factory configuration
+    local factoryInfo = monsterFactories[monsterType]
+    if not factoryInfo then
+        print("ERROR: Unknown monster type:", monsterType)
+        return nil
     end
 
-    return nil, nil
+    -- Get config
+    local config = factoryInfo.config
+
+    -- Calculate sprite position from collision center
+    local spriteWidth = config.SPRITE_WIDTH
+    local spriteHeight = config.SPRITE_HEIGHT
+    local colliderWidth = config.COLLIDER_WIDTH
+    local colliderHeight = config.COLLIDER_HEIGHT
+
+    -- Get offsets from config (same as MonsterFactory)
+    local pfOffsetX = (spriteWidth - colliderWidth) / 2
+    local pfOffsetY = config.PATHFINDING_OFFSET_Y or (spriteHeight - colliderHeight - 8)
+
+    -- Sprite position = collision center - offset - half collider size
+    local spriteX = x - pfOffsetX - colliderWidth / 2
+    local spriteY = y - pfOffsetY - colliderHeight / 2
+
+    -- Create monster using factory
+    return factoryInfo.factory(spriteX, spriteY, world, physicsWorld)
 end
 
 return EntityUtils
