@@ -2,6 +2,7 @@ local System = require("src.core.System")
 local EntityUtils = require("src.utils.entities")
 local GameState = require("src.core.GameState")
 local ShaderManager = require("src.utils.ShaderManager")
+local GameController = require("src.core.GameController")
 
 ---@class AimLineRenderSystem : System
 ---Renders an aiming line for ranged weapons from player to mouse cursor
@@ -20,6 +21,11 @@ end
 
 ---Draw the aiming line
 function AimLineRenderSystem:draw()
+    -- Don't draw aiming line when game is over
+    if GameController.gameOver then
+        return
+    end
+
     -- Get the world reference
     local world = self.world
     if not world then
