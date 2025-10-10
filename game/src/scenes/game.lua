@@ -161,13 +161,16 @@ function GameScene.load()
   tileSize = mapData.tileSize
   world = mapData.collisionGrid
 
+  -- Store mapData in GameState for debugging
+  GameState.mapData = mapData
+
   -- Update camera bounds to match the loaded level
   local levelWidthPixels = worldWidth * tileSize
   local levelHeightPixels = worldHeight * tileSize
   GameState.updateCameraBounds(levelWidthPixels, levelHeightPixels)
 
   -- Create physics colliders for world borders
-  GameScene.createBorderColliders()
+  borderColliders = TiledMapLoader.createCollisionBodies(mapData, physicsWorld)
   GameScene.borderColliders = borderColliders
 
   -- Spawn entities from map objects using factory pattern
@@ -211,37 +214,6 @@ function GameScene.setAmbientColor(r, g, b, a, duration)
 end
 
 
--- Create static colliders for world border tiles
-function GameScene.createBorderColliders()
-  -- Clear existing border colliders
-  borderColliders = {}
-
-  -- Create colliders for wall tiles (tile type 3) and structure tiles (tile type 4)
-  for x = 1, worldWidth do
-    for y = 1, worldHeight do
-      if world[x][y] == 3 or world[x][y] == 4 then -- Wall or structure tiles
-        local tileX = (x - 1) * tileSize
-        local tileY = (y - 1) * tileSize
-
-        -- Create a rectangular collider for each wall/structure tile
-        if physicsWorld then
-          local body = love.physics.newBody(physicsWorld,
-            tileX + tileSize / 2, tileY + tileSize / 2, "static")
-          local shape = love.physics.newRectangleShape(tileSize, tileSize)
-          local fixture = love.physics.newFixture(body, shape)
-          fixture:setRestitution(0.1) -- Slight bounce
-          fixture:setFriction(0.8)    -- High friction
-
-          table.insert(borderColliders, {
-            body = body,
-            fixture = fixture,
-            shape = shape
-          })
-        end
-      end
-    end
-  end
-end
 
 -- Update the game scene
 function GameScene.update(dt, gameState)
@@ -315,11 +287,7 @@ end
 
 -- Get map data (collision grid and dimensions)
 function GameScene.getMapData()
-  return {
-    collisionGrid = world,
-    width = worldWidth,
-    height = worldHeight
-  }
+  return mapData
 end
 
 -- Add a new monster at the specified position

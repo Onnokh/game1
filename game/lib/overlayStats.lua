@@ -14,6 +14,8 @@ local overlayStats = {
   CONTROLLER_COOLDOWN = 0.2,
   -- Store active particle systems
   particleSystems = {},
+  -- Tile debugging
+  showTileDebug = false,
   renderInfo = {
     name = name,
     version = version,
@@ -716,6 +718,91 @@ end
 ---@param cameraY number Camera Y position (optional)
 ---@param cameraScale number Camera scale factor (optional)
 ---@return nil
+---Draw tile debug information
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale
+function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
+  -- Get map data from GameState
+  local GameState = require("src.core.GameState")
+  local TiledMapLoader = require("src.utils.TiledMapLoader")
+
+  if not GameState.mapData or not GameState.mapData.collisionGrid then
+    return
+  end
+
+  local mapData = GameState.mapData
+  local collisionGrid = mapData.collisionGrid
+  local tileSize = mapData.tileSize
+  local scale = cameraScale or 1.0
+  local screenWidth, screenHeight = love.graphics.getDimensions()
+  local halfW, halfH = screenWidth / 2, screenHeight / 2
+
+  -- Use main font for better readability (same as pathfinding debug)
+  if overlayFontMain then
+    love.graphics.setFont(overlayFontMain)
+  end
+
+  -- Calculate visible tile range in world coordinates
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
+  local bottomRightX = cameraX + (halfW / scale)
+  local bottomRightY = cameraY + (halfH / scale)
+
+  -- Convert screen bounds to grid coordinates (same as CoordinateUtils.worldToGrid)
+  local startTileX = math.max(1, math.floor(topLeftX / tileSize) + 1)
+  local endTileX = math.min(mapData.width, math.ceil(bottomRightX / tileSize))
+  local startTileY = math.max(1, math.floor(topLeftY / tileSize) + 1)
+  local endTileY = math.min(mapData.height, math.ceil(bottomRightY / tileSize))
+
+  -- Draw tile debug info for visible tiles
+  for x = startTileX, endTileX do
+    for y = startTileY, endTileY do
+      if collisionGrid[x] and collisionGrid[x][y] then
+        -- Convert grid coordinates to world coordinates (tile top-left corner)
+        local worldX = (x - 1) * tileSize
+        local worldY = (y - 1) * tileSize
+
+        -- Convert to screen coordinates (same as pathfinding debug)
+        local screenX = halfW + (worldX - cameraX) * scale
+        local screenY = halfH + (worldY - cameraY) * scale
+
+        -- Only draw if tile is visible on screen
+        if screenX >= -tileSize * scale and screenX <= screenWidth + tileSize * scale and
+           screenY >= -tileSize * scale and screenY <= screenHeight + tileSize * scale then
+
+          local tileData = collisionGrid[x][y]
+          local gid = tileData.gid
+          local tileType = tileData.type
+          local tileTypeName = TiledMapLoader.getTileTypeName(tileType)
+
+          -- Set color based on tile type
+          if tileType == TiledMapLoader.TILE_WORLDEDGE then
+            love.graphics.setColor(1, 0.5, 0.5, 0.8) -- Red for collision
+          elseif tileType == TiledMapLoader.TILE_EDGE then
+            love.graphics.setColor(0.5, 0.5, 1, 0.8) -- Blue for edge
+          else
+            love.graphics.setColor(0.5, 1, 0.5, 0.8) -- Green for grass
+          end
+
+          -- Draw tile border in screen coordinates
+          love.graphics.rectangle("line", screenX, screenY, tileSize * scale, tileSize * scale)
+
+          -- Draw GID and type text
+          love.graphics.setColor(1, 1, 1, 1)
+
+          -- Draw GID at top-left of tile
+          love.graphics.print(tostring(gid), screenX + 2, screenY + 2)
+
+          -- Draw tile type at bottom-right of tile
+          local textWidth = overlayFontMain:getWidth(tileTypeName)
+          love.graphics.print(tileTypeName, screenX + tileSize * scale - textWidth - 2, screenY + tileSize * scale - 14)
+        end
+      end
+    end
+  end
+end
+
 function overlayStats.draw(cameraX, cameraY, cameraScale)
   if not overlayStats.isActive then
     return
@@ -746,6 +833,10 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
     overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
     -- Draw entity state overlays in world space
     overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
+    -- Draw tile debug info in world space
+    if overlayStats.showTileDebug then
+      overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
+    end
   end
 
 
@@ -937,6 +1028,8 @@ function overlayStats.handleKeyboard(key)
     overlayStats.toggleOverlay()
   elseif key == "f5" then
     overlayStats.toggleVSync()
+  elseif key == "f4" then
+    overlayStats.showTileDebug = not overlayStats.showTileDebug
   end
 end
 

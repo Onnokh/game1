@@ -48,9 +48,11 @@
             "scaleInEditor": 1
         },
         "maps/level1.tmx#test": {
+            "dynamicWrapping": false,
             "scaleInDock": 1
         },
         "maps/test.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
@@ -65,7 +67,7 @@
         }
     },
     "frame.defaultDuration": 100,
-    "last.exportedFilePath": "C:/Sites/game1/game/resources/tiled/maps",
+    "last.exportedFilePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/maps",
     "last.imagePath": "C:/Sites/game1/game/resources",
     "last.objectTemplatePath": "C:/Users/Onno/Sites/game1/game/resources/tiled/objects",
     "map.lastUsedExportFilter": "Lua files (*.lua)",

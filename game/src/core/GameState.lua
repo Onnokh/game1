@@ -44,7 +44,8 @@ local GameState = {
   player = {},
   coins = {},
   phase = nil,
-  day = nil
+  day = nil,
+  mapData = nil -- Map data for debugging
 }
 
 ---Initialize the game state
