@@ -1,8 +1,8 @@
 {
     "activeFile": "maps/level1.tmx",
     "expandedProjectPaths": [
-        ".",
         "objects",
+        ".",
         "maps"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
@@ -20,11 +20,11 @@
             "scaleInEditor": 1
         },
         "maps/level1.tmx": {
-            "scale": 1,
-            "selectedLayer": 0,
+            "scale": 3,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 346,
-                "y": 275
+                "x": 408,
+                "y": 268
             }
         },
         "maps/level1.tmx#Objects": {
@@ -73,13 +73,12 @@
     "map.lastUsedExportFilter": "Lua files (*.lua)",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
-        "maps/level1.tmx",
-        "maps/test.tsx"
+        "maps/level1.tmx"
     ],
     "project": "game1.tiled-project",
     "recentFiles": [
-        "maps/test.tsx",
         "maps/level1.tmx",
+        "maps/test.tsx",
         "Objects.tsx",
         "Reactor.tsx",
         "objects/Reactor.tsx",

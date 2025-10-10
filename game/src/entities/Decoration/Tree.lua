@@ -17,13 +17,13 @@ function Tree.create(x, y, world, physicsWorld)
 
     local tree = Entity.new()
     local position = Position.new(x, y, 0)
-    local spriteRenderer = SpriteRenderer.new('tree', 48, 80)
-    local pathfindingCollision = PathfindingCollision.new(12, 12, "static", 18, 68, "circle")
+    local spriteRenderer = SpriteRenderer.new('tree', 48, 96)
+    local pathfindingCollision = PathfindingCollision.new(12, 12, "static", 18, 84, "circle")
 
     tree:addComponent("Position", position)
     tree:addComponent("SpriteRenderer", spriteRenderer)
     tree:addComponent("PathfindingCollision", pathfindingCollision)
-    tree:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = 1, heightFactor = 1, offsetY = -4 }))
+    tree:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = 1.3, heightFactor = .5, offsetY = 0 }))
 
     -- Tag for easy querying
     tree:addTag("Tree")
