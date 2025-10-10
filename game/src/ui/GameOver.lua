@@ -1,5 +1,6 @@
 ---@class GameOver: UIElement
 local UIElement = require("src.ui.UIElement")
+local Button = require("src.ui.Button")
 local fonts = require("src.utils.fonts")
 
 local GameOver = setmetatable({}, { __index = UIElement })
@@ -7,15 +8,33 @@ GameOver.__index = GameOver
 
 function GameOver.new()
     local self = setmetatable(UIElement.new(), GameOver)
-    self._buttons = {
-        restart = { x = 0, y = 0, w = 0, h = 0 },
-        menu = { x = 0, y = 0, w = 0, h = 0 }
+
+    -- Create buttons
+    self.buttons = {
+        Button.new("Restart", function()
+            local controller = require("src.core.GameController")
+            if controller and controller.restartGame then controller.restartGame() end
+        end),
+        Button.new("Back to Menu", function()
+            local controller = require("src.core.GameController")
+            if controller and controller.backToMenu then controller.backToMenu() end
+        end)
     }
+
+    self.selectedIndex = 1
+    self.buttons[self.selectedIndex].selected = true
+
     return self
 end
 
 function GameOver:update(dt, gameState)
-    -- no-op
+    -- Update button hover states
+    if self.visible then
+        local mouseX, mouseY = love.mouse.getPosition()
+        for i, btn in ipairs(self.buttons) do
+            btn:updateHover(mouseX, mouseY)
+        end
+    end
 end
 
 function GameOver:draw()
@@ -23,10 +42,8 @@ function GameOver:draw()
 
     local sw, sh = love.graphics.getDimensions()
     local prevFont = love.graphics.getFont()
-    local r, g, b, a = love.graphics.getColor()
 
-    love.graphics.push()
-    love.graphics.origin()
+    love.graphics.push("all")
 
     local text = "GAME OVER"
     local font = fonts.getUIFont(128)
@@ -37,82 +54,89 @@ function GameOver:draw()
     local x = math.floor((sw - tw) / 2)
     local y = math.floor((sh - th) / 2)
 
-    -- backdrop
+    -- Backdrop
     love.graphics.setColor(0, 0, 0, 0.4)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-    -- shadowed text
+    -- Shadowed title
     love.graphics.setColor(0, 0, 0, 0.9)
     love.graphics.print(text, x + 2, y + 2)
     love.graphics.setColor(1, 0.25, 0.25, 1)
     love.graphics.print(text, x, y)
 
-    -- buttons layout
+    -- Draw buttons
     local buttonFont = fonts.getUIFont(28)
-    local paddingX, paddingY = 18, 10
     local gap = 16
 
-    local restartText = "Restart"
-    local menuText = "Back to Menu"
+    -- Update button positions
+    local totalWidth = 0
+    for _, btn in ipairs(self.buttons) do
+        btn:updateBounds(0, 0, buttonFont)
+        totalWidth = totalWidth + btn.width
+    end
+    totalWidth = totalWidth + gap * (#self.buttons - 1)
 
-    local rtw = (buttonFont and buttonFont:getWidth(restartText)) or 0
-    local rth = (buttonFont and buttonFont:getHeight()) or 0
-    local mtw = (buttonFont and buttonFont:getWidth(menuText)) or 0
-    local mth = (buttonFont and buttonFont:getHeight()) or 0
-
-    local rw = rtw + paddingX * 2
-    local mw = mtw + paddingX * 2
-    local bh = math.max(rth, mth) + paddingY * 2
-
-    local totalW = rw + gap + mw
-    local baseX = math.floor((sw - totalW) / 2)
+    local baseX = math.floor((sw - totalWidth) / 2)
     local baseY = y + th + 36
 
-    -- store bounds
-    self._buttons.restart.x, self._buttons.restart.y, self._buttons.restart.w, self._buttons.restart.h = baseX, baseY, rw, bh
-    self._buttons.menu.x, self._buttons.menu.y, self._buttons.menu.w, self._buttons.menu.h = baseX + rw + gap, baseY, mw, bh
-
-    -- draw restart button
-    love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", baseX + 2, baseY + 2, rw, bh, 6, 6)
-    love.graphics.setColor(0.2, 0.2, 0.2, 1)
-    love.graphics.rectangle("fill", baseX, baseY, rw, bh, 6, 6)
-    if buttonFont then love.graphics.setFont(buttonFont) end
-    love.graphics.setColor(1, 1, 1, 1)
-    local rtx = math.floor(baseX + (rw - rtw) / 2)
-    local rty = math.floor(baseY + (bh - rth) / 2)
-    love.graphics.print(restartText, rtx, rty)
-
-    -- draw menu button
-    local mx = baseX + rw + gap
-    love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", mx + 2, baseY + 2, mw, bh, 6, 6)
-    love.graphics.setColor(0.2, 0.2, 0.2, 1)
-    love.graphics.rectangle("fill", mx, baseY, mw, bh, 6, 6)
-    love.graphics.setColor(1, 1, 1, 1)
-    local mtx = math.floor(mx + (mw - mtw) / 2)
-    local mty = math.floor(baseY + (bh - mth) / 2)
-    love.graphics.print(menuText, mtx, mty)
+    local currentX = baseX
+    for _, btn in ipairs(self.buttons) do
+        btn:updateBounds(currentX, baseY, buttonFont)
+        btn:draw(buttonFont)
+        currentX = currentX + btn.width + gap
+    end
 
     if prevFont then love.graphics.setFont(prevFont) end
-    love.graphics.setColor(r, g, b, a)
     love.graphics.pop()
 end
 
+function GameOver:handleMousePressed(x, y, button)
+    if not self.visible or button ~= 1 then return false end
+
+    for i, btn in ipairs(self.buttons) do
+        if btn:contains(x, y) then
+            btn:setPressed(true)
+            return true
+        end
+    end
+    return false
+end
+
+function GameOver:handleMouseReleased(x, y, button)
+    if not self.visible or button ~= 1 then return false end
+
+    for i, btn in ipairs(self.buttons) do
+        btn:setPressed(false)
+        if btn:handleClick(x, y) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Keep for backwards compatibility
 function GameOver:handleMouseClick(x, y, button)
+    return self:handleMouseReleased(x, y, button)
+end
+
+function GameOver:handleKeyPress(key)
     if not self.visible then return false end
-    if button ~= 1 then return false end
-    local function inside(rect)
-        return x >= rect.x and y >= rect.y and x <= rect.x + rect.w and y <= rect.y + rect.h
-    end
-    if inside(self._buttons.restart) then
-        local controller = require("src.core.GameController")
-        if controller and controller.restartGame then controller.restartGame() end
+
+    -- Navigate between buttons
+    if key == "left" or key == "a" or key == "up" or key == "w" then
+        self.buttons[self.selectedIndex].selected = false
+        self.selectedIndex = self.selectedIndex - 1
+        if self.selectedIndex < 1 then self.selectedIndex = #self.buttons end
+        self.buttons[self.selectedIndex].selected = true
         return true
-    end
-    if inside(self._buttons.menu) then
-        local controller = require("src.core.GameController")
-        if controller and controller.backToMenu then controller.backToMenu() end
+    elseif key == "right" or key == "d" or key == "down" or key == "s" then
+        self.buttons[self.selectedIndex].selected = false
+        self.selectedIndex = self.selectedIndex + 1
+        if self.selectedIndex > #self.buttons then self.selectedIndex = 1 end
+        self.buttons[self.selectedIndex].selected = true
+        return true
+    elseif key == "return" or key == "space" then
+        self.buttons[self.selectedIndex]:activate()
         return true
     end
     return false

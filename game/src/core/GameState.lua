@@ -167,8 +167,12 @@ function GameState.handleKeyPressed(key)
 
   -- Pass to current scene
   if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].handleKeyPressed then
-    GameState.scenes[GameState.currentScene].handleKeyPressed(key, GameState)
+    local handled = GameState.scenes[GameState.currentScene].handleKeyPressed(key, GameState)
+    if handled then
+      return true
+    end
   end
+  return false
 end
 
 ---Handle key release events
@@ -217,6 +221,11 @@ end
 function GameState.handleMouseReleased(x, y, button)
   if button == 1 then -- Left mouse button
     GameState.input.attack = false
+  end
+
+  -- Pass to current scene
+  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].mousereleased then
+    GameState.scenes[GameState.currentScene].mousereleased(x, y, button, GameState)
   end
 end
 

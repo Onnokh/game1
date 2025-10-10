@@ -1,6 +1,7 @@
 local gameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
 local UIElement = require("src.ui.UIElement")
+local Button = require("src.ui.Button")
 local fonts = require("src.utils.fonts")
 
 ---@class PauseMenu: UIElement
@@ -10,29 +11,81 @@ PauseMenu.__index = PauseMenu
 
 function PauseMenu.new()
     local self = setmetatable(UIElement.new(), PauseMenu)
-    self._buttons = {
-        resume = { x = 0, y = 0, w = 0, h = 0 },
-        menu = { x = 0, y = 0, w = 0, h = 0 }
+
+    -- Create buttons
+    self.buttons = {
+        Button.new("Resume", function()
+            gameController.togglePause()
+        end),
+        Button.new("Back to Menu", function()
+            gameController.resetPauseState()
+            gameState.changeScene("menu")
+        end)
     }
+
+    self.selectedIndex = 1
+    self.buttons[self.selectedIndex].selected = true
+
     return self
 end
 
 function PauseMenu:update(dt, gameState)
-    -- no-op for now
+    -- Update button hover states
+    if self.visible then
+        local mouseX, mouseY = love.mouse.getPosition()
+        for i, btn in ipairs(self.buttons) do
+            btn:updateHover(mouseX, mouseY)
+        end
+    end
 end
 
+function PauseMenu:handleMousePressed(x, y, button)
+    if not self.visible or button ~= 1 then return false end
+
+    for i, btn in ipairs(self.buttons) do
+        if btn:contains(x, y) then
+            btn:setPressed(true)
+            return true
+        end
+    end
+    return false
+end
+
+function PauseMenu:handleMouseReleased(x, y, button)
+    if not self.visible or button ~= 1 then return false end
+
+    for i, btn in ipairs(self.buttons) do
+        btn:setPressed(false)
+        if btn:handleClick(x, y) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Keep for backwards compatibility
 function PauseMenu:handleMouseClick(x, y, button)
-    if not self.visible or button ~= 1 then return false end -- Only handle left clicks
-    local function inside(rect)
-        return x >= rect.x and y >= rect.y and x <= rect.x + rect.w and y <= rect.y + rect.h
-    end
-    if inside(self._buttons.resume) then
-        gameController.togglePause()
+    return self:handleMouseReleased(x, y, button)
+end
+
+function PauseMenu:handleKeyPress(key)
+    if not self.visible then return false end
+
+    -- Navigate between buttons
+    if key == "left" or key == "a" or key == "up" or key == "w" then
+        self.buttons[self.selectedIndex].selected = false
+        self.selectedIndex = self.selectedIndex - 1
+        if self.selectedIndex < 1 then self.selectedIndex = #self.buttons end
+        self.buttons[self.selectedIndex].selected = true
         return true
-    end
-    if inside(self._buttons.menu) then
-        gameController.resetPauseState()
-        gameState.changeScene("menu")
+    elseif key == "right" or key == "d" or key == "down" or key == "s" then
+        self.buttons[self.selectedIndex].selected = false
+        self.selectedIndex = self.selectedIndex + 1
+        if self.selectedIndex > #self.buttons then self.selectedIndex = 1 end
+        self.buttons[self.selectedIndex].selected = true
+        return true
+    elseif key == "return" or key == "space" then
+        self.buttons[self.selectedIndex]:activate()
         return true
     end
     return false
@@ -46,11 +99,11 @@ function PauseMenu:draw()
 
     local sw, sh = love.graphics.getDimensions()
 
-    -- Backdrop to match GameOver style
+    -- Backdrop
     love.graphics.setColor(0, 0, 0, 0.6)
     love.graphics.rectangle("fill", 0, 0, sw, sh)
 
-    -- Title styled similarly to GameOver but with different color
+    -- Title
     local prevFont = love.graphics.getFont()
     local titleText = "PAUSED"
     local titleFont = fonts.getUIFont(128) or prevFont
@@ -60,58 +113,33 @@ function PauseMenu:draw()
     local tx = math.floor((sw - tw) / 2)
     local ty = math.floor((sh - th) / 2) - 48
 
-    -- shadowed title (cyan/white instead of red)
+    -- Shadowed title
     love.graphics.setColor(0, 0, 0, 0.9)
     love.graphics.print(titleText, tx + 2, ty + 2)
     love.graphics.setColor(0.85, 0.95, 1.0, 1)
     love.graphics.print(titleText, tx, ty)
 
-    -- Buttons layout (same metrics as GameOver)
+    -- Draw buttons
     local buttonFont = fonts.getUIFont(28) or prevFont
-    local paddingX, paddingY = 18, 10
     local gap = 16
 
-    local resumeText = "Resume"
-    local menuText = "Back to Menu"
+    -- Update button positions
+    local totalWidth = 0
+    for _, btn in ipairs(self.buttons) do
+        btn:updateBounds(0, 0, buttonFont)
+        totalWidth = totalWidth + btn.width
+    end
+    totalWidth = totalWidth + gap * (#self.buttons - 1)
 
-    local rtw = (buttonFont and buttonFont:getWidth(resumeText)) or 0
-    local rth = (buttonFont and buttonFont:getHeight()) or 0
-    local mtw = (buttonFont and buttonFont:getWidth(menuText)) or 0
-    local mth = (buttonFont and buttonFont:getHeight()) or 0
-
-    local rw = rtw + paddingX * 2
-    local mw = mtw + paddingX * 2
-    local bh = math.max(rth, mth) + paddingY * 2
-
-    local totalW = rw + gap + mw
-    local baseX = math.floor((sw - totalW) / 2)
+    local baseX = math.floor((sw - totalWidth) / 2)
     local baseY = ty + th + 36
 
-    -- store bounds for clicks
-    self._buttons.resume.x, self._buttons.resume.y, self._buttons.resume.w, self._buttons.resume.h = baseX, baseY, rw, bh
-    self._buttons.menu.x, self._buttons.menu.y, self._buttons.menu.w, self._buttons.menu.h = baseX + rw + gap, baseY, mw, bh
-
-    -- draw resume button (cool gray/blue)
-    love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", baseX + 2, baseY + 2, rw, bh, 6, 6)
-    love.graphics.setColor(0.2, 0.28, 0.38, 1)
-    love.graphics.rectangle("fill", baseX, baseY, rw, bh, 6, 6)
-    love.graphics.setFont(buttonFont)
-    love.graphics.setColor(1, 1, 1, 1)
-    local rtx = math.floor(baseX + (rw - rtw) / 2)
-    local rty = math.floor(baseY + (bh - rth) / 2)
-    love.graphics.print(resumeText, rtx, rty)
-
-    -- draw menu button
-    local mx = baseX + rw + gap
-    love.graphics.setColor(0, 0, 0, 0.7)
-    love.graphics.rectangle("fill", mx + 2, baseY + 2, mw, bh, 6, 6)
-    love.graphics.setColor(0.25, 0.25, 0.25, 1)
-    love.graphics.rectangle("fill", mx, baseY, mw, bh, 6, 6)
-    love.graphics.setColor(1, 1, 1, 1)
-    local mtx = math.floor(mx + (mw - mtw) / 2)
-    local mty = math.floor(baseY + (bh - mth) / 2)
-    love.graphics.print(menuText, mtx, mty)
+    local currentX = baseX
+    for _, btn in ipairs(self.buttons) do
+        btn:updateBounds(currentX, baseY, buttonFont)
+        btn:draw(buttonFont)
+        currentX = currentX + btn.width + gap
+    end
 
     if prevFont then love.graphics.setFont(prevFont) end
     love.graphics.pop()

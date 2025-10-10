@@ -144,14 +144,31 @@ function GameController.keypressed(key)
       return true
     end
     return true -- consume ESC during game over
-  elseif key == "1" then
-    GameController.switchPhase("Discovery")
-    return true
-  elseif key == "2" then
-    GameController.switchPhase("Siege")
-    return true
   end
-  GameState.handleKeyPressed(key)
+
+  -- When paused or game over, let UI systems handle input first
+  if GameController.paused or GameController.gameOver then
+    local handled = GameState.handleKeyPressed(key)
+    if handled then
+      return true
+    end
+  end
+
+  -- Phase switching (only when not paused/game over)
+  if not GameController.paused and not GameController.gameOver then
+    if key == "1" then
+      GameController.switchPhase("Discovery")
+      return true
+    elseif key == "2" then
+      GameController.switchPhase("Siege")
+      return true
+    end
+  end
+
+  -- Pass to game state for normal gameplay input
+  if not GameController.paused and not GameController.gameOver then
+    GameState.handleKeyPressed(key)
+  end
 end
 
 return GameController

@@ -350,15 +350,15 @@ function GameScene.addMonster(x, y, type)
   return nil
 end
 
--- Handle mouse clicks for debugging
+-- Handle mouse press for debugging
 function GameScene.mousepressed(x, y, button, gameState)
-  -- First check if pause menu can handle the click
+  -- First check if UI systems can handle the press
   if uiWorld then
     for _, system in ipairs(uiWorld.systems) do
-      if system.handleMouseClick then
-        local handled = system:handleMouseClick(x, y, button)
+      if system.handleMousePressed then
+        local handled = system:handleMousePressed(x, y, button)
         if handled then
-          return -- Pause menu handled the click, don't process further
+          return -- UI system handled the press, don't process further
         end
       end
     end
@@ -372,6 +372,37 @@ function GameScene.mousepressed(x, y, button, gameState)
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
     GameScene.addMonster(worldX, worldY, "slime")
   end
+end
+
+-- Handle mouse release
+function GameScene.mousereleased(x, y, button, gameState)
+  -- Check if UI systems can handle the release
+  if uiWorld then
+    for _, system in ipairs(uiWorld.systems) do
+      if system.handleMouseReleased then
+        local handled = system:handleMouseReleased(x, y, button)
+        if handled then
+          return -- UI system handled the release, don't process further
+        end
+      end
+    end
+  end
+end
+
+-- Handle keyboard input for UI systems
+function GameScene.handleKeyPressed(key, gameState)
+  -- Check if UI systems can handle the key press
+  if uiWorld then
+    for _, system in ipairs(uiWorld.systems) do
+      if system.handleKeyPress then
+        local handled = system:handleKeyPress(key)
+        if handled then
+          return true -- UI system handled the key, don't process further
+        end
+      end
+    end
+  end
+  return false
 end
 
 -- Draw the game scene

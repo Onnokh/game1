@@ -1,26 +1,41 @@
 local gameController = require("src.core.GameController")
 local sprites = require("src.utils.sprites")
 local fonts = require("src.utils.fonts")
+local Button = require("src.ui.Button")
 
 
 ---@class MenuScene
 local MenuScene = {}
 
 -- Menu state
-local selectedOption = 1
-local menuOptions = {"Start Game", "Quit"}
-local menuY = 300
-local optionHeight = 56
+local buttons = {}
+local selectedIndex = 1
 
 -- Initialize the menu scene
 function MenuScene.load()
-  selectedOption = 1
+  selectedIndex = 1
   sprites.load()
+
+  -- Create buttons
+  buttons = {
+    Button.new("Start Game", function()
+      gameController.restartGame()
+    end),
+    Button.new("Quit", function()
+      love.event.quit()
+    end)
+  }
+
+  buttons[selectedIndex].selected = true
 end
 
 -- Update the menu scene
 function MenuScene.update(dt, gameState)
-  -- Menu doesn't need much updating
+  -- Update button hover states
+  local mouseX, mouseY = love.mouse.getPosition()
+  for i, btn in ipairs(buttons) do
+    btn:updateHover(mouseX, mouseY)
+  end
 end
 
 -- Draw the menu scene
@@ -35,57 +50,82 @@ function MenuScene.draw(gameState)
   sprites.drawMenuBackground()
 
   -- Draw title
+  love.graphics.push("all")
   love.graphics.setColor(1, 1, 1)
   love.graphics.setFont(fonts.getUIFont(128))
   love.graphics.printf("Outpost", marginX, titleY, contentWidth, "left")
 
-  -- Draw menu options
-  love.graphics.setFont(fonts.getUIFont(36))
-  for i, option in ipairs(menuOptions) do
-    local y = menuY + (i - 1) * optionHeight
+  -- Draw buttons
+  local buttonFont = fonts.getUIFont(28)
+  local buttonY = 300
+  local buttonSpacing = 20
 
-    if i == selectedOption then
-      love.graphics.setColor(1, 1, 0) -- Yellow for selected
-      love.graphics.printf("> " .. option, marginX, y, contentWidth, "left")
-    else
-      love.graphics.setColor(1, 1, 1) -- White for unselected
-      love.graphics.printf(option, marginX, y, contentWidth, "left")
-    end
+  for i, btn in ipairs(buttons) do
+    btn:updateBounds(marginX, buttonY, buttonFont)
+    btn:draw(buttonFont)
+    buttonY = buttonY + btn.height + buttonSpacing
   end
 
   -- Draw instructions
   love.graphics.setColor(0.7, 0.7, 0.7)
   love.graphics.setFont(fonts.getUIFont(16))
   love.graphics.printf("Use arrow keys to navigate, Enter to select", marginX, height - 50, contentWidth, "left")
+
+  love.graphics.pop()
 end
 
 -- Handle key press events
 function MenuScene.handleKeyPressed(key, gameState)
   if key == "up" or key == "w" then
-    selectedOption = selectedOption - 1
-    if selectedOption < 1 then
-      selectedOption = #menuOptions
+    buttons[selectedIndex].selected = false
+    selectedIndex = selectedIndex - 1
+    if selectedIndex < 1 then
+      selectedIndex = #buttons
     end
+    buttons[selectedIndex].selected = true
   elseif key == "down" or key == "s" then
-    selectedOption = selectedOption + 1
-    if selectedOption > #menuOptions then
-      selectedOption = 1
+    buttons[selectedIndex].selected = false
+    selectedIndex = selectedIndex + 1
+    if selectedIndex > #buttons then
+      selectedIndex = 1
     end
+    buttons[selectedIndex].selected = true
   elseif key == "return" or key == "space" then
-    if selectedOption == 1 then
-      -- Start a fresh run
-      gameController.restartGame()
-    elseif selectedOption == 2 then
-      -- Quit
-      love.event.quit()
+    buttons[selectedIndex]:activate()
+  end
+end
+
+-- Handle mouse press
+function MenuScene.mousepressed(x, y, button, gameState)
+  if button == 1 then
+    for i, btn in ipairs(buttons) do
+      if btn:contains(x, y) then
+        btn:setPressed(true)
+        return true
+      end
     end
   end
+  return false
+end
+
+-- Handle mouse release
+function MenuScene.mousereleased(x, y, button, gameState)
+  if button == 1 then
+    for i, btn in ipairs(buttons) do
+      btn:setPressed(false)
+      if btn:handleClick(x, y) then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 -- Cleanup the menu scene when switching away
 function MenuScene.cleanup()
-  -- Menu scene doesn't need much cleanup, just reset state
-  selectedOption = 1
+  -- Reset state
+  selectedIndex = 1
+  buttons = {}
 end
 
 return MenuScene
