@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="45" height="25" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="42">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="45" height="25" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="45">
  <editorsettings>
   <export target="level1.lua" format="lua"/>
  </editorsettings>
@@ -55,10 +55,13 @@
    <point/>
   </object>
   <object id="35" template="../objects/Reactor.tx" x="223" y="269"/>
-  <object id="37" name="Tree" gid="323" x="381.364" y="210.818" width="48" height="96"/>
+  <object id="37" name="Tree" gid="323" x="417.364" y="484.151" width="48" height="96"/>
   <object id="38" name="Tree" gid="323" x="528.5" y="168" width="48" height="96"/>
   <object id="39" name="Tree" gid="323" x="477.667" y="331" width="48" height="96"/>
-  <object id="40" name="Tree" gid="323" x="168" y="170.5" width="48" height="96"/>
-  <object id="41" name="Tree" gid="323" x="124.5" y="309.5" width="48" height="96"/>
+  <object id="40" name="Tree" gid="323" x="704" y="250.5" width="48" height="96"/>
+  <object id="41" name="Tree" gid="323" x="758.5" y="298.833" width="48" height="96"/>
+  <object id="42" name="Tree" gid="323" x="526" y="574" width="48" height="96"/>
+  <object id="43" name="Tree" gid="323" x="354.667" y="567.333" width="48" height="96"/>
+  <object id="44" name="Tree" gid="323" x="148" y="521.333" width="48" height="96"/>
  </objectgroup>
 </map>

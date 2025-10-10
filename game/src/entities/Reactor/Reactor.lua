@@ -7,7 +7,6 @@ local Health = require("src.components.Health")
 local HealthBar = require("src.components.HealthBar")
 local Light = require("src.components.Light")
 local Interactable = require("src.components.Interactable")
-local EventBus = require("src.utils.EventBus")
 
 ---@class Reactor
 local Reactor = {}
@@ -22,13 +21,13 @@ function Reactor.create(x, y, world, physicsWorld)
 
     local reactor = Entity.new()
     local position = Position.new(x, y, 0)
-    local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
-    local animator = Animator.new({ sheet = "reactor", frames = {1, 2, 3, 4}, fps = 4, loop = true })
+    local spriteRenderer = SpriteRenderer.new(nil, 96, 96)
+    local animator = Animator.new({ sheet = "reactor", frames = {1}, fps = 4, loop = true })
     local health = Health.new(1000)
     local healthBar = HealthBar.new(48, 4, -6)
     healthBar.alwaysVisible = true
 
-    local collider = PathfindingCollision.new(64, 48, "static", 0, 16)
+    local collider = PathfindingCollision.new(96, 48, "static", 0, 48)
     if physicsWorld then
         collider:createCollider(physicsWorld, x, y)
     end
