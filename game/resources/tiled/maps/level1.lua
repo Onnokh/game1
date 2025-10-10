@@ -10,7 +10,7 @@ return {
   tilewidth = 32,
   tileheight = 32,
   nextlayerid = 9,
-  nextobjectid = 45,
+  nextobjectid = 48,
   properties = {},
   tilesets = {
     {
@@ -75,7 +75,7 @@ return {
       name = "Objects",
       firstgid = 321,
       class = "",
-      tilewidth = 64,
+      tilewidth = 96,
       tileheight = 96,
       spacing = 0,
       margin = 0,
@@ -99,10 +99,8 @@ return {
         {
           id = 1,
           image = "../../reactor/reactor-Sheet.png",
-          x = 0,
-          y = 0,
-          width = 64,
-          height = 64
+          width = 96,
+          height = 96
         },
         {
           id = 2,
@@ -216,20 +214,6 @@ return {
           properties = {}
         },
         {
-          id = 35,
-          name = "Reactor",
-          type = "",
-          shape = "rectangle",
-          x = 223,
-          y = 269,
-          width = 64,
-          height = 64,
-          rotation = 0,
-          gid = 0,
-          visible = true,
-          properties = {}
-        },
-        {
           id = 37,
           name = "Tree",
           type = "",
@@ -338,6 +322,20 @@ return {
           height = 96,
           rotation = 0,
           gid = 323,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 47,
+          name = "Reactor",
+          type = "",
+          shape = "rectangle",
+          x = 192,
+          y = 288,
+          width = 96,
+          height = 96,
+          rotation = 0,
+          gid = 322,
           visible = true,
           properties = {}
         }

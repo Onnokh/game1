@@ -1,8 +1,8 @@
 {
     "activeFile": "maps/level1.tmx",
     "expandedProjectPaths": [
-        "objects",
         ".",
+        "objects",
         "maps"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
@@ -20,11 +20,11 @@
             "scaleInEditor": 1
         },
         "maps/level1.tmx": {
-            "scale": 3,
+            "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 408,
-                "y": 268
+                "x": 405.33333333333337,
+                "y": 380.6666666666667
             }
         },
         "maps/level1.tmx#Objects": {

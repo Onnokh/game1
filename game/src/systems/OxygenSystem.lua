@@ -56,8 +56,12 @@ function OxygenSystem:isInReactorSafeZone(x, y)
         return false
     end
 
-    -- Calculate distance to reactor center using EntityUtils
-    local reactorCenterX, reactorCenterY = EntityUtils.getEntityVisualCenter(reactor, reactorPosition)
+    -- Calculate distance to reactor's sprite center (not collider center)
+    -- The reactor is a 96x96 sprite, so we want the true visual center
+    local spriteRenderer = reactor:getComponent("SpriteRenderer")
+    local reactorCenterX = reactorPosition.x + (spriteRenderer and spriteRenderer.width or 96) / 2
+    local reactorCenterY = reactorPosition.y + (spriteRenderer and spriteRenderer.height or 96) / 2
+
     local dx = x - reactorCenterX
     local dy = y - reactorCenterY
     local distance = math.sqrt(dx * dx + dy * dy)

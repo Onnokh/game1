@@ -21,8 +21,8 @@ end
 
 ---Draw the aiming line
 function AimLineRenderSystem:draw()
-    -- Don't draw aiming line when game is over
-    if GameController.gameOver then
+    -- Don't draw aiming line when game is paused or over
+    if GameController.paused or GameController.gameOver then
         return
     end
 

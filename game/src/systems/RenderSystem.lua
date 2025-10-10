@@ -358,9 +358,10 @@ function RenderSystem:drawOxygenSafeZone()
     local GameConstants = require("src.constants")
     local safeRadius = GameConstants.REACTOR_SAFE_RADIUS
 
-    -- Calculate reactor center (reactor is 64x64)
-    local reactorCenterX = position.x + 32
-    local reactorCenterY = position.y + 32
+    -- Calculate reactor center (reactor is 96x96)
+    local spriteRenderer = reactor:getComponent("SpriteRenderer")
+    local reactorCenterX = position.x + (spriteRenderer and spriteRenderer.width or 96) / 2
+    local reactorCenterY = position.y + (spriteRenderer and spriteRenderer.height or 96) / 2
 
     -- Draw the oxygen safe zone as a semi-transparent circle
     -- Use a cyan/light blue color to indicate "breathable air"
