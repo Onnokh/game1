@@ -22,6 +22,8 @@ local function ensureLightCreated(self, lightConfig)
     local maxRadius = lightConfig.radius
     if lightConfig.flicker then
         maxRadius = maxRadius + (lightConfig.flickerRadiusAmplitude or 10)
+        -- Add random offset so lights don't flicker in sync
+        lightConfig.flickerOffset = math.random() * 1000
     end
     local light = Light:new(self.lightWorld, maxRadius)
     light:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, lightConfig.a)
@@ -62,7 +64,7 @@ function LightSystem:update(dt)
 
                         -- Apply flicker if enabled
                         if lightConfig.flicker then
-                            local t = love.timer.getTime()
+                            local t = love.timer.getTime() + (lightConfig.flickerOffset or 0)
                             local speed = lightConfig.flickerSpeed or 8
                             local rAmp = lightConfig.flickerRadiusAmplitude or 10
                             local aAmp = lightConfig.flickerAlphaAmplitude or 20
