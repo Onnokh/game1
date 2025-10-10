@@ -52,10 +52,9 @@ local playerEntity = nil
 local monsters = {} -- Array of monster entities
 local playerCollider = nil
 local lightWorld = nil
-local testBoxEntity = nil
-local testBoxOverlayRegistered = false
 local tiledMap = nil -- Cartographer map object
 local mapData = nil -- Parsed map data from TiledMapLoader
+local mouseFacingSystemAdded = false -- Track if MouseFacingSystem has been added
 
 -- Physics
 local physicsWorld = nil
@@ -167,14 +166,16 @@ function GameScene.load()
   local levelHeightPixels = worldHeight * tileSize
   GameState.updateCameraBounds(levelWidthPixels, levelHeightPixels)
 
-
-
   -- Create physics colliders for world borders
   GameScene.createBorderColliders()
   GameScene.borderColliders = borderColliders
 
   -- Spawn entities from map objects using factory pattern
   TiledMapLoader.spawnEntities(mapData, {
+    spawn = function(obj)
+      -- Spawn player at the map's defined spawn point
+      playerEntity = Player.create(obj.x, obj.y, ecsWorld, physicsWorld)
+    end,
     reactors = function(obj)
       Reactor.create(obj.x, obj.y, ecsWorld, physicsWorld)
     end,
@@ -182,6 +183,13 @@ function GameScene.load()
     -- enemies = function(obj) ... end,
     -- items = function(obj) ... end,
   })
+
+  -- If no spawn point was defined in the map, spawn player at center
+  if not playerEntity then
+    local centerX = (worldWidth * tileSize) / 2
+    local centerY = (worldHeight * tileSize) / 2
+    playerEntity = Player.create(centerX, centerY, ecsWorld, physicsWorld)
+  end
 
   -- Create global particle entity for bullet impacts and other effects
   do
@@ -243,18 +251,10 @@ function GameScene.update(dt, gameState)
     return
   end
 
-  -- Create player entity if it doesn't exist
-  if not playerEntity and ecsWorld then
-    -- Use spawn point from map if available
-    if mapData and mapData.spawnPoint then
-      gameState.player.x = mapData.spawnPoint.x
-      gameState.player.y = mapData.spawnPoint.y
-    end
-
-    playerEntity = Player.create(gameState.player.x, gameState.player.y, ecsWorld, physicsWorld)
-
-    -- Add mouse facing system (needs gameState)
+  -- Add mouse facing system once player exists (needs gameState)
+  if playerEntity and not mouseFacingSystemAdded then
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
+    mouseFacingSystemAdded = true
   end
 
   -- Update Tiled map (for animations)
@@ -279,30 +279,11 @@ function GameScene.update(dt, gameState)
     uiWorld:update(dt)
   end
 
-  -- Register test wall collider into debug overlay once created by CollisionSystem
-  if not testBoxOverlayRegistered and testBoxEntity then
-    local c = testBoxEntity:getComponent("Collision")
-    if c and c:hasCollider() then
-      table.insert(borderColliders, c.collider)
-      testBoxOverlayRegistered = true
-    end
-  end
-
-  -- Update gameState for camera and other systems
+  -- Update camera to follow player
   if playerEntity then
     local position = playerEntity:getComponent("Position")
-    local movement = playerEntity:getComponent("Movement")
     local collision = playerEntity:getComponent("Collision")
     local spriteRenderer = playerEntity:getComponent("SpriteRenderer")
-
-    if position then
-      gameState.player.x = position.x
-      gameState.player.y = position.y
-    end
-
-    if movement then
-      gameState.player.direction = movement.direction
-    end
 
     -- Track player collider for debug overlay
     if collision and collision:hasCollider() then
@@ -483,16 +464,15 @@ function GameScene.cleanup()
     uiWorld = nil
   end
 
-  -- Clear entity references
+  -- Clear entity references and flags
   playerEntity = nil
-  testBoxEntity = nil
-  testBoxOverlayRegistered = false
+  mouseFacingSystemAdded = false
   playerCollider = nil
+  tiledMap = nil
+  mapData = nil
   GameScene.playerCollider = nil
   GameScene.borderColliders = nil
   GameScene.monsters = nil
-  tiledMap = nil
-  mapData = nil
 
   -- Force Love2D to reset graphics state and release canvases
   love.graphics.reset()

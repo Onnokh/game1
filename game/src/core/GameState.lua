@@ -5,11 +5,6 @@ local gamera = require("lib.gamera")
 local DEFAULT_RUN = {
   phase = "Discovery",
   day = 1,
-  player = {
-    x = 320,
-    y = 192,
-    direction = "down"
-  },
   coins = {
     total = 0,
     collectedThisSession = 0
@@ -57,21 +52,15 @@ function GameState.load()
 
   -- Start from a fresh deep copy of defaults for a clean run
   local runCopy = TableUtils.deepCopy(DEFAULT_RUN)
-  GameState.player = runCopy.player
   GameState.phase = runCopy.phase
   GameState.day = runCopy.day
   GameState.coins = runCopy.coins
 
-  -- Apply runtime constants to the copied player block
-  local playerWidth = GameConstants.PLAYER_WIDTH
-  local playerHeight = GameConstants.PLAYER_HEIGHT
-  local playerSpeed = GameConstants.PLAYER_SPEED
-
+  -- Initialize player with constants only (spawn position comes from map)
   GameState.player = {
-    width = playerWidth,
-    height = playerHeight,
-    speed = playerSpeed,
-    direction = runCopy.player.direction
+    width = GameConstants.PLAYER_WIDTH,
+    height = GameConstants.PLAYER_HEIGHT,
+    speed = GameConstants.PLAYER_SPEED
   }
 
   -- Initialize gamera camera with proper bounds starting at (0,0)
@@ -109,18 +98,14 @@ function GameState.resetRunState()
     GameState.input[k] = false
   end
 
-  -- Reapply constants for player block
+  -- Reapply constants for player block (spawn position comes from map)
   GameState.player = {
     width = GameConstants.PLAYER_WIDTH,
     height = GameConstants.PLAYER_HEIGHT,
-    speed = GameConstants.PLAYER_SPEED,
-    direction = GameState.player.direction
+    speed = GameConstants.PLAYER_SPEED
   }
 
-  -- Recenter camera
-  if GameState.camera then
-    GameState.camera:setPosition(GameState.player.x, GameState.player.y)
-  end
+  -- Camera will be positioned when the player entity spawns from the map
 end
 
 ---Update mouse position in world coordinates
