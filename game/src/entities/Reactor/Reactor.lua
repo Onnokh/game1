@@ -58,7 +58,7 @@ function Reactor.create(x, y, world, physicsWorld)
 
     -- Create interactable component for reactor
     local interactable = Interactable.new(
-        60, -- interaction range (larger than default since reactor is big)
+        96, -- interaction range (larger than default since reactor is big)
         function(playerEntity, reactorEntity)
             -- Switch to Siege phase
             local GameController = require("src.core.GameController")
