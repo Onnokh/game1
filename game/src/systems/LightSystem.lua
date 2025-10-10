@@ -18,8 +18,20 @@ local function ensureLightCreated(self, lightConfig)
     if lightConfig.lightRef then return end
 
     local Light = require("shadows.Light")
-    local light = Light:new(self.lightWorld, lightConfig.radius)
+    -- If flickering, create canvas large enough for maximum radius
+    local maxRadius = lightConfig.radius
+    if lightConfig.flicker then
+        maxRadius = maxRadius + (lightConfig.flickerRadiusAmplitude or 10)
+    end
+    local light = Light:new(self.lightWorld, maxRadius)
     light:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, lightConfig.a)
+
+    -- Force canvas to be destroyed and recreated at correct size
+    if lightConfig.flicker then
+        light:DestroyCanvas()
+        light:InitCanvas()
+    end
+
     lightConfig.lightRef = light
 end
 
@@ -57,22 +69,12 @@ function LightSystem:update(dt)
                             local baseRadius = lightConfig.radius or 400
                             local baseA = lightConfig.a or 255
 
-                            -- Simple layered noise using sines for organic flicker
                             local n = math.sin(t * speed) * 0.6 + math.sin(t * (speed * 1.7) + 1.3) * 0.4
                             local radius = baseRadius + n * rAmp
                             local alpha = math.max(0, math.min(255, baseA + n * aAmp))
 
                             lightConfig.lightRef:SetRadius(radius)
                             lightConfig.lightRef:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, alpha)
-                        else
-                            -- Ensure base properties when not flickering
-                            if lightConfig.lightRef.GetRadius and lightConfig.lightRef:GetRadius() ~= lightConfig.radius then
-                                lightConfig.lightRef:SetRadius(lightConfig.radius)
-                            end
-                            local cr, cg, cb, ca = lightConfig.lightRef:GetColor()
-                            if cr ~= lightConfig.r or cg ~= lightConfig.g or cb ~= lightConfig.b or ca ~= lightConfig.a then
-                                lightConfig.lightRef:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, lightConfig.a)
-                            end
                         end
                     end
                 end
