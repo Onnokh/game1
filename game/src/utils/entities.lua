@@ -151,6 +151,7 @@ function EntityUtils.findValidTilesInRadius(centerX, centerY, radius)
 
     local mapData = GameScene.getMapData()
     if not mapData or not mapData.collisionGrid then
+        print(string.format("[EntityUtils] WARNING: No map data for findValidTilesInRadius"))
         return {}
     end
 
@@ -158,9 +159,9 @@ function EntityUtils.findValidTilesInRadius(centerX, centerY, radius)
 
     -- Calculate bounding box
     local minX = math.max(1, math.floor(centerX - radius))
-    local maxX = math.ceil(centerX + radius)
+    local maxX = math.min(mapData.width, math.ceil(centerX + radius))
     local minY = math.max(1, math.floor(centerY - radius))
-    local maxY = math.ceil(centerY + radius)
+    local maxY = math.min(mapData.height, math.ceil(centerY + radius))
 
     for x = minX, maxX do
         for y = minY, maxY do
@@ -180,6 +181,11 @@ function EntityUtils.findValidTilesInRadius(centerX, centerY, radius)
                 end
             end
         end
+    end
+    
+    if #validTiles == 0 then
+        print(string.format("[EntityUtils] WARNING: findValidTilesInRadius found 0 tiles at (%d,%d) radius %d (grid %dx%d)", 
+            centerX, centerY, radius, mapData.width, mapData.height))
     end
 
     return validTiles

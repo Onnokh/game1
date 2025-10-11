@@ -63,8 +63,11 @@ function PathfindingSystem:addEntity(entity)
     end
 
     -- If this entity has a pathfinding collision component, rebuild the pathfinding grid
+    -- OPTIMIZATION: Skip rebuild during initial load (trees being added)
+    -- Grid will be correct from initial setup with all static entities already placed
     local pathfindingCollision = entity:getComponent("PathfindingCollision")
-    if pathfindingCollision and self.grid and self.pathfinder then
+    if pathfindingCollision and pathfindingCollision.type == "dynamic" and self.grid and self.pathfinder then
+        -- Only rebuild for dynamic entities that move (not trees/static objects)
         self:rebuildPathfindingGrid()
     end
 end
@@ -102,8 +105,14 @@ function PathfindingSystem:initializePathfinding()
     -- Create grid and pathfinder
     self.grid = Grid(transposedMap)
 
+    -- Use JPS for fast pathfinding (annotation only happens once at load)
     self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
-    self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
+
+    -- Annotate grid for JPS (expensive but only done once)
+    print("[PathfindingSystem] Annotating grid for JPS...")
+    local annotateStart = love.timer.getTime()
+    self.pathfinder:annotateGrid()
+    print(string.format("[PathfindingSystem] Grid annotation took %.2fs", love.timer.getTime() - annotateStart))
 
     -- Set up pathfinder for all entities with their own clearance values
     for _, entity in ipairs(self.entities) do
@@ -184,8 +193,10 @@ function PathfindingSystem:rebuildPathfindingGrid()
     -- Create new grid and pathfinder
     self.grid = Grid(transposedMap)
 
-    self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
-    self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
+    -- Use JPS for fast pathfinding
+    self.pathfinder = Pathfinder(self.grid, 'JPS', 1)
+    -- NOTE: Skip annotation during rebuild (too expensive for runtime)
+    -- Paths will still work but without clearance optimization
 
     -- Update pathfinders for all entities with their own clearance values
     for _, entity in ipairs(self.entities) do

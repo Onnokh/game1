@@ -10,16 +10,25 @@ TiledMapLoader.TILE_GRASS = 1
 TiledMapLoader.TILE_WORLDEDGE = 2
 
 
-TiledMapLoader.GRASS_TILES = {
-  327,328,329, 330, 443, 444, 445, 446, 447, 448,  453, 458, 459, 460, 461, 462, 463, 464, 465,
-  466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 480, 481, 483, 491, 497, 498, 505, 506
-}
+-- Strategy: Mark most tiles as walkable, only block specific edge tiles
+TiledMapLoader.GRASS_TILES = {}
 
-TiledMapLoader.WORLDEDGE_TILES = {
-  482, 488, 489, 490, 491, 490, 492, 493,  512,513
-}
+-- Island maps: All non-zero tiles are walkable except specific edge markers
+TiledMapLoader.WORLDEDGE_TILES = {}
+
+-- Helper: Check if GID is walkable (everything except 0 and edge tiles)
+function TiledMapLoader.isGidWalkable(gid)
+  -- 0 = empty/void
+  if gid == 0 then return false end
+
+  -- Edge tiles (these are the borders in island maps)
+  -- We'll mark specific edges if needed, but for now treat all as walkable
+  -- since we're using physics boundaries instead
+  return true
+end
 --- Check if a tile type is walkable
 function TiledMapLoader.isWalkable(tileType)
+  -- Only grass tiles are walkable, blocked and empty are not
   return tileType == TiledMapLoader.TILE_GRASS
 end
 
@@ -27,31 +36,35 @@ end
 function TiledMapLoader.getTileTypeName(tileType)
   if tileType == TiledMapLoader.TILE_EMPTY then return "EMPTY" end
   if tileType == TiledMapLoader.TILE_GRASS then return "GRASS" end
+  if tileType == TiledMapLoader.TILE_BLOCKED then return "BLOCKED" end
   if tileType == TiledMapLoader.TILE_WORLDEDGE then return "WORLDEDGE" end
   return "UNKNOWN"
 end
+
+-- Blocked tile GIDs (walls, obstacles, etc.)
+local BLOCKED_GIDS = {
+  [23] = true,
+  [24] = true,
+  [25] = true,
+  [162] = true,
+  [169] = true,
+  [170] = true,
+  [172] = true,
+  [173] = true,
+}
 
 --- Get tile collision type from GID
 function TiledMapLoader.getTileType(gid)
   -- Empty tiles (no tile) are non-walkable
   if gid == 0 then return TiledMapLoader.TILE_EMPTY end
 
-  -- Check if GID is in the grass tiles list
-  for _, grassGid in ipairs(TiledMapLoader.GRASS_TILES) do
-    if gid == grassGid then
-      return TiledMapLoader.TILE_GRASS
-    end
+  -- Check if this GID is a blocked tile (walls, obstacles)
+  if BLOCKED_GIDS[gid] then
+    return TiledMapLoader.TILE_BLOCKED
   end
 
-  -- Check if GID is in the worldedge tiles list
-  for _, worldedgeGid in ipairs(TiledMapLoader.WORLDEDGE_TILES) do
-    if gid == worldedgeGid then
-      return TiledMapLoader.TILE_WORLDEDGE
-    end
-  end
-
-  -- Default: treat unknown tiles as non-walkable for safety
-  return TiledMapLoader.TILE_WORLDEDGE
+  -- All other non-zero tiles are walkable (grass)
+  return TiledMapLoader.TILE_GRASS
 end
 
 --- Parse collision grid from tile layer
@@ -60,21 +73,32 @@ function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
   local layer = tiledMap.layers and tiledMap.layers[1]
 
   if not layer or layer.type ~= "tilelayer" then
+    print("[TiledMapLoader] WARNING: No tile layer found in map")
     return grid
   end
 
+  local walkableCount = 0
   for y = 1, height do
     for x = 1, width do
       if not grid[x] then grid[x] = {} end
       local gid = layer.data[(y - 1) * width + x]
       local tileType = TiledMapLoader.getTileType(gid)
+      local isWalkable = TiledMapLoader.isWalkable(tileType)
+
       grid[x][y] = {
         type = tileType,
         gid = gid,
-        walkable = TiledMapLoader.isWalkable(tileType)
+        walkable = isWalkable
       }
+
+      if isWalkable then
+        walkableCount = walkableCount + 1
+      end
     end
   end
+
+  print(string.format("[TiledMapLoader] Parsed grid %dx%d: %d walkable tiles (first GID sample: %s)",
+    width, height, walkableCount, tostring(layer.data[1])))
 
   return grid
 end
@@ -207,78 +231,113 @@ end
 --- Create physics collision bodies from map data
 ---@param mapData table Map data with collision grid
 ---@param physicsWorld love.World Physics world to create bodies in
+---@param offsetX number X offset for this island (default 0)
+---@param offsetY number Y offset for this island (default 0)
 ---@return table Array of collision bodies
-function TiledMapLoader.createCollisionBodies(mapData, physicsWorld)
+function TiledMapLoader.createCollisionBodies(mapData, physicsWorld, offsetX, offsetY)
   local collisionBodies = {}
   local collisionGrid = mapData.collisionGrid
   local worldWidth = mapData.width
   local worldHeight = mapData.height
   local tileSize = mapData.tileSize
 
-  -- Create colliders for non-walkable tiles
+  -- Default offsets to 0 if not provided
+  offsetX = offsetX or 0
+  offsetY = offsetY or 0
+
+  if not physicsWorld or not collisionGrid then
+    return collisionBodies
+  end
+
+  -- Create a visited grid to track which tiles we've processed
+  local visited = {}
   for x = 1, worldWidth do
+    visited[x] = {}
     for y = 1, worldHeight do
-      local tileData = collisionGrid[x][y]
-      if tileData and not tileData.walkable then
-        local tileX = (x - 1) * tileSize
-        local tileY = (y - 1) * tileSize
-
-        -- Create a rectangular collider for each wall/structure tile
-        if physicsWorld then
-          local body = love.physics.newBody(physicsWorld,
-            tileX + tileSize / 2, tileY + tileSize / 2, "static")
-          local shape = love.physics.newRectangleShape(tileSize, tileSize)
-          local fixture = love.physics.newFixture(body, shape)
-          fixture:setRestitution(0.1) -- Slight bounce
-          fixture:setFriction(0.8)    -- High friction
-
-          table.insert(collisionBodies, {
-            body = body,
-            fixture = fixture,
-            shape = shape
-          })
-        end
-      end
+      visited[x][y] = false
     end
   end
 
-  -- Create boundary walls around the entire map
-  local mapWidthPixels = worldWidth * tileSize
-  local mapHeightPixels = worldHeight * tileSize
-  local wallThickness = 32 -- Thickness of boundary walls
+  -- Helper: Check if tile is blocked (not walkable)
+  local function isBlocked(x, y)
+    if x < 1 or x > worldWidth or y < 1 or y > worldHeight then
+      return false
+    end
+    local tile = collisionGrid[x] and collisionGrid[x][y]
+    return tile and not tile.walkable
+  end
 
-  if physicsWorld then
-    -- Left boundary wall
-    local leftWall = love.physics.newBody(physicsWorld, -wallThickness/2, mapHeightPixels/2, "static")
-    local leftShape = love.physics.newRectangleShape(wallThickness, mapHeightPixels + wallThickness * 2)
-    local leftFixture = love.physics.newFixture(leftWall, leftShape)
-    leftFixture:setRestitution(0.1)
-    leftFixture:setFriction(0.8)
-    table.insert(collisionBodies, {body = leftWall, fixture = leftFixture, shape = leftShape})
+  -- Helper: Find the maximum width of a rectangle starting at (startX, startY)
+  local function findRectWidth(startX, startY)
+    local width = 0
+    for x = startX, worldWidth do
+      if isBlocked(x, startY) and not visited[x][startY] then
+        width = width + 1
+      else
+        break
+      end
+    end
+    return width
+  end
 
-    -- Right boundary wall
-    local rightWall = love.physics.newBody(physicsWorld, mapWidthPixels + wallThickness/2, mapHeightPixels/2, "static")
-    local rightShape = love.physics.newRectangleShape(wallThickness, mapHeightPixels + wallThickness * 2)
-    local rightFixture = love.physics.newFixture(rightWall, rightShape)
-    rightFixture:setRestitution(0.1)
-    rightFixture:setFriction(0.8)
-    table.insert(collisionBodies, {body = rightWall, fixture = rightFixture, shape = rightShape})
+  -- Helper: Check if we can extend a rectangle down by one row
+  local function canExtendDown(startX, startY, width, currentHeight)
+    local nextY = startY + currentHeight
+    if nextY > worldHeight then
+      return false
+    end
 
-    -- Top boundary wall
-    local topWall = love.physics.newBody(physicsWorld, mapWidthPixels/2, -wallThickness/2, "static")
-    local topShape = love.physics.newRectangleShape(mapWidthPixels, wallThickness)
-    local topFixture = love.physics.newFixture(topWall, topShape)
-    topFixture:setRestitution(0.1)
-    topFixture:setFriction(0.8)
-    table.insert(collisionBodies, {body = topWall, fixture = topFixture, shape = topShape})
+    for x = startX, startX + width - 1 do
+      if not isBlocked(x, nextY) or visited[x][nextY] then
+        return false
+      end
+    end
+    return true
+  end
 
-    -- Bottom boundary wall
-    local bottomWall = love.physics.newBody(physicsWorld, mapWidthPixels/2, mapHeightPixels + wallThickness/2, "static")
-    local bottomShape = love.physics.newRectangleShape(mapWidthPixels, wallThickness)
-    local bottomFixture = love.physics.newFixture(bottomWall, bottomShape)
-    bottomFixture:setRestitution(0.1)
-    bottomFixture:setFriction(0.8)
-    table.insert(collisionBodies, {body = bottomWall, fixture = bottomFixture, shape = bottomShape})
+  -- Greedy rectangle merging: find largest possible rectangles
+  for y = 1, worldHeight do
+    for x = 1, worldWidth do
+      if isBlocked(x, y) and not visited[x][y] then
+        -- Find width of rectangle
+        local width = findRectWidth(x, y)
+
+        -- Try to extend height
+        local height = 1
+        while canExtendDown(x, y, width, height) do
+          height = height + 1
+        end
+
+        -- Mark all tiles in this rectangle as visited
+        for rx = x, x + width - 1 do
+          for ry = y, y + height - 1 do
+            visited[rx][ry] = true
+          end
+        end
+
+        -- Create a physics body for this rectangle
+        local rectWidth = width * tileSize
+        local rectHeight = height * tileSize
+        local centerX = offsetX + (x - 1) * tileSize + rectWidth / 2
+        local centerY = offsetY + (y - 1) * tileSize + rectHeight / 2
+
+        local body = love.physics.newBody(physicsWorld, centerX, centerY, "static")
+        local shape = love.physics.newRectangleShape(rectWidth, rectHeight)
+        local fixture = love.physics.newFixture(body, shape)
+        fixture:setRestitution(0.1)
+        fixture:setFriction(0.8)
+
+        table.insert(collisionBodies, {
+          body = body,
+          fixture = fixture,
+          shape = shape,
+          x = x,
+          y = y,
+          width = width,
+          height = height
+        })
+      end
+    end
   end
 
   return collisionBodies

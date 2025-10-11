@@ -23,6 +23,69 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "maps/islands/base_island.tmx": {
+            "expandedObjectLayers": [
+                9
+            ],
+            "scale": 0.5,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 1620,
+                "y": -6
+            }
+        },
+        "maps/islands/base_island.tmx#Objects": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "maps/islands/base_island.tmx#TX Tileset Grass": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "maps/islands/base_island.tmx#TX Tileset Wall": {
+            "scaleInDock": 1
+        },
+        "maps/islands/base_island.tmx#test": {
+            "scaleInDock": 1
+        },
+        "maps/islands/forest_island.tmx": {
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 1.8584375,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 320.16142592903986,
+                "y": 123.22179250042038
+            }
+        },
+        "maps/islands/forest_island.tmx#Objects": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "maps/islands/forest_island.tmx#test": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "maps/islands/forest_island1.tmx": {
+            "scale": 1.8584375,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 320.16142592903986,
+                "y": 320.16142592903986
+            }
+        },
+        "maps/islands/island1.tmx": {
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 187.5,
+                "y": 238.5
+            }
+        },
         "maps/level1.tmx": {
             "expandedObjectLayers": [
                 5
@@ -73,7 +136,12 @@
             "scaleInEditor": 1
         },
         "tilemaps/Objects.tsx": {
-            "dynamicWrapping": true
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "tilemaps/test.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
         }
     },
     "frame.defaultDuration": 100,
@@ -89,6 +157,8 @@
     ],
     "project": "game1.tiled-project",
     "recentFiles": [
+        "maps/islands/base_island.tmx",
+        "maps/islands/island1.tmx",
         "maps/level1.tmx",
         "maps/test.tsx",
         "Objects.tsx",

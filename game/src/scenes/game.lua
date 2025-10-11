@@ -6,7 +6,7 @@ local world = {} -- For pathfinding and collision detection
 local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
-local cartographer = require("lib.cartographer")
+local MapManager = require("src.maps.MapManager")
 local TiledMapLoader = require("src.utils.TiledMapLoader")
 local GameState = require("src.core.GameState")
 
@@ -49,8 +49,6 @@ local playerEntity = nil
 local monsters = {} -- Array of monster entities
 local playerCollider = nil
 local lightWorld = nil
-local tiledMap = nil -- Cartographer map object
-local mapData = nil -- Parsed map data from TiledMapLoader
 local mouseFacingSystemAdded = false -- Track if MouseFacingSystem has been added
 
 -- Physics
@@ -138,63 +136,279 @@ function GameScene.load()
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
 
-  -- Load Tiled map using Cartographer
-  tiledMap = cartographer.load("resources/tiled/maps/level1.lua")
+  -- Load multi-island world using MapManager
+  local loadStart = love.timer.getTime()
+  MapManager.load("src/maps/level1")
+  print(string.format("[GameScene] MapManager.load took %.2fs", love.timer.getTime() - loadStart))
 
-  -- Set pixel-perfect filtering for all tileset images
-  if tiledMap and tiledMap._images then
-    for _, image in pairs(tiledMap._images) do
-      image:setFilter("nearest", "nearest")
+  -- Get base island for world setup
+  local baseIsland = MapManager.getMap("base")
+  if not baseIsland or not baseIsland.map then
+    print("[GameScene] ERROR: Failed to load base island!")
+    return
+  end
+
+  -- Calculate bounding box of ALL islands
+  local minX, minY = 0, 0
+  local maxX, maxY = baseIsland.width, baseIsland.height
+
+  for _, island in ipairs(MapManager.getAllMaps()) do
+    minX = math.min(minX, island.x)
+    minY = math.min(minY, island.y)
+    maxX = math.max(maxX, island.x + island.width)
+    maxY = math.max(maxY, island.y + island.height)
+  end
+
+  -- Add padding
+  local padding = 500
+  minX = minX - padding
+  minY = minY - padding
+  maxX = maxX + padding
+  maxY = maxY + padding
+
+  -- Calculate offset to make everything positive and grid-aligned
+  local offsetX = -minX
+  local offsetY = -minY
+
+  -- Snap offset to tile grid to keep islands aligned
+  offsetX = math.ceil(offsetX / tileSize) * tileSize
+  offsetY = math.ceil(offsetY / tileSize) * tileSize
+
+  -- Adjust all island positions by the offset
+  for _, island in ipairs(MapManager.getAllMaps()) do
+    island.x = island.x + offsetX
+    island.y = island.y + offsetY
+  end
+
+  -- Adjust all bridge positions by the offset
+  for _, bridge in ipairs(MapManager.getBridges()) do
+    bridge.x = bridge.x + offsetX
+    bridge.y = bridge.y + offsetY
+  end
+
+  -- Calculate new camera bounds (now starting from 0,0)
+  local camWidth = maxX - minX
+  local camHeight = maxY - minY
+
+  print(string.format("[GameScene] World offset: (%.0f, %.0f)", offsetX, offsetY))
+  print(string.format("[GameScene] Camera bounds: (0, 0) to (%.0f, %.0f)", camWidth, camHeight))
+
+  -- Use base island tile size
+  tileSize = baseIsland.map.tilewidth
+
+  -- Calculate world grid dimensions to encompass all islands
+  worldWidth = math.ceil(camWidth / tileSize)
+  worldHeight = math.ceil(camHeight / tileSize)
+
+  local gridStart = love.timer.getTime()
+
+  -- OPTIMIZATION: Pre-allocate grid with single walkable value
+  world = {}
+  local emptyTile = { walkable = false, type = 0 }
+  for x = 1, worldWidth do
+    world[x] = {}
+    for y = 1, worldHeight do
+      world[x][y] = emptyTile  -- Reuse same table for all empty tiles
     end
   end
 
-  -- Parse map data using TiledMapLoader
-  mapData = TiledMapLoader.loadMapData(tiledMap)
+  print(string.format("[GameScene] Pathfinding grid: %dx%d tiles (%.2fs)",
+    worldWidth, worldHeight, love.timer.getTime() - gridStart))
 
-  -- Extract data from parsed map
-  worldWidth = mapData.width
-  worldHeight = mapData.height
-  tileSize = mapData.tileSize
-  world = mapData.collisionGrid
+  -- Add bridge tiles to pathfinding grid (make them walkable)
+  local bridges = MapManager.getBridges()
+  for _, bridge in ipairs(bridges) do
+    if bridge.direction == "horizontal" then
+      -- Vertical connection (horizontal bridge line)
+      local bridgeX = math.floor(bridge.x / tileSize) + 1
+      local bridgeStartY = math.floor(bridge.y / tileSize) + 1
+      local bridgeEndY = math.floor((bridge.y + bridge.height) / tileSize)
 
-  -- Store mapData in GameState for debugging
-  GameState.mapData = mapData
-
-  -- Update camera bounds to match the loaded level
-  local levelWidthPixels = worldWidth * tileSize
-  local levelHeightPixels = worldHeight * tileSize
-  GameState.updateCameraBounds(levelWidthPixels, levelHeightPixels)
-
-  -- Create physics colliders for world borders
-  borderColliders = TiledMapLoader.createCollisionBodies(mapData, physicsWorld)
-  GameScene.borderColliders = borderColliders
-
-  -- Spawn entities from map objects using factory pattern
-  TiledMapLoader.spawnEntities(mapData, {
-    spawn = function(obj)
-      -- Spawn player at the map's defined spawn point
-      playerEntity = Player.create(obj.x, obj.y, ecsWorld, physicsWorld)
-    end,
-    reactors = function(obj)
-      Reactor.create(obj.x, obj.y, ecsWorld, physicsWorld)
-    end,
-    other = function(obj)
-      print('spawning other at:', obj.x, obj.y, obj.name)
-      if obj.name == "Tree" then
-        Tree.create(obj.x, obj.y, ecsWorld, physicsWorld)
+      for tileY = bridgeStartY, bridgeEndY do
+        if tileY >= 1 and tileY <= worldHeight and bridgeX >= 1 and bridgeX <= worldWidth then
+          world[bridgeX][tileY] = {
+            walkable = true,
+            type = 1,
+            gid = 140,  -- Bridge tile GID
+            isBridge = true
+          }
+        end
       end
-    end,
-    -- Add more entity types here as needed:
-    -- enemies = function(obj) ... end,
-    -- items = function(obj) ... end,
-  })
+    elseif bridge.direction == "vertical" then
+      -- Horizontal connection (vertical bridge line)
+      local bridgeStartX = math.floor(bridge.x / tileSize) + 1
+      local bridgeEndX = math.floor((bridge.x + bridge.width) / tileSize)
+      local bridgeY = math.floor(bridge.y / tileSize) + 1
 
-  -- If no spawn point was defined in the map, spawn player at center
+      for tileX = bridgeStartX, bridgeEndX do
+        if tileX >= 1 and tileX <= worldWidth and bridgeY >= 1 and bridgeY <= worldHeight then
+          world[tileX][bridgeY] = {
+            walkable = true,
+            type = 1,
+            gid = 140,  -- Bridge tile GID
+            isBridge = true
+          }
+        end
+      end
+    end
+  end
+
+  print(string.format("[GameScene] Added %d bridges to pathfinding grid", #bridges))
+
+  -- Create collision bodies and mark walkable areas for each island
+  local collisionStart = love.timer.getTime()
+  local utilsTiledMapLoader = require("src.utils.TiledMapLoader")
+
+  -- OPTIMIZATION: Cache collision grids by map path (don't reparse same map multiple times)
+  local collisionGridCache = {}
+
+  for _, island in ipairs(MapManager.getAllMaps()) do
+    local islandMap = island.map
+    local islandX = island.x
+    local islandY = island.y
+    local mapPath = island.definition.mapPath
+
+    -- Check cache first
+    local islandCollisionGrid = collisionGridCache[mapPath]
+    if not islandCollisionGrid then
+      -- Parse collision grid from this island's map data (only once per map type)
+      islandCollisionGrid = utilsTiledMapLoader.parseCollisionGrid(
+        islandMap,
+        islandMap.width,
+        islandMap.height
+      )
+
+      -- Debug: Count walkable tiles in parsed grid
+      local parsedWalkableCount = 0
+      for x = 1, islandMap.width do
+        for y = 1, islandMap.height do
+          if islandCollisionGrid[x] and islandCollisionGrid[x][y] and islandCollisionGrid[x][y].walkable then
+            parsedWalkableCount = parsedWalkableCount + 1
+          end
+        end
+      end
+      print(string.format("  Parsed collision grid for '%s': %d walkable tiles out of %d total",
+        island.definition.name, parsedWalkableCount, islandMap.width * islandMap.height))
+
+      collisionGridCache[mapPath] = islandCollisionGrid
+    end
+
+    -- Mark walkable tiles in the global pathfinding grid
+    -- OPTIMIZATION: Only create new table for walkable tiles
+    local walkableTileCount = 0
+    for localX = 1, islandMap.width do
+      for localY = 1, islandMap.height do
+        local tileData = islandCollisionGrid[localX][localY]
+
+        -- Only process walkable tiles (skip empty/blocked)
+        if tileData and tileData.walkable then
+          -- Convert local island tile coords to global world tile coords
+          local worldTileX = math.floor(islandX / tileSize) + localX
+          local worldTileY = math.floor(islandY / tileSize) + localY
+
+          if worldTileX >= 1 and worldTileX <= worldWidth and
+             worldTileY >= 1 and worldTileY <= worldHeight then
+            -- Create new table only for walkable tiles
+            world[worldTileX][worldTileY] = {
+              walkable = true,
+              type = tileData.type,
+              gid = tileData.gid
+            }
+            walkableTileCount = walkableTileCount + 1
+          end
+        end
+      end
+    end
+
+    print(string.format("  Island '%s': %d walkable tiles marked (%.0f, %.0f)",
+      island.definition.name, walkableTileCount, islandX, islandY))
+
+    -- Create physics collision bodies for this island's tiles
+    local islandColliders = utilsTiledMapLoader.createCollisionBodies(
+      {
+        collisionGrid = islandCollisionGrid,
+        width = islandMap.width,
+        height = islandMap.height,
+        tileSize = tileSize
+      },
+      physicsWorld,
+      islandX,  -- X offset
+      islandY   -- Y offset
+    )
+
+    -- Add to border colliders list
+    for _, collider in ipairs(islandColliders) do
+      table.insert(borderColliders, collider)
+    end
+  end
+
+  print(string.format("[GameScene] Collision setup took %.2fs", love.timer.getTime() - collisionStart))
+
+  GameScene.borderColliders = borderColliders
+  print(string.format("[GameScene] Total collision bodies: %d", #borderColliders))
+
+  -- Store map data in GameState for debugging (overlay needs this)
+  GameState.mapData = {
+    width = worldWidth,
+    height = worldHeight,
+    tileSize = tileSize,
+    collisionGrid = world
+  }
+
+  -- Spawn entities from ALL island maps
+  local spawnStart = love.timer.getTime()
+
+  for _, island in ipairs(MapManager.getAllMaps()) do
+    local islandMap = island.map
+    local islandX = island.x
+    local islandY = island.y
+
+    -- Parse objects from this island's map
+    local objects = TiledMapLoader.parseObjects(islandMap)
+
+    -- Spawn entities with offset for island position
+    if objects.spawn and not playerEntity and island.id == "base" then
+      -- Spawn player at base island spawn point
+      playerEntity = Player.create(islandX + objects.spawn.x, islandY + objects.spawn.y, ecsWorld, physicsWorld)
+    end
+
+    -- Spawn reactors
+    for _, obj in ipairs(objects.reactors or {}) do
+      Reactor.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
+    end
+
+    -- Spawn other objects (trees, etc.)
+    for _, obj in ipairs(objects.other or {}) do
+      if obj.name == "Tree" then
+        Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
+      end
+    end
+  end
+
+  print(string.format("[GameScene] Entity spawning took %.2fs", love.timer.getTime() - spawnStart))
+
+  -- If no spawn point found, spawn player at center of base island
   if not playerEntity then
-    local centerX = (worldWidth * tileSize) / 2
-    local centerY = (worldHeight * tileSize) / 2
+    local centerX = baseIsland.x + baseIsland.width / 2
+    local centerY = baseIsland.y + baseIsland.height / 2
     playerEntity = Player.create(centerX, centerY, ecsWorld, physicsWorld)
   end
+
+  -- Create camera with positive-only bounds
+  local gamera = require("lib.gamera")
+  GameState.camera = gamera.new(0, 0, camWidth, camHeight)
+
+  -- Center camera on player
+  if playerEntity then
+    local position = playerEntity:getComponent("Position")
+    if position then
+      GameState.camera:setPosition(position.x, position.y)
+    end
+  end
+
+  GameState.camera:setScale(GameConstants.CAMERA_SCALE)
+
+  print(string.format("[GameScene] Camera positioned at (%.2f, %.2f)", GameState.camera:getPosition()))
 
   -- Create global particle entity for bullet impacts and other effects
   do
@@ -207,7 +421,12 @@ function GameScene.load()
   end
 
   -- Add pathfinding system after static collision objects are added
-  ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize)) -- Pathfinding system
+  local pathfindingStart = love.timer.getTime()
+  ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize))
+  print(string.format("[GameScene] Pathfinding system init took %.2fs", love.timer.getTime() - pathfindingStart))
+
+  local totalLoadTime = love.timer.getTime() - loadStart
+  print(string.format("[GameScene] ===== TOTAL LOAD TIME: %.2fs =====", totalLoadTime))
 end
 
 -- Allow other modules (phases, etc.) to set ambient color safely
@@ -231,10 +450,8 @@ function GameScene.update(dt, gameState)
     mouseFacingSystemAdded = true
   end
 
-  -- Update Tiled map (for animations)
-  if tiledMap then
-    tiledMap:update(dt)
-  end
+  -- Update all maps through MapManager (with camera culling)
+  MapManager.update(dt, gameState.camera)
 
   -- Update physics world FIRST so positions are current
   if physicsWorld then
@@ -289,7 +506,16 @@ end
 
 -- Get map data (collision grid and dimensions)
 function GameScene.getMapData()
-  return mapData
+  -- Return the FULL world grid dimensions, not just base island
+  if world and worldWidth and worldHeight and tileSize then
+    return {
+      width = worldWidth,     -- Full world grid width (e.g., 112 tiles)
+      height = worldHeight,   -- Full world grid height (e.g., 82 tiles)
+      tileSize = tileSize,    -- Tile size in pixels (32)
+      collisionGrid = world   -- Full world pathfinding grid
+    }
+  end
+  return nil
 end
 
 -- Add a new monster at the specified position
@@ -370,10 +596,8 @@ end
 function GameScene.draw(gameState)
   -- Draw the world first
   gameState.camera:draw(function()
-    -- Draw the Tiled map using Cartographer
-    if tiledMap then
-      tiledMap:draw()
-    end
+    -- Draw all islands using MapManager (with camera frustum culling)
+    MapManager.draw(gameState.camera)
 
     -- Draw ECS entities
     if ecsWorld then
@@ -456,12 +680,13 @@ function GameScene.cleanup()
     uiWorld = nil
   end
 
+  -- Unload all maps
+  MapManager.unload()
+
   -- Clear entity references and flags
   playerEntity = nil
   mouseFacingSystemAdded = false
   playerCollider = nil
-  tiledMap = nil
-  mapData = nil
   GameScene.playerCollider = nil
   GameScene.borderColliders = nil
   GameScene.monsters = nil
