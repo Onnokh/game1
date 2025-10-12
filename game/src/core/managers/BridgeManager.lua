@@ -8,7 +8,6 @@ local GameConstants = require("src.constants")
 
 -- Internal state
 BridgeManager.bridges = {} -- Cached bridge connections: {fromTile = {x, y}, toTile = {x, y}}
-BridgeManager.adjacencyMap = {} -- Maps island index to list of adjacent island indices
 BridgeManager.initialized = false
 
 ---=============================================================================
@@ -97,11 +96,7 @@ end
 function BridgeManager.initialize(islands, tileSize, pathfindingGrid)
     print("[BridgeManager] Initializing...")
 
-    -- Build adjacency map (islands within configured distance of each other)
-    local adjacencyTolerance = tileSize * GameConstants.ISLAND_ADJACENCY_DISTANCE_TILES
-    BridgeManager.adjacencyMap = BridgeManager.buildAdjacencyMap(islands, adjacencyTolerance)
-
-    -- Detect bridges (only between adjacent islands)
+    -- Detect bridges between islands
     BridgeManager.bridges = BridgeManager.detectBridges(
         islands,
         tileSize,
@@ -112,77 +107,6 @@ function BridgeManager.initialize(islands, tileSize, pathfindingGrid)
 
     BridgeManager.initialized = true
     print(string.format("[BridgeManager] Initialized with %d bridges", #BridgeManager.bridges))
-end
-
----Build adjacency map for islands
----@param islands table Array of island data
----@param tolerance number Maximum gap distance to consider islands adjacent
----@return table Adjacency map: island index -> array of adjacent island indices
-function BridgeManager.buildAdjacencyMap(islands, tolerance)
-    tolerance = tolerance or 10 -- pixels
-
-    local adjacencyMap = {}
-
-    -- Initialize adjacency lists
-    for i = 1, #islands do
-        adjacencyMap[i] = {}
-    end
-
-    -- Check each pair of islands
-    for i = 1, #islands do
-        local island1 = islands[i]
-
-        for j = i + 1, #islands do
-            local island2 = islands[j]
-
-            -- Calculate the gap/overlap between islands
-            local horizontalGap = math.max(
-                island1.x - (island2.x + island2.width),
-                island2.x - (island1.x + island1.width)
-            )
-
-            local verticalGap = math.max(
-                island1.y - (island2.y + island2.height),
-                island2.y - (island1.y + island1.height)
-            )
-
-            -- Islands are adjacent if they're close in one dimension and aligned in the other
-            local isAdjacent = false
-
-            -- Check if horizontally adjacent (east/west neighbors)
-            if horizontalGap >= 0 and horizontalGap <= tolerance then
-                -- Check if they overlap vertically (share Y range)
-                local verticalOverlap = not (
-                    island1.y + island1.height < island2.y or
-                    island2.y + island2.height < island1.y
-                )
-                if verticalOverlap then
-                    isAdjacent = true
-                end
-            end
-
-            -- Check if vertically adjacent (north/south neighbors)
-            if verticalGap >= 0 and verticalGap <= tolerance then
-                -- Check if they overlap horizontally (share X range)
-                local horizontalOverlap = not (
-                    island1.x + island1.width < island2.x or
-                    island2.x + island2.width < island1.x
-                )
-                if horizontalOverlap then
-                    isAdjacent = true
-                end
-            end
-
-            if isAdjacent then
-                table.insert(adjacencyMap[i], j)
-                table.insert(adjacencyMap[j], i)
-                print(string.format("[BridgeManager] Islands '%s' (#%d) and '%s' (#%d) are adjacent",
-                    island1.id, i, island2.id, j))
-            end
-        end
-    end
-
-    return adjacencyMap
 end
 
 ---Detect bridges between islands based on proximity
@@ -208,38 +132,34 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
         islandWalkableTiles[i] = tiles
     end
 
-    -- For each island, check only its adjacent neighbors
+    -- Check each pair of islands for possible bridges
     for i = 1, #islands do
-        local adjacentIndices = BridgeManager.adjacencyMap[i] or {}
+        for j = i + 1, #islands do
+            local island1 = islands[i]
+            local island2 = islands[j]
+            local tiles1 = islandWalkableTiles[i]
+            local tiles2 = islandWalkableTiles[j]
 
-        for _, j in ipairs(adjacentIndices) do
-            -- Only process each pair once (i < j)
-            if i < j then
-                local island1 = islands[i]
-                local island2 = islands[j]
-                local tiles1 = islandWalkableTiles[i]
-                local tiles2 = islandWalkableTiles[j]
+            -- Skip if either island has no walkable tiles
+            if #tiles1 == 0 or #tiles2 == 0 then
+                goto continue
+            end
 
-                -- Skip if either island has no walkable tiles
-                if #tiles1 == 0 or #tiles2 == 0 then
-                    goto continue
-                end
+            -- Skip if not enough edge tiles (need at least 3 to exclude corners)
+            local minRequiredEdgeTiles = 3
 
-                -- Skip if not enough edge tiles (need at least 3 to exclude corners)
-                local minRequiredEdgeTiles = 3
+            -- Find aligned tile pairs that can form a bridge (work in tile coordinates)
+            local bestTile1 = nil
+            local bestTile2 = nil
+            local bestDist = math.huge
+            local maxBridgeDistanceTiles = GameConstants.MAX_BRIDGE_DISTANCE_TILES
 
-                -- Find aligned tile pairs that can form a bridge (work in tile coordinates)
-                local bestTile1 = nil
-                local bestTile2 = nil
-                local bestDist = math.huge
-                local maxBridgeDistanceTiles = GameConstants.MAX_BRIDGE_DISTANCE_TILES
+            -- Determine primary direction between island centers
+            local direction = getDirectionBetweenIslands(island1, island2)
 
-                -- Determine primary direction between island centers
-                local direction = getDirectionBetweenIslands(island1, island2)
-
-                -- Filter tiles to only those at the edge facing the other island
-                local edgeTiles1 = {}
-                local edgeTiles2 = {}
+            -- Filter tiles to only those at the edge facing the other island
+            local edgeTiles1 = {}
+            local edgeTiles2 = {}
 
                 if direction == "east" or direction == "west" then
                     -- Horizontal connection - find tiles at horizontal edges
@@ -358,9 +278,8 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                     -- Sort by distance
                     table.sort(validPairs, function(a, b) return a.dist < b.dist end)
 
-                    -- Pick from the shortest X% (configurable) with some randomness
-                    local poolRatio = GameConstants.BRIDGE_SELECTION_POOL_RATIO
-                    local poolSize = math.max(1, math.ceil(#validPairs * poolRatio))
+                    -- Pick from the shortest 3 options (or all if less than 3)
+                    local poolSize = math.min(3, #validPairs)
                     local randomIndex = math.random(1, poolSize)
                     local chosen = validPairs[randomIndex]
 
@@ -378,7 +297,6 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                 end
 
                 ::continue::
-            end
         end
     end
 
@@ -568,12 +486,6 @@ function BridgeManager.getBridges()
     return BridgeManager.bridges
 end
 
----Get adjacency map
----@return table Adjacency map
-function BridgeManager.getAdjacencyMap()
-    return BridgeManager.adjacencyMap
-end
-
 ---Mark all bridge tiles as walkable in the pathfinding grid
 ---@param grid table Pathfinding grid (2D array)
 function BridgeManager.markBridgeTilesWalkable(grid)
@@ -668,7 +580,6 @@ end
 ---Unload and reset BridgeManager
 function BridgeManager.unload()
     BridgeManager.bridges = {}
-    BridgeManager.adjacencyMap = {}
     BridgeManager.initialized = false
     print("[BridgeManager] Unloaded")
 end
