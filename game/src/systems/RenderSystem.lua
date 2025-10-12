@@ -146,7 +146,7 @@ end
 ---@param spriteRenderer SpriteRenderer The sprite renderer component
 ---@param animator Animator|nil The animator component
 function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
-    local ShaderManager = require("src.utils.ShaderManager")
+    local ShaderManager = require("src.core.managers.ShaderManager")
     local outlineShader = ShaderManager.getShader("outline")
 
     if not outlineShader then

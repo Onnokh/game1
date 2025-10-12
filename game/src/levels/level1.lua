@@ -24,7 +24,6 @@ local level1 = {
     -- Random island generation parameters
     generation = {
         seed = nil,              -- nil = random seed, or set specific number for deterministic generation
-        tileSize = 32,           -- Tile size for bridge generation
         islandCount = {          -- How many random islands to generate
             min = 8,
             max = 12

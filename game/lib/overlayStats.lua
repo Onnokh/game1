@@ -216,7 +216,7 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
 
   -- Try to get world bounds from MapManager
   local worldMinX, worldMinY, worldMaxX, worldMaxY
-  local success, MapManager = pcall(require, "src.maps.MapManager")
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
   if success and MapManager and MapManager.initialized then
     -- Use full world bounds from all islands
     worldMinX, worldMinY = math.huge, math.huge
@@ -637,6 +637,36 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
+---Draws connection points from MapManager
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
+  local scale = cameraScale or 1.0
+
+  -- Try to access MapManager
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
+  if not success or not MapManager or not MapManager.drawConnectionPoints then
+    return
+  end
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-topLeftX, -topLeftY)
+
+  -- Call MapManager's connection point drawing
+  MapManager.drawConnectionPoints()
+
+  love.graphics.pop()
+end
+
 ---Draws island boundaries and information
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
@@ -646,7 +676,7 @@ function overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
   local scale = cameraScale or 1.0
 
   -- Try to access MapManager
-  local success, MapManager = pcall(require, "src.maps.MapManager")
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
   if not success or not MapManager or not MapManager.initialized then
     return
   end
@@ -777,7 +807,7 @@ end
 function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
   -- Get map data from GameState
   local GameState = require("src.core.GameState")
-  local TiledMapLoader = require("src.utils.TiledMapLoader")
+  local TiledMapLoader = require("src.utils.tiled")
 
   if not GameState.mapData or not GameState.mapData.collisionGrid then
     return
@@ -796,19 +826,24 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
   end
 
   -- Calculate visible tile range in world coordinates
+  local CoordinateUtils = require("src.utils.coordinates")
   local topLeftX = cameraX - (halfW / scale)
   local topLeftY = cameraY - (halfH / scale)
   local bottomRightX = cameraX + (halfW / scale)
   local bottomRightY = cameraY + (halfH / scale)
 
-  -- Convert screen bounds to grid coordinates (same as CoordinateUtils.worldToGrid)
-  local startTileX = math.max(1, math.floor(topLeftX / tileSize) + 1)
-  local endTileX = math.min(mapData.width, math.ceil(bottomRightX / tileSize))
-  local startTileY = math.max(1, math.floor(topLeftY / tileSize) + 1)
-  local endTileY = math.min(mapData.height, math.ceil(bottomRightY / tileSize))
+  -- Convert screen bounds to grid coordinates using CoordinateUtils
+  local startTileX, startTileY = CoordinateUtils.worldToGrid(topLeftX, topLeftY)
+  local endTileX, endTileY = CoordinateUtils.worldToGrid(bottomRightX, bottomRightY)
+
+  -- Clamp to grid bounds
+  startTileX = math.max(1, startTileX)
+  startTileY = math.max(1, startTileY)
+  endTileX = math.min(mapData.width, endTileX)
+  endTileY = math.min(mapData.height, endTileY)
 
   -- Try to get island maps to show their raw GID data
-  local success, MapManager = pcall(require, "src.maps.MapManager")
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
   local showRawGids = success and MapManager and MapManager.initialized
 
   if showRawGids then
@@ -850,9 +885,8 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
                   love.graphics.setColor(1, 1, 1, 1)
                   love.graphics.print(tostring(gid), screenX + 2, screenY + 2)
 
-                  -- Show if it's walkable from the pathfinding grid
-                  local gridX = math.floor(worldX / tileSize) + 1
-                  local gridY = math.floor(worldY / tileSize) + 1
+                  -- Show if it's walkable from the pathfinding grid (using CoordinateUtils)
+                  local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY)
                   local walkable = (collisionGrid and collisionGrid[gridX] and
                                    collisionGrid[gridX][gridY] and
                                    collisionGrid[gridX][gridY].walkable)
@@ -895,6 +929,8 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
     overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
     -- Draw island boundaries and info
     overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
+    -- Draw connection points
+    overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
     -- Draw physics colliders in world space
     overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
     -- Draw sprite outlines in world space
@@ -1008,7 +1044,7 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   -- Display island count from MapManager
   local islandCount = 0
   local worldSizeText = "N/A"
-  local successMap, MapManager = pcall(require, "src.maps.MapManager")
+  local successMap, MapManager = pcall(require, "src.core.managers.MapManager")
   if successMap and MapManager and MapManager.initialized then
     islandCount = #MapManager.getAllMaps()
 

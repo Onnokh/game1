@@ -1,5 +1,5 @@
 local System = require("src.core.System")
-local ShaderManager = require("src.utils.ShaderManager")
+local ShaderManager = require("src.core.managers.ShaderManager")
 local EntityUtils = require("src.utils.entities")
 
 ---@class AggroVignetteSystem : System

@@ -1,5 +1,5 @@
 local Component = require("src.core.Component")
-local ShaderManager = require("src.utils.ShaderManager")
+local ShaderManager = require("src.core.managers.ShaderManager")
 
 ---@class FlashEffect : Component
 ---@field duration number Duration of the flash effect in seconds

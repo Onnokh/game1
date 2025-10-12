@@ -1,7 +1,7 @@
 local overlayStats = require("lib.overlayStats")
 local GameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
-local SoundManager = require("src.utils.SoundManager")
+local SoundManager = require("src.core.managers.SoundManager")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
