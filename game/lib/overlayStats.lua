@@ -16,6 +16,18 @@ local overlayStats = {
   particleSystems = {},
   -- Tile debugging
   showTileDebug = false,
+  -- Debug camera scale override (nil = use default from constants)
+  debugCameraScale = nil,
+  -- Debug visualization toggles
+  debugToggles = {
+    gridlines = true,
+    islands = true,
+    physicsColliders = false,
+    spriteOutlines = false,
+    pathfinding = true,
+    entityStates = true,
+    stats = true,
+  },
   renderInfo = {
     name = name,
     version = version,
@@ -637,37 +649,6 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
----Draws connection points from MapManager
----@param cameraX number Camera X position
----@param cameraY number Camera Y position
----@param cameraScale number Camera scale factor (optional)
----@return nil
-function overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
-  local scale = cameraScale or 1.0
-
-  -- Try to access BridgeManager and MapManager
-  local successBridge, BridgeManager = pcall(require, "src.core.managers.BridgeManager")
-  local successMap, MapManager = pcall(require, "src.core.managers.MapManager")
-  if not successBridge or not BridgeManager or not successMap or not MapManager then
-    return
-  end
-
-  -- Save current graphics state
-  love.graphics.push("all")
-
-  -- Apply camera transform
-  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
-  local topLeftX = cameraX - (halfW / scale)
-  local topLeftY = cameraY - (halfH / scale)
-  love.graphics.scale(scale, scale)
-  love.graphics.translate(-topLeftX, -topLeftY)
-
-  -- Call BridgeManager's connection point drawing
-  BridgeManager.drawConnectionPoints(MapManager.getAllMaps())
-
-  love.graphics.pop()
-end
-
 ---Draws island boundaries and information
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
@@ -944,6 +925,188 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
   end
 end
 
+---Draws the toggle controls panel below the stats panel (in screen space)
+---@param statsWidth number Width of the stats panel to match
+---@return nil
+function overlayStats.drawToggleControls(statsWidth)
+  -- Ensure we're drawing in screen space
+  love.graphics.push("all")
+  love.graphics.origin() -- Reset all transformations to screen space
+
+  local font = overlayFontMain or love.graphics.getFont()
+  love.graphics.setFont(font)
+
+  -- Panel settings
+  local padding = 10
+  local lineHeight = 20  -- Match the main stats panel line height
+  local startY = 440  -- Position below the main stats panel (increased height)
+
+  -- Use the same width as stats panel or calculate a minimum
+  local panelWidth = statsWidth or 280
+
+  -- Store toggle bounds for click detection
+  if not overlayStats.toggleBounds then
+    overlayStats.toggleBounds = {}
+  end
+  overlayStats.toggleBounds = {}  -- Clear previous bounds
+
+  -- Store zoom button bounds for click detection
+  if not overlayStats.zoomButtonBounds then
+    overlayStats.zoomButtonBounds = {}
+  end
+  overlayStats.zoomButtonBounds = {}  -- Clear previous bounds
+
+  -- Define toggle list with keys and descriptions
+  -- Only show keyboard shortcuts for implemented toggles
+  local toggleList = {
+    {"", "Gridlines", overlayStats.debugToggles.gridlines},
+    {"", "Islands", overlayStats.debugToggles.islands},
+    {"", "Physics", overlayStats.debugToggles.physicsColliders},
+    {"", "Sprites", overlayStats.debugToggles.spriteOutlines},
+    {"", "Pathfinding", overlayStats.debugToggles.pathfinding},
+    {"", "States", overlayStats.debugToggles.entityStates},
+    {"F4", "Tiles (GID)", overlayStats.showTileDebug},
+  }
+
+  -- Calculate panel height (title + zoom buttons + toggles)
+  local buttonSize = 20
+  local panelHeight = padding + lineHeight + 5 + buttonSize + 10 + (#toggleList * lineHeight) + padding
+
+  -- Draw panel background
+  love.graphics.setColor(0, 0, 0, 0.8)
+  love.graphics.rectangle("fill", 10, startY, panelWidth, panelHeight)
+
+  -- Draw title
+  love.graphics.setColor(0.678, 0.847, 0.902, 1)
+  local titleY = startY + padding
+  love.graphics.print("Debug Toggles", 20, titleY)
+
+  -- Draw zoom controls next to title
+  local gameState = require("src.core.GameState")
+
+  -- Initialize debugCameraScale from actual camera if not set
+  if not overlayStats.debugCameraScale and gameState and gameState.camera then
+    overlayStats.debugCameraScale = gameState.camera.scale
+  end
+
+  local currentScale = overlayStats.debugCameraScale or (gameState and gameState.camera and gameState.camera.scale) or 1.0
+  local zoomText = string.format("Zoom: %.2fx", currentScale)
+  local zoomTextWidth = font:getWidth(zoomText)
+  local zoomTextX = panelWidth - zoomTextWidth - 10
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.print(zoomText, 10 + zoomTextX, titleY)
+
+  titleY = titleY + lineHeight + 5
+
+  -- Draw zoom buttons
+  local buttonSpacing = 5
+  local buttonY = titleY
+  local buttonStartX = panelWidth - (buttonSize * 2 + buttonSpacing) - 10
+
+  -- Zoom Out button (-)
+  local zoomOutX = 10 + buttonStartX
+  local mouseX, mouseY = love.mouse.getPosition()
+  local isHoveringZoomOut = mouseX >= zoomOutX and mouseX <= zoomOutX + buttonSize and
+                            mouseY >= buttonY and mouseY <= buttonY + buttonSize
+
+  if isHoveringZoomOut then
+    love.graphics.setColor(0.5, 0.5, 0.5, 0.8)
+  else
+    love.graphics.setColor(0.3, 0.3, 0.3, 0.8)
+  end
+  love.graphics.rectangle("fill", zoomOutX, buttonY, buttonSize, buttonSize)
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.rectangle("line", zoomOutX, buttonY, buttonSize, buttonSize)
+  love.graphics.print("-", zoomOutX + 6, buttonY + 2)
+
+  -- Store zoom out button bounds
+  table.insert(overlayStats.zoomButtonBounds, {
+    x = zoomOutX,
+    y = buttonY,
+    width = buttonSize,
+    height = buttonSize,
+    action = "zoomOut"
+  })
+
+  -- Zoom In button (+)
+  local zoomInX = zoomOutX + buttonSize + buttonSpacing
+  local isHoveringZoomIn = mouseX >= zoomInX and mouseX <= zoomInX + buttonSize and
+                           mouseY >= buttonY and mouseY <= buttonY + buttonSize
+
+  if isHoveringZoomIn then
+    love.graphics.setColor(0.5, 0.5, 0.5, 0.8)
+  else
+    love.graphics.setColor(0.3, 0.3, 0.3, 0.8)
+  end
+  love.graphics.rectangle("fill", zoomInX, buttonY, buttonSize, buttonSize)
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.rectangle("line", zoomInX, buttonY, buttonSize, buttonSize)
+  love.graphics.print("+", zoomInX + 5, buttonY + 2)
+
+  -- Store zoom in button bounds
+  table.insert(overlayStats.zoomButtonBounds, {
+    x = zoomInX,
+    y = buttonY,
+    width = buttonSize,
+    height = buttonSize,
+    action = "zoomIn"
+  })
+
+  titleY = titleY + buttonSize + 10
+
+  -- Draw each toggle
+  for i, toggle in ipairs(toggleList) do
+    local y = titleY + (i - 1) * lineHeight
+    local key = toggle[1]
+    local name = toggle[2]
+    local enabled = toggle[3]
+
+    -- Store bounds for click detection
+    table.insert(overlayStats.toggleBounds, {
+      x = 10,
+      y = y,
+      width = panelWidth,
+      height = lineHeight,
+      index = i
+    })
+
+    -- Draw hover effect if mouse is over this toggle
+    local mouseX, mouseY = love.mouse.getPosition()
+    local isHovered = mouseX >= 10 and mouseX <= 10 + panelWidth and
+                      mouseY >= y and mouseY <= y + lineHeight
+
+    if isHovered then
+      love.graphics.setColor(1, 1, 1, 0.1)
+      love.graphics.rectangle("fill", 10, y, panelWidth, lineHeight)
+    end
+
+    -- Draw key binding in gray (only if it exists)
+    if key ~= "" then
+      love.graphics.setColor(0.6, 0.6, 0.6, 1)
+      love.graphics.print(key, 20, y)
+    end
+
+    -- Draw name in white (adjust position based on whether there's a key)
+    love.graphics.setColor(1, 1, 1, 1)
+    local nameX = (key ~= "") and 60 or 20
+    love.graphics.print(name, nameX, y)
+
+    -- Draw status in green or red (right-aligned in panel)
+    local statusX = 10 + panelWidth - 50
+    if enabled then
+      love.graphics.setColor(0, 1, 0, 1)
+      love.graphics.print("ON", statusX, y)
+    else
+      love.graphics.setColor(1, 0, 0, 1)
+      love.graphics.print("OFF", statusX - 5, y)
+    end
+  end
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.pop() -- Restore previous graphics state
+end
+
 function overlayStats.draw(cameraX, cameraY, cameraScale)
   if not overlayStats.isActive then
     return
@@ -963,204 +1126,240 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
 
   if cameraX and cameraY then
     -- Draw gridlines in world space (covers all islands)
-    overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
+    if overlayStats.debugToggles.gridlines then
+      overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
+    end
     -- Draw island boundaries and info
-    overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
-    -- Draw connection points
-    overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
+    if overlayStats.debugToggles.islands then
+      overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
+    end
     -- Draw physics colliders in world space
-    overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
+    if overlayStats.debugToggles.physicsColliders then
+      overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
+    end
     -- Draw sprite outlines in world space
-    overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
+    if overlayStats.debugToggles.spriteOutlines then
+      overlayStats.drawSpriteOutlines(cameraX, cameraY, cameraScale)
+    end
     -- Draw pathfinding debug in world space
-    overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
+    if overlayStats.debugToggles.pathfinding then
+      overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
+    end
     -- Draw entity state overlays in world space
-    overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
+    if overlayStats.debugToggles.entityStates then
+      overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
+    end
     -- Draw tile debug info in world space
     if overlayStats.showTileDebug then
       overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
     end
-    -- Draw tile coordinates at mouse position
+    -- Draw tile coordinates at mouse position (always shown in debug mode)
     overlayStats.drawMouseTileCoordinates(cameraX, cameraY, cameraScale)
   end
 
 
-  -- Calculate dynamic width based on renderer version and other content
-  local padding = 20 -- 10px padding on each side
-  local baseWidth = 280 -- Minimum width
+  -- Draw stats panel if toggle is enabled
+  if overlayStats.debugToggles.stats then
+    -- Calculate dynamic width based on renderer version and other content
+    local padding = 20 -- 10px padding on each side
+    local baseWidth = 280 -- Minimum width
 
-  -- Check width needed for the renderer version text
-  local versionTextWidth = font:getWidth(string.format("%s", overlayStats.renderInfo.version))
-  local rendererInfoWidth =
-    font:getWidth(string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor))
-  local systemInfoWidth = font:getWidth(
-    overlayStats.sysInfo.os .. " " .. overlayStats.sysInfo.arch .. ": " .. overlayStats.sysInfo.cpuCount .. "x CPU"
-  )
+    -- Check width needed for the renderer version text
+    local versionTextWidth = font:getWidth(string.format("%s", overlayStats.renderInfo.version))
+    local rendererInfoWidth =
+      font:getWidth(string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor))
+    local systemInfoWidth = font:getWidth(
+      overlayStats.sysInfo.os .. " " .. overlayStats.sysInfo.arch .. ": " .. overlayStats.sysInfo.cpuCount .. "x CPU"
+    )
 
-  -- Calculate rectangle width based on the widest content
-  local contentWidth = math.max(versionTextWidth, rendererInfoWidth, systemInfoWidth, baseWidth)
-  local rectangleWidth = contentWidth + padding
+    -- Calculate rectangle width based on the widest content
+    local contentWidth = math.max(versionTextWidth, rendererInfoWidth, systemInfoWidth, baseWidth)
+    local rectangleWidth = contentWidth + padding
 
-  -- Update the overlay area dimensions for touch detection
-  overlayStats.touch.overlayArea = {
-    x = 10,
-    y = 10,
-    width = rectangleWidth,
-    height = 340,
-  }
+    -- Calculate estimated content height (rough estimate)
+    local estimatedLines = 19 -- Approximate number of lines in the stats
+    local estimatedHeight = 20 + (estimatedLines * 20) + 30 -- Start + lines + padding
 
-  -- Draw background rectangle with dynamic width
-  love.graphics.setColor(0, 0, 0, 0.8)
-  love.graphics.rectangle("fill", 10, 10, rectangleWidth, 400)
-  love.graphics.setColor(0.678, 0.847, 0.902, 1)
+    -- Draw background rectangle with dynamic width and calculated height FIRST
+    love.graphics.setColor(0, 0, 0, 0.8)
+    love.graphics.rectangle("fill", 10, 10, rectangleWidth, estimatedHeight)
 
-  -- System Info
-  local y = 20
-  love.graphics.print(
-    overlayStats.sysInfo.os .. " " .. overlayStats.sysInfo.arch .. ": " .. overlayStats.sysInfo.cpuCount .. "x CPU",
-    20,
-    y
-  )
-  y = y + 30
+    -- Update the overlay area dimensions for touch detection
+    overlayStats.touch.overlayArea = {
+      x = 10,
+      y = 10,
+      width = rectangleWidth,
+      height = estimatedHeight,
+    }
 
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.print(
-    string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor),
-    20,
-    y
-  )
-  y = y + 20
+    love.graphics.setColor(0.678, 0.847, 0.902, 1)
 
-  love.graphics.print(string.format("%s", overlayStats.renderInfo.version), 20, y)
-  y = y + 30
+    -- System Info - start tracking y position
+    local y = 20
+    love.graphics.print(
+      overlayStats.sysInfo.os .. " " .. overlayStats.sysInfo.arch .. ": " .. overlayStats.sysInfo.cpuCount .. "x CPU",
+      20,
+      y
+    )
+    y = y + 30
 
-  -- Safely handle frameTime with nil/zero checks
-  love.graphics.setColor(0, 1, 0, 1)
-  local frameTime = averages.frameTime or 0
-  local fps = frameTime > 0 and (1 / frameTime) or 0
-  love.graphics.print(string.format("FPS: %.1f (%.1fms)", fps, frameTime * 1000), 20, y)
-  y = y + 20
-
-  -- Reset canvases each frame
-  local currentCanvases = love.graphics.getStats().canvases
-  love.graphics.print(string.format("Canvases: %d", currentCanvases), 20, y)
-  y = y + 20
-
-  -- Reset canvas switches each frame
-  local currentCanvasSwitches = love.graphics.getStats().canvasswitches
-  love.graphics.print(string.format("Canvas Switches: %d", currentCanvasSwitches), 20, y)
-  y = y + 20
-
-  -- Reset shader switches each frame
-  local currentShaderSwitches = love.graphics.getStats().shaderswitches
-  love.graphics.print(string.format("Shader Switches: %d", currentShaderSwitches), 20, y)
-  y = y + 20
-
-  -- Reset draw calls each frame
-  local currentDrawCalls = love.graphics.getStats().drawcalls
-  local currentDrawCallsBatched = love.graphics.getStats().drawcallsbatched
-  love.graphics.print(string.format("Draw Calls: %d (%d batched)", currentDrawCalls, currentDrawCallsBatched), 20, y)
-  y = y + 20
-
-  love.graphics.print(string.format("RAM: %.1f MB", averages.memoryUsage / 1024), 20, y)
-  y = y + 20
-
-  -- Reset texture memory usage  each frame
-  local currentTextureMemory = love.graphics.getStats().texturememory / (1024 * 1024)
-  love.graphics.print(string.format("VRAM: %.1f MB", currentTextureMemory), 20, y)
-  y = y + 20
-
-  -- Reset images each frame
-  local currentImages = love.graphics.getStats().images
-  love.graphics.print(string.format("Images: %d", currentImages), 20, y)
-  y = y + 20
-
-  -- Display particle count
-  local currentParticleCount = averages.particleCount or 0
-  love.graphics.print(string.format("Particles: %d", math.floor(currentParticleCount)), 20, y)
-  y = y + 20
-
-  -- Display island count from MapManager
-  local islandCount = 0
-  local worldSizeText = "N/A"
-  local successMap, MapManager = pcall(require, "src.core.managers.MapManager")
-  if successMap and MapManager and MapManager.initialized then
-    islandCount = #MapManager.getAllMaps()
-
-    -- Calculate world bounds
-    local minX, minY = math.huge, math.huge
-    local maxX, maxY = -math.huge, -math.huge
-    for _, island in ipairs(MapManager.getAllMaps()) do
-      minX = math.min(minX, island.x)
-      minY = math.min(minY, island.y)
-      maxX = math.max(maxX, island.x + island.width)
-      maxY = math.max(maxY, island.y + island.height)
-    end
-    local worldW = maxX - minX
-    local worldH = maxY - minY
-    worldSizeText = string.format("%.0fx%.0f", worldW, worldH)
-  end
-
-  love.graphics.setColor(0.678, 0.847, 0.902, 1)
-  love.graphics.print(string.format("Islands: %d", islandCount), 20, y)
-  y = y + 20
-  love.graphics.print(string.format("World Size: %s", worldSizeText), 20, y)
-  y = y + 20
-
-  -- Show culling stats
-  if successMap and MapManager and MapManager.lastDrawnCount then
-    love.graphics.setColor(0, 1, 0, 1)
-    love.graphics.print(string.format("Islands Drawn: %d (culled: %d)",
-      MapManager.lastDrawnCount, MapManager.lastCulledCount or 0), 20, y)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print(
+      string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor),
+      20,
+      y
+    )
     y = y + 20
-  end
 
-  -- Display collider count using ECS system (both types)
-  local pathfindingColliderCount = 0
-  local physicsColliderCount = 0
-  local borderColliderCount = 0
-  if cameraX and cameraY then
-    local gameState = require("src.core.GameState")
-    if gameState and gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
-      local entitiesWithPathfindingCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PathfindingCollision"})
-      local entitiesWithPhysicsCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PhysicsCollision"})
-      pathfindingColliderCount = #entitiesWithPathfindingCollision
-      physicsColliderCount = #entitiesWithPhysicsCollision
+    love.graphics.print(string.format("%s", overlayStats.renderInfo.version), 20, y)
+    y = y + 30
 
-      -- Count border colliders (tilemap walls)
-      if gameState.scenes.game.borderColliders then
-        borderColliderCount = #gameState.scenes.game.borderColliders
+    -- Safely handle frameTime with nil/zero checks
+    love.graphics.setColor(0, 1, 0, 1)
+    local frameTime = averages.frameTime or 0
+    local fps = frameTime > 0 and (1 / frameTime) or 0
+    love.graphics.print(string.format("FPS: %.1f (%.1fms)", fps, frameTime * 1000), 20, y)
+    y = y + 20
+
+    -- Reset canvases each frame
+    local currentCanvases = love.graphics.getStats().canvases
+    love.graphics.print(string.format("Canvases: %d", currentCanvases), 20, y)
+    y = y + 20
+
+    -- Reset canvas switches each frame
+    local currentCanvasSwitches = love.graphics.getStats().canvasswitches
+    love.graphics.print(string.format("Canvas Switches: %d", currentCanvasSwitches), 20, y)
+    y = y + 20
+
+    -- Reset shader switches each frame
+    local currentShaderSwitches = love.graphics.getStats().shaderswitches
+    love.graphics.print(string.format("Shader Switches: %d", currentShaderSwitches), 20, y)
+    y = y + 20
+
+    -- Reset draw calls each frame
+    local currentDrawCalls = love.graphics.getStats().drawcalls
+    local currentDrawCallsBatched = love.graphics.getStats().drawcallsbatched
+    love.graphics.print(string.format("Draw Calls: %d (%d batched)", currentDrawCalls, currentDrawCallsBatched), 20, y)
+    y = y + 20
+
+    love.graphics.print(string.format("RAM: %.1f MB", averages.memoryUsage / 1024), 20, y)
+    y = y + 20
+
+    -- Reset texture memory usage  each frame
+    local currentTextureMemory = love.graphics.getStats().texturememory / (1024 * 1024)
+    love.graphics.print(string.format("VRAM: %.1f MB", currentTextureMemory), 20, y)
+    y = y + 20
+
+    -- Reset images each frame
+    local currentImages = love.graphics.getStats().images
+    love.graphics.print(string.format("Images: %d", currentImages), 20, y)
+    y = y + 20
+
+    -- Display particle count
+    local currentParticleCount = averages.particleCount or 0
+    love.graphics.print(string.format("Particles: %d", math.floor(currentParticleCount)), 20, y)
+    y = y + 20
+
+    -- Display island count from MapManager
+    local islandCount = 0
+    local worldSizeText = "N/A"
+    local successMap, MapManager = pcall(require, "src.core.managers.MapManager")
+    if successMap and MapManager and MapManager.initialized then
+      islandCount = #MapManager.getAllMaps()
+
+      -- Calculate world bounds
+      local minX, minY = math.huge, math.huge
+      local maxX, maxY = -math.huge, -math.huge
+      for _, island in ipairs(MapManager.getAllMaps()) do
+        minX = math.min(minX, island.x)
+        minY = math.min(minY, island.y)
+        maxX = math.max(maxX, island.x + island.width)
+        maxY = math.max(maxY, island.y + island.height)
+      end
+      local worldW = maxX - minX
+      local worldH = maxY - minY
+      worldSizeText = string.format("%.0fx%.0f", worldW, worldH)
+    end
+
+    love.graphics.setColor(0.678, 0.847, 0.902, 1)
+    love.graphics.print(string.format("Islands: %d", islandCount), 20, y)
+    y = y + 20
+    love.graphics.print(string.format("World Size: %s", worldSizeText), 20, y)
+    y = y + 20
+
+    -- Show culling stats
+    if successMap and MapManager and MapManager.lastDrawnCount then
+      love.graphics.setColor(0, 1, 0, 1)
+      love.graphics.print(string.format("Islands Drawn: %d (culled: %d)",
+        MapManager.lastDrawnCount, MapManager.lastCulledCount or 0), 20, y)
+      y = y + 20
+    end
+
+    -- Display collider count using ECS system (both types)
+    local pathfindingColliderCount = 0
+    local physicsColliderCount = 0
+    local borderColliderCount = 0
+    if cameraX and cameraY then
+      local gameState = require("src.core.GameState")
+      if gameState and gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
+        local entitiesWithPathfindingCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PathfindingCollision"})
+        local entitiesWithPhysicsCollision = gameState.scenes.game.ecsWorld:getEntitiesWith({"PhysicsCollision"})
+        pathfindingColliderCount = #entitiesWithPathfindingCollision
+        physicsColliderCount = #entitiesWithPhysicsCollision
+
+        -- Count border colliders (tilemap walls)
+        if gameState.scenes.game.borderColliders then
+          borderColliderCount = #gameState.scenes.game.borderColliders
+        end
       end
     end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print(string.format("Pathfinding Colliders: %d", pathfindingColliderCount), 20, y)
+    y = y + 20
+    love.graphics.print(string.format("Physics Colliders: %d", physicsColliderCount), 20, y)
+    y = y + 20
+    love.graphics.print(string.format("Tilemap Walls: %d", borderColliderCount), 20, y)
+    y = y + 20
+
+    -- Reset color to white
+    love.graphics.setColor(1, 1, 1, 1)
+
+    -- Add GLSL 3 support indicator
+    love.graphics.setColor(overlayStats.supportedFeatures.glsl3 and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
+    love.graphics.print(string.format("GLSL 3: %s", overlayStats.supportedFeatures.glsl3 and "Yes" or "No"), 20, y)
+    y = y + 20
+
+    -- Add pixel shader highp support indicator
+    love.graphics.setColor(overlayStats.supportedFeatures.pixelShaderHighp and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
+    love.graphics.print(
+      string.format("Pixel Shader highp: %s", overlayStats.supportedFeatures.pixelShaderHighp and "Yes" or "No"),
+      20,
+      y
+    )
+    y = y + 20
+
+    -- Add VSync status with color indication
+    love.graphics.setColor(overlayStats.vsyncEnabled and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
+    love.graphics.print(string.format("VSync: %s", overlayStats.vsyncEnabled and "ON" or "OFF"), 20, y)
+  end -- End of stats panel toggle
+
+  -- Draw toggle controls panel below stats panel (always visible when overlay is active)
+  -- Pass the calculated width from stats panel if it was drawn, otherwise use default
+  local togglePanelWidth = 280
+  if overlayStats.debugToggles.stats then
+    -- Calculate the same width as the stats panel
+    local padding = 20
+    local baseWidth = 280
+    local versionTextWidth = font:getWidth(string.format("%s", overlayStats.renderInfo.version))
+    local rendererInfoWidth =
+      font:getWidth(string.format("Renderer: %s (%s)", overlayStats.renderInfo.name, overlayStats.renderInfo.vendor))
+    local systemInfoWidth = font:getWidth(
+      overlayStats.sysInfo.os .. " " .. overlayStats.sysInfo.arch .. ": " .. overlayStats.sysInfo.cpuCount .. "x CPU"
+    )
+    local contentWidth = math.max(versionTextWidth, rendererInfoWidth, systemInfoWidth, baseWidth)
+    togglePanelWidth = contentWidth + padding
   end
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.print(string.format("Pathfinding Colliders: %d", pathfindingColliderCount), 20, y)
-  y = y + 20
-  love.graphics.print(string.format("Physics Colliders: %d", physicsColliderCount), 20, y)
-  y = y + 20
-  love.graphics.print(string.format("Tilemap Walls: %d", borderColliderCount), 20, y)
-  y = y + 20
-
-  -- Reset color to white
-  love.graphics.setColor(1, 1, 1, 1)
-
-  -- Add GLSL 3 support indicator
-  love.graphics.setColor(overlayStats.supportedFeatures.glsl3 and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
-  love.graphics.print(string.format("GLSL 3: %s", overlayStats.supportedFeatures.glsl3 and "Yes" or "No"), 20, y)
-  y = y + 20
-
-  -- Add pixel shader highp support indicator
-  love.graphics.setColor(overlayStats.supportedFeatures.pixelShaderHighp and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
-  love.graphics.print(
-    string.format("Pixel Shader highp: %s", overlayStats.supportedFeatures.pixelShaderHighp and "Yes" or "No"),
-    20,
-    y
-  )
-  y = y + 20
-
-  -- Add VSync status with color indication
-  love.graphics.setColor(overlayStats.vsyncEnabled and { 0, 1, 0, 1 } or { 1, 0, 0, 1 })
-  love.graphics.print(string.format("VSync: %s", overlayStats.vsyncEnabled and "ON" or "OFF"), 20, y)
+  overlayStats.drawToggleControls(togglePanelWidth)
 
   love.graphics.pop()
 end
@@ -1201,6 +1400,100 @@ function overlayStats.update(dt)
   overlayStats.metrics.particleCount[overlayStats.currentSample] = totalParticles
 end
 
+---Handles mouse clicks for toggling debug options
+---@param x number Mouse X position
+---@param y number Mouse Y position
+---@param button number Mouse button pressed (1 = left, 2 = right, 3 = middle)
+---@return boolean Whether the click was handled
+function overlayStats.handleMousePressed(x, y, button)
+  if not overlayStats.isActive or button ~= 1 then
+    return false
+  end
+
+  -- Check if click is within zoom button bounds
+  if overlayStats.zoomButtonBounds then
+    for _, bounds in ipairs(overlayStats.zoomButtonBounds) do
+      if x >= bounds.x and x <= bounds.x + bounds.width and
+         y >= bounds.y and y <= bounds.y + bounds.height then
+        local gameState = require("src.core.GameState")
+        if gameState and gameState.camera then
+          -- Preset zoom levels
+          local zoomLevels = {0.5, 1.0, 2.0, 3.0, 4.0}
+
+          -- Initialize debugCameraScale from actual camera if not set
+          if not overlayStats.debugCameraScale then
+            overlayStats.debugCameraScale = gameState.camera.scale
+          end
+
+          local currentScale = overlayStats.debugCameraScale
+
+          -- Find closest zoom level index
+          local currentIndex = 1
+          local minDiff = math.abs(zoomLevels[1] - currentScale)
+          for i, level in ipairs(zoomLevels) do
+            local diff = math.abs(level - currentScale)
+            if diff < minDiff then
+              minDiff = diff
+              currentIndex = i
+            end
+          end
+
+          local newIndex
+          if bounds.action == "zoomIn" then
+            -- Move to next zoom level
+            newIndex = math.min(currentIndex + 1, #zoomLevels)
+          elseif bounds.action == "zoomOut" then
+            -- Move to previous zoom level
+            newIndex = math.max(currentIndex - 1, 1)
+          end
+
+          local newScale = zoomLevels[newIndex]
+          overlayStats.debugCameraScale = newScale
+          gameState.camera:setScale(newScale)
+          print(string.format("Zoom: %.1fx", newScale))
+          return true
+        end
+      end
+    end
+  end
+
+  -- Check if click is within any toggle bounds
+  if overlayStats.toggleBounds then
+    for _, bounds in ipairs(overlayStats.toggleBounds) do
+      if x >= bounds.x and x <= bounds.x + bounds.width and
+         y >= bounds.y and y <= bounds.y + bounds.height then
+        -- Toggle the corresponding debug option
+        local index = bounds.index
+        if index == 1 then
+          overlayStats.debugToggles.gridlines = not overlayStats.debugToggles.gridlines
+          print("Gridlines:", overlayStats.debugToggles.gridlines and "ON" or "OFF")
+        elseif index == 2 then
+          overlayStats.debugToggles.islands = not overlayStats.debugToggles.islands
+          print("Islands:", overlayStats.debugToggles.islands and "ON" or "OFF")
+        elseif index == 3 then
+          overlayStats.debugToggles.physicsColliders = not overlayStats.debugToggles.physicsColliders
+          print("Physics Colliders:", overlayStats.debugToggles.physicsColliders and "ON" or "OFF")
+        elseif index == 4 then
+          overlayStats.debugToggles.spriteOutlines = not overlayStats.debugToggles.spriteOutlines
+          print("Sprite Outlines:", overlayStats.debugToggles.spriteOutlines and "ON" or "OFF")
+        elseif index == 5 then
+          overlayStats.debugToggles.pathfinding = not overlayStats.debugToggles.pathfinding
+          print("Pathfinding:", overlayStats.debugToggles.pathfinding and "ON" or "OFF")
+        elseif index == 6 then
+          overlayStats.debugToggles.entityStates = not overlayStats.debugToggles.entityStates
+          print("Entity States:", overlayStats.debugToggles.entityStates and "ON" or "OFF")
+        elseif index == 7 then
+          overlayStats.showTileDebug = not overlayStats.showTileDebug
+          print("Tile Debug:", overlayStats.showTileDebug and "ON" or "OFF")
+        end
+        return true
+      end
+    end
+  end
+
+  return false
+end
+
 ---Processes keyboard input for the overlay
 ---@param key string The key that was pressed
 ---@return nil
@@ -1211,6 +1504,7 @@ function overlayStats.handleKeyboard(key)
     overlayStats.toggleVSync()
   elseif key == "f4" then
     overlayStats.showTileDebug = not overlayStats.showTileDebug
+    print("Tile Debug:", overlayStats.showTileDebug and "ON" or "OFF")
   end
 end
 

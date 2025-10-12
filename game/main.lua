@@ -175,8 +175,14 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
 end
 
 function love.mousepressed(x, y, button)
-  local gameState = require("src.core.GameState")
-  gameState.handleMousePressed(x, y, button)
+  -- Let overlayStats handle clicks first (for debug toggles)
+  local handled = overlayStats.handleMousePressed(x, y, button)
+
+  -- If not handled by overlay, pass to game
+  if not handled then
+    local gameState = require("src.core.GameState")
+    gameState.handleMousePressed(x, y, button)
+  end
 end
 
 function love.mousereleased(x, y, button)

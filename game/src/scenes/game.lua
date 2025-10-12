@@ -236,7 +236,10 @@ function GameScene.update(dt, gameState)
     end
   end
 
-  gameState.camera:setScale(GameConstants.CAMERA_SCALE)
+  -- Use debug camera scale if set, otherwise use constant
+  local overlayStats = require("lib.overlayStats")
+  local targetScale = overlayStats.debugCameraScale or GameConstants.CAMERA_SCALE
+  gameState.camera:setScale(targetScale)
 
   -- Update world light (position and ambient tween)
   WorldLight.update(dt, gameState.camera)

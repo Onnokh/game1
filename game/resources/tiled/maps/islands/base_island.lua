@@ -103,7 +103,7 @@ return {
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 124, 127, 125, 127, 126, 127, 126, 125, 126, 126, 127, 140, 125, 125, 127, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 124, 127, 125, 127, 126, 127, 126, 148, 126, 126, 127, 140, 125, 125, 127, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 139, 140, 141, 141, 140, 140, 141, 141, 140, 140, 141, 140, 140, 140, 142, 143, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 139, 140, 140, 141, 142, 141, 141, 140, 141, 141, 140, 140, 140, 140, 141, 143, 0, 0, 124, 127, 125, 127, 126, 127, 125, 127, 126, 127, 126, 125, 126, 126, 127, 140, 125, 125, 134, 0, 0,
         0, 139, 142, 141, 141, 142, 140, 140, 141, 140, 142, 141, 141, 142, 140, 140, 146, 147, 147, 148, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 140, 149, 0, 0,
@@ -273,87 +273,6 @@ return {
           height = 96,
           rotation = 0,
           gid = 2,
-          visible = true,
-          properties = {}
-        }
-      }
-    },
-    {
-      type = "objectgroup",
-      draworder = "topdown",
-      id = 9,
-      name = "Bridges",
-      class = "",
-      visible = true,
-      opacity = 1,
-      offsetx = 0,
-      offsety = 0,
-      parallaxx = 1,
-      parallaxy = 1,
-      properties = {},
-      objects = {
-        {
-          id = 50,
-          name = "ConnectionPoint",
-          type = "",
-          shape = "rectangle",
-          x = 1184,
-          y = 160,
-          width = 32,
-          height = 32,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 52,
-          name = "ConnectionPoint",
-          type = "",
-          shape = "rectangle",
-          x = 256,
-          y = 512,
-          width = 32,
-          height = 32,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 53,
-          name = "ConnectionPoint",
-          type = "",
-          shape = "rectangle",
-          x = 32,
-          y = 160,
-          width = 32,
-          height = 32,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 54,
-          name = "ConnectionPoint",
-          type = "",
-          shape = "rectangle",
-          x = 256,
-          y = 64,
-          width = 32,
-          height = 32,
-          rotation = 0,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 55,
-          name = "ConnectionPoint",
-          type = "",
-          shape = "rectangle",
-          x = 32,
-          y = 480,
-          width = 32,
-          height = 32,
-          rotation = 0,
           visible = true,
           properties = {}
         }

@@ -631,40 +631,6 @@ function BridgeManager.drawSimple()
     love.graphics.pop()
 end
 
----Draw connection points (for debug overlay)
----@param islands table Array of island data
-function BridgeManager.drawConnectionPoints(islands)
-    if not BridgeManager.initialized then return end
-
-    love.graphics.push("all")
-    love.graphics.setColor(0, 1, 1, 0.6)
-    love.graphics.setLineWidth(2)
-
-    for _, island in ipairs(islands) do
-        if island.map and island.map.layers then
-            for _, layer in ipairs(island.map.layers) do
-                if layer.name == "Bridges" and layer.objects then
-                    for _, obj in ipairs(layer.objects) do
-                        if obj.name == "ConnectionPoint" then
-                            local worldX = island.x + obj.x
-                            local worldY = island.y + obj.y
-                            love.graphics.rectangle("line", worldX, worldY, obj.width or 32, obj.height or 32)
-
-                            love.graphics.setColor(1, 1, 0, 0.8)
-                            local centerX = worldX + (obj.width or 32) / 2
-                            local centerY = worldY + (obj.height or 32) / 2
-                            love.graphics.circle("fill", centerX, centerY, 3)
-                            love.graphics.setColor(0, 1, 1, 0.6)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    love.graphics.pop()
-end
-
 ---Get all detected bridges
 ---@return table Array of bridges
 function BridgeManager.getBridges()
