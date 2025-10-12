@@ -6,8 +6,7 @@ local world = {} -- For pathfinding and collision detection
 local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
-local cartographer = require("lib.cartographer")
-local TiledMapLoader = require("src.utils.TiledMapLoader")
+local MapManager = require("src.core.managers.MapManager")
 local GameState = require("src.core.GameState")
 
 -- ECS System
@@ -35,10 +34,7 @@ local LightSystem = require("src.systems.LightSystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
-local ShaderManager = require("src.utils.ShaderManager")
-local Player = require("src.entities.Player.Player")
-local Reactor = require("src.entities.Reactor.Reactor")
-local Tree = require("src.entities.Decoration.Tree")
+local ShaderManager = require("src.core.managers.ShaderManager")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
 local worldWidth = 0  -- Will be set by loaded map
@@ -49,8 +45,6 @@ local playerEntity = nil
 local monsters = {} -- Array of monster entities
 local playerCollider = nil
 local lightWorld = nil
-local tiledMap = nil -- Cartographer map object
-local mapData = nil -- Parsed map data from TiledMapLoader
 local mouseFacingSystemAdded = false -- Track if MouseFacingSystem has been added
 
 -- Physics
@@ -138,63 +132,28 @@ function GameScene.load()
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
 
-  -- Load Tiled map using Cartographer
-  tiledMap = cartographer.load("resources/tiled/maps/level1.lua")
+  -- Load complete world using MapManager (handles everything: islands, pathfinding, collisions, entities, camera)
+  local worldData = MapManager.load("src/levels/level1", physicsWorld, ecsWorld)
 
-  -- Set pixel-perfect filtering for all tileset images
-  if tiledMap and tiledMap._images then
-    for _, image in pairs(tiledMap._images) do
-      image:setFilter("nearest", "nearest")
-    end
-  end
+  -- Extract world data
+  world = worldData.grid
+  worldWidth = worldData.gridWidth
+  worldHeight = worldData.gridHeight
+  tileSize = worldData.tileSize
+  playerEntity = worldData.playerEntity
+  borderColliders = worldData.collisionBodies
+  GameState.camera = worldData.camera
 
-  -- Parse map data using TiledMapLoader
-  mapData = TiledMapLoader.loadMapData(tiledMap)
-
-  -- Extract data from parsed map
-  worldWidth = mapData.width
-  worldHeight = mapData.height
-  tileSize = mapData.tileSize
-  world = mapData.collisionGrid
-
-  -- Store mapData in GameState for debugging
-  GameState.mapData = mapData
-
-  -- Update camera bounds to match the loaded level
-  local levelWidthPixels = worldWidth * tileSize
-  local levelHeightPixels = worldHeight * tileSize
-  GameState.updateCameraBounds(levelWidthPixels, levelHeightPixels)
-
-  -- Create physics colliders for world borders
-  borderColliders = TiledMapLoader.createCollisionBodies(mapData, physicsWorld)
+  -- Store references for debugging
   GameScene.borderColliders = borderColliders
 
-  -- Spawn entities from map objects using factory pattern
-  TiledMapLoader.spawnEntities(mapData, {
-    spawn = function(obj)
-      -- Spawn player at the map's defined spawn point
-      playerEntity = Player.create(obj.x, obj.y, ecsWorld, physicsWorld)
-    end,
-    reactors = function(obj)
-      Reactor.create(obj.x, obj.y, ecsWorld, physicsWorld)
-    end,
-    other = function(obj)
-      print('spawning other at:', obj.x, obj.y, obj.name)
-      if obj.name == "Tree" then
-        Tree.create(obj.x, obj.y, ecsWorld, physicsWorld)
-      end
-    end,
-    -- Add more entity types here as needed:
-    -- enemies = function(obj) ... end,
-    -- items = function(obj) ... end,
-  })
-
-  -- If no spawn point was defined in the map, spawn player at center
-  if not playerEntity then
-    local centerX = (worldWidth * tileSize) / 2
-    local centerY = (worldHeight * tileSize) / 2
-    playerEntity = Player.create(centerX, centerY, ecsWorld, physicsWorld)
-  end
+  -- Store map data in GameState for debugging (overlay needs this)
+  GameState.mapData = {
+    width = worldWidth,
+    height = worldHeight,
+    tileSize = tileSize,
+    collisionGrid = world
+  }
 
   -- Create global particle entity for bullet impacts and other effects
   do
@@ -207,7 +166,9 @@ function GameScene.load()
   end
 
   -- Add pathfinding system after static collision objects are added
-  ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize)) -- Pathfinding system
+  local pathfindingStart = love.timer.getTime()
+  ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize))
+  print(string.format("[GameScene] Pathfinding system init took %.2fs", love.timer.getTime() - pathfindingStart))
 end
 
 -- Allow other modules (phases, etc.) to set ambient color safely
@@ -231,10 +192,8 @@ function GameScene.update(dt, gameState)
     mouseFacingSystemAdded = true
   end
 
-  -- Update Tiled map (for animations)
-  if tiledMap then
-    tiledMap:update(dt)
-  end
+  -- Update all maps through MapManager (with camera culling)
+  MapManager.update(dt, gameState.camera)
 
   -- Update physics world FIRST so positions are current
   if physicsWorld then
@@ -289,7 +248,16 @@ end
 
 -- Get map data (collision grid and dimensions)
 function GameScene.getMapData()
-  return mapData
+  -- Return the FULL world grid dimensions, not just base island
+  if world and worldWidth and worldHeight and tileSize then
+    return {
+      width = worldWidth,     -- Full world grid width (e.g., 112 tiles)
+      height = worldHeight,   -- Full world grid height (e.g., 82 tiles)
+      tileSize = tileSize,    -- Tile size in pixels (32)
+      collisionGrid = world   -- Full world pathfinding grid
+    }
+  end
+  return nil
 end
 
 -- Add a new monster at the specified position
@@ -370,10 +338,8 @@ end
 function GameScene.draw(gameState)
   -- Draw the world first
   gameState.camera:draw(function()
-    -- Draw the Tiled map using Cartographer
-    if tiledMap then
-      tiledMap:draw()
-    end
+    -- Draw all islands using MapManager (with camera frustum culling)
+    MapManager.draw(gameState.camera)
 
     -- Draw ECS entities
     if ecsWorld then
@@ -456,12 +422,13 @@ function GameScene.cleanup()
     uiWorld = nil
   end
 
+  -- Unload all maps
+  MapManager.unload()
+
   -- Clear entity references and flags
   playerEntity = nil
   mouseFacingSystemAdded = false
   playerCollider = nil
-  tiledMap = nil
-  mapData = nil
   GameScene.playerCollider = nil
   GameScene.borderColliders = nil
   GameScene.monsters = nil

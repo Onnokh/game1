@@ -1,4 +1,4 @@
-local FontManager = require("src.utils.FontManager")
+local FontManager = require("src.core.managers.FontManager")
 
 local fonts = {}
 

@@ -165,6 +165,7 @@ end
 function Pathfinding:startWander(currentX, currentY)
 
     if not self.pathfinder or not self.grid then
+        print("[Pathfinding] startWander failed: no pathfinder or grid")
         return false
     end
 
@@ -176,6 +177,7 @@ function Pathfinding:startWander(currentX, currentY)
 
     -- If no valid target found, fail early
     if not targetX or not targetY then
+        print(string.format("[Pathfinding] startWander failed: no valid target from (%.0f, %.0f)", currentX, currentY))
         return false
     end
 
@@ -186,8 +188,22 @@ function Pathfinding:startWander(currentX, currentY)
     -- Ensure target is within grid bounds using coordinate utilities
     targetGridX, targetGridY = CoordinateUtils.clampToGridBounds(targetGridX, targetGridY, self.grid)
 
-    -- Find path with clearance
-    local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY, self.clearance)
+    -- Debug: Check if start and target are walkable
+    local startWalkable = self.grid:isWalkableAt(startGridX, startGridY, 1)
+    local targetWalkable = self.grid:isWalkableAt(targetGridX, targetGridY, 1)
+
+    if not startWalkable then
+        print(string.format("[Pathfinding] START tile (%d,%d) is NOT walkable!", startGridX, startGridY))
+        return false
+    end
+
+    if not targetWalkable then
+        print(string.format("[Pathfinding] TARGET tile (%d,%d) is NOT walkable!", targetGridX, targetGridY))
+        return false
+    end
+
+    -- Find path (skip clearance to avoid requiring annotation)
+    local path = self.pathfinder:getPath(startGridX, startGridY, targetGridX, targetGridY)
 
     if path and path._nodes and #path._nodes > 0 then
         self.currentPath = path
@@ -196,8 +212,17 @@ function Pathfinding:startWander(currentX, currentY)
         self.targetY = targetY
         self.isWandering = true
         self.lastWanderTime = 0
+        print(string.format("[Pathfinding] startWander SUCCESS: path from (%d,%d) to (%d,%d) with %d nodes",
+            startGridX, startGridY, targetGridX, targetGridY, #path._nodes))
         return true
     else
+        -- Debug: Check grid values directly
+        local gridMap = self.grid:getMap()
+        local startValue = gridMap[startGridY] and gridMap[startGridY][startGridX]
+        local targetValue = gridMap[targetGridY] and gridMap[targetGridY][targetGridX]
+        print(string.format("[Pathfinding] startWander failed: no path from (%d,%d)[value=%s] to (%d,%d)[value=%s]",
+            startGridX, startGridY, tostring(startValue),
+            targetGridX, targetGridY, tostring(targetValue)))
         return false
     end
 end

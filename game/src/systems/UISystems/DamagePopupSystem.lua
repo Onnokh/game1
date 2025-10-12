@@ -2,7 +2,7 @@ local System = require("src.core.System")
 local EventBus = require("src.utils.EventBus")
 local fonts = require("src.utils.fonts")
 local ui_text = require("src.utils.ui_text")
-local ShaderManager = require("src.utils.ShaderManager")
+local ShaderManager = require("src.core.managers.ShaderManager")
 local gameState = require("src.core.GameState")
 
 ---@class DamagePopupSystem : System

@@ -189,6 +189,7 @@ function overlayStats.load()
 end
 
 ---Draws gridlines in world space using GameConstants.TILE_SIZE
+---Extends to cover all islands if MapManager is loaded
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
 ---@param cameraScale number Camera scale factor (optional)
@@ -213,11 +214,33 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
   love.graphics.setColor(1, 1, 1, 0.3)
   love.graphics.setLineWidth(1)
 
-  -- Calculate world bounds based on camera position
-  local startX = math.floor(topLeftX / gridSize) * gridSize
-  local startY = math.floor(topLeftY / gridSize) * gridSize
-  local endX = startX + width + gridSize
-  local endY = startY + height + gridSize
+  -- Try to get world bounds from MapManager
+  local worldMinX, worldMinY, worldMaxX, worldMaxY
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
+  if success and MapManager and MapManager.initialized then
+    -- Use full world bounds from all islands
+    worldMinX, worldMinY = math.huge, math.huge
+    worldMaxX, worldMaxY = -math.huge, -math.huge
+
+    for _, island in ipairs(MapManager.getAllMaps()) do
+      worldMinX = math.min(worldMinX, island.x)
+      worldMinY = math.min(worldMinY, island.y)
+      worldMaxX = math.max(worldMaxX, island.x + island.width)
+      worldMaxY = math.max(worldMaxY, island.y + island.height)
+    end
+  else
+    -- Fallback to camera-based bounds
+    worldMinX = topLeftX
+    worldMinY = topLeftY
+    worldMaxX = topLeftX + width / scale
+    worldMaxY = topLeftY + height / scale
+  end
+
+  -- Snap to grid
+  local startX = math.floor(worldMinX / gridSize) * gridSize
+  local startY = math.floor(worldMinY / gridSize) * gridSize
+  local endX = math.ceil(worldMaxX / gridSize) * gridSize
+  local endY = math.ceil(worldMaxY / gridSize) * gridSize
 
   -- Draw vertical lines
   for x = startX, endX, gridSize do
@@ -614,37 +637,96 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
----Draws blocked pathfinding tiles in world space
+---Draws connection points from MapManager
 ---@param cameraX number Camera X position
 ---@param cameraY number Camera Y position
 ---@param cameraScale number Camera scale factor (optional)
 ---@return nil
-function overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
-  -- Try to access the game scene's ECS world
-  local gameState = require("src.core.GameState")
-  if not gameState or not gameState.scenes or not gameState.scenes.game then
-    return
-  end
-
-  -- Access the ECS world from the game scene
-  local gameScene = gameState.scenes.game
-  if not gameScene.ecsWorld then
-    return
-  end
-
+function overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
   local scale = cameraScale or 1.0
+
+  -- Try to access MapManager
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
+  if not success or not MapManager or not MapManager.drawConnectionPoints then
+    return
+  end
 
   -- Save current graphics state
   love.graphics.push("all")
 
-  -- Apply camera transform aligned with gamera (use top-left world position)
+  -- Apply camera transform
   local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
   local topLeftX = cameraX - (halfW / scale)
   local topLeftY = cameraY - (halfH / scale)
   love.graphics.scale(scale, scale)
   love.graphics.translate(-topLeftX, -topLeftY)
 
-  -- Restore graphics state
+  -- Call MapManager's connection point drawing
+  MapManager.drawConnectionPoints()
+
+  love.graphics.pop()
+end
+
+---Draws island boundaries and information
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor (optional)
+---@return nil
+function overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
+  local scale = cameraScale or 1.0
+
+  -- Try to access MapManager
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
+  if not success or not MapManager or not MapManager.initialized then
+    return
+  end
+
+  -- Save current graphics state
+  love.graphics.push("all")
+
+  -- Apply camera transform
+  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+  local topLeftX = cameraX - (halfW / scale)
+  local topLeftY = cameraY - (halfH / scale)
+  love.graphics.scale(scale, scale)
+  love.graphics.translate(-topLeftX, -topLeftY)
+
+  -- Use main font
+  if overlayFontMain then
+    love.graphics.setFont(overlayFontMain)
+  end
+
+  -- Draw each island boundary
+  for i, island in ipairs(MapManager.getAllMaps()) do
+    -- Color code: base island = green, others = cyan
+    if island.id == "base" then
+      love.graphics.setColor(0, 1, 0, 0.6)
+    else
+      love.graphics.setColor(0, 1, 1, 0.4)
+    end
+
+    -- Draw island boundary
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", island.x, island.y, island.width, island.height)
+
+    -- Draw island info
+    love.graphics.setColor(1, 1, 1, 1)
+    local infoText = string.format("%s\n%dx%d\n(%.0f, %.0f)",
+      island.definition.name or island.id,
+      island.width,
+      island.height,
+      island.x,
+      island.y
+    )
+    love.graphics.print(infoText, island.x + 10, island.y + 10)
+
+    -- Draw island number
+    love.graphics.setColor(1, 1, 0, 0.8)
+    love.graphics.print("#" .. i, island.x + island.width - 30, island.y + 10)
+  end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
   love.graphics.pop()
 end
 
@@ -725,7 +807,7 @@ end
 function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
   -- Get map data from GameState
   local GameState = require("src.core.GameState")
-  local TiledMapLoader = require("src.utils.TiledMapLoader")
+  local TiledMapLoader = require("src.utils.tiled")
 
   if not GameState.mapData or not GameState.mapData.collisionGrid then
     return
@@ -744,61 +826,83 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
   end
 
   -- Calculate visible tile range in world coordinates
+  local CoordinateUtils = require("src.utils.coordinates")
   local topLeftX = cameraX - (halfW / scale)
   local topLeftY = cameraY - (halfH / scale)
   local bottomRightX = cameraX + (halfW / scale)
   local bottomRightY = cameraY + (halfH / scale)
 
-  -- Convert screen bounds to grid coordinates (same as CoordinateUtils.worldToGrid)
-  local startTileX = math.max(1, math.floor(topLeftX / tileSize) + 1)
-  local endTileX = math.min(mapData.width, math.ceil(bottomRightX / tileSize))
-  local startTileY = math.max(1, math.floor(topLeftY / tileSize) + 1)
-  local endTileY = math.min(mapData.height, math.ceil(bottomRightY / tileSize))
+  -- Convert screen bounds to grid coordinates using CoordinateUtils
+  local startTileX, startTileY = CoordinateUtils.worldToGrid(topLeftX, topLeftY)
+  local endTileX, endTileY = CoordinateUtils.worldToGrid(bottomRightX, bottomRightY)
 
-  -- Draw tile debug info for visible tiles
-  for x = startTileX, endTileX do
-    for y = startTileY, endTileY do
-      if collisionGrid[x] and collisionGrid[x][y] then
-        -- Convert grid coordinates to world coordinates (tile top-left corner)
-        local worldX = (x - 1) * tileSize
-        local worldY = (y - 1) * tileSize
+  -- Clamp to grid bounds
+  startTileX = math.max(1, startTileX)
+  startTileY = math.max(1, startTileY)
+  endTileX = math.min(mapData.width, endTileX)
+  endTileY = math.min(mapData.height, endTileY)
 
-        -- Convert to screen coordinates (same as pathfinding debug)
-        local screenX = halfW + (worldX - cameraX) * scale
-        local screenY = halfH + (worldY - cameraY) * scale
+  -- Try to get island maps to show their raw GID data
+  local success, MapManager = pcall(require, "src.core.managers.MapManager")
+  local showRawGids = success and MapManager and MapManager.initialized
 
-        -- Only draw if tile is visible on screen
-        if screenX >= -tileSize * scale and screenX <= screenWidth + tileSize * scale and
-           screenY >= -tileSize * scale and screenY <= screenHeight + tileSize * scale then
+  if showRawGids then
+    -- Save current font
+    local oldFont = love.graphics.getFont()
 
-          local tileData = collisionGrid[x][y]
-          local gid = tileData.gid
-          local tileType = tileData.type
-          local tileTypeName = TiledMapLoader.getTileTypeName(tileType)
+    -- Use small font for GIDs
+    if overlayFontSmall then
+      love.graphics.setFont(overlayFontSmall)
+    end
 
-          -- Set color based on tile type
-          if tileType == TiledMapLoader.TILE_WORLDEDGE then
-            love.graphics.setColor(1, 0.5, 0.5, 0.8) -- Red for collision
-          elseif tileType == TiledMapLoader.TILE_EDGE then
-            love.graphics.setColor(0.5, 0.5, 1, 0.8) -- Blue for edge
-          else
-            love.graphics.setColor(0.5, 1, 0.5, 0.8) -- Green for grass
+    -- Draw GIDs directly from island maps in screen space
+    for _, island in ipairs(MapManager.getAllMaps()) do
+      local islandMap = island.map
+      if islandMap and islandMap.layers and islandMap.layers[1] then
+        local layer = islandMap.layers[1]
+        if layer.type == "tilelayer" and layer.data then
+          for localY = 1, islandMap.height do
+            for localX = 1, islandMap.width do
+              local gid = layer.data[(localY - 1) * islandMap.width + localX]
+
+              if gid and gid > 0 then
+                -- Convert to world position
+                local worldX = island.x + (localX - 1) * tileSize
+                local worldY = island.y + (localY - 1) * tileSize
+
+                -- Convert to screen coordinates
+                local screenX = halfW + (worldX - cameraX) * scale
+                local screenY = halfH + (worldY - cameraY) * scale
+
+                -- Only draw if visible
+                if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
+
+                  -- Draw tile border in screen space (scaled size)
+                  love.graphics.setColor(0.5, 0.8, 1, 0.4)
+                  love.graphics.rectangle("line", screenX, screenY, tileSize * scale, tileSize * scale)
+
+                  -- Draw GID in crisp screen-space text
+                  love.graphics.setColor(1, 1, 1, 1)
+                  love.graphics.print(tostring(gid), screenX + 2, screenY + 2)
+
+                  -- Show if it's walkable from the pathfinding grid (using CoordinateUtils)
+                  local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY)
+                  local walkable = (collisionGrid and collisionGrid[gridX] and
+                                   collisionGrid[gridX][gridY] and
+                                   collisionGrid[gridX][gridY].walkable)
+                  local status = walkable and "W" or "B"
+                  love.graphics.print(status, screenX + tileSize * scale - 12, screenY + tileSize * scale - 12)
+                end
+              end
+            end
           end
-
-          -- Draw tile border in screen coordinates
-          love.graphics.rectangle("line", screenX, screenY, tileSize * scale, tileSize * scale)
-
-          -- Draw GID and type text
-          love.graphics.setColor(1, 1, 1, 1)
-
-          -- Draw GID at top-left of tile
-          love.graphics.print(tostring(gid), screenX + 2, screenY + 2)
-
-          -- Draw tile type at bottom-right of tile
-          local textWidth = overlayFontMain:getWidth(tileTypeName)
-          love.graphics.print(tileTypeName, screenX + tileSize * scale - textWidth - 2, screenY + tileSize * scale - 14)
         end
       end
+    end
+
+    -- Restore font
+    if oldFont then
+      love.graphics.setFont(oldFont)
     end
   end
 end
@@ -821,10 +925,12 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   end
 
   if cameraX and cameraY then
-    -- Draw gridlines in world space
+    -- Draw gridlines in world space (covers all islands)
     overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
-    -- Draw blocked pathfinding tiles in world space
-    overlayStats.drawBlockedTiles(cameraX, cameraY, cameraScale)
+    -- Draw island boundaries and info
+    overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
+    -- Draw connection points
+    overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
     -- Draw physics colliders in world space
     overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
     -- Draw sprite outlines in world space
@@ -935,6 +1041,41 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
   love.graphics.print(string.format("Particles: %d", math.floor(currentParticleCount)), 20, y)
   y = y + 20
 
+  -- Display island count from MapManager
+  local islandCount = 0
+  local worldSizeText = "N/A"
+  local successMap, MapManager = pcall(require, "src.core.managers.MapManager")
+  if successMap and MapManager and MapManager.initialized then
+    islandCount = #MapManager.getAllMaps()
+
+    -- Calculate world bounds
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+    for _, island in ipairs(MapManager.getAllMaps()) do
+      minX = math.min(minX, island.x)
+      minY = math.min(minY, island.y)
+      maxX = math.max(maxX, island.x + island.width)
+      maxY = math.max(maxY, island.y + island.height)
+    end
+    local worldW = maxX - minX
+    local worldH = maxY - minY
+    worldSizeText = string.format("%.0fx%.0f", worldW, worldH)
+  end
+
+  love.graphics.setColor(0.678, 0.847, 0.902, 1)
+  love.graphics.print(string.format("Islands: %d", islandCount), 20, y)
+  y = y + 20
+  love.graphics.print(string.format("World Size: %s", worldSizeText), 20, y)
+  y = y + 20
+
+  -- Show culling stats
+  if successMap and MapManager and MapManager.lastDrawnCount then
+    love.graphics.setColor(0, 1, 0, 1)
+    love.graphics.print(string.format("Islands Drawn: %d (culled: %d)",
+      MapManager.lastDrawnCount, MapManager.lastCulledCount or 0), 20, y)
+    y = y + 20
+  end
+
   -- Display collider count using ECS system (both types)
   local pathfindingColliderCount = 0
   local physicsColliderCount = 0
@@ -953,6 +1094,7 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
       end
     end
   end
+  love.graphics.setColor(1, 1, 1, 1)
   love.graphics.print(string.format("Pathfinding Colliders: %d", pathfindingColliderCount), 20, y)
   y = y + 20
   love.graphics.print(string.format("Physics Colliders: %d", physicsColliderCount), 20, y)

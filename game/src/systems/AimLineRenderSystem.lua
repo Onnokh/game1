@@ -1,7 +1,7 @@
 local System = require("src.core.System")
 local EntityUtils = require("src.utils.entities")
 local GameState = require("src.core.GameState")
-local ShaderManager = require("src.utils.ShaderManager")
+local ShaderManager = require("src.core.managers.ShaderManager")
 local GameController = require("src.core.GameController")
 
 ---@class AimLineRenderSystem : System

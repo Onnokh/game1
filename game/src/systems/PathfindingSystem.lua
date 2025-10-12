@@ -1,5 +1,4 @@
 local System = require("src.core.System")
-local TiledMapLoader = require("src.utils.TiledMapLoader")
 
 ---@class PathfindingSystem : System
 ---@field worldMap table The 2D world map array
@@ -62,9 +61,20 @@ function PathfindingSystem:addEntity(entity)
         pathfinding.entityId = entity.id -- Store entity ID for debug output
     end
 
-    -- If this entity has a pathfinding collision component, rebuild the pathfinding grid
+    -- OPTIMIZATION: Don't rebuild grid when entities are added
+    -- Only STATIC entities block pathfinding, and they're added during initial load
+    -- Dynamic entities (monsters, player) don't block pathfinding for other entities
+end
+
+---Remove an entity from this system
+---@param entity Entity The entity to remove
+function PathfindingSystem:removeEntity(entity)
+    System.removeEntity(self, entity)
+
+    -- Only rebuild if this was a static collision entity that blocks pathfinding
     local pathfindingCollision = entity:getComponent("PathfindingCollision")
-    if pathfindingCollision and self.grid and self.pathfinder then
+    if pathfindingCollision and pathfindingCollision.type == "static" and self.grid and self.pathfinder then
+        -- Rebuild grid when static entities are removed (e.g., destroyed trees)
         self:rebuildPathfindingGrid()
     end
 end
@@ -102,8 +112,14 @@ function PathfindingSystem:initializePathfinding()
     -- Create grid and pathfinder
     self.grid = Grid(transposedMap)
 
+    -- Use JPS for fast pathfinding (annotation only happens once at load)
     self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
-    self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
+
+    -- Annotate grid for JPS (expensive but only done once)
+    print("[PathfindingSystem] Annotating grid for JPS...")
+    local annotateStart = love.timer.getTime()
+    self.pathfinder:annotateGrid()
+    print(string.format("[PathfindingSystem] Grid annotation took %.2fs", love.timer.getTime() - annotateStart))
 
     -- Set up pathfinder for all entities with their own clearance values
     for _, entity in ipairs(self.entities) do
@@ -118,6 +134,8 @@ end
 ---Add collision objects to the pathfinding grid
 ---@param collisionMap table The collision map to modify
 function PathfindingSystem:addCollisionObjectsToGrid(collisionMap)
+		local CoordinateUtils = require("src.utils.coordinates")
+
 		-- Get all entities with pathfinding collision components
 		for i, entity in ipairs(self.entities) do
 			local pathfindingCollision = entity:getComponent("PathfindingCollision")
@@ -127,12 +145,13 @@ function PathfindingSystem:addCollisionObjectsToGrid(collisionMap)
 			-- Dynamic entities (monsters) should NOT block pathfinding
 			if pathfindingCollision and position and pathfindingCollision.type == "static" then
 				if pathfindingCollision:hasCollider() then
-					-- Get collision bounds in grid coordinates
+					-- Get collision bounds in grid coordinates using CoordinateUtils
 					local colliderX, colliderY = pathfindingCollision:getPosition()
-					local gridX1 = math.floor(colliderX / self.tileSize) + 1
-					local gridY1 = math.floor(colliderY / self.tileSize) + 1
-					local gridX2 = math.floor((colliderX + pathfindingCollision.width) / self.tileSize) + 1
-					local gridY2 = math.floor((colliderY + pathfindingCollision.height) / self.tileSize) + 1
+					local gridX1, gridY1 = CoordinateUtils.worldToGrid(colliderX, colliderY)
+					local gridX2, gridY2 = CoordinateUtils.worldToGrid(
+						colliderX + pathfindingCollision.width,
+						colliderY + pathfindingCollision.height
+					)
 
 					-- Mark collision area as blocked (0 = blocked)
 					for x = gridX1, gridX2 do
@@ -184,8 +203,10 @@ function PathfindingSystem:rebuildPathfindingGrid()
     -- Create new grid and pathfinder
     self.grid = Grid(transposedMap)
 
-    self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
-    self.pathfinder:annotateGrid() -- Calculate clearance values for the grid
+    -- Use JPS for fast pathfinding
+    self.pathfinder = Pathfinder(self.grid, 'JPS', 1)
+    -- NOTE: Skip annotation during rebuild (too expensive for runtime)
+    -- Paths will still work but without clearance optimization
 
     -- Update pathfinders for all entities with their own clearance values
     for _, entity in ipairs(self.entities) do
@@ -200,18 +221,8 @@ end
 ---Update all entities with pathfinding
 ---@param dt number Delta time
 function PathfindingSystem:update(dt)
-    -- Rebuild pathfinding grid periodically to account for moving entities
-    -- This is expensive, so we do it less frequently than every frame
-    local currentTime = love.timer.getTime()
-    if not self.lastGridRebuild then
-        self.lastGridRebuild = currentTime
-    end
-
-    -- Rebuild grid every 0.5 seconds to account for moving entities
-    if currentTime - self.lastGridRebuild > 0.5 then
-        self:rebuildPathfindingGrid()
-        self.lastGridRebuild = currentTime
-    end
+    -- NOTE: Grid rebuilding is now event-driven (only when entities are added/removed)
+    -- No need for periodic rebuilds since dynamic entities don't block pathfinding
 
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")

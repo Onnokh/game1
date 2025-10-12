@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="20" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="4" nextobjectid="69">
+ <editorsettings>
+  <export target="forest_island.lua" format="lua"/>
+ </editorsettings>
+ <tileset firstgid="1" name="test" tilewidth="32" tileheight="32" tilecount="225" columns="15">
+  <image source="../../../world.png" width="480" height="480"/>
+ </tileset>
+ <tileset firstgid="226" name="Objects" tilewidth="96" tileheight="96" tilecount="2" columns="0">
+  <grid orientation="orthogonal" width="32" height="32"/>
+  <tile id="1">
+   <image source="../../../reactor/reactor-Sheet.png" width="96" height="96"/>
+  </tile>
+  <tile id="2">
+   <image source="../../../objects/tree.png" width="48" height="96"/>
+  </tile>
+ </tileset>
+ <layer id="1" name="Tile Layer 1" width="20" height="10">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,121,124,122,124,122,124,122,124,124,124,122,124,122,125,0,0,0,
+0,0,0,136,137,138,139,137,137,137,138,137,138,139,139,139,140,0,0,0,
+0,0,0,136,137,138,139,137,138,137,138,137,137,137,138,139,140,0,0,0,
+0,0,0,136,137,138,139,137,138,137,138,137,138,137,138,139,140,0,0,0,
+0,0,0,136,137,138,139,137,138,137,137,138,137,138,139,139,140,0,0,0,
+0,0,0,136,137,137,137,137,138,139,137,137,137,137,138,139,140,0,0,0,
+0,0,0,151,152,152,152,152,152,152,152,152,152,152,152,154,155,0,0,0,
+0,0,0,166,167,167,167,167,167,167,167,167,167,167,167,169,170,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="2" name="Object Layer 1">
+  <object id="2" name="Tree" gid="228" x="510" y="211" width="48" height="96"/>
+  <object id="27" name="Tree" gid="228" x="273.333" y="136" width="48" height="96"/>
+  <object id="29" name="Tree" gid="228" x="357.333" y="142.333" width="48" height="96"/>
+  <object id="30" name="Tree" gid="228" x="396.333" y="211.333" width="48" height="96"/>
+  <object id="31" name="Tree" gid="228" x="446.667" y="240.333" width="48" height="96"/>
+  <object id="32" name="Tree" gid="228" x="412" y="166" width="48" height="96"/>
+  <object id="33" name="Tree" gid="228" x="404" y="62.6667" width="48" height="96"/>
+  <object id="34" name="Tree" gid="228" x="499.333" y="107.667" width="48" height="96"/>
+  <object id="35" name="Tree" gid="228" x="471.5" y="139.5" width="48" height="96"/>
+  <object id="36" name="Tree" gid="228" x="448" y="76" width="48" height="96"/>
+  <object id="37" name="Tree" gid="228" x="159.5" y="153.5" width="48" height="96"/>
+  <object id="49" name="Tree" gid="228" x="226.333" y="221" width="48" height="96"/>
+  <object id="50" name="Tree" gid="228" x="112.666" y="221.333" width="48" height="96"/>
+  <object id="51" name="Tree" gid="228" x="163" y="250.333" width="48" height="96"/>
+  <object id="52" name="Tree" gid="228" x="128.333" y="176" width="48" height="96"/>
+  <object id="53" name="Tree" gid="228" x="120.333" y="72.667" width="48" height="96"/>
+  <object id="54" name="Tree" gid="228" x="215.666" y="117.667" width="48" height="96"/>
+  <object id="55" name="Tree" gid="228" x="187.833" y="149.5" width="48" height="96"/>
+  <object id="56" name="Tree" gid="228" x="164.333" y="86" width="48" height="96"/>
+  <object id="57" name="Tree" gid="228" x="369.833" y="218" width="48" height="96"/>
+  <object id="58" name="Tree" gid="228" x="256.166" y="218.333" width="48" height="96"/>
+  <object id="59" name="Tree" gid="228" x="306.5" y="247.333" width="48" height="96"/>
+  <object id="60" name="Tree" gid="228" x="271.833" y="173" width="48" height="96"/>
+  <object id="61" name="Tree" gid="228" x="263.833" y="69.667" width="48" height="96"/>
+  <object id="62" name="Tree" gid="228" x="359.166" y="114.667" width="48" height="96"/>
+  <object id="63" name="Tree" gid="228" x="331.333" y="146.5" width="48" height="96"/>
+  <object id="64" name="Tree" gid="228" x="307.833" y="83" width="48" height="96"/>
+ </objectgroup>
+ <objectgroup id="3" name="Bridges">
+  <object id="65" template="../../objects/ConnectionPoint.tx" x="512" y="160"/>
+  <object id="66" template="../../objects/ConnectionPoint.tx" x="92.6935" y="159.954"/>
+  <object id="67" template="../../objects/ConnectionPoint.tx" x="288" y="32"/>
+  <object id="68" template="../../objects/ConnectionPoint.tx" x="288" y="224"/>
+ </objectgroup>
+</map>
