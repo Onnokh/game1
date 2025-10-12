@@ -145,8 +145,9 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                 goto continue
             end
 
-            -- Skip if not enough edge tiles (need at least 3 to exclude corners)
-            local minRequiredEdgeTiles = 3
+            -- Need at least 5 edge tiles to exclude corners (remove 2 from each end)
+            -- This ensures 3-tile wide attachments don't overlap island corners
+            local minRequiredEdgeTiles = 5
 
             -- Find aligned tile pairs that can form a bridge (work in tile coordinates)
             local bestTile1 = nil
@@ -193,18 +194,22 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                         end
                     end
 
-                    -- Sort by Y position and exclude corners (first and last tiles)
-                    -- This prevents bridges from spawning at awkward corner positions
-                    table.sort(edgeTiles1, function(a, b) return a.tileY < b.tileY end)
-                    table.sort(edgeTiles2, function(a, b) return a.tileY < b.tileY end)
-                    if #edgeTiles1 >= minRequiredEdgeTiles then
-                        table.remove(edgeTiles1, 1) -- Remove first (top corner)
-                        table.remove(edgeTiles1) -- Remove last (bottom corner)
-                    end
-                    if #edgeTiles2 >= minRequiredEdgeTiles then
-                        table.remove(edgeTiles2, 1) -- Remove first (top corner)
-                        table.remove(edgeTiles2) -- Remove last (bottom corner)
-                    end
+                -- Sort by Y position and exclude corners (first 2 and last 2 tiles)
+                -- Removes 2 tiles from each end to prevent 3-tile attachments from hitting corners
+                table.sort(edgeTiles1, function(a, b) return a.tileY < b.tileY end)
+                table.sort(edgeTiles2, function(a, b) return a.tileY < b.tileY end)
+                if #edgeTiles1 >= minRequiredEdgeTiles then
+                    table.remove(edgeTiles1, 1) -- Remove first (top corner)
+                    table.remove(edgeTiles1, 1) -- Remove second (near top corner)
+                    table.remove(edgeTiles1) -- Remove last (bottom corner)
+                    table.remove(edgeTiles1) -- Remove second-to-last (near bottom corner)
+                end
+                if #edgeTiles2 >= minRequiredEdgeTiles then
+                    table.remove(edgeTiles2, 1) -- Remove first (top corner)
+                    table.remove(edgeTiles2, 1) -- Remove second (near top corner)
+                    table.remove(edgeTiles2) -- Remove last (bottom corner)
+                    table.remove(edgeTiles2) -- Remove second-to-last (near bottom corner)
+                end
                 else
                     -- Vertical connection - find tiles at vertical edges
                     local maxY1 = -math.huge
@@ -237,18 +242,22 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                         end
                     end
 
-                    -- Sort by X position and exclude corners (first and last tiles)
-                    -- This prevents bridges from spawning at awkward corner positions
-                    table.sort(edgeTiles1, function(a, b) return a.tileX < b.tileX end)
-                    table.sort(edgeTiles2, function(a, b) return a.tileX < b.tileX end)
-                    if #edgeTiles1 >= minRequiredEdgeTiles then
-                        table.remove(edgeTiles1, 1) -- Remove first (left corner)
-                        table.remove(edgeTiles1) -- Remove last (right corner)
-                    end
-                    if #edgeTiles2 >= minRequiredEdgeTiles then
-                        table.remove(edgeTiles2, 1) -- Remove first (left corner)
-                        table.remove(edgeTiles2) -- Remove last (right corner)
-                    end
+                -- Sort by X position and exclude corners (first 2 and last 2 tiles)
+                -- Removes 2 tiles from each end to prevent 3-tile attachments from hitting corners
+                table.sort(edgeTiles1, function(a, b) return a.tileX < b.tileX end)
+                table.sort(edgeTiles2, function(a, b) return a.tileX < b.tileX end)
+                if #edgeTiles1 >= minRequiredEdgeTiles then
+                    table.remove(edgeTiles1, 1) -- Remove first (left corner)
+                    table.remove(edgeTiles1, 1) -- Remove second (near left corner)
+                    table.remove(edgeTiles1) -- Remove last (right corner)
+                    table.remove(edgeTiles1) -- Remove second-to-last (near right corner)
+                end
+                if #edgeTiles2 >= minRequiredEdgeTiles then
+                    table.remove(edgeTiles2, 1) -- Remove first (left corner)
+                    table.remove(edgeTiles2, 1) -- Remove second (near left corner)
+                    table.remove(edgeTiles2) -- Remove last (right corner)
+                    table.remove(edgeTiles2) -- Remove second-to-last (near right corner)
+                end
                 end
 
                 -- Find all valid aligned pairs within distance
@@ -286,13 +295,31 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                     bestTile1 = chosen.tile1
                     bestTile2 = chosen.tile2
 
-                    print(string.format("[BridgeManager] '%s' → '%s': Tiles (%d,%d) → (%d,%d) [%d options, picked #%d, dist=%.1f]",
+                    -- Determine attachment directions for each island
+                    local fromDirection, toDirection
+                    if direction == "east" then
+                        fromDirection = "east"
+                        toDirection = "west"
+                    elseif direction == "west" then
+                        fromDirection = "west"
+                        toDirection = "east"
+                    elseif direction == "north" then
+                        fromDirection = "north"
+                        toDirection = "south"
+                    else -- south
+                        fromDirection = "south"
+                        toDirection = "north"
+                    end
+
+                    print(string.format("[BridgeManager] '%s' → '%s': Tiles (%d,%d) → (%d,%d) [%d options, picked #%d, dist=%.1f, %s→%s]",
                         island1.id, island2.id, bestTile1.tileX, bestTile1.tileY, bestTile2.tileX, bestTile2.tileY,
-                        #validPairs, randomIndex, chosen.dist))
+                        #validPairs, randomIndex, chosen.dist, fromDirection, toDirection))
 
                     table.insert(bridges, {
                         fromTile = {x = bestTile1.tileX, y = bestTile1.tileY},
-                        toTile = {x = bestTile2.tileX, y = bestTile2.tileY}
+                        toTile = {x = bestTile2.tileX, y = bestTile2.tileY},
+                        fromDirection = fromDirection,
+                        toDirection = toDirection
                     })
                 end
 
@@ -325,62 +352,177 @@ function BridgeManager.draw(map)
     love.graphics.setColor(1, 1, 1, 1) -- White (to not tint the tile)
 
     local tileSize = GameConstants.TILE_SIZE
-    local bridgeGID = 140 -- GID of the bridge tile
+    local image = nil
+    local tileset = nil
 
-    -- Get the tileset and prepare tile drawing
-    local tileset = map:getTileset(bridgeGID)
+    -- Get the image and tileset from the map
+    local testGID = type(GameConstants.BRIDGE_TILE_HORIZONTAL) == "table"
+        and GameConstants.BRIDGE_TILE_HORIZONTAL[1]
+        or GameConstants.BRIDGE_TILE_HORIZONTAL
+    tileset = map:getTileset(testGID)
     if not tileset or not tileset.image then
-        print("[BridgeManager] WARNING: Could not find tileset for GID " .. bridgeGID .. ", falling back to simple draw")
+        print("[BridgeManager] WARNING: Could not find tileset, falling back to simple draw")
         love.graphics.pop()
         BridgeManager.drawSimple()
         return
     end
-
-    -- Get the quad for this tile
-    local quad = map:_getTileQuad(bridgeGID)
-    if not quad then
-        print("[BridgeManager] WARNING: Could not get quad for GID " .. bridgeGID .. ", falling back to simple draw")
-        love.graphics.pop()
-        BridgeManager.drawSimple()
-        return
-    end
-
-    -- Get the image from the map's internal images table
-    local image = map._images[tileset.image]
-    if not image then
-        print("[BridgeManager] WARNING: Could not get image for tileset, falling back to simple draw")
-        love.graphics.pop()
-        BridgeManager.drawSimple()
-        return
-    end
+    image = map._images[tileset.image]
 
     for _, bridge in ipairs(BridgeManager.bridges) do
         local tileX1 = bridge.fromTile.x
         local tileY1 = bridge.fromTile.y
         local tileX2 = bridge.toTile.x
         local tileY2 = bridge.toTile.y
+        local fromDir = bridge.fromDirection
+        local toDir = bridge.toDirection
 
         -- Determine if bridge is horizontal or vertical
         local isHorizontal = tileY1 == tileY2
         local isVertical = tileX1 == tileX2
 
+        -- Get attachment patterns based on direction
+        local fromPattern = GameConstants["BRIDGE_ATTACH_" .. string.upper(fromDir)]
+        local toPattern = GameConstants["BRIDGE_ATTACH_" .. string.upper(toDir)]
+
         if isHorizontal then
-            -- Draw tiles horizontally from tileX1 to tileX2
+            -- Horizontal bridge (east-west connection)
+            -- Attachments are VERTICAL (3 tiles: center, up, down)
             local startX = math.min(tileX1, tileX2)
             local endX = math.max(tileX1, tileX2)
+            local leftIsFrom = tileX1 < tileX2
+
+            -- Draw each column of the bridge
             for tileX = startX, endX do
                 local worldX = (tileX - 1) * tileSize
                 local worldY = (tileY1 - 1) * tileSize
-                love.graphics.draw(image, quad, worldX, worldY)
+
+                -- Determine which attachment pattern to use
+                local pattern = nil
+                if tileX == startX then
+                    -- Left end
+                    pattern = leftIsFrom and fromPattern or toPattern
+                elseif tileX == endX then
+                    -- Right end
+                    pattern = leftIsFrom and toPattern or fromPattern
+                end
+
+                if pattern then
+                    -- Draw 3-tile vertical attachment (center, up, down)
+                    -- pattern[1] = top, pattern[2] = center, pattern[3] = bottom
+                    -- nil means "do not replace" - skip that tile
+                    for i = 1, 3 do
+                        local gid = pattern[i]
+                        if gid then -- Only draw if not nil
+                            -- South attachments shift down 1 tile, others centered
+                            local yOffset
+                            if (tileX == startX and leftIsFrom and fromDir == "south") or
+                               (tileX == endX and not leftIsFrom and toDir == "south") then
+                                yOffset = i - 1 -- 0, 1, 2 (shift down for south)
+                            else
+                                yOffset = i - 2 -- -1, 0, 1 (centered)
+                            end
+                            local quad = map:_getTileQuad(gid)
+                            if quad then
+                                love.graphics.draw(image, quad, worldX, worldY + (yOffset * tileSize))
+                            end
+                        end
+                    end
+                else
+                    -- Middle section - use horizontal bridge tiles (2 tiles tall)
+                    local horizontalTiles = GameConstants.BRIDGE_TILE_HORIZONTAL
+                    if type(horizontalTiles) == "table" then
+                        -- Draw top and bottom tiles
+                        for i = 1, #horizontalTiles do
+                            local gid = horizontalTiles[i]
+                            local yOffset = i - 1 -- 0, 1 (top, bottom)
+                            local quad = map:_getTileQuad(gid)
+                            if quad then
+                                love.graphics.draw(image, quad, worldX, worldY + (yOffset * tileSize))
+                            end
+                        end
+                    else
+                        -- Single tile (backwards compatibility)
+                        local quad = map:_getTileQuad(horizontalTiles)
+                        if quad then
+                            love.graphics.draw(image, quad, worldX, worldY)
+                        end
+                    end
+                end
             end
         elseif isVertical then
-            -- Draw tiles vertically from tileY1 to tileY2
+            -- Vertical bridge (north-south connection)
+            -- Attachments are HORIZONTAL (3 tiles: center, left, right)
             local startY = math.min(tileY1, tileY2)
             local endY = math.max(tileY1, tileY2)
+            local topIsFrom = tileY1 < tileY2
+
+            -- Draw each row of the bridge
+            local skipNext = false -- For multi-row attachments
             for tileY = startY, endY do
+                if skipNext then
+                    skipNext = false
+                    goto continueVertical
+                end
+
                 local worldX = (tileX1 - 1) * tileSize
                 local worldY = (tileY - 1) * tileSize
-                love.graphics.draw(image, quad, worldX, worldY)
+
+                -- Determine which attachment pattern to use
+                local pattern = nil
+                local currentDir = nil
+                if tileY == startY then
+                    -- Top end
+                    pattern = topIsFrom and fromPattern or toPattern
+                    currentDir = topIsFrom and fromDir or toDir
+                elseif tileY == endY then
+                    -- Bottom end
+                    pattern = topIsFrom and toPattern or fromPattern
+                    currentDir = topIsFrom and toDir or fromDir
+                end
+
+                if pattern then
+                    -- Check if this is a multi-row attachment (south)
+                    local isMultiRow = type(pattern[1]) == "table"
+
+                    if isMultiRow then
+                        -- Draw multi-row attachment (2 rows of 3 tiles each)
+                        for rowIdx = 1, #pattern do
+                            local row = pattern[rowIdx]
+                            for i = 1, 3 do
+                                local gid = row[i]
+                                if gid then
+                                    local xOffset = i - 2 -- -1, 0, 1 (left, center, right)
+                                    local quad = map:_getTileQuad(gid)
+                                    if quad then
+                                        love.graphics.draw(image, quad, worldX + (xOffset * tileSize), worldY + ((rowIdx - 1) * tileSize))
+                                    end
+                                end
+                            end
+                        end
+                        skipNext = true -- Skip next tile as we drew 2 rows
+                    else
+                        -- Single-row attachment (left, center, right)
+                        for i = 1, 3 do
+                            local gid = pattern[i]
+                            if gid then
+                                local xOffset = i - 2 -- -1, 0, 1 (left, center, right)
+                                local quad = map:_getTileQuad(gid)
+                                if quad then
+                                    love.graphics.draw(image, quad, worldX + (xOffset * tileSize), worldY)
+                                end
+                            end
+                        end
+                    end
+                else
+                    -- Middle section - use vertical bridge tile (single column)
+                    local gid = GameConstants.BRIDGE_TILE_VERTICAL
+                    local quad = map:_getTileQuad(gid)
+                    if quad then
+                        love.graphics.draw(image, quad, worldX, worldY)
+                    end
+                end
+
+                ::continueVertical::
             end
         else
             -- Bridge is neither horizontal nor vertical - this shouldn't happen
@@ -493,47 +635,151 @@ function BridgeManager.markBridgeTilesWalkable(grid)
         return
     end
 
-    local GameConstants = require("src.constants")
-    local bridgeGID = 140 -- Match the GID used for rendering
-
     local tilesMarked = 0
     for _, bridge in ipairs(BridgeManager.bridges) do
         local tileX1 = bridge.fromTile.x
         local tileY1 = bridge.fromTile.y
         local tileX2 = bridge.toTile.x
         local tileY2 = bridge.toTile.y
+        local fromDir = bridge.fromDirection
+        local toDir = bridge.toDirection
+
+        -- Get attachment patterns
+        local fromPattern = GameConstants["BRIDGE_ATTACH_" .. string.upper(fromDir)]
+        local toPattern = GameConstants["BRIDGE_ATTACH_" .. string.upper(toDir)]
 
         -- Determine if bridge is horizontal or vertical
         local isHorizontal = tileY1 == tileY2
         local isVertical = tileX1 == tileX2
 
         if isHorizontal then
+            -- Horizontal bridge - attachments are vertical
             local startX = math.min(tileX1, tileX2)
             local endX = math.max(tileX1, tileX2)
+            local leftIsFrom = tileX1 < tileX2
+
             for tileX = startX, endX do
-                if grid[tileX] and grid[tileX][tileY1] then
-                    -- Create a NEW tile object (don't modify shared emptyTile reference!)
-                    grid[tileX][tileY1] = {
-                        walkable = true,
-                        type = 1, -- Walkable ground type
-                        gid = bridgeGID
-                    }
-                    tilesMarked = tilesMarked + 1
+                local pattern = nil
+                if tileX == startX then
+                    pattern = leftIsFrom and fromPattern or toPattern
+                elseif tileX == endX then
+                    pattern = leftIsFrom and toPattern or fromPattern
+                end
+
+                if pattern then
+                    -- Mark 3 tiles vertically (up, center, down)
+                    -- nil in pattern means "do not replace" - skip that tile
+                    for i = 1, 3 do
+                        local gid = pattern[i]
+                        if gid then -- Only mark if not nil
+                            -- South attachments shift down 1 tile, others centered
+                            local yOffset
+                            if (tileX == startX and leftIsFrom and fromDir == "south") or
+                               (tileX == endX and not leftIsFrom and toDir == "south") then
+                                yOffset = i - 1 -- 0, 1, 2 (shift down for south)
+                            else
+                                yOffset = i - 2 -- -1, 0, 1 (centered)
+                            end
+                            local checkY = tileY1 + yOffset
+                            if grid[tileX] and grid[tileX][checkY] then
+                                grid[tileX][checkY] = {
+                                    walkable = true,
+                                    type = 1,
+                                    gid = gid
+                                }
+                                tilesMarked = tilesMarked + 1
+                            end
+                        end
+                    end
+                else
+                    -- Middle section - horizontal bridge (only top row 147 is walkable)
+                    if grid[tileX] and grid[tileX][tileY1] then
+                        grid[tileX][tileY1] = {
+                            walkable = true,
+                            type = 1,
+                            gid = 147 -- Only top row is walkable
+                        }
+                        tilesMarked = tilesMarked + 1
+                    end
                 end
             end
         elseif isVertical then
+            -- Vertical bridge - attachments are horizontal
             local startY = math.min(tileY1, tileY2)
             local endY = math.max(tileY1, tileY2)
+            local topIsFrom = tileY1 < tileY2
+
+            local skipNext = false -- For multi-row attachments
             for tileY = startY, endY do
-                if grid[tileX1] and grid[tileX1][tileY] then
-                    -- Create a NEW tile object (don't modify shared emptyTile reference!)
-                    grid[tileX1][tileY] = {
-                        walkable = true,
-                        type = 1, -- Walkable ground type
-                        gid = bridgeGID
-                    }
-                    tilesMarked = tilesMarked + 1
+                if skipNext then
+                    skipNext = false
+                    goto continueVerticalMark
                 end
+
+                local pattern = nil
+                if tileY == startY then
+                    pattern = topIsFrom and fromPattern or toPattern
+                elseif tileY == endY then
+                    pattern = topIsFrom and toPattern or fromPattern
+                end
+
+                if pattern then
+                    -- Check if multi-row attachment (south)
+                    local isMultiRow = type(pattern[1]) == "table"
+
+                    if isMultiRow then
+                        -- Mark multi-row attachment (2 rows of 3 tiles each)
+                        for rowIdx = 1, #pattern do
+                            local row = pattern[rowIdx]
+                            for i = 1, 3 do
+                                local gid = row[i]
+                                if gid then
+                                    local xOffset = i - 2
+                                    local checkX = tileX1 + xOffset
+                                    local checkY = tileY + (rowIdx - 1)
+                                    if grid[checkX] and grid[checkX][checkY] then
+                                        grid[checkX][checkY] = {
+                                            walkable = true,
+                                            type = 1,
+                                            gid = gid
+                                        }
+                                        tilesMarked = tilesMarked + 1
+                                    end
+                                end
+                            end
+                        end
+                        skipNext = true -- Skip next row as we marked 2 rows
+                    else
+                        -- Single-row attachment (left, center, right)
+                        for i = 1, 3 do
+                            local gid = pattern[i]
+                            if gid then
+                                local xOffset = i - 2
+                                local checkX = tileX1 + xOffset
+                                if grid[checkX] and grid[checkX][tileY] then
+                                    grid[checkX][tileY] = {
+                                        walkable = true,
+                                        type = 1,
+                                        gid = gid
+                                    }
+                                    tilesMarked = tilesMarked + 1
+                                end
+                            end
+                        end
+                    end
+                else
+                    -- Middle section - single tile (vertical bridge)
+                    if grid[tileX1] and grid[tileX1][tileY] then
+                        grid[tileX1][tileY] = {
+                            walkable = true,
+                            type = 1,
+                            gid = GameConstants.BRIDGE_TILE_VERTICAL
+                        }
+                        tilesMarked = tilesMarked + 1
+                    end
+                end
+
+                ::continueVerticalMark::
             end
         end
     end
@@ -542,6 +788,7 @@ function BridgeManager.markBridgeTilesWalkable(grid)
 end
 
 ---Get all bridge tile positions (for collision exclusion)
+---Only returns actual walkable bridge tiles (147 and 186), not decorative parts
 ---@return table Array of {tileX, tileY} positions
 function BridgeManager.getBridgeTilePositions()
     if not BridgeManager.initialized or not BridgeManager.bridges then
@@ -560,12 +807,14 @@ function BridgeManager.getBridgeTilePositions()
         local isVertical = tileX1 == tileX2
 
         if isHorizontal then
+            -- Horizontal bridges: Only top row (147) is walkable
             local startX = math.min(tileX1, tileX2)
             local endX = math.max(tileX1, tileX2)
             for tileX = startX, endX do
-                table.insert(positions, {tileX = tileX, tileY = tileY1})
+                table.insert(positions, {tileX = tileX, tileY = tileY1}) -- Only top row (147)
             end
         elseif isVertical then
+            -- Vertical bridges: Single column (186) is walkable
             local startY = math.min(tileY1, tileY2)
             local endY = math.max(tileY1, tileY2)
             for tileY = startY, endY do

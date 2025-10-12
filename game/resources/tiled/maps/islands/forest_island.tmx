@@ -58,10 +58,4 @@
   <object id="63" name="Tree" gid="228" x="331.333" y="146.5" width="48" height="96"/>
   <object id="64" name="Tree" gid="228" x="307.833" y="83" width="48" height="96"/>
  </objectgroup>
- <objectgroup id="3" name="Bridges">
-  <object id="65" template="../../objects/ConnectionPoint.tx" x="512" y="160"/>
-  <object id="66" template="../../objects/ConnectionPoint.tx" x="96" y="160"/>
-  <object id="67" template="../../objects/ConnectionPoint.tx" x="256" y="32"/>
-  <object id="68" template="../../objects/ConnectionPoint.tx" x="256" y="224"/>
- </objectgroup>
 </map>

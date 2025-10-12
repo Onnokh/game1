@@ -18,13 +18,26 @@ GameConstants.TILE_SIZE = 32  -- Match Tiled map tile size
 -- Bridge generation constants
 GameConstants.MAX_BRIDGE_DISTANCE_TILES = 10 -- Maximum distance between islands for bridge generation
 
+-- Bridge tile GIDs
+GameConstants.BRIDGE_TILE_HORIZONTAL = {147, 162} -- Middle tiles for horizontal (east-west) bridges [top, bottom]
+GameConstants.BRIDGE_TILE_VERTICAL = 186         -- Middle tile for vertical (north-south) bridges
+
+-- Attachment patterns
+GameConstants.BRIDGE_ATTACH_NORTH = {125, 126, 127} -- 1 row: left to right
+GameConstants.BRIDGE_ATTACH_EAST = {nil, 146, 161}  -- 1 column: top to bottom
+GameConstants.BRIDGE_ATTACH_SOUTH = {
+    {nil, 141, nil},  -- Row 1: left to right
+    {170, 171, 172}   -- Row 2: left to right
+}
+GameConstants.BRIDGE_ATTACH_WEST = {nil, 148, 139}  -- 1 column: top to bottom
+
 -- Player constants
 GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24
-GameConstants.PLAYER_SPEED = 80 -- Match working implementation
+GameConstants.PLAYER_SPEED = 80 -- player speed in pixels per second
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the worldw
+GameConstants.CAMERA_SCALE = 2 -- Zoomed out to see more of the worldw
 
 -- Oxygen system constants
 GameConstants.OXYGEN_MAX = 100
