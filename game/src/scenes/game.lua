@@ -144,6 +144,9 @@ function GameScene.load()
   borderColliders = worldData.collisionBodies
   GameState.camera = worldData.camera
 
+  -- Set camera on ECS world for frustum culling in systems (e.g., LightSystem)
+  ecsWorld:setCamera(GameState.camera)
+
   -- Store references for debugging
   GameScene.borderColliders = borderColliders
 

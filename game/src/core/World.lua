@@ -5,6 +5,7 @@
 ---@field tagIndex table<string, table<number, Entity>> Index of entities by tag
 ---@field physicsWorld love.World|nil The physics world (optional)
 ---@field lightWorld table|nil The light world (optional)
+---@field camera table|nil The camera (optional, for frustum culling)
 local World = {}
 World.__index = World
 
@@ -22,7 +23,14 @@ function World.new(physicsWorld, lightWorld)
     -- Store world references for systems to access
     self.physicsWorld = physicsWorld
     self.lightWorld = lightWorld
+    self.camera = nil
     return self
+end
+
+---Set the camera for frustum culling
+---@param camera table The camera object
+function World:setCamera(camera)
+    self.camera = camera
 end
 
 ---Create a new entity and add it to the world

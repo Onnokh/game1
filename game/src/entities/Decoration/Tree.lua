@@ -26,11 +26,11 @@ function Tree.create(x, y, world, physicsWorld)
     tree:addComponent("PathfindingCollision", pathfindingCollision)
     tree:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = 1.3, heightFactor = .5, offsetY = 0 }))
 
-  --   tree:addComponent("Light", Light.new({
-  --     { r = 100, g = 150, b = 255, radius = 15, offsetX = 32, offsetY = 20, flicker = true, flickerRadiusAmplitude = 2 },
-  --     { r = 100, g = 150, b = 255, radius = 15, offsetX = 15, offsetY = 30, flicker = true, flickerRadiusAmplitude = 2 },
-  --     { r = 100, g = 150, b = 255, radius = 15, offsetX = 32, offsetY = 54, flicker = true, flickerRadiusAmplitude = 2 }
-  -- }))
+    tree:addComponent("Light", Light.new({
+      { r = 100, g = 150, b = 255, radius = 15, offsetX = 32, offsetY = 20, flicker = true, flickerRadiusAmplitude = 2 },
+      { r = 100, g = 150, b = 255, radius = 15, offsetX = 15, offsetY = 30, flicker = true, flickerRadiusAmplitude = 2 },
+      { r = 100, g = 150, b = 255, radius = 15, offsetX = 32, offsetY = 54, flicker = true, flickerRadiusAmplitude = 2 }
+  }))
 
     -- Tag for easy querying
     tree:addTag("Tree")

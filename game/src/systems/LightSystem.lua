@@ -37,10 +37,43 @@ local function ensureLightCreated(self, lightConfig)
     lightConfig.lightRef = light
 end
 
+---Check if a light position is visible in the camera view
+---@param x number Light x position
+---@param y number Light y position
+---@param radius number Light radius
+---@param camera table|nil Camera object
+---@return boolean Whether the light is visible
+local function isLightVisible(x, y, radius, camera)
+    if not camera then return true end -- No camera means no culling
+
+    local camX, camY = camera:getPosition()
+    local camScale = camera:getScale()
+    local screenW, screenH = love.graphics.getDimensions()
+    local viewWidth = screenW / camScale
+    local viewHeight = screenH / camScale
+
+    -- Add margin based on light radius so lights just outside view still affect visible area
+    local margin = radius * 1.2
+
+    -- Check if light is within camera bounds (with margin)
+    local isVisible = not (
+        x + radius < camX - viewWidth/2 - margin or
+        x - radius > camX + viewWidth/2 + margin or
+        y + radius < camY - viewHeight/2 - margin or
+        y - radius > camY + viewHeight/2 + margin
+    )
+
+    return isVisible
+end
+
 ---Update
 ---@param dt number
 function LightSystem:update(dt)
     if not self or not self.entities then return end
+
+    -- Get camera from world for frustum culling
+    local camera = self.world and self.world.camera or nil
+
     for _, entity in ipairs(self.entities) do
         local position = entity:getComponent("Position")
         local lightComp = entity:getComponent("Light")
@@ -49,18 +82,24 @@ function LightSystem:update(dt)
         if position and lightComp and lightComp.lights then
             -- Iterate through all lights in the component
             for i, lightConfig in ipairs(lightComp.lights) do
-                -- If light is disabled and has a lightRef, remove it
-                if lightConfig.enabled == false and lightConfig.lightRef then
-                    lightConfig.lightRef:Remove()
-                    lightConfig.lightRef = nil
-                elseif lightConfig.enabled ~= false then
+                -- Calculate light position for visibility check
+                local defaultOX = spriteRenderer and (spriteRenderer.width or 0) / 2 or 0
+                local defaultOY = spriteRenderer and (spriteRenderer.height or 0) / 2 or 0
+                local lightX = position.x + (lightConfig.offsetX ~= nil and lightConfig.offsetX or defaultOX)
+                local lightY = position.y + (lightConfig.offsetY ~= nil and lightConfig.offsetY or defaultOY)
+                local lightRadius = lightConfig.radius or 400
+
+                -- Check if light is visible in camera view
+                local visible = isLightVisible(lightX, lightY, lightRadius, camera)
+
+                -- If light is disabled or not visible
+                if (lightConfig.enabled == false or not visible) and lightConfig.lightRef then
+                    -- Temporarily remove light from rendering (but keep the reference)
+                    lightConfig.lightRef:SetPosition(lightX, lightY, 0) -- Z=0 disables the light
+                elseif lightConfig.enabled ~= false and visible then
                     ensureLightCreated(self, lightConfig)
                     if lightConfig.lightRef then
-                        local defaultOX = spriteRenderer and (spriteRenderer.width or 0) / 2 or 0
-                        local defaultOY = spriteRenderer and (spriteRenderer.height or 0) / 2 or 0
-                        local x = position.x + (lightConfig.offsetX ~= nil and lightConfig.offsetX or defaultOX)
-                        local y = position.y + (lightConfig.offsetY ~= nil and lightConfig.offsetY or defaultOY)
-                        lightConfig.lightRef:SetPosition(x, y, 1)
+                        lightConfig.lightRef:SetPosition(lightX, lightY, 1) -- Z=1 enables the light
 
                         -- Apply flicker if enabled
                         if lightConfig.flicker then
