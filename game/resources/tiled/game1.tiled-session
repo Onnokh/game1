@@ -3,11 +3,11 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "maps/level1.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
+        "maps",
         ".",
-        "objects",
-        "maps"
+        "objects"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -27,11 +27,11 @@
             "expandedObjectLayers": [
                 9
             ],
-            "scale": 0.5,
+            "scale": 1.5,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 1620,
-                "y": -6
+                "x": 465.33333333333337,
+                "y": 264
             }
         },
         "maps/islands/base_island.tmx#Objects": {
@@ -153,7 +153,6 @@
     "map.lastUsedFormat": "tmx",
     "map.width": 20,
     "openFiles": [
-        "maps/level1.tmx"
     ],
     "project": "game1.tiled-project",
     "recentFiles": [

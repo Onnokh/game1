@@ -7,6 +7,7 @@ local GameConstants = require("src.constants")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
 local MapManager = require("src.core.managers.MapManager")
+local BridgeManager = require("src.core.managers.BridgeManager")
 local GameState = require("src.core.GameState")
 
 -- ECS System
@@ -343,6 +344,11 @@ function GameScene.draw(gameState)
   gameState.camera:draw(function()
     -- Draw all islands using MapManager (with camera frustum culling)
     MapManager.draw(gameState.camera)
+
+    -- Draw bridges between islands (pass base island map for tileset access)
+    local baseIsland = MapManager.baseIsland
+    local map = baseIsland and baseIsland.map
+    BridgeManager.draw(map)
 
     -- Draw ECS entities
     if ecsWorld then

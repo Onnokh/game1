@@ -9,6 +9,7 @@ local TiledMapLoader = nil
 local Player = nil
 local Reactor = nil
 local Tree = nil
+local BridgeManager = nil
 local GameConstants = nil
 
 -- Internal state
@@ -280,6 +281,14 @@ local function createCollisionBodies(tileSize, physicsWorld)
     local collisionBodies = {}
     local collisionGridCache = {}
 
+    -- Get bridge tile positions to exclude from collision
+    local bridgeTiles = BridgeManager.getBridgeTilePositions()
+    local bridgeTileSet = {}
+    for _, pos in ipairs(bridgeTiles) do
+        local key = pos.tileX .. "," .. pos.tileY
+        bridgeTileSet[key] = true
+    end
+
     for _, island in ipairs(MapManager.maps) do
         local islandMap = island.map
         local mapPath = island.definition.mapPath
@@ -292,6 +301,20 @@ local function createCollisionBodies(tileSize, physicsWorld)
                 islandMap.height
             )
             collisionGridCache[mapPath] = islandCollisionGrid
+        end
+
+        -- Mark bridge tiles as walkable (no collision) in this island's grid
+        for localX = 1, islandMap.width do
+            for localY = 1, islandMap.height do
+                -- Convert local tile coords to world tile coords
+                local worldTileX = math.floor(island.x / tileSize) + localX
+                local worldTileY = math.floor(island.y / tileSize) + localY
+                local key = worldTileX .. "," .. worldTileY
+
+                if bridgeTileSet[key] and islandCollisionGrid[localX] and islandCollisionGrid[localX][localY] then
+                    islandCollisionGrid[localX][localY].walkable = true
+                end
+            end
         end
 
         local islandColliders = TiledMapLoader.createCollisionBodies(
@@ -313,6 +336,7 @@ local function createCollisionBodies(tileSize, physicsWorld)
 
     print(string.format("[MapManager] Collision setup took %.2fs", love.timer.getTime() - collisionStart))
     print(string.format("[MapManager] Total collision bodies: %d", #collisionBodies))
+    print(string.format("[MapManager] Excluded %d bridge tiles from collision", #bridgeTiles))
 
     return collisionBodies
 end
@@ -410,6 +434,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     if not Tree then
         Tree = require("src.entities.Decoration.Tree")
     end
+    if not BridgeManager then
+        BridgeManager = require("src.core.managers.BridgeManager")
+    end
     if not GameConstants then
         GameConstants = require("src.constants")
     end
@@ -468,7 +495,13 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     -- Build pathfinding grid
     local pathfindingGrid = buildPathfindingGrid(tileSize, worldBounds.cameraWidth, worldBounds.cameraHeight)
 
-    -- Create collision bodies
+    -- Initialize BridgeManager BEFORE collision (to detect bridge tiles first)
+    BridgeManager.initialize(MapManager.maps, tileSize, pathfindingGrid)
+
+    -- Mark bridge tiles as walkable in pathfinding grid
+    BridgeManager.markBridgeTilesWalkable(pathfindingGrid.grid)
+
+    -- Create collision bodies (bridge tiles will be excluded)
     local collisionBodies = createCollisionBodies(tileSize, physicsWorld)
 
     -- Spawn entities
@@ -575,51 +608,6 @@ function MapManager.draw(camera)
     MapManager.lastCulledCount = culledCount
 end
 
----Draw connection points (for debug overlay)
-function MapManager.drawConnectionPoints()
-    if not MapManager.initialized then return end
-
-    love.graphics.push("all")
-    love.graphics.setColor(0, 1, 1, 0.6)
-    love.graphics.setLineWidth(2)
-
-    for _, island in ipairs(MapManager.maps) do
-        if island.map and island.map.layers then
-            for _, layer in ipairs(island.map.layers) do
-                if layer.name == "Bridges" and layer.objects then
-                    for _, obj in ipairs(layer.objects) do
-                        if obj.name == "ConnectionPoint" then
-                            local worldX = island.x + obj.x
-                            local worldY = island.y + obj.y
-                            love.graphics.rectangle("line", worldX, worldY, obj.width or 32, obj.height or 32)
-
-                            love.graphics.setColor(1, 1, 0, 0.8)
-                            local centerX = worldX + (obj.width or 32) / 2
-                            local centerY = worldY + (obj.height or 32) / 2
-                            love.graphics.circle("fill", centerX, centerY, 3)
-                            love.graphics.setColor(0, 1, 1, 0.6)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    love.graphics.pop()
-end
-
----Get a specific map by ID
----@param mapId string The ID of the map
----@return table|nil Map data or nil
-function MapManager.getMap(mapId)
-    for _, mapData in ipairs(MapManager.maps) do
-        if mapData.id == mapId then
-            return mapData
-        end
-    end
-    return nil
-end
-
 ---Get all loaded maps
 ---@return table List of all maps
 function MapManager.getAllMaps()
@@ -632,6 +620,11 @@ function MapManager.unload()
         if mapData.map then
             TiledMapLoader.clearCache(mapData.definition.mapPath)
         end
+    end
+
+    -- Unload BridgeManager
+    if BridgeManager then
+        BridgeManager.unload()
     end
 
     MapManager.maps = {}

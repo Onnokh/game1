@@ -645,9 +645,10 @@ end
 function overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
   local scale = cameraScale or 1.0
 
-  -- Try to access MapManager
-  local success, MapManager = pcall(require, "src.core.managers.MapManager")
-  if not success or not MapManager or not MapManager.drawConnectionPoints then
+  -- Try to access BridgeManager and MapManager
+  local successBridge, BridgeManager = pcall(require, "src.core.managers.BridgeManager")
+  local successMap, MapManager = pcall(require, "src.core.managers.MapManager")
+  if not successBridge or not BridgeManager or not successMap or not MapManager then
     return
   end
 
@@ -661,8 +662,8 @@ function overlayStats.drawConnectionPoints(cameraX, cameraY, cameraScale)
   love.graphics.scale(scale, scale)
   love.graphics.translate(-topLeftX, -topLeftY)
 
-  -- Call MapManager's connection point drawing
-  MapManager.drawConnectionPoints()
+  -- Call BridgeManager's connection point drawing
+  BridgeManager.drawConnectionPoints(MapManager.getAllMaps())
 
   love.graphics.pop()
 end
@@ -790,6 +791,53 @@ function overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
       end
     end
   end
+
+  -- Reset color
+  love.graphics.setColor(1, 1, 1, 1)
+end
+
+---Draws tile coordinates at mouse position
+---@param cameraX number Camera X position
+---@param cameraY number Camera Y position
+---@param cameraScale number Camera scale factor
+---@return nil
+function overlayStats.drawMouseTileCoordinates(cameraX, cameraY, cameraScale)
+  if not cameraX or not cameraY then
+    return
+  end
+
+  local scale = cameraScale or 1.0
+  local mouseX, mouseY = love.mouse.getPosition()
+  local screenWidth, screenHeight = love.graphics.getDimensions()
+  local halfW, halfH = screenWidth / 2, screenHeight / 2
+
+  -- Convert mouse screen position to world position
+  local worldX = cameraX + (mouseX - halfW) / scale
+  local worldY = cameraY + (mouseY - halfH) / scale
+
+  -- Convert world position to tile coordinates
+  local GameConstants = require("src.constants")
+  local tileSize = GameConstants.TILE_SIZE
+  local tileX = math.floor(worldX / tileSize)
+  local tileY = math.floor(worldY / tileSize)
+
+  -- Use main font for readability
+  if overlayFontMain then
+    love.graphics.setFont(overlayFontMain)
+  end
+
+  -- Draw tile coordinates near mouse cursor
+  love.graphics.setColor(0, 0, 0, 0.8)
+  local text = string.format("Tile: (%d, %d)", tileX, tileY)
+  local textWidth = love.graphics.getFont():getWidth(text)
+  local textHeight = love.graphics.getFont():getHeight()
+
+  -- Draw background rectangle
+  love.graphics.rectangle("fill", mouseX + 15, mouseY - 10, textWidth + 10, textHeight + 6)
+
+  -- Draw text
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.print(text, mouseX + 20, mouseY - 7)
 
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
@@ -943,6 +991,8 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
     if overlayStats.showTileDebug then
       overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
     end
+    -- Draw tile coordinates at mouse position
+    overlayStats.drawMouseTileCoordinates(cameraX, cameraY, cameraScale)
   end
 
 

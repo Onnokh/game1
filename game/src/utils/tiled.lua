@@ -22,6 +22,8 @@ local BLOCKED_GIDS = {
     [23] = true,
     [24] = true,
     [25] = true,
+    [166] = true,
+    [167] = true,
     [162] = true,
     [169] = true,
     [170] = true,
@@ -173,8 +175,10 @@ function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
         for x = 1, width do
             if not grid[x] then grid[x] = {} end
             local gid = layer.data[(y - 1) * width + x]
+
+            -- A tile is walkable if it exists (gid > 0) and is not blocked
             local tileType = TiledMapLoader.getTileType(gid)
-            local isWalkable = TiledMapLoader.isWalkable(tileType)
+            local isWalkable = (gid ~= 0) and not BLOCKED_GIDS[gid]
 
             grid[x][y] = {
                 type = tileType,
@@ -188,8 +192,8 @@ function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
         end
     end
 
-    print(string.format("[TiledMapLoader] Parsed grid %dx%d: %d walkable tiles (first GID sample: %s)",
-        width, height, walkableCount, tostring(layer.data[1])))
+    print(string.format("[TiledMapLoader] Parsed grid %dx%d: %d walkable tiles",
+        width, height, walkableCount))
 
     return grid
 end
