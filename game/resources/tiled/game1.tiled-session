@@ -50,6 +50,25 @@
         "maps/islands/base_island.tmx#test": {
             "scaleInDock": 1
         },
+        "maps/islands/empty_island.tmx": {
+            "expandedObjectLayers": [
+                3
+            ],
+            "scale": 2,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 321,
+                "y": 131.75
+            }
+        },
+        "maps/islands/empty_island.tmx#Objects": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "maps/islands/empty_island.tmx#test": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
         "maps/islands/forest_island.tmx": {
             "expandedObjectLayers": [
                 3

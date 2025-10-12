@@ -57,6 +57,26 @@ local level1 = {
                     chestCount = { min = 1, max = 3 }
                 }
             },
+            {
+              id = "empty_island",
+              name = "Empty Island",
+              mapPath = "resources/tiled/maps/islands/empty_island.lua",
+              theme = "forest",
+              weight = 100,
+              properties = {
+                  hasReactor = false,
+                  hasShop = false,
+                  enemySpawns = true,
+                  safe = false,
+                  difficulty = 1,
+                  enemyTypes = { "slime", "skeleton" }
+              },
+              loot = {
+                  coinMultiplier = 1.2,
+                  rareLootChance = 0.1,
+                  chestCount = { min = 1, max = 3 }
+              }
+          },
             -- Add more island types here as you create them
             -- {
             --     id = "desert_island",

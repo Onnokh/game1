@@ -903,46 +903,35 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
       love.graphics.setFont(overlayFontSmall)
     end
 
-    -- Draw GIDs directly from island maps in screen space
-    for _, island in ipairs(MapManager.getAllMaps()) do
-      local islandMap = island.map
-      if islandMap and islandMap.layers and islandMap.layers[1] then
-        local layer = islandMap.layers[1]
-        if layer.type == "tilelayer" and layer.data then
-          for localY = 1, islandMap.height do
-            for localX = 1, islandMap.width do
-              local gid = layer.data[(localY - 1) * islandMap.width + localX]
+    -- Draw GIDs from world grid (includes islands AND bridges)
+    for gridX = startTileX, endTileX do
+      for gridY = startTileY, endTileY do
+        local tile = collisionGrid[gridX] and collisionGrid[gridX][gridY]
 
-              if gid and gid > 0 then
-                -- Convert to world position
-                local worldX = island.x + (localX - 1) * tileSize
-                local worldY = island.y + (localY - 1) * tileSize
+        if tile and tile.gid and tile.gid > 0 then
+          -- Convert grid to world position (top-left corner of tile)
+          local worldX = (gridX - 1) * tileSize
+          local worldY = (gridY - 1) * tileSize
 
-                -- Convert to screen coordinates
-                local screenX = halfW + (worldX - cameraX) * scale
-                local screenY = halfH + (worldY - cameraY) * scale
+          -- Convert to screen coordinates
+          local screenX = halfW + (worldX - cameraX) * scale
+          local screenY = halfH + (worldY - cameraY) * scale
 
-                -- Only draw if visible
-                if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
+          -- Only draw if visible
+          if screenX >= -tileSize * scale and screenX <= screenWidth and
+             screenY >= -tileSize * scale and screenY <= screenHeight then
 
-                  -- Draw tile border in screen space (scaled size)
-                  love.graphics.setColor(0.5, 0.8, 1, 0.4)
-                  love.graphics.rectangle("line", screenX, screenY, tileSize * scale, tileSize * scale)
+            -- Draw tile border
+            love.graphics.setColor(0.5, 0.8, 1, 0.4)
+            love.graphics.rectangle("line", screenX, screenY, tileSize * scale, tileSize * scale)
 
-                  -- Draw GID in crisp screen-space text
-                  love.graphics.setColor(1, 1, 1, 1)
-                  love.graphics.print(tostring(gid), screenX + 2, screenY + 2)
+            -- Draw GID
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.print(tostring(tile.gid), screenX + 2, screenY + 2)
 
-                  -- Show if it's walkable from the pathfinding grid (using CoordinateUtils)
-                  local gridX, gridY = CoordinateUtils.worldToGrid(worldX, worldY)
-                  local walkable = (collisionGrid and collisionGrid[gridX] and
-                                   collisionGrid[gridX][gridY] and
-                                   collisionGrid[gridX][gridY].walkable)
-                  local status = walkable and "W" or "B"
-                  love.graphics.print(status, screenX + tileSize * scale - 12, screenY + tileSize * scale - 12)
-                end
-              end
-            end
+            -- Show walkable status
+            local status = tile.walkable and "W" or "B"
+            love.graphics.print(status, screenX + tileSize * scale - 12, screenY + tileSize * scale - 12)
           end
         end
       end

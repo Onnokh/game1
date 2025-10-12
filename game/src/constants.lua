@@ -37,7 +37,7 @@ GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 80 -- player speed in pixels per second
 
 -- Camera constants
-GameConstants.CAMERA_SCALE = 2 -- Zoomed out to see more of the worldw
+GameConstants.CAMERA_SCALE = .5 -- Zoomed out to see more of the worldw
 
 -- Oxygen system constants
 GameConstants.OXYGEN_MAX = 100

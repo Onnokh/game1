@@ -244,18 +244,21 @@ local function buildPathfindingGrid(tileSize, camWidth, camHeight)
             for localY = 1, islandMap.height do
                 local tileData = islandCollisionGrid[localX][localY]
 
-                if tileData and tileData.walkable then
+                if tileData and tileData.gid and tileData.gid > 0 then
                     local worldTileX = math.floor(island.x / tileSize) + localX
                     local worldTileY = math.floor(island.y / tileSize) + localY
 
                     if worldTileX >= 1 and worldTileX <= worldWidth and
                        worldTileY >= 1 and worldTileY <= worldHeight then
+                        -- Store ALL tiles (walkable and blocked)
                         world[worldTileX][worldTileY] = {
-                            walkable = true,
+                            walkable = tileData.walkable,
                             type = tileData.type,
                             gid = tileData.gid
                         }
-                        walkableTileCount = walkableTileCount + 1
+                        if tileData.walkable then
+                            walkableTileCount = walkableTileCount + 1
+                        end
                     end
                 end
             end
@@ -272,88 +275,53 @@ local function buildPathfindingGrid(tileSize, camWidth, camHeight)
     }
 end
 
----Create collision bodies for all islands
+---Create collision bodies from completed world grid (includes islands AND bridges)
+---@param worldGrid table The completed world pathfinding grid
+---@param gridWidth number Grid width in tiles
+---@param gridHeight number Grid height in tiles
 ---@param tileSize number Tile size in pixels
 ---@param physicsWorld love.World Physics world
 ---@return table Array of collision bodies
-local function createCollisionBodies(tileSize, physicsWorld)
+local function createCollisionBodiesFromWorldGrid(worldGrid, gridWidth, gridHeight, tileSize, physicsWorld)
     local collisionStart = love.timer.getTime()
-    local collisionBodies = {}
-    local collisionGridCache = {}
 
-    -- Get bridge tile positions to exclude from collision
-    local bridgeTiles = BridgeManager.getBridgeTilePositions()
-    local bridgeTileSet = {}
-    for _, pos in ipairs(bridgeTiles) do
-        local key = pos.tileX .. "," .. pos.tileY
-        bridgeTileSet[key] = true
-    end
-
-    for _, island in ipairs(MapManager.maps) do
-        local islandMap = island.map
-        local mapPath = island.definition.mapPath
-
-        -- Get base collision grid (may be cached)
-        local baseCollisionGrid = collisionGridCache[mapPath]
-        if not baseCollisionGrid then
-            baseCollisionGrid = TiledMapLoader.parseCollisionGrid(
-                islandMap,
-                islandMap.width,
-                islandMap.height
-            )
-            collisionGridCache[mapPath] = baseCollisionGrid
-        end
-
-        -- Deep copy the grid for this island instance (to avoid modifying shared cache)
-        local islandCollisionGrid = {}
-        for x = 1, islandMap.width do
-            islandCollisionGrid[x] = {}
-            for y = 1, islandMap.height do
-                if baseCollisionGrid[x] and baseCollisionGrid[x][y] then
-                    -- Create a new tile object (don't share reference!)
-                    islandCollisionGrid[x][y] = {
-                        type = baseCollisionGrid[x][y].type,
-                        gid = baseCollisionGrid[x][y].gid,
-                        walkable = baseCollisionGrid[x][y].walkable
-                    }
-                end
+    -- Convert world grid to collision grid format for TiledMapLoader
+    local collisionGrid = {}
+    for x = 1, gridWidth do
+        collisionGrid[x] = {}
+        for y = 1, gridHeight do
+            local tile = worldGrid[x] and worldGrid[x][y]
+            if tile then
+                collisionGrid[x][y] = {
+                    type = tile.type or 0,
+                    gid = tile.gid or 0,
+                    walkable = tile.walkable or false
+                }
+            else
+                collisionGrid[x][y] = {
+                    type = 0,
+                    gid = 0,
+                    walkable = false
+                }
             end
         end
-
-        -- Mark bridge tiles as walkable (no collision) in this island's grid
-        for localX = 1, islandMap.width do
-            for localY = 1, islandMap.height do
-                -- Convert local tile coords to world tile coords
-                local worldTileX = math.floor(island.x / tileSize) + localX
-                local worldTileY = math.floor(island.y / tileSize) + localY
-                local key = worldTileX .. "," .. worldTileY
-
-                if bridgeTileSet[key] and islandCollisionGrid[localX] and islandCollisionGrid[localX][localY] then
-                    islandCollisionGrid[localX][localY].walkable = true
-                end
-            end
-        end
-
-        local islandColliders = TiledMapLoader.createCollisionBodies(
-            {
-                collisionGrid = islandCollisionGrid,
-                width = islandMap.width,
-                height = islandMap.height,
-                tileSize = tileSize
-            },
-            physicsWorld,
-            island.x,
-            island.y
-        )
-
-        for _, collider in ipairs(islandColliders) do
-            table.insert(collisionBodies, collider)
-        end
     end
+
+    -- Generate collision bodies from the complete world grid
+    local collisionBodies = TiledMapLoader.createCollisionBodies(
+        {
+            collisionGrid = collisionGrid,
+            width = gridWidth,
+            height = gridHeight,
+            tileSize = tileSize
+        },
+        physicsWorld,
+        0, -- No offset, world grid is already in world coordinates
+        0
+    )
 
     print(string.format("[MapManager] Collision setup took %.2fs", love.timer.getTime() - collisionStart))
-    print(string.format("[MapManager] Total collision bodies: %d", #collisionBodies))
-    print(string.format("[MapManager] Excluded %d bridge tiles from collision", #bridgeTiles))
+    print(string.format("[MapManager] Total collision bodies: %d (from world grid)", #collisionBodies))
 
     return collisionBodies
 end
@@ -512,14 +480,18 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     -- Build pathfinding grid
     local pathfindingGrid = buildPathfindingGrid(tileSize, worldBounds.cameraWidth, worldBounds.cameraHeight)
 
-    -- Initialize BridgeManager BEFORE collision (to detect bridge tiles first)
+    -- Initialize BridgeManager and add bridges to world grid
     BridgeManager.initialize(MapManager.maps, tileSize, pathfindingGrid)
-
-    -- Mark bridge tiles as walkable in pathfinding grid
     BridgeManager.markBridgeTilesWalkable(pathfindingGrid.grid)
 
-    -- Create collision bodies (bridge tiles will be excluded)
-    local collisionBodies = createCollisionBodies(tileSize, physicsWorld)
+    -- Create collision bodies from the COMPLETED world grid (includes bridges)
+    local collisionBodies = createCollisionBodiesFromWorldGrid(
+        pathfindingGrid.grid,
+        pathfindingGrid.width,
+        pathfindingGrid.height,
+        tileSize,
+        physicsWorld
+    )
 
     -- Spawn entities
     local playerEntity = spawnEntities(ecsWorld, physicsWorld)

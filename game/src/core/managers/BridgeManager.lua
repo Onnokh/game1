@@ -5,6 +5,7 @@ local BridgeManager = {}
 
 -- Dependencies
 local GameConstants = require("src.constants")
+local TiledMapLoader = require("src.utils.tiled")
 
 -- Internal state
 BridgeManager.bridges = {} -- Cached bridge connections: {fromTile = {x, y}, toTile = {x, y}}
@@ -28,6 +29,23 @@ local function isTileWalkable(tileX, tileY, grid, gridWidth, gridHeight)
 
     local tile = grid[tileX] and grid[tileX][tileY]
     return tile and tile.walkable == true
+end
+
+---Check if a tile is safe for bridge attachment (empty or walkable)
+---@param tileX number Tile X coordinate
+---@param tileY number Tile Y coordinate
+---@param grid table Pathfinding grid
+---@param gridWidth number Grid width
+---@param gridHeight number Grid height
+---@return boolean
+local function isTileSafeForAttachment(tileX, tileY, grid, gridWidth, gridHeight)
+    if tileX < 1 or tileX > gridWidth or tileY < 1 or tileY > gridHeight then
+        return false
+    end
+
+    local tile = grid[tileX] and grid[tileX][tileY]
+    -- Safe if empty (no tile) or walkable
+    return not tile or tile.walkable == true or tile.walkable == false and not tile.gid or tile.gid == 0
 end
 
 ---Find walkable tiles on an island (returns tile coordinates only)
@@ -273,11 +291,36 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                         local isVertical = dx == 0    -- Perfectly aligned vertically
 
                         if (isHorizontal or isVertical) and dist <= maxBridgeDistanceTiles then
-                            table.insert(validPairs, {
-                                tile1 = tile1,
-                                tile2 = tile2,
-                                dist = dist
-                            })
+                            -- Validate attachment positions are safe (not on blocked island tiles)
+                            local attachmentSafe = true
+
+                            if isHorizontal then
+                                -- Check 3 vertical positions for each attachment
+                                for yOffset = -1, 1 do
+                                    if not isTileSafeForAttachment(tile1.tileX, tile1.tileY + yOffset, grid, gridWidth, gridHeight) or
+                                       not isTileSafeForAttachment(tile2.tileX, tile2.tileY + yOffset, grid, gridWidth, gridHeight) then
+                                        attachmentSafe = false
+                                        break
+                                    end
+                                end
+                            else -- isVertical
+                                -- Check 3 horizontal positions for each attachment
+                                for xOffset = -1, 1 do
+                                    if not isTileSafeForAttachment(tile1.tileX + xOffset, tile1.tileY, grid, gridWidth, gridHeight) or
+                                       not isTileSafeForAttachment(tile2.tileX + xOffset, tile2.tileY, grid, gridWidth, gridHeight) then
+                                        attachmentSafe = false
+                                        break
+                                    end
+                                end
+                            end
+
+                            if attachmentSafe then
+                                table.insert(validPairs, {
+                                    tile1 = tile1,
+                                    tile2 = tile2,
+                                    dist = dist
+                                })
+                            end
                         end
                     end
                 end
@@ -682,9 +725,11 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                             end
                             local checkY = tileY1 + yOffset
                             if grid[tileX] and grid[tileX][checkY] then
+                                -- Use same walkability check as island tiles
+                                local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
                                 grid[tileX][checkY] = {
-                                    walkable = true,
-                                    type = 1,
+                                    walkable = isWalkable,
+                                    type = isWalkable and 1 or 3,
                                     gid = gid
                                 }
                                 tilesMarked = tilesMarked + 1
@@ -692,12 +737,14 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                         end
                     end
                 else
-                    -- Middle section - horizontal bridge (only top row 147 is walkable)
+                    -- Middle section - horizontal bridge (only top row 147)
                     if grid[tileX] and grid[tileX][tileY1] then
+                        local gid = 147
+                        local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
                         grid[tileX][tileY1] = {
-                            walkable = true,
-                            type = 1,
-                            gid = 147 -- Only top row is walkable
+                            walkable = isWalkable,
+                            type = isWalkable and 1 or 3,
+                            gid = gid
                         }
                         tilesMarked = tilesMarked + 1
                     end
@@ -738,9 +785,11 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                                     local checkX = tileX1 + xOffset
                                     local checkY = tileY + (rowIdx - 1)
                                     if grid[checkX] and grid[checkX][checkY] then
+                                        -- Use same walkability check as island tiles
+                                        local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
                                         grid[checkX][checkY] = {
-                                            walkable = true,
-                                            type = 1,
+                                            walkable = isWalkable,
+                                            type = isWalkable and 1 or 3,
                                             gid = gid
                                         }
                                         tilesMarked = tilesMarked + 1
@@ -757,9 +806,11 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                                 local xOffset = i - 2
                                 local checkX = tileX1 + xOffset
                                 if grid[checkX] and grid[checkX][tileY] then
+                                    -- Use same walkability check as island tiles
+                                    local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
                                     grid[checkX][tileY] = {
-                                        walkable = true,
-                                        type = 1,
+                                        walkable = isWalkable,
+                                        type = isWalkable and 1 or 3,
                                         gid = gid
                                     }
                                     tilesMarked = tilesMarked + 1
@@ -770,10 +821,12 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                 else
                     -- Middle section - single tile (vertical bridge)
                     if grid[tileX1] and grid[tileX1][tileY] then
+                        local gid = GameConstants.BRIDGE_TILE_VERTICAL
+                        local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
                         grid[tileX1][tileY] = {
-                            walkable = true,
-                            type = 1,
-                            gid = GameConstants.BRIDGE_TILE_VERTICAL
+                            walkable = isWalkable,
+                            type = isWalkable and 1 or 3,
+                            gid = gid
                         }
                         tilesMarked = tilesMarked + 1
                     end
@@ -785,45 +838,6 @@ function BridgeManager.markBridgeTilesWalkable(grid)
     end
 
     print(string.format("[BridgeManager] Marked %d bridge tiles as walkable", tilesMarked))
-end
-
----Get all bridge tile positions (for collision exclusion)
----Only returns actual walkable bridge tiles (147 and 186), not decorative parts
----@return table Array of {tileX, tileY} positions
-function BridgeManager.getBridgeTilePositions()
-    if not BridgeManager.initialized or not BridgeManager.bridges then
-        return {}
-    end
-
-    local positions = {}
-    for _, bridge in ipairs(BridgeManager.bridges) do
-        local tileX1 = bridge.fromTile.x
-        local tileY1 = bridge.fromTile.y
-        local tileX2 = bridge.toTile.x
-        local tileY2 = bridge.toTile.y
-
-        -- Determine if bridge is horizontal or vertical
-        local isHorizontal = tileY1 == tileY2
-        local isVertical = tileX1 == tileX2
-
-        if isHorizontal then
-            -- Horizontal bridges: Only top row (147) is walkable
-            local startX = math.min(tileX1, tileX2)
-            local endX = math.max(tileX1, tileX2)
-            for tileX = startX, endX do
-                table.insert(positions, {tileX = tileX, tileY = tileY1}) -- Only top row (147)
-            end
-        elseif isVertical then
-            -- Vertical bridges: Single column (186) is walkable
-            local startY = math.min(tileY1, tileY2)
-            local endY = math.max(tileY1, tileY2)
-            for tileY = startY, endY do
-                table.insert(positions, {tileX = tileX1, tileY = tileY})
-            end
-        end
-    end
-
-    return positions
 end
 
 ---Unload and reset BridgeManager
