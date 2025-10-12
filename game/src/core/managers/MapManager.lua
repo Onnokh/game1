@@ -293,14 +293,31 @@ local function createCollisionBodies(tileSize, physicsWorld)
         local islandMap = island.map
         local mapPath = island.definition.mapPath
 
-        local islandCollisionGrid = collisionGridCache[mapPath]
-        if not islandCollisionGrid then
-            islandCollisionGrid = TiledMapLoader.parseCollisionGrid(
+        -- Get base collision grid (may be cached)
+        local baseCollisionGrid = collisionGridCache[mapPath]
+        if not baseCollisionGrid then
+            baseCollisionGrid = TiledMapLoader.parseCollisionGrid(
                 islandMap,
                 islandMap.width,
                 islandMap.height
             )
-            collisionGridCache[mapPath] = islandCollisionGrid
+            collisionGridCache[mapPath] = baseCollisionGrid
+        end
+
+        -- Deep copy the grid for this island instance (to avoid modifying shared cache)
+        local islandCollisionGrid = {}
+        for x = 1, islandMap.width do
+            islandCollisionGrid[x] = {}
+            for y = 1, islandMap.height do
+                if baseCollisionGrid[x] and baseCollisionGrid[x][y] then
+                    -- Create a new tile object (don't share reference!)
+                    islandCollisionGrid[x][y] = {
+                        type = baseCollisionGrid[x][y].type,
+                        gid = baseCollisionGrid[x][y].gid,
+                        walkable = baseCollisionGrid[x][y].walkable
+                    }
+                end
+            end
         end
 
         -- Mark bridge tiles as walkable (no collision) in this island's grid

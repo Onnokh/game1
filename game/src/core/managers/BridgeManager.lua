@@ -196,6 +196,9 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
     print("[BridgeManager] ===== DETECTING BRIDGES =====")
     print(string.format("[BridgeManager] Grid size: %dx%d, Tile size: %d", gridWidth, gridHeight, tileSize))
 
+    -- Seed random for varied bridge placement
+    math.randomseed(os.time())
+
     local bridges = {}
 
     -- Find all walkable tiles on each island
@@ -221,6 +224,9 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                 if #tiles1 == 0 or #tiles2 == 0 then
                     goto continue
                 end
+
+                -- Skip if not enough edge tiles (need at least 3 to exclude corners)
+                local minRequiredEdgeTiles = 3
 
                 -- Find aligned tile pairs that can form a bridge (work in tile coordinates)
                 local bestTile1 = nil
@@ -266,6 +272,19 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                             table.insert(edgeTiles2, tile)
                         end
                     end
+
+                    -- Sort by Y position and exclude corners (first and last tiles)
+                    -- This prevents bridges from spawning at awkward corner positions
+                    table.sort(edgeTiles1, function(a, b) return a.tileY < b.tileY end)
+                    table.sort(edgeTiles2, function(a, b) return a.tileY < b.tileY end)
+                    if #edgeTiles1 >= minRequiredEdgeTiles then
+                        table.remove(edgeTiles1, 1) -- Remove first (top corner)
+                        table.remove(edgeTiles1) -- Remove last (bottom corner)
+                    end
+                    if #edgeTiles2 >= minRequiredEdgeTiles then
+                        table.remove(edgeTiles2, 1) -- Remove first (top corner)
+                        table.remove(edgeTiles2) -- Remove last (bottom corner)
+                    end
                 else
                     -- Vertical connection - find tiles at vertical edges
                     local maxY1 = -math.huge
@@ -297,9 +316,23 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                             table.insert(edgeTiles2, tile)
                         end
                     end
+
+                    -- Sort by X position and exclude corners (first and last tiles)
+                    -- This prevents bridges from spawning at awkward corner positions
+                    table.sort(edgeTiles1, function(a, b) return a.tileX < b.tileX end)
+                    table.sort(edgeTiles2, function(a, b) return a.tileX < b.tileX end)
+                    if #edgeTiles1 >= minRequiredEdgeTiles then
+                        table.remove(edgeTiles1, 1) -- Remove first (left corner)
+                        table.remove(edgeTiles1) -- Remove last (right corner)
+                    end
+                    if #edgeTiles2 >= minRequiredEdgeTiles then
+                        table.remove(edgeTiles2, 1) -- Remove first (left corner)
+                        table.remove(edgeTiles2) -- Remove last (right corner)
+                    end
                 end
 
-                -- Now find closest aligned pair from edge tiles (in tile coordinates)
+                -- Find all valid aligned pairs within distance
+                local validPairs = {}
                 for _, tile1 in ipairs(edgeTiles1) do
                     for _, tile2 in ipairs(edgeTiles2) do
                         local dx = math.abs(tile1.tileX - tile2.tileX)
@@ -310,17 +343,33 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                         local isHorizontal = dy == 0  -- Perfectly aligned horizontally
                         local isVertical = dx == 0    -- Perfectly aligned vertically
 
-                        if (isHorizontal or isVertical) and dist < bestDist and dist <= maxBridgeDistanceTiles then
-                            bestDist = dist
-                            bestTile1 = tile1
-                            bestTile2 = tile2
+                        if (isHorizontal or isVertical) and dist <= maxBridgeDistanceTiles then
+                            table.insert(validPairs, {
+                                tile1 = tile1,
+                                tile2 = tile2,
+                                dist = dist
+                            })
                         end
                     end
                 end
 
-                if bestTile1 and bestTile2 then
-                    print(string.format("[BridgeManager] '%s' → '%s': Tiles (%d,%d) → (%d,%d)",
-                        island1.id, island2.id, bestTile1.tileX, bestTile1.tileY, bestTile2.tileX, bestTile2.tileY))
+                -- Pick a random valid pair (weighted toward shorter bridges)
+                if #validPairs > 0 then
+                    -- Sort by distance
+                    table.sort(validPairs, function(a, b) return a.dist < b.dist end)
+
+                    -- Pick from the shortest X% (configurable) with some randomness
+                    local poolRatio = GameConstants.BRIDGE_SELECTION_POOL_RATIO
+                    local poolSize = math.max(1, math.ceil(#validPairs * poolRatio))
+                    local randomIndex = math.random(1, poolSize)
+                    local chosen = validPairs[randomIndex]
+
+                    bestTile1 = chosen.tile1
+                    bestTile2 = chosen.tile2
+
+                    print(string.format("[BridgeManager] '%s' → '%s': Tiles (%d,%d) → (%d,%d) [%d options, picked #%d, dist=%.1f]",
+                        island1.id, island2.id, bestTile1.tileX, bestTile1.tileY, bestTile2.tileX, bestTile2.tileY,
+                        #validPairs, randomIndex, chosen.dist))
 
                     table.insert(bridges, {
                         fromTile = {x = bestTile1.tileX, y = bestTile1.tileY},
