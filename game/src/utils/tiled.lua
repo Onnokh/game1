@@ -7,6 +7,7 @@ local TiledMapLoader = {}
 -- Cache loaded maps to avoid reloading
 local mapCache = {}
 local cartographer = require("lib.cartographer")
+local GameConstants = require("src.constants")
 
 ---=============================================================================
 --- TILE TYPE CONSTANTS
@@ -17,19 +18,11 @@ TiledMapLoader.TILE_GRASS = 1
 TiledMapLoader.TILE_BLOCKED = 3
 TiledMapLoader.TILE_WORLDEDGE = 2
 
--- Blocked tile GIDs (walls, obstacles, etc.)
-local BLOCKED_GIDS = {
-    [23] = true,
-    [24] = true,
-    [25] = true,
-    [166] = true,
-    [167] = true,
-    [162] = true,
-    [169] = true,
-    [170] = true,
-    [172] = true,
-    [173] = true,
-}
+-- Convert blocked tile GIDs array to hash table for O(1) lookups
+local BLOCKED_GIDS_LOOKUP = {}
+for _, gid in ipairs(GameConstants.BLOCKED_TILE_GIDS) do
+    BLOCKED_GIDS_LOOKUP[gid] = true
+end
 
 ---=============================================================================
 --- MAP LOADING (Cartographer)
@@ -130,7 +123,7 @@ end
 ---@return number Tile type constant
 function TiledMapLoader.getTileType(gid)
     if gid == 0 then return TiledMapLoader.TILE_EMPTY end
-    if BLOCKED_GIDS[gid] then return TiledMapLoader.TILE_BLOCKED end
+    if BLOCKED_GIDS_LOOKUP[gid] then return TiledMapLoader.TILE_BLOCKED end
     return TiledMapLoader.TILE_GRASS
 end
 
@@ -178,7 +171,7 @@ function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
 
             -- A tile is walkable if it exists (gid > 0) and is not blocked
             local tileType = TiledMapLoader.getTileType(gid)
-            local isWalkable = (gid ~= 0) and not BLOCKED_GIDS[gid]
+            local isWalkable = (gid ~= 0) and not BLOCKED_GIDS_LOOKUP[gid]
 
             grid[x][y] = {
                 type = tileType,

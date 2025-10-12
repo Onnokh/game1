@@ -31,6 +31,9 @@ GameConstants.BRIDGE_ATTACH_SOUTH = {
 }
 GameConstants.BRIDGE_ATTACH_WEST = {nil, 148, 139}  -- 1 column: top to bottom
 
+-- Blocked tile GIDs (walls, obstacles, etc.)
+GameConstants.BLOCKED_TILE_GIDS = {23, 24, 25, 162, 166, 167, 169, 170, 172, 173}
+
 -- Player constants
 GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24

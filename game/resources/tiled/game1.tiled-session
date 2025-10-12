@@ -3,11 +3,12 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "maps/islands/forest_island.tmx",
     "expandedProjectPaths": [
         "maps",
         ".",
-        "objects"
+        "objects",
+        "maps/islands"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -64,9 +65,6 @@
             "scaleInDock": 1
         },
         "maps/islands/forest_island.tmx": {
-            "expandedObjectLayers": [
-                3
-            ],
             "scale": 1.8584375,
             "selectedLayer": 0,
             "viewCenter": {
@@ -166,10 +164,15 @@
     "map.lastUsedFormat": "tmx",
     "map.width": 20,
     "openFiles": [
+        "maps/islands/base_island.tmx",
+        "maps/islands/empty_island.tmx",
+        "maps/islands/forest_island.tmx"
     ],
     "project": "game1.tiled-project",
     "recentFiles": [
         "maps/islands/base_island.tmx",
+        "maps/islands/empty_island.tmx",
+        "maps/islands/forest_island.tmx",
         "maps/islands/island1.tmx",
         "maps/level1.tmx",
         "maps/test.tsx",

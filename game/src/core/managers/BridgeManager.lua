@@ -703,9 +703,9 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                         end
                     end
                 else
-                    -- Middle section - horizontal bridge (only top row 147)
+                    -- Middle section - horizontal bridge (only top row)
                     if grid[tileX] and grid[tileX][tileY1] then
-                        local gid = 147
+                        local gid = GameConstants.BRIDGE_TILE_HORIZONTAL[1]
                         local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
                         grid[tileX][tileY1] = {
                             walkable = isWalkable,
