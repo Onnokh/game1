@@ -9,34 +9,17 @@ function Siege.onEnter(gameState)
     GameScene.setAmbientColor(70, 90, 140, 255, 5)
   end
 
-  -- Spawn enemies equal to the current day number
-  local GameScene = require("src.scenes.game")
-  local EntityUtils = require("src.utils.entities")
+  -- Spawn enemies from MobSpawn areas marked for "Siege" phase
+  local MobManager = require("src.core.managers.MobManager")
 
-  if GameScene and GameScene.addMonster and GameScene.getMapData then
-    local mapData = GameScene.getMapData()
-    local numEnemies = gameState.day or 1
-
-    for i = 1, numEnemies do
-      -- Spawn in the bottom half of the map
-      local x, y = EntityUtils.findValidSpawnPosition(1, mapData.width, 1, mapData.height)
-
-      if x and y then
-        -- random enemy type
-        local enemyType = math.random(1, 3)
-        local enemy = nil
-        if enemyType == 1 then
-          enemy = GameScene.addMonster(x, y, "skeleton")
-        elseif enemyType == 2 then
-          enemy = GameScene.addMonster(x, y, "slime")
-        elseif enemyType == 3 then
-          enemy = GameScene.addMonster(x, y, "warhog")
-        end
-        if enemy and enemy.addTag then
-          enemy:addTag("SiegeAttacker")
-        end
-      end
-    end
+  if GameScene and GameScene.ecsWorld and GameScene.physicsWorld then
+    -- Spawn enemies from MobSpawn areas with phase="Siege"
+    MobManager.spawnPhaseEnemies(
+      "Siege",
+      GameScene.ecsWorld,
+      GameScene.physicsWorld,
+      "SiegeAttacker"
+    )
   end
 end
 

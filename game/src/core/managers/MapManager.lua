@@ -11,6 +11,7 @@ local Reactor = nil
 local Tree = nil
 local BridgeManager = nil
 local GameConstants = nil
+local MobManager = nil
 
 -- Internal state
 MapManager.maps = {}
@@ -355,6 +356,46 @@ local function spawnEntities(ecsWorld, physicsWorld)
         for _, obj in ipairs(objects.other or {}) do
             if obj.name == "Tree" then
                 Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
+            elseif obj.name == "MobSpawn" then
+                -- General mob spawn area (can be immediate or phase-based)
+                local amount = 1
+                local phase = nil
+
+                if obj.properties then
+                    if obj.properties.amount then
+                        amount = obj.properties.amount
+                    end
+                    if obj.properties.phase then
+                        phase = obj.properties.phase
+                    end
+                end
+
+                MobManager.registerSpawnArea({
+                    x = islandX + obj.x,
+                    y = islandY + obj.y,
+                    width = obj.width or 160,
+                    height = obj.height or 64,
+                    amount = amount,
+                    phase = phase,
+                    islandDef = island.definition
+                })
+            elseif obj.name == "Siege" then
+                -- Siege-specific spawn area (automatically phase="Siege")
+                local amount = 5 -- Default siege amount
+
+                if obj.properties and obj.properties.amount then
+                    amount = obj.properties.amount
+                end
+
+                MobManager.registerSpawnArea({
+                    x = islandX + obj.x,
+                    y = islandY + obj.y,
+                    width = obj.width or 160,
+                    height = obj.height or 64,
+                    amount = amount,
+                    phase = "Siege", -- Always Siege phase
+                    islandDef = island.definition
+                })
             end
         end
     end
@@ -365,6 +406,9 @@ local function spawnEntities(ecsWorld, physicsWorld)
         local centerY = MapManager.baseIsland.y + MapManager.baseIsland.height / 2
         playerEntity = Player.create(centerX, centerY, ecsWorld, physicsWorld)
     end
+
+    -- Spawn immediate enemies from MobSpawn areas
+    MobManager.spawnImmediateEnemies(ecsWorld, physicsWorld)
 
     print(string.format("[MapManager] Entity spawning took %.2fs", love.timer.getTime() - spawnStart))
 
@@ -425,12 +469,16 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     if not GameConstants then
         GameConstants = require("src.constants")
     end
+    if not MobManager then
+        MobManager = require("src.core.managers.MobManager")
+    end
 
     -- Clear previous state
     MapManager.maps = {}
     MapManager.baseIsland = nil
     MapManager.levelConfig = nil
     MapManager.initialized = false
+    MobManager.clear()
 
     -- Load level configuration
     local levelModule = require(levelPath:gsub("/", "."))
@@ -614,6 +662,11 @@ function MapManager.unload()
     -- Unload BridgeManager
     if BridgeManager then
         BridgeManager.unload()
+    end
+
+    -- Clear MobManager
+    if MobManager then
+        MobManager.clear()
     end
 
     MapManager.maps = {}

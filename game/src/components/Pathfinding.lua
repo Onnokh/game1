@@ -212,8 +212,6 @@ function Pathfinding:startWander(currentX, currentY)
         self.targetY = targetY
         self.isWandering = true
         self.lastWanderTime = 0
-        print(string.format("[Pathfinding] startWander SUCCESS: path from (%d,%d) to (%d,%d) with %d nodes",
-            startGridX, startGridY, targetGridX, targetGridY, #path._nodes))
         return true
     else
         -- Debug: Check grid values directly

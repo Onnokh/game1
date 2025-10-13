@@ -9,8 +9,8 @@ return {
   height = 10,
   tilewidth = 32,
   tileheight = 32,
-  nextlayerid = 4,
-  nextobjectid = 69,
+  nextlayerid = 5,
+  nextobjectid = 70,
   properties = {},
   tilesets = {
     {
@@ -117,7 +117,7 @@ return {
       type = "objectgroup",
       draworder = "topdown",
       id = 2,
-      name = "Object Layer 1",
+      name = "Objects",
       class = "",
       visible = true,
       opacity = 1,
@@ -504,6 +504,37 @@ return {
           gid = 228,
           visible = true,
           properties = {}
+        }
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 4,
+      name = "Area",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {},
+      objects = {
+        {
+          id = 69,
+          name = "MobSpawn",
+          type = "",
+          shape = "rectangle",
+          x = 192,
+          y = 96,
+          width = 287.23,
+          height = 97.5,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["amount"] = 2
+          }
         }
       }
     }

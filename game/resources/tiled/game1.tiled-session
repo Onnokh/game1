@@ -25,11 +25,14 @@
             "scaleInEditor": 1
         },
         "maps/islands/base_island.tmx": {
-            "scale": 0.75,
-            "selectedLayer": -1,
+            "expandedObjectLayers": [
+                10
+            ],
+            "scale": 1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 450.66666666666663,
-                "y": 388.66666666666663
+                "x": 405,
+                "y": 232
             }
         },
         "maps/islands/base_island.tmx#Objects": {
@@ -49,11 +52,14 @@
             "scaleInDock": 1
         },
         "maps/islands/empty_island.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
             "scale": 2,
-            "selectedLayer": 1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 321,
-                "y": 131.75
+                "x": 272.5,
+                "y": 111.5
             }
         },
         "maps/islands/empty_island.tmx#Objects": {
@@ -66,10 +72,10 @@
         },
         "maps/islands/forest_island.tmx": {
             "scale": 1.8584375,
-            "selectedLayer": 0,
+            "selectedLayer": 2,
             "viewCenter": {
                 "x": 320.16142592903986,
-                "y": 122.95274928535397
+                "y": 122.68370607028754
             }
         },
         "maps/islands/forest_island.tmx#Objects": {
@@ -169,6 +175,7 @@
         "maps/islands/forest_island.tmx"
     ],
     "project": "game1.tiled-project",
+    "property.type": "int",
     "recentFiles": [
         "maps/islands/base_island.tmx",
         "maps/islands/empty_island.tmx",

@@ -76,12 +76,26 @@ end
 ---@param nextPhase string
 function GameController.switchPhase(nextPhase)
   if nextPhase == GameController.currentPhase then return end
+
+  print(string.format("[GameController] ========== PHASE CHANGE: %s -> %s ==========",
+    GameController.currentPhase, nextPhase))
+
   local current = GameController.phases and GameController.phases[GameController.currentPhase]
-  if current and current.onExit then current.onExit(GameState) end
+  if current and current.onExit then
+    print(string.format("[GameController] Exiting phase: %s", GameController.currentPhase))
+    current.onExit(GameState)
+  end
+
   GameController.currentPhase = nextPhase
   GameState.phase = nextPhase
+
   local incoming = GameController.phases and GameController.phases[GameController.currentPhase]
-  if incoming and incoming.onEnter then incoming.onEnter(GameState) end
+  if incoming and incoming.onEnter then
+    print(string.format("[GameController] Entering phase: %s (Day %d)", nextPhase, GameState.day or 1))
+    incoming.onEnter(GameState)
+  end
+
+  print("[GameController] ========== PHASE CHANGE COMPLETE ==========")
 end
 
 function GameController.setPaused(paused)
