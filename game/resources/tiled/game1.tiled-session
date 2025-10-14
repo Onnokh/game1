@@ -26,14 +26,14 @@
         },
         "maps/islands/base_island.tmx": {
             "expandedObjectLayers": [
-                5,
-                10
+                10,
+                5
             ],
             "scale": 1,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 405,
-                "y": 232
+                "x": 640,
+                "y": 319.5
             }
         },
         "maps/islands/base_island.tmx#Objects": {
@@ -79,7 +79,7 @@
             "selectedLayer": 2,
             "viewCenter": {
                 "x": 320.16142592903986,
-                "y": 122.68370607028754
+                "y": 24.213889355977813
             }
         },
         "maps/islands/forest_island.tmx#Objects": {
@@ -106,6 +106,21 @@
                 "x": 187.5,
                 "y": 238.5
             }
+        },
+        "maps/islands/shop_island.tmx": {
+            "scale": 3,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 302.6666666666667,
+                "y": 176.66666666666663
+            }
+        },
+        "maps/islands/shop_island.tmx#Objects": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
+        "maps/islands/shop_island.tmx#test": {
+            "scaleInDock": 1
         },
         "maps/level1.tmx": {
             "expandedObjectLayers": [

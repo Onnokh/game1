@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="20" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="72">
+ <editorsettings>
+  <export target="shop_island.lua" format="lua"/>
+ </editorsettings>
+ <tileset firstgid="1" name="test" tilewidth="32" tileheight="32" tilecount="225" columns="15">
+  <image source="../../../world.png" width="480" height="480"/>
+ </tileset>
+ <tileset firstgid="226" name="Objects" tilewidth="96" tileheight="96" tilecount="2" columns="0">
+  <grid orientation="orthogonal" width="32" height="32"/>
+  <tile id="1">
+   <image source="../../../reactor/reactor-Sheet.png" width="96" height="96"/>
+  </tile>
+  <tile id="2">
+   <image source="../../../objects/tree.png" width="48" height="96"/>
+  </tile>
+ </tileset>
+ <layer id="1" name="Tile Layer 1" width="20" height="10">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,121,124,122,124,122,124,122,124,124,124,122,124,122,125,0,0,0,
+0,0,0,136,137,138,139,137,137,137,138,137,138,139,139,139,140,0,0,0,
+0,0,0,136,137,138,139,137,138,137,138,137,137,137,138,139,140,0,0,0,
+0,0,0,136,137,138,139,137,138,137,138,137,138,138,138,138,140,0,0,0,
+0,0,0,136,137,138,139,137,138,137,137,138,138,138,138,138,140,0,0,0,
+0,0,0,136,137,137,137,137,138,139,137,137,138,138,138,138,140,0,0,0,
+0,0,0,151,152,152,152,152,152,152,152,152,152,152,152,154,155,0,0,0,
+0,0,0,166,167,167,167,167,167,167,167,167,167,167,167,169,170,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="4" name="Objects"/>
+ <objectgroup id="2" name="Area">
+  <object id="71" name="Shop" x="288" y="96" width="64" height="64"/>
+ </objectgroup>
+</map>

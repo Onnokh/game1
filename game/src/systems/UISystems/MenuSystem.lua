@@ -9,6 +9,7 @@ function MenuSystem.new()
 	setmetatable(self, MenuSystem)
 	self.visible = false
 	self.isWorldSpace = false -- This UI system draws in screen space
+	self.drawOrder = 1000 -- Draw on top of other UI elements
 	return self
 end
 

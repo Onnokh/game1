@@ -9,6 +9,7 @@ local TiledMapLoader = nil
 local Player = nil
 local Reactor = nil
 local Tree = nil
+local Shop = nil
 local BridgeManager = nil
 local GameConstants = nil
 local MobManager = nil
@@ -356,6 +357,8 @@ local function spawnEntities(ecsWorld, physicsWorld)
         for _, obj in ipairs(objects.other or {}) do
             if obj.name == "Tree" then
                 Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
+            elseif obj.name == "Shop" then
+                Shop.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
             elseif obj.name == "MobSpawn" then
                 -- General mob spawn area (can be immediate or phase-based)
                 local amount = 1
@@ -462,6 +465,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     end
     if not Tree then
         Tree = require("src.entities.Decoration.Tree")
+    end
+    if not Shop then
+        Shop = require("src.entities.Shop.Shop")
     end
     if not BridgeManager then
         BridgeManager = require("src.core.managers.BridgeManager")

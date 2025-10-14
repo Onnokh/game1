@@ -6,14 +6,16 @@
 ---@field physicsWorld love.World|nil The physics world (optional)
 ---@field lightWorld table|nil The light world (optional)
 ---@field camera table|nil The camera (optional, for frustum culling)
+---@field useDrawOrder boolean Whether to sort systems by drawOrder when drawing (for UI worlds)
 local World = {}
 World.__index = World
 
 ---Create a new ECS world
 ---@param physicsWorld love.World|nil The physics world (optional)
 ---@param lightWorld table|nil The light world (optional)
+---@param useDrawOrder boolean|nil Whether to use drawOrder sorting (default: false)
 ---@return World
-function World.new(physicsWorld, lightWorld)
+function World.new(physicsWorld, lightWorld, useDrawOrder)
     local self = setmetatable({}, World)
     self.entities = {}
     self.systems = {}
@@ -24,6 +26,7 @@ function World.new(physicsWorld, lightWorld)
     self.physicsWorld = physicsWorld
     self.lightWorld = lightWorld
     self.camera = nil
+    self.useDrawOrder = useDrawOrder or false
     return self
 end
 
@@ -145,10 +148,42 @@ function World:update(dt)
     -- Bullets call it immediately on collision, Skeletons call it after death animation completes
 end
 
----Draw all systems in the world
+---Draw all systems in the world (sorted by drawOrder if enabled)
 function World:draw()
-    for _, system in ipairs(self.systems) do
-        system:draw()
+    if self.useDrawOrder then
+        -- Create a sorted copy of systems based on drawOrder
+        local systemsToDraw = {}
+        for _, system in ipairs(self.systems) do
+            table.insert(systemsToDraw, system)
+        end
+
+        -- Sort by drawOrder (lower values draw first, higher values draw on top)
+        table.sort(systemsToDraw, function(a, b)
+            local orderA = a.drawOrder or 0
+            local orderB = b.drawOrder or 0
+            return orderA < orderB
+        end)
+
+        -- Debug: print draw order (only once)
+        if not self._debugPrinted then
+            print("[World] Draw order (z-index):")
+            for i, system in ipairs(systemsToDraw) do
+                local name = system.name or tostring(system)
+                local order = system.drawOrder or 0
+                print(string.format("  %d. %s (drawOrder: %d)", i, name, order))
+            end
+            self._debugPrinted = true
+        end
+
+        -- Draw in sorted order
+        for _, system in ipairs(systemsToDraw) do
+            system:draw()
+        end
+    else
+        -- Draw in registration order (original behavior)
+        for _, system in ipairs(self.systems) do
+            system:draw()
+        end
     end
 end
 

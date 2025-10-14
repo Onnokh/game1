@@ -9,6 +9,7 @@ function GameOverSystem.new()
     local self = System.new({})
     setmetatable(self, GameOverSystem)
     self.isWorldSpace = false
+    self.drawOrder = 1000 -- Draw on top of other UI elements
     self.widget = GameOver.new()
     return self
 end

@@ -9,6 +9,7 @@ function PauseMenuSystem.new()
     local self = System.new({})
     setmetatable(self, PauseMenuSystem)
     self.isWorldSpace = false -- This UI system draws in screen space
+    self.drawOrder = 1000 -- Draw on top of other UI elements
     self.widget = PauseMenu.new()
     return self
 end
@@ -34,23 +35,38 @@ function PauseMenuSystem:draw()
 end
 
 function PauseMenuSystem:handleMouseClick(x, y, button)
-    if self.widget and self.widget.handleMouseClick then
-        -- @diagnostic disable-next-line: undefined-field
-        return self.widget:handleMouseClick(x, y, button)
+    -- If pause menu is visible, consume all clicks
+    local gameController = require("src.core.GameController")
+    if gameController.paused and not gameController.gameOver then
+        if self.widget and self.widget.handleMouseClick then
+            -- @diagnostic disable-next-line: undefined-field
+            self.widget:handleMouseClick(x, y, button)
+        end
+        return true -- Consume the click event
     end
     return false
 end
 
 function PauseMenuSystem:handleMousePressed(x, y, button)
-    if self.widget and self.widget.handleMousePressed then
-        return self.widget:handleMousePressed(x, y, button)
+    -- If pause menu is visible, consume all clicks to prevent interaction with game elements below
+    local gameController = require("src.core.GameController")
+    if gameController.paused and not gameController.gameOver then
+        if self.widget and self.widget.handleMousePressed then
+            self.widget:handleMousePressed(x, y, button)
+        end
+        return true -- Consume the click event
     end
     return false
 end
 
 function PauseMenuSystem:handleMouseReleased(x, y, button)
-    if self.widget and self.widget.handleMouseReleased then
-        return self.widget:handleMouseReleased(x, y, button)
+    -- If pause menu is visible, consume all clicks
+    local gameController = require("src.core.GameController")
+    if gameController.paused and not gameController.gameOver then
+        if self.widget and self.widget.handleMouseReleased then
+            self.widget:handleMouseReleased(x, y, button)
+        end
+        return true -- Consume the click event
     end
     return false
 end
