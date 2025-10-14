@@ -5,10 +5,10 @@
     },
     "activeFile": "maps/islands/forest_island.tmx",
     "expandedProjectPaths": [
-        "maps",
         ".",
+        "maps/islands",
         "objects",
-        "maps/islands"
+        "maps"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -26,6 +26,7 @@
         },
         "maps/islands/base_island.tmx": {
             "expandedObjectLayers": [
+                5,
                 10
             ],
             "scale": 1,
@@ -71,6 +72,9 @@
             "scaleInDock": 1
         },
         "maps/islands/forest_island.tmx": {
+            "expandedObjectLayers": [
+                4
+            ],
             "scale": 1.8584375,
             "selectedLayer": 2,
             "viewCenter": {

@@ -61,18 +61,6 @@ function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, e
     -- Get available enemy types from island definition
     local enemyTypes = islandDef.properties.enemyTypes or {"slime", "skeleton"}
 
-    local safetyInfo = ""
-    if ignoreSpawnFlag then
-        safetyInfo = " | [FORCED SPAWN - Ignoring safety]"
-    end
-
-    print(string.format("[MobManager] Spawning %d enemies at (%.0f, %.0f) [%dx%d area] | Island: %s | Types: [%s]%s%s",
-        amount, x, y, width, height,
-        islandDef.name or "unknown",
-        table.concat(enemyTypes, ", "),
-        tagToAdd and " | Tag: " .. tagToAdd or "",
-        safetyInfo))
-
     local spawnedCount = 0
     local spawnedTypes = {}
 
@@ -95,9 +83,6 @@ function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, e
 
             spawnedCount = spawnedCount + 1
             spawnedTypes[enemyType] = (spawnedTypes[enemyType] or 0) + 1
-
-            print(string.format("  [MobManager] → Spawned %s #%d at (%.0f, %.0f)",
-                enemyType, spawnedCount, spawnX, spawnY))
         else
             print(string.format("[MobManager] WARNING: Unknown enemy type '%s'", enemyType))
         end
@@ -108,8 +93,6 @@ function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, e
         for type, count in pairs(spawnedTypes) do
             table.insert(typesSummary, string.format("%dx %s", count, type))
         end
-        print(string.format("[MobManager] ✓ Spawned %d enemies: %s",
-            spawnedCount, table.concat(typesSummary, ", ")))
     end
 
     return spawnedCount
@@ -119,10 +102,6 @@ end
 ---@param spawnArea table Spawn area data {x, y, width, height, amount, phase, islandDef}
 function MobManager.registerSpawnArea(spawnArea)
     table.insert(MobManager.mobSpawnAreas, spawnArea)
-
-    local phaseInfo = spawnArea.phase and string.format(" [Phase: %s]", spawnArea.phase) or " [Immediate]"
-    print(string.format("[MobManager] Registered spawn area #%d: %d enemies at (%.0f, %.0f)%s",
-        #MobManager.mobSpawnAreas, spawnArea.amount, spawnArea.x, spawnArea.y, phaseInfo))
 end
 
 ---Spawn enemies from MobSpawn areas that don't have a phase (immediate spawning)
@@ -133,8 +112,6 @@ function MobManager.spawnImmediateEnemies(ecsWorld, physicsWorld)
     if not ecsWorld or not physicsWorld then
         return 0
     end
-
-    print("[MobManager] ===== IMMEDIATE ENEMY SPAWNING =====")
 
     local totalSpawned = 0
     local areasProcessed = 0
