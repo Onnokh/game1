@@ -12,6 +12,7 @@ local Tree = nil
 local BridgeManager = nil
 local GameConstants = nil
 local MobManager = nil
+local TileLightSpawner = nil
 
 -- Internal state
 MapManager.maps = {}
@@ -472,6 +473,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     if not MobManager then
         MobManager = require("src.core.managers.MobManager")
     end
+    if not TileLightSpawner then
+        TileLightSpawner = require("src.utils.TileLightSpawner")
+    end
 
     -- Clear previous state
     MapManager.maps = {}
@@ -543,6 +547,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
 
     -- Spawn entities
     local playerEntity = spawnEntities(ecsWorld, physicsWorld)
+
+    -- Spawn tile lights for all islands
+    TileLightSpawner.spawnLightsForAllIslands(MapManager.maps, ecsWorld)
 
     -- Setup camera
     local camera = setupCamera(worldBounds.cameraWidth, worldBounds.cameraHeight, playerEntity)

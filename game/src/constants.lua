@@ -34,6 +34,19 @@ GameConstants.BRIDGE_ATTACH_WEST = {nil, 148, 139}  -- 1 column: top to bottom
 -- Blocked tile GIDs (walls, obstacles, etc.)
 GameConstants.BLOCKED_TILE_GIDS = {23, 24, 25, 162, 166, 167, 169, 170, 172, 173}
 
+-- Tile light configuration
+-- Maps tile GIDs to light properties
+GameConstants.TILE_LIGHTS = {
+    -- Example: Add your tile GIDs and their light properties here
+    -- [GID] = { radius = 200, r = 255, g = 200, b = 100, offsetX = 16, offsetY = 16, flicker = true }
+
+    -- Example light tiles (uncomment` and modify as needed):
+    [499] = { radius = 30, r = 255, g = 220, b = 150, offsetX = 24, offsetY = 14, flicker = true },
+    [502] = { radius = 20, r = 150, g = 220, b = 255, offsetX = 10, offsetY = 6, flicker = true },
+    [503] = { radius = 20, r = 150, g = 220, b = 255, offsetX = 24, offsetY = 6, flicker = true },
+    [506] = { radius = 30, r = 255, g = 220, b = 150, offsetX = 8, offsetY = 14, flicker = true },
+}
+
 -- Player constants
 GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24
