@@ -2,6 +2,8 @@ local System = require("src.core.System")
 local fonts = require("src.utils.fonts")
 local ui_text = require("src.utils.ui_text")
 local gameState = require("src.core.GameState")
+local AnimationModule = require("src.core.Animation")
+local AnimationManager = AnimationModule.AnimationManager
 
 ---@class ShopUISystem : System
 ---@field ecsWorld World
@@ -23,20 +25,30 @@ function ShopUISystem.new(ecsWorld)
     self.mouseX = 0
     self.mouseY = 0
 
+    -- Animation manager for all shop animations
+    self.animationManager = AnimationManager.new()
+    self.hoveredSlot = nil -- {shopEntity, slotIndex}
+    self.animatingOutShops = {} -- Shops that are animating out but not in interaction range
+
     return self
 end
 
 function ShopUISystem:update(dt)
+    -- Update all animations
+    self.animationManager:update(dt)
+
     -- Find player entity
     local player = self.ecsWorld:getPlayer()
     if not player then
         self.activeShops = {}
+        self.hoveredSlot = nil
         return
     end
 
     local playerPos = player:getComponent("Position")
     if not playerPos then
         self.activeShops = {}
+        self.hoveredSlot = nil
         return
     end
 
@@ -46,8 +58,14 @@ function ShopUISystem:update(dt)
     local playerCenterY = playerPos.y + (playerSprite and playerSprite.height / 2 or 0)
 
     -- Find all shops within interaction range
-    self.activeShops = {}
+    local previousActiveShops = {}
+    for _, shop in ipairs(self.activeShops) do
+        previousActiveShops[shop.id] = true
+    end
+
     local shops = self.ecsWorld:getEntitiesWithTag("Shop")
+    local shopsInRange = {} -- Shops currently in interaction range
+    local shopsInRangeIds = {}
 
     for _, shop in ipairs(shops) do
         local shopPos = shop:getComponent("Position")
@@ -66,10 +84,66 @@ function ShopUISystem:update(dt)
             -- Check if within interaction range
             local interactionRange = shop.interactionRange or 80
             if distance <= interactionRange then
-                table.insert(self.activeShops, shop)
+                shopsInRange[shop.id] = shop
+                shopsInRangeIds[shop.id] = true
+
+                -- Start scale-in animation for newly visible shops (only if just entered range)
+                local animId = "shop_scale_" .. tostring(shop.id)
+                local anim = self.animationManager:get(animId)
+
+                if not anim and not previousActiveShops[shop.id] then
+                    -- Shop just entered range, create new scale-in animation
+                    self.animationManager:create(animId, 0.0, 1.0, 0.25, "outBack")
+                elseif anim and anim.targetValue == 0.0 then
+                    -- Shop re-entered range while animating out, reverse the animation
+                    anim:reverse()
+                end
             end
         end
     end
+
+    -- Detect shops that left range and start scale-out animation
+    for _, shop in ipairs(self.activeShops) do
+        if not shopsInRangeIds[shop.id] and not self.animatingOutShops[shop.id] then
+            -- Shop just left range, start scale-out animation
+            local animId = "shop_scale_" .. tostring(shop.id)
+            local anim = self.animationManager:get(animId)
+            if anim and anim.targetValue == 1.0 then
+                -- Reverse to scale out
+                anim:reverse()
+                self.animatingOutShops[shop.id] = shop
+            elseif not anim then
+                -- Animation was already cleaned up, create new scale-out animation from 1.0
+                self.animationManager:create(animId, 1.0, 0.0, 0.25, "inQuad")
+                self.animatingOutShops[shop.id] = shop
+            end
+        end
+    end
+
+    -- Clean up animating out shops that have finished (or no longer have an animation)
+    for shopId, shop in pairs(self.animatingOutShops) do
+        local animId = "shop_scale_" .. tostring(shopId)
+        local anim = self.animationManager:get(animId)
+        -- Remove if animation is complete or doesn't exist (was auto-cleaned)
+        if not anim or anim.isComplete then
+            self.animationManager:remove(animId)
+            self.animatingOutShops[shopId] = nil
+        end
+    end
+
+    -- Build activeShops list: shops in range + shops animating out
+    self.activeShops = {}
+    for shopId, shop in pairs(shopsInRange) do
+        table.insert(self.activeShops, shop)
+    end
+    for shopId, shop in pairs(self.animatingOutShops) do
+        if not shopsInRangeIds[shopId] then -- Don't add twice
+            table.insert(self.activeShops, shop)
+        end
+    end
+
+    -- Update hovered slot based on mouse position
+    self:updateHoveredSlot()
 
     -- Handle mouse clicks
     if self.mousePressed and love.mouse.isDown(1) then
@@ -79,6 +153,56 @@ function ShopUISystem:update(dt)
 
     -- Update mouse position for next frame
     self.mouseX, self.mouseY = love.mouse.getPosition()
+end
+
+function ShopUISystem:updateHoveredSlot()
+    -- Reset hovered slot
+    self.hoveredSlot = nil
+
+    local mouseX, mouseY = self.mouseX, self.mouseY
+
+    -- Check each active shop's item slots
+    for _, shop in ipairs(self.activeShops) do
+        -- Skip shops that are animating out
+        if self.animatingOutShops[shop.id] then
+            goto continue
+        end
+
+        local shopPos = shop:getComponent("Position")
+        local shopSprite = shop:getComponent("SpriteRenderer")
+        local shopComp = shop:getComponent("Shop")
+
+        if shopPos and shopSprite and shopComp then
+            -- Convert shop world position to screen
+            local shopWorldX = shopPos.x + shopSprite.width / 2
+            local shopWorldY = shopPos.y
+            local screenX, screenY = shopWorldX, shopWorldY
+
+            if gameState and gameState.camera and gameState.camera.toScreen then
+                screenX, screenY = gameState.camera:toScreen(shopWorldX, shopWorldY)
+            end
+
+            -- Check each of the 3 item slots
+            local slotSize = 128
+            local slotSpacing = 160
+
+            for i = 1, 3 do
+                local item = shopComp:getItem(i)
+                if item then
+                    local slotX = screenX + (i - 2) * slotSpacing - slotSize / 2
+                    local slotY = screenY - 60
+
+                    -- Check if mouse is within this slot
+                    if mouseX >= slotX and mouseX <= slotX + slotSize and
+                       mouseY >= slotY and mouseY <= slotY + slotSize then
+                        self.hoveredSlot = {shop = shop, slotIndex = i}
+                        return
+                    end
+                end
+            end
+        end
+        ::continue::
+    end
 end
 
 function ShopUISystem:handleMouseClick()
@@ -98,6 +222,11 @@ function ShopUISystem:handleMouseClick()
 
     -- Check each active shop's item slots
     for _, shop in ipairs(self.activeShops) do
+        -- Skip shops that are animating out
+        if self.animatingOutShops[shop.id] then
+            goto continue
+        end
+
         local shopPos = shop:getComponent("Position")
         local shopSprite = shop:getComponent("SpriteRenderer")
         local shopComp = shop:getComponent("Shop")
@@ -133,7 +262,22 @@ function ShopUISystem:handleMouseClick()
                             -- Player can afford the item
                             -- Deduct coins and purchase item
                             if gameState.removeCoins(cost) then
-                                -- Purchase from shop (returns item definition)
+                                -- Trigger purchase shrink animation
+                                local animId = "purchase_" .. tostring(shop.id) .. "_" .. tostring(i)
+                                local purchaseAnim = self.animationManager:create(animId, 1.0, 0.0, 0.25, "inBack")
+
+                                -- Store item data and metadata on the animation for rendering
+                                purchaseAnim.itemData = {
+                                    id = item.id,
+                                    name = item.name,
+                                    cost = item.cost,
+                                    spriteSheet = item.spriteSheet,
+                                    spriteFrame = item.spriteFrame
+                                }
+                                purchaseAnim.slotIndex = i
+                                purchaseAnim.shop = shop
+
+                                -- Purchase from shop (returns item definition and removes it)
                                 local purchasedItem = shopComp:purchaseItem(i)
                                 if purchasedItem and purchasedItem.id then
                                     -- Add item to player's inventory using the ID from definition
@@ -154,6 +298,7 @@ function ShopUISystem:handleMouseClick()
                 end
             end
         end
+        ::continue::
     end
 end
 
@@ -203,6 +348,16 @@ function ShopUISystem:draw()
                 screenX, screenY = gameState.camera:toScreen(shopWorldX, shopWorldY)
             end
 
+            -- Get shop scale animation value (default to 1.0 if no animation)
+            local animId = "shop_scale_" .. tostring(shop.id)
+            local shopScale = self.animationManager:getValue(animId, 1.0)
+
+            -- Apply scale transform to entire shop UI, centered at bottom center (screenX, screenY)
+            love.graphics.push()
+            love.graphics.translate(screenX, screenY)
+            love.graphics.scale(shopScale, shopScale)
+            love.graphics.translate(-screenX, -screenY)
+
             -- Draw 3 item slots (128x128 with 32px padding, 64px item, 32px spacing)
             local slotSize = 128 -- 64px item + 32px padding on each side
             local slotSpacing = 160 -- 128px slot + 32px gap between items
@@ -212,9 +367,32 @@ function ShopUISystem:draw()
                 local slotX = screenX + (i - 2) * slotSpacing - slotSize / 2
                 local slotY = screenY - 60
 
+                -- Check if this slot has a purchase animation (even if item is nil)
+                local purchaseAnimId = "purchase_" .. tostring(shop.id) .. "_" .. tostring(i)
+                local purchaseAnim = self.animationManager:get(purchaseAnimId)
+
+                -- Use stored item data from animation if item was just purchased
+                if not item and purchaseAnim and purchaseAnim.itemData then
+                    item = purchaseAnim.itemData
+                end
+
                 if item then
-                    -- Check if player can afford this item
-                    local canAfford = playerCoins >= (item.cost or 0)
+                    -- Check if player can afford this item (items being purchased show as affordable)
+                    local canAfford = (purchaseAnim ~= nil) or (playerCoins >= (item.cost or 0))
+
+                    -- Calculate scale based on hover and purchase animations (for item sprite only)
+                    local itemScale = 1.0
+
+                    -- Check if this slot is being hovered (but not if it's being purchased)
+                    local isHovered = self.hoveredSlot and self.hoveredSlot.shop == shop and self.hoveredSlot.slotIndex == i
+                    if isHovered and not purchaseAnim then
+                        itemScale = 1.1 -- Grow by 10% when hovered (no easing needed for instant hover)
+                    end
+
+                    -- Purchase animation takes priority over hover (animation value goes from 1.0 to 0.0)
+                    if purchaseAnim then
+                        itemScale = purchaseAnim.value
+                    end
 
                     -- Draw black background
                     love.graphics.setColor(0, 0, 0, 0.9)
@@ -225,6 +403,12 @@ function ShopUISystem:draw()
                     local spriteOffset = 32 -- 32px padding
                     local spriteCenterX = slotX + spriteOffset + spriteSize / 2
                     local spriteCenterY = slotY + spriteOffset + spriteSize / 2
+
+                    -- Apply scale transform only to the item sprite
+                    love.graphics.push()
+                    love.graphics.translate(spriteCenterX, spriteCenterY)
+                    love.graphics.scale(itemScale, itemScale)
+                    love.graphics.translate(-spriteCenterX, -spriteCenterY)
 
                     -- Draw the item sprite if it has sprite info
                     if item.spriteSheet and item.spriteFrame then
@@ -248,6 +432,9 @@ function ShopUISystem:draw()
                         end
                         love.graphics.rectangle("fill", slotX + spriteOffset, slotY + spriteOffset, spriteSize, spriteSize)
                     end
+
+                    -- Pop the scale transform
+                    love.graphics.pop()
 
                     -- Draw border around entire slot (gray if can't afford, white if can)
                     if canAfford then
@@ -315,6 +502,9 @@ function ShopUISystem:draw()
                     love.graphics.setLineWidth(1)
                 end
             end
+
+            -- Pop the shop scale transform
+            love.graphics.pop()
         end
     end
 
