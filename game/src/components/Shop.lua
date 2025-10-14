@@ -88,7 +88,7 @@ end
 ---@param index number Index of the item (1-based)
 ---@return table|nil The item, or nil if index is invalid
 function Shop:getItem(index)
-    if index < 1 or index > #self.inventory then
+    if index < 1 or index > self.maxItems then
         return nil
     end
     return self.inventory[index]
@@ -115,7 +115,7 @@ end
 ---@param index number Index of the item to purchase (1-based)
 ---@return table|nil The purchased item info, or nil if purchase failed
 function Shop:purchaseItem(index)
-    if index < 1 or index > #self.inventory then
+    if index < 1 or index > self.maxItems then
         print("[Shop] Cannot purchase: invalid index")
         return nil
     end
@@ -126,7 +126,7 @@ function Shop:purchaseItem(index)
         return nil
     end
 
-    -- Remove item from inventory (set to nil)
+    -- Remove item from inventory (set to nil to keep positions)
     self.inventory[index] = nil
 
     print(string.format("[Shop] Purchased '%s' for %d coins", item.name, item.cost))

@@ -111,6 +111,7 @@ function GameScene.load()
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
+  local SiegeIndicatorSystem = require("src.systems.UISystems.SiegeIndicatorSystem")
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
   local AggroVignetteSystem = require("src.systems.UISystems.AggroVignetteSystem")
@@ -123,6 +124,7 @@ function GameScene.load()
   uiWorld:addSystem(GameOverSystem.new())
 
   uiWorld:addSystem(healthBarSystem)
+  uiWorld:addSystem(SiegeIndicatorSystem.new(ecsWorld)) -- Draw siege indicators below other UI
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
   uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
   uiWorld:addSystem(CoinCounterSystem.new())

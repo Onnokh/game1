@@ -113,6 +113,9 @@ function ShopUISystem:handleMouseClick()
                     -- Check if mouse is within this slot
                     if mouseX >= slotX and mouseX <= slotX + slotSize and
                        mouseY >= slotY and mouseY <= slotY + slotSize then
+                        -- Debug print
+                        print(string.format("[ShopUI] Clicked slot %d (%s) at mouse (%d, %d), slot bounds [%d-%d, %d-%d]",
+                            i, item.name, mouseX, mouseY, slotX, slotX + slotSize, slotY, slotY + slotSize))
                         -- Purchase the item
                         shopComp:purchaseItem(i)
                         return
