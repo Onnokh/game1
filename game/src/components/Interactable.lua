@@ -79,4 +79,28 @@ function Interactable:setCanInteractCondition(condition)
     self.canInteract = condition
 end
 
+---Serialize the Interactable component for saving
+---@return table Serialized interactable data
+function Interactable:serialize()
+    return {
+        interactionRange = self.interactionRange,
+        interactionText = self.interactionText
+        -- Note: onInteract and canInteract are functions, recreated by entity factories
+    }
+end
+
+---Deserialize Interactable component from saved data
+---@param data table Serialized interactable data
+---@return Interactable Recreated Interactable component
+function Interactable.deserialize(data)
+    -- Note: callbacks are placeholder, entity factory will set proper ones
+    local interactable = Interactable.new(
+        data.interactionRange,
+        function() end, -- Placeholder, entity factory sets this
+        data.interactionText,
+        nil  -- canInteract set by entity factory
+    )
+    return interactable
+end
+
 return Interactable

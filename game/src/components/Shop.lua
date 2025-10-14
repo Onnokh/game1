@@ -224,5 +224,24 @@ function Shop:purchaseItem(index)
     return itemDef
 end
 
+---Serialize the Shop component for saving
+---@return table Serialized shop data
+function Shop:serialize()
+    return {
+        inventory = self.inventory,
+        maxItems = self.maxItems
+    }
+end
+
+---Deserialize Shop component from saved data
+---@param data table Serialized shop data
+---@return Shop Recreated Shop component
+function Shop.deserialize(data)
+    -- Pass saved inventory to constructor to prevent regeneration
+    local shop = Shop.new(data.inventory)
+    shop.maxItems = data.maxItems or 3
+    return shop
+end
+
 return Shop
 

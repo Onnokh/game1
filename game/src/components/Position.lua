@@ -73,4 +73,21 @@ function Position:getZ()
     return self.z or 0
 end
 
+---Serialize the Position component for saving
+---@return table Serialized position data
+function Position:serialize()
+    return {
+        x = self.x,
+        y = self.y,
+        z = self.z
+    }
+end
+
+---Deserialize Position component from saved data
+---@param data table Serialized position data
+---@return Position Recreated Position component
+function Position.deserialize(data)
+    return Position.new(data.x, data.y, data.z)
+end
+
 return Position

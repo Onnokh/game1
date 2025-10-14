@@ -15,26 +15,24 @@ local CoinEntity = {}
 ---Create a new coin entity
 ---@param x number X position
 ---@param y number Y position
----@param value number|nil Coin value, defaults to 1
----@param attractorRadius number|nil Attractor radius, defaults to 64
 ---@param world World|nil The ECS world to add the coin to
 ---@param physicsWorld table|nil The physics world for collision
----@param velocityX number|nil Initial X velocity, defaults to 0
----@param velocityY number|nil Initial Y velocity, defaults to 0
+---@param options table|nil Optional parameters {value, attractorRadius, velocityX, velocityY}
 ---@return Entity The created coin entity
-function CoinEntity.create(x, y, value, attractorRadius, world, physicsWorld, velocityX, velocityY)
+function CoinEntity.create(x, y, world, physicsWorld, options)
+    options = options or {}
     ---@class CoinEntity : Entity
     local coin = Entity.new()
     coin:addTag("Coin") -- Tag to identify coin entities
 
     -- Create components
     local position = Position.new(x, y, DepthSorting.getLayerZ("LOOT")) -- Coins at loot level
-    local coinComponent = Coin.new(value, attractorRadius)
+    local coinComponent = Coin.new(options.value, options.attractorRadius)
 
     -- Create movement component for coin physics (low max speed, very high friction to stop quickly)
     local movement = Movement.new(100, 0, 0.9) -- maxSpeed=200, no acceleration, very high friction
-    if velocityX and velocityY then
-        movement:setVelocity(velocityX, velocityY)
+    if options.velocityX and options.velocityY then
+        movement:setVelocity(options.velocityX, options.velocityY)
     end
 
     -- Create sprite renderer for coin spritesheet (9 frames)

@@ -103,4 +103,23 @@ function Oxygen:getStatus()
     end
 end
 
+---Serialize the Oxygen component for saving
+---@return table Serialized oxygen data
+function Oxygen:serialize()
+    return {
+        current = self.current,
+        max = self.max,
+        isDepleted = self.isDepleted
+    }
+end
+
+---Deserialize Oxygen component from saved data
+---@param data table Serialized oxygen data
+---@return Oxygen Recreated Oxygen component
+function Oxygen.deserialize(data)
+    local oxygen = Oxygen.new(data.max, data.current)
+    oxygen.isDepleted = data.isDepleted
+    return oxygen
+end
+
 return Oxygen

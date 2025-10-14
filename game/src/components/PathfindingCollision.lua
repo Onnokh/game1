@@ -219,5 +219,42 @@ function PathfindingCollision:hasLineOfSightTo(targetX, targetY, ignoreFixture)
     return not blocked
 end
 
+---Serialize the PathfindingCollision component for saving
+---Note: Box2D collider is not serialized, it will be recreated
+---@return table Serialized collision data
+function PathfindingCollision:serialize()
+    return {
+        width = self.width,
+        height = self.height,
+        offsetX = self.offsetX,
+        offsetY = self.offsetY,
+        type = self.type,
+        shape = self.shape,
+        restitution = self.restitution,
+        friction = self.friction,
+        linearDamping = self.linearDamping,
+        enabled = self.enabled
+    }
+end
+
+---Deserialize PathfindingCollision component from saved data
+---@param data table Serialized collision data
+---@return PathfindingCollision Recreated PathfindingCollision component
+function PathfindingCollision.deserialize(data)
+    local collision = PathfindingCollision.new(
+        data.width,
+        data.height,
+        data.type,
+        data.offsetX,
+        data.offsetY,
+        data.shape
+    )
+    collision.restitution = data.restitution or 0.1
+    collision.friction = data.friction or 0.3
+    collision.linearDamping = data.linearDamping or 0
+    collision.enabled = data.enabled ~= false
+    -- Collider will be created by entity creation logic
+    return collision
+end
 
 return PathfindingCollision

@@ -170,4 +170,42 @@ function PhysicsCollision:hasCollider()
     return self.collider ~= nil and self.collider.body ~= nil
 end
 
+---Serialize the PhysicsCollision component for saving
+---Note: Box2D collider is not serialized, it will be recreated
+---@return table Serialized collision data
+function PhysicsCollision:serialize()
+    return {
+        width = self.width,
+        height = self.height,
+        offsetX = self.offsetX,
+        offsetY = self.offsetY,
+        type = self.type,
+        shape = self.shape,
+        restitution = self.restitution,
+        friction = self.friction,
+        linearDamping = self.linearDamping,
+        enabled = self.enabled
+    }
+end
+
+---Deserialize PhysicsCollision component from saved data
+---@param data table Serialized collision data
+---@return PhysicsCollision Recreated PhysicsCollision component
+function PhysicsCollision.deserialize(data)
+    local collision = PhysicsCollision.new(
+        data.width,
+        data.height,
+        data.type,
+        data.offsetX,
+        data.offsetY,
+        data.shape
+    )
+    collision.restitution = data.restitution or 0.1
+    collision.friction = data.friction or 0.3
+    collision.linearDamping = data.linearDamping or 0
+    collision.enabled = data.enabled ~= false
+    -- Collider will be created by entity creation logic
+    return collision
+end
+
 return PhysicsCollision

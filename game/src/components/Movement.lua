@@ -85,4 +85,30 @@ function Movement:isMoving()
     return self.velocityX ~= 0 or self.velocityY ~= 0
 end
 
+---Serialize the Movement component for saving
+---@return table Serialized movement data
+function Movement:serialize()
+    return {
+        velocityX = self.velocityX,
+        velocityY = self.velocityY,
+        maxSpeed = self.maxSpeed,
+        acceleration = self.acceleration,
+        friction = self.friction,
+        direction = self.direction,
+        enabled = self.enabled
+    }
+end
+
+---Deserialize Movement component from saved data
+---@param data table Serialized movement data
+---@return Movement Recreated Movement component
+function Movement.deserialize(data)
+    local movement = Movement.new(data.maxSpeed, data.acceleration, data.friction)
+    movement.velocityX = data.velocityX or 0
+    movement.velocityY = data.velocityY or 0
+    movement.direction = data.direction or "down"
+    movement.enabled = data.enabled ~= false
+    return movement
+end
+
 return Movement

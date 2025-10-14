@@ -17,7 +17,9 @@ function PauseMenu.new()
         Button.new("Resume", function()
             gameController.togglePause()
         end),
-        Button.new("Back to Menu", function()
+        Button.new("Save and Exit", function()
+            local SaveSystem = require("src.utils.SaveSystem")
+            SaveSystem.save()
             gameController.resetPauseState()
             gameState.changeScene("menu")
         end)
@@ -123,13 +125,15 @@ function PauseMenu:draw()
     local buttonFont = fonts.getUIFont(28) or prevFont
     local gap = 16
 
-    -- Update button positions
-    local totalWidth = 0
+    -- Calculate maximum button width for consistent sizing
+    local maxButtonWidth = 0
     for _, btn in ipairs(self.buttons) do
         btn:updateBounds(0, 0, buttonFont)
-        totalWidth = totalWidth + btn.width
+        maxButtonWidth = math.max(maxButtonWidth, btn.width)
     end
-    totalWidth = totalWidth + gap * (#self.buttons - 1)
+
+    -- Calculate total width with uniform button sizes
+    local totalWidth = maxButtonWidth * #self.buttons + gap * (#self.buttons - 1)
 
     local baseX = math.floor((sw - totalWidth) / 2)
     local baseY = ty + th + 36
@@ -137,8 +141,9 @@ function PauseMenu:draw()
     local currentX = baseX
     for _, btn in ipairs(self.buttons) do
         btn:updateBounds(currentX, baseY, buttonFont)
+        btn.width = maxButtonWidth -- Override to use max width
         btn:draw(buttonFont)
-        currentX = currentX + btn.width + gap
+        currentX = currentX + maxButtonWidth + gap
     end
 
     if prevFont then love.graphics.setFont(prevFont) end

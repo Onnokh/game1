@@ -63,6 +63,34 @@ function Animator:setAnimation(config)
     self.playing = true
 end
 
+---Serialize the Animator component for saving
+---@return table Serialized animator data
+function Animator:serialize()
+    return {
+        sheet = self.sheet,
+        frames = self.frames,
+        fps = self.fps,
+        loop = self.loop,
+        time = self.time,
+        playing = self.playing
+    }
+end
+
+---Deserialize Animator component from saved data
+---@param data table Serialized animator data
+---@return Animator Recreated Animator component
+function Animator.deserialize(data)
+    local animator = Animator.new({
+        sheet = data.sheet,
+        frames = data.frames,
+        fps = data.fps,
+        loop = data.loop
+    })
+    animator.time = data.time or 0
+    animator.playing = data.playing ~= false
+    return animator
+end
+
 return Animator
 
 

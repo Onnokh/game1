@@ -225,4 +225,36 @@ function Pathfinding:startWander(currentX, currentY)
     end
 end
 
+---Serialize the Pathfinding component for saving
+---Note: Path and grid/pathfinder are not serialized, they will be recreated
+---@return table Serialized pathfinding data
+function Pathfinding:serialize()
+    return {
+        spawnX = self.spawnX,
+        spawnY = self.spawnY,
+        wanderRadius = self.wanderRadius,
+        targetX = self.targetX,
+        targetY = self.targetY,
+        lastWanderTime = self.lastWanderTime,
+        wanderCooldown = self.wanderCooldown,
+        isWandering = self.isWandering,
+        clearance = self.clearance
+    }
+end
+
+---Deserialize Pathfinding component from saved data
+---@param data table Serialized pathfinding data
+---@return Pathfinding Recreated Pathfinding component
+function Pathfinding.deserialize(data)
+    local pathfinding = Pathfinding.new(data.spawnX, data.spawnY, data.wanderRadius)
+    pathfinding.targetX = data.targetX
+    pathfinding.targetY = data.targetY
+    pathfinding.lastWanderTime = data.lastWanderTime or 0
+    pathfinding.wanderCooldown = data.wanderCooldown or 2.0
+    pathfinding.isWandering = data.isWandering or false
+    pathfinding.clearance = data.clearance or 1
+    -- Grid and pathfinder will be set by PathfindingSystem
+    return pathfinding
+end
+
 return Pathfinding

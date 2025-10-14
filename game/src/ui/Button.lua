@@ -9,6 +9,7 @@ local fonts = require("src.utils.fonts")
 ---@field selected boolean Whether the button is selected (keyboard navigation)
 ---@field hovered boolean Whether the button is hovered (mouse)
 ---@field pressed boolean Whether the button is currently being pressed
+---@field disabled boolean Whether the button is disabled
 ---@field onClick function Callback when button is clicked/activated
 ---@field paddingX number Horizontal padding
 ---@field paddingY number Vertical padding
@@ -29,6 +30,7 @@ function Button.new(text, onClick)
     self.selected = false
     self.hovered = false
     self.pressed = false
+    self.disabled = false
     self.onClick = onClick
     self.paddingX = 18
     self.paddingY = 10
@@ -86,6 +88,9 @@ end
 ---@param y number Click y position
 ---@return boolean Whether the click was handled
 function Button:handleClick(x, y)
+    if self.disabled then
+        return false
+    end
     if self:contains(x, y) then
         if self.onClick then
             self.onClick()
@@ -97,6 +102,9 @@ end
 
 ---Activate the button (keyboard selection)
 function Button:activate()
+    if self.disabled then
+        return
+    end
     if self.onClick then
         self.onClick()
     end
@@ -109,19 +117,22 @@ function Button:draw(font)
     local offsetY = 0
 
     -- Pressed state: slightly offset for depth effect
-    if self.pressed then
+    if self.pressed and not self.disabled then
         offsetX = 1
         offsetY = 1
     end
 
     -- Shadow (skip if pressed for depth effect)
-    if not self.pressed then
+    if not self.pressed or self.disabled then
         love.graphics.setColor(0, 0, 0, 0.7)
         love.graphics.rectangle("fill", self.x + 2, self.y + 2, self.width, self.height, 6, 6)
     end
 
     -- Button background - different colors for different states
-    if self.pressed then
+    if self.disabled then
+        -- Disabled: dark and grayed out
+        love.graphics.setColor(0.1, 0.1, 0.1, 0.5)
+    elseif self.pressed then
         -- Pressed: darkest
         love.graphics.setColor(0.15, 0.2, 0.25, 1)
     elseif self.selected or self.hovered then
@@ -134,27 +145,32 @@ function Button:draw(font)
     love.graphics.rectangle("fill", self.x + offsetX, self.y + offsetY, self.width, self.height, 6, 6)
 
     -- Hover border (different from selection)
-    if self.hovered and not self.selected and not self.pressed then
+    if self.hovered and not self.selected and not self.pressed and not self.disabled then
         love.graphics.setColor(0.5, 0.6, 0.7, 0.8)
         love.graphics.setLineWidth(2)
         love.graphics.rectangle("line", self.x + offsetX, self.y + offsetY, self.width, self.height, 6, 6)
     end
 
     -- Selection border (keyboard navigation)
-    if self.selected then
+    if self.selected and not self.disabled then
         love.graphics.setColor(0.6, 0.8, 1.0, 1)
         love.graphics.setLineWidth(2)
         love.graphics.rectangle("line", self.x + offsetX, self.y + offsetY, self.width, self.height, 6, 6)
     end
 
-    -- Button text
+    -- Button text (centered within button)
     love.graphics.setFont(font)
-    if self.pressed then
+    if self.disabled then
+        love.graphics.setColor(0.4, 0.4, 0.4, 0.6)
+    elseif self.pressed then
         love.graphics.setColor(0.9, 0.9, 0.9, 1)
     else
         love.graphics.setColor(1, 1, 1, 1)
     end
-    local textX = math.floor(self.x + self.paddingX + offsetX)
+
+    -- Center text horizontally within button
+    local textWidth = font:getWidth(self.text)
+    local textX = math.floor(self.x + (self.width - textWidth) / 2 + offsetX)
     local textY = math.floor(self.y + self.paddingY + offsetY)
     love.graphics.print(self.text, textX, textY)
 end

@@ -270,4 +270,34 @@ function StateMachine:isLocked()
     return self.locked
 end
 
+---Serialize the StateMachine component for saving
+---Note: States themselves (with functions) cannot be serialized
+---Only saves current state name, state data, and global data
+---States must be recreated when entity is deserialized
+---@return table Serialized state machine data
+function StateMachine:serialize()
+    return {
+        currentState = self.currentState,
+        stateData = self.stateData,
+        globalData = self.globalData,
+        enabled = self.enabled,
+        locked = self.locked
+    }
+end
+
+---Deserialize StateMachine component from saved data
+---Note: This creates a minimal state machine with just data
+---The states must be added by the entity creation logic
+---@param data table Serialized state machine data
+---@return StateMachine Recreated StateMachine component
+function StateMachine.deserialize(data)
+    local sm = StateMachine.new(data.currentState)
+    sm.stateData = data.stateData or {}
+    sm.globalData = data.globalData
+    sm.enabled = data.enabled ~= false
+    sm.locked = data.locked or false
+    sm.initialized = false -- Will be initialized when states are added
+    return sm
+end
+
 return StateMachine

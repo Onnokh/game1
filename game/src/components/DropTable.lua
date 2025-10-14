@@ -70,4 +70,19 @@ function DropTable:getDrop(index)
     return self.drops[index]
 end
 
+---Serialize the DropTable component for saving
+---@return table Serialized drop table data
+function DropTable:serialize()
+    return {
+        drops = self.drops
+    }
+end
+
+---Deserialize DropTable component from saved data
+---@param data table Serialized drop table data
+---@return DropTable Recreated DropTable component
+function DropTable.deserialize(data)
+    return DropTable.new(data.drops)
+end
+
 return DropTable

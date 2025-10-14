@@ -107,16 +107,25 @@ end
 
 -- Restart the current game session (reload the current scene and reset pause/gameOver)
 function GameController.restartGame()
-  -- Clear pause/game-over and reset phase
+  -- Check if we're loading from a save
+  local SaveSystem = require("src.utils.SaveSystem")
+  local isLoadingSave = SaveSystem.pendingLoadData ~= nil
+
+  -- Clear pause/game-over
   GameController.gameOver = false
   GameController.paused = false
-  GameController.currentPhase = "Discovery"
-  -- Update phase overlay state
-  local phase = GameController.phases and GameController.phases[GameController.currentPhase]
-  if phase and phase.onEnter then
-    GameState.phase = GameController.currentPhase
-    phase.onEnter(GameState)
+
+  if not isLoadingSave then
+    -- Only reset phase for new games, not when loading saves
+    GameController.currentPhase = "Discovery"
+    -- Update phase overlay state
+    local phase = GameController.phases and GameController.phases[GameController.currentPhase]
+    if phase and phase.onEnter then
+      GameState.phase = GameController.currentPhase
+      phase.onEnter(GameState)
+    end
   end
+
   -- Reload the game scene cleanly
   local GS = require("src.core.GameState")
   if GS and GS.resetRunState then GS.resetRunState() end

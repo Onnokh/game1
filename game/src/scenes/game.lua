@@ -140,7 +140,10 @@ function GameScene.load()
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
 
   -- Load complete world using MapManager (handles everything: islands, pathfinding, collisions, entities, camera)
-  local worldData = MapManager.load("src/levels/level1", physicsWorld, ecsWorld)
+  -- Check if we're loading from a save (which would have a specific seed)
+  local SaveSystem = require("src.utils.SaveSystem")
+  local savedSeed = SaveSystem.getPendingMapSeed()
+  local worldData = MapManager.load("src/levels/level1", physicsWorld, ecsWorld, savedSeed)
 
   -- Extract world data
   world = worldData.grid
@@ -179,6 +182,19 @@ function GameScene.load()
   local pathfindingStart = love.timer.getTime()
   ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize))
   print(string.format("[GameScene] Pathfinding system init took %.2fs", love.timer.getTime() - pathfindingStart))
+
+  -- Check if there's pending save data to load
+  local SaveSystem = require("src.utils.SaveSystem")
+  if SaveSystem.pendingLoadData then
+    print("[GameScene] Restoring game state from save...")
+    local success, restoredPlayer = SaveSystem.restoreGameState(ecsWorld, physicsWorld)
+
+    -- Update player entity reference so camera can follow it
+    if success and restoredPlayer then
+      playerEntity = restoredPlayer
+      print("[GameScene] Player entity reference updated for camera tracking")
+    end
+  end
 end
 
 -- Allow other modules (phases, etc.) to set ambient color safely

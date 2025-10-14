@@ -103,4 +103,23 @@ function Health:getStatus()
     end
 end
 
+---Serialize the Health component for saving
+---@return table Serialized health data
+function Health:serialize()
+    return {
+        current = self.current,
+        max = self.max,
+        isDead = self.isDead
+    }
+end
+
+---Deserialize Health component from saved data
+---@param data table Serialized health data
+---@return Health Recreated Health component
+function Health.deserialize(data)
+    local health = Health.new(data.max, data.current)
+    health.isDead = data.isDead
+    return health
+end
+
 return Health

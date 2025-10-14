@@ -111,16 +111,22 @@ end
 ---@param islands table Array of island data
 ---@param tileSize number Tile size in pixels
 ---@param pathfindingGrid table Grid data with grid, width, height
-function BridgeManager.initialize(islands, tileSize, pathfindingGrid)
+---Initialize bridge manager with optional seed for deterministic generation
+---@param islands table Array of island data
+---@param tileSize number Tile size
+---@param pathfindingGrid table Pathfinding grid data
+---@param seed number|nil Optional seed (should match map seed for consistency)
+function BridgeManager.initialize(islands, tileSize, pathfindingGrid, seed)
     print("[BridgeManager] Initializing...")
 
-    -- Detect bridges between islands
+    -- Detect bridges between islands (use same seed as map for consistency)
     BridgeManager.bridges = BridgeManager.detectBridges(
         islands,
         tileSize,
         pathfindingGrid.grid,
         pathfindingGrid.width,
-        pathfindingGrid.height
+        pathfindingGrid.height,
+        seed
     )
 
     BridgeManager.initialized = true
@@ -133,13 +139,16 @@ end
 ---@param grid table Pathfinding grid
 ---@param gridWidth number Grid width
 ---@param gridHeight number Grid height
+---@param seed number|nil Optional seed for deterministic bridge placement
 ---@return table Array of bridge connections {fromTile = {x, y}, toTile = {x, y}}
-function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHeight)
+function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHeight, seed)
     print("[BridgeManager] ===== DETECTING BRIDGES =====")
     print(string.format("[BridgeManager] Grid size: %dx%d, Tile size: %d", gridWidth, gridHeight, tileSize))
 
-    -- Seed random for varied bridge placement
-    math.randomseed(os.time())
+    -- Use provided seed for deterministic bridge placement (important for save/load)
+    seed = seed or os.time()
+    math.randomseed(seed)
+    print(string.format("[BridgeManager] Using seed: %d", seed))
 
     local bridges = {}
 

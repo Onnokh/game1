@@ -123,5 +123,22 @@ function Inventory:clear()
     print("[Inventory] Cleared all items")
 end
 
+---Serialize the Inventory component for saving
+---@return table Serialized inventory data
+function Inventory:serialize()
+    return {
+        items = self.items
+    }
+end
+
+---Deserialize Inventory component from saved data
+---@param data table Serialized inventory data
+---@return Inventory Recreated Inventory component
+function Inventory.deserialize(data)
+    local inventory = Inventory.new()
+    inventory.items = data.items or {}
+    return inventory
+end
+
 return Inventory
 

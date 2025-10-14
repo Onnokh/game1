@@ -66,4 +66,47 @@ function Light.new(opts)
     return self
 end
 
+---Serialize the Light component for saving
+---@return table Serialized light data
+function Light:serialize()
+    -- Deep copy lights array but exclude lightId (will be recreated by LightSystem)
+    local lightsData = {}
+    for i, light in ipairs(self.lights) do
+        lightsData[i] = {
+            radius = light.radius,
+            r = light.r,
+            g = light.g,
+            b = light.b,
+            a = light.a,
+            offsetX = light.offsetX,
+            offsetY = light.offsetY,
+            enabled = light.enabled,
+            flicker = light.flicker,
+            flickerSpeed = light.flickerSpeed,
+            flickerRadiusAmplitude = light.flickerRadiusAmplitude,
+            flickerAlphaAmplitude = light.flickerAlphaAmplitude
+            -- lightId excluded - will be recreated by LightSystem
+        }
+    end
+
+    return {
+        lights = lightsData,
+        isMultiLight = self.isMultiLight
+    }
+end
+
+---Deserialize Light component from saved data
+---@param data table Serialized light data
+---@return Light Recreated Light component
+function Light.deserialize(data)
+    -- Reconstruct as multi-light if needed
+    if data.isMultiLight then
+        return Light.new(data.lights)
+    else
+        -- Single light
+        local lightConfig = data.lights and data.lights[1]
+        return Light.new(lightConfig or {})
+    end
+end
+
 return Light

@@ -22,15 +22,19 @@ MapManager.levelConfig = nil
 MapManager.initialized = false
 MapManager.lastDrawnCount = 0
 MapManager.lastCulledCount = 0
+MapManager.currentSeed = nil -- Store the seed used for current map generation
 
 ---=============================================================================
---- ISLAND GENERATION (from old IslandGenerator)
+--- ISLAND GENERATION
 ---=============================================================================
 
-local function setRandomSeed()
+local function setRandomSeed(seed)
+    seed = seed or os.time()
+    MapManager.currentSeed = seed -- Store the seed
     if os and os.time then
-        math.randomseed(os.time())
+        math.randomseed(seed)
     end
+    print(string.format("[MapManager] Using random seed: %d", seed))
 end
 
 local function weightedRandom(pool)
@@ -65,9 +69,10 @@ end
 ---Generate random islands around base island
 ---@param levelConfig table Level configuration
 ---@param baseIsland table Base island data
+---@param seed number|nil Optional random seed (for save/load consistency)
 ---@return table Array of generated islands
-local function generateIslands(levelConfig, baseIsland)
-    setRandomSeed()
+local function generateIslands(levelConfig, baseIsland, seed)
+    setRandomSeed(seed)
 
     local islandPool = levelConfig.generation.islandPool
     local generation = levelConfig.generation
@@ -152,7 +157,7 @@ local function generateIslands(levelConfig, baseIsland)
 end
 
 ---=============================================================================
---- WORLD BUILDING (from old WorldLoader)
+--- WORLD BUILDING
 ---=============================================================================
 
 ---Calculate world bounds and apply grid-aligned offset to all islands
@@ -446,12 +451,13 @@ end
 --- PUBLIC API
 ---=============================================================================
 
----Load a complete world from a level configuration
----@param levelPath string Path to level config (e.g., "src/levels/level1")
+---Load a complete world (base island + generated islands + entities)
+---@param levelPath string Path to level configuration (e.g., "src/levels/level1")
 ---@param physicsWorld love.World Physics world for collision bodies
 ---@param ecsWorld World ECS world for entity spawning
+---@param seed number|nil Optional random seed for map generation (used when loading saves for consistency)
 ---@return table World data containing grid, dimensions, camera bounds, player, etc.
-function MapManager.load(levelPath, physicsWorld, ecsWorld)
+function MapManager.load(levelPath, physicsWorld, ecsWorld, seed)
     local startTime = love.timer.getTime()
 
     -- Load dependencies FIRST (lazy loading to avoid circular dependencies)
@@ -523,8 +529,8 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     table.insert(MapManager.maps, MapManager.baseIsland)
     print(string.format("[MapManager] Base island loaded: %dx%d pixels at (0, 0)", baseWidth, baseHeight))
 
-    -- Generate additional islands
-    local generatedIslands = generateIslands(levelModule, MapManager.baseIsland)
+    -- Generate additional islands (use provided seed or generate new one)
+    local generatedIslands = generateIslands(levelModule, MapManager.baseIsland, seed)
     for _, islandData in ipairs(generatedIslands) do
         if islandData.map then
             table.insert(MapManager.maps, islandData)
@@ -539,8 +545,8 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld)
     -- Build pathfinding grid
     local pathfindingGrid = buildPathfindingGrid(tileSize, worldBounds.cameraWidth, worldBounds.cameraHeight)
 
-    -- Initialize BridgeManager and add bridges to world grid
-    BridgeManager.initialize(MapManager.maps, tileSize, pathfindingGrid)
+    -- Initialize BridgeManager and add bridges to world grid (use same seed for consistency)
+    BridgeManager.initialize(MapManager.maps, tileSize, pathfindingGrid, MapManager.currentSeed)
     BridgeManager.markBridgeTilesWalkable(pathfindingGrid.grid)
 
     -- Create collision bodies from the COMPLETED world grid (includes bridges)

@@ -179,4 +179,34 @@ function Attack:calculateHitArea(attackerX, attackerY, range)
     end
 end
 
+---Serialize the Attack component for saving
+---@return table Serialized attack data
+function Attack:serialize()
+    return {
+        damage = self.damage,
+        range = self.range,
+        cooldown = self.cooldown,
+        lastAttackTime = self.lastAttackTime,
+        enabled = self.enabled,
+        attackType = self.attackType,
+        knockback = self.knockback,
+        attackDirectionX = self.attackDirectionX,
+        attackDirectionY = self.attackDirectionY,
+        attackAngleRad = self.attackAngleRad
+    }
+end
+
+---Deserialize Attack component from saved data
+---@param data table Serialized attack data
+---@return Attack Recreated Attack component
+function Attack.deserialize(data)
+    local attack = Attack.new(data.damage, data.range, data.cooldown, data.attackType, data.knockback)
+    attack.lastAttackTime = data.lastAttackTime or 0
+    attack.enabled = data.enabled ~= false
+    attack.attackDirectionX = data.attackDirectionX or 0
+    attack.attackDirectionY = data.attackDirectionY or 0
+    attack.attackAngleRad = data.attackAngleRad or 0
+    return attack
+end
+
 return Attack

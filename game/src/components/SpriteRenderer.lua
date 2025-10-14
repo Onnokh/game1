@@ -92,4 +92,50 @@ function SpriteRenderer:clearOutline()
     self.outline = nil
 end
 
+---Serialize the SpriteRenderer component for saving
+---@return table Serialized sprite renderer data
+function SpriteRenderer:serialize()
+    return {
+        sprite = self.sprite,
+        width = self.width,
+        height = self.height,
+        color = {r = self.color.r, g = self.color.g, b = self.color.b, a = self.color.a},
+        visible = self.visible,
+        scaleX = self.scaleX,
+        scaleY = self.scaleY,
+        rotation = self.rotation,
+        offsetX = self.offsetX,
+        offsetY = self.offsetY,
+        facingMouse = self.facingMouse,
+        spriteIndex = self.spriteIndex,
+        outline = self.outline and {
+            enabled = self.outline.enabled,
+            color = {
+                r = self.outline.color.r,
+                g = self.outline.color.g,
+                b = self.outline.color.b,
+                a = self.outline.color.a
+            }
+        } or nil
+    }
+end
+
+---Deserialize SpriteRenderer component from saved data
+---@param data table Serialized sprite renderer data
+---@return SpriteRenderer Recreated SpriteRenderer component
+function SpriteRenderer.deserialize(data)
+    local renderer = SpriteRenderer.new(data.sprite, data.width, data.height)
+    renderer.color = data.color or {r = 1, g = 1, b = 1, a = 1}
+    renderer.visible = data.visible ~= false
+    renderer.scaleX = data.scaleX or 1
+    renderer.scaleY = data.scaleY or 1
+    renderer.rotation = data.rotation or 0
+    renderer.offsetX = data.offsetX or 0
+    renderer.offsetY = data.offsetY or 0
+    renderer.facingMouse = data.facingMouse or false
+    renderer.spriteIndex = data.spriteIndex
+    renderer.outline = data.outline
+    return renderer
+end
+
 return SpriteRenderer

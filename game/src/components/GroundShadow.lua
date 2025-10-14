@@ -27,6 +27,32 @@ function GroundShadow.new(params)
 	return self
 end
 
+---Serialize the GroundShadow component for saving
+---@return table Serialized ground shadow data
+function GroundShadow:serialize()
+    return {
+        enabled = self.enabled,
+        alpha = self.alpha,
+        widthFactor = self.widthFactor,
+        heightFactor = self.heightFactor,
+        offsetY = self.offsetY,
+        pixelSize = self.pixelSize
+    }
+end
+
+---Deserialize GroundShadow component from saved data
+---@param data table Serialized ground shadow data
+---@return GroundShadow Recreated GroundShadow component
+function GroundShadow.deserialize(data)
+    return GroundShadow.new({
+        alpha = data.alpha,
+        widthFactor = data.widthFactor,
+        heightFactor = data.heightFactor,
+        offsetY = data.offsetY,
+        pixelSize = data.pixelSize
+    })
+end
+
 return GroundShadow
 
 

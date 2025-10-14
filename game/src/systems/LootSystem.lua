@@ -73,7 +73,11 @@ function LootSystem:dropLoot(entity, dropTable, position)
                 local world = self.world or entity._world
                 local physicsWorld = self.physicsWorld or (world and world.physicsWorld) or nil
                 if world then
-                    Coin.create(coinX, coinY, 1, nil, world, physicsWorld, velocityX, velocityY)
+                    Coin.create(coinX, coinY, world, physicsWorld, {
+                        value = 1,
+                        velocityX = velocityX,
+                        velocityY = velocityY
+                    })
                 end
             end
         end

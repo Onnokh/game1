@@ -53,7 +53,8 @@ function MonsterFactory.create(options)
 
     -- Create the monster entity
     local monster = Entity.new()
-    monster:addTag(tag)
+    monster:addTag(tag) -- Specific tag (e.g., "Skeleton", "Warhog")
+    monster:addTag("Monster") -- Generic tag for all monsters
     monster.target = nil -- Current target (player or reactor)
 
     -- Create components

@@ -123,5 +123,24 @@ function Weapon:getWeaponList()
     return weapons
 end
 
+---Serialize the Weapon component for saving
+---@return table Serialized weapon data
+function Weapon:serialize()
+    return {
+        currentWeapon = self.currentWeapon,
+        inventory = self.inventory,
+        canSwitch = self.canSwitch
+    }
+end
+
+---Deserialize Weapon component from saved data
+---@param data table Serialized weapon data
+---@return Weapon Recreated Weapon component
+function Weapon.deserialize(data)
+    local weapon = Weapon.new(data.currentWeapon, data.inventory)
+    weapon.canSwitch = data.canSwitch ~= false
+    return weapon
+end
+
 return Weapon
 

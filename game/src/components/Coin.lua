@@ -44,4 +44,23 @@ function Coin:getAttractorRadius()
     return self.attractorRadius
 end
 
+---Serialize the Coin component for saving
+---@return table Serialized coin data
+function Coin:serialize()
+    return {
+        value = self.value,
+        attractorRadius = self.attractorRadius,
+        spawnTime = self.spawnTime
+    }
+end
+
+---Deserialize Coin component from saved data
+---@param data table Serialized coin data
+---@return Coin Recreated Coin component
+function Coin.deserialize(data)
+    local coin = Coin.new(data.value, data.attractorRadius)
+    coin.spawnTime = data.spawnTime or love.timer.getTime()
+    return coin
+end
+
 return Coin

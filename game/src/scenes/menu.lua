@@ -16,15 +16,39 @@ function MenuScene.load()
   selectedIndex = 1
   sprites.load()
 
+  local SaveSystem = require("src.utils.SaveSystem")
+  local hasSave = SaveSystem.hasSave()
+
   -- Create buttons
   buttons = {
-    Button.new("Start Game", function()
+    Button.new("Continue", function()
+      if SaveSystem.hasSave() then
+        SaveSystem.load()
+        gameController.restartGame() -- This will load the game scene which will check for pending save data
+      end
+    end),
+    Button.new("New Game", function()
+      local SaveSystem = require("src.utils.SaveSystem")
+      SaveSystem.deleteSave() -- Clear any existing save
       gameController.restartGame()
     end),
     Button.new("Quit", function()
       love.event.quit()
     end)
   }
+
+  -- Disable Continue button if no save exists
+  buttons[1].disabled = not hasSave
+
+  -- Start on first non-disabled button
+  if buttons[selectedIndex].disabled then
+    repeat
+      selectedIndex = selectedIndex + 1
+      if selectedIndex > #buttons then
+        selectedIndex = 1
+      end
+    until not buttons[selectedIndex].disabled
+  end
 
   buttons[selectedIndex].selected = true
 end
@@ -60,8 +84,18 @@ function MenuScene.draw(gameState)
   local buttonY = 300
   local buttonSpacing = 20
 
+  -- Calculate maximum button width to make all buttons same size
+  local maxButtonWidth = 0
+  for i, btn in ipairs(buttons) do
+    local textWidth = buttonFont:getWidth(btn.text)
+    local buttonWidth = textWidth + btn.paddingX * 2
+    maxButtonWidth = math.max(maxButtonWidth, buttonWidth) + 80
+  end
+
+  -- Draw all buttons with the same width
   for i, btn in ipairs(buttons) do
     btn:updateBounds(marginX, buttonY, buttonFont)
+    btn.width = maxButtonWidth -- Override to use max width
     btn:draw(buttonFont)
     buttonY = buttonY + btn.height + buttonSpacing
   end
@@ -78,17 +112,23 @@ end
 function MenuScene.handleKeyPressed(key, gameState)
   if key == "up" or key == "w" then
     buttons[selectedIndex].selected = false
-    selectedIndex = selectedIndex - 1
-    if selectedIndex < 1 then
-      selectedIndex = #buttons
-    end
+    -- Skip disabled buttons
+    repeat
+      selectedIndex = selectedIndex - 1
+      if selectedIndex < 1 then
+        selectedIndex = #buttons
+      end
+    until not buttons[selectedIndex].disabled
     buttons[selectedIndex].selected = true
   elseif key == "down" or key == "s" then
     buttons[selectedIndex].selected = false
-    selectedIndex = selectedIndex + 1
-    if selectedIndex > #buttons then
-      selectedIndex = 1
-    end
+    -- Skip disabled buttons
+    repeat
+      selectedIndex = selectedIndex + 1
+      if selectedIndex > #buttons then
+        selectedIndex = 1
+      end
+    until not buttons[selectedIndex].disabled
     buttons[selectedIndex].selected = true
   elseif key == "return" or key == "space" then
     buttons[selectedIndex]:activate()
