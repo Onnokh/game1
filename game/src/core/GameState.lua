@@ -205,13 +205,15 @@ end
 ---@param y number Mouse Y position
 ---@param button number Mouse button pressed
 function GameState.handleMousePressed(x, y, button)
-  if button == 1 then -- Left mouse button
-    GameState.input.attack = true
+  -- Pass to current scene first to check if UI systems want to handle it
+  local handled = false
+  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].mousepressed then
+    handled = GameState.scenes[GameState.currentScene].mousepressed(x, y, button, GameState)
   end
 
-  -- Pass to current scene
-  if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].mousepressed then
-    GameState.scenes[GameState.currentScene].mousepressed(x, y, button, GameState)
+  -- Only set attack input if the UI didn't consume the click
+  if not handled and button == 1 then -- Left mouse button
+    GameState.input.attack = true
   end
 end
 

@@ -84,6 +84,18 @@ end
 function ShopUISystem:handleMouseClick()
     local mouseX, mouseY = self.mouseX, self.mouseY
 
+    -- Get player entity and inventory
+    local player = self.ecsWorld:getPlayer()
+    if not player then
+        return
+    end
+
+    local playerInventory = player:getComponent("Inventory")
+    if not playerInventory then
+        print("[ShopUI] Player has no inventory component")
+        return
+    end
+
     -- Check each active shop's item slots
     for _, shop in ipairs(self.activeShops) do
         local shopPos = shop:getComponent("Position")
@@ -113,11 +125,30 @@ function ShopUISystem:handleMouseClick()
                     -- Check if mouse is within this slot
                     if mouseX >= slotX and mouseX <= slotX + slotSize and
                        mouseY >= slotY and mouseY <= slotY + slotSize then
-                        -- Debug print
-                        print(string.format("[ShopUI] Clicked slot %d (%s) at mouse (%d, %d), slot bounds [%d-%d, %d-%d]",
-                            i, item.name, mouseX, mouseY, slotX, slotX + slotSize, slotY, slotY + slotSize))
-                        -- Purchase the item
-                        shopComp:purchaseItem(i)
+                        -- Check if player has enough coins
+                        local playerCoins = gameState.getTotalCoins()
+                        local cost = item.cost or 0
+
+                        if playerCoins >= cost then
+                            -- Player can afford the item
+                            -- Deduct coins and purchase item
+                            if gameState.removeCoins(cost) then
+                                -- Purchase from shop (returns item definition)
+                                local purchasedItem = shopComp:purchaseItem(i)
+                                if purchasedItem and purchasedItem.id then
+                                    -- Add item to player's inventory using the ID from definition
+                                    playerInventory:addItem(purchasedItem.id, 1)
+                                    print(string.format("[ShopUI] Purchased %s for %d coins", purchasedItem.name, cost))
+                                else
+                                    -- Refund coins if purchase failed
+                                    gameState.addCoins(cost)
+                                    print(string.format("[ShopUI] Purchase failed for %s", item.name))
+                                end
+                            end
+                        else
+                            -- Not enough coins
+                            print(string.format("[ShopUI] Not enough coins! Need %d, have %d", cost, playerCoins))
+                        end
                         return
                     end
                 end
@@ -125,6 +156,7 @@ function ShopUISystem:handleMouseClick()
         end
     end
 end
+
 
 function ShopUISystem:draw()
     if #self.activeShops == 0 then
@@ -182,12 +214,25 @@ function ShopUISystem:draw()
                     love.graphics.setColor(0, 0, 0, 0.9)
                     love.graphics.rectangle("fill", slotX, slotY, slotSize, slotSize)
 
-                    -- Draw colored square (64x64, with 32px padding on each side)
-                    local colorSquareSize = 64
-                    local colorSquareOffset = 32 -- 32px padding
-                    local color = slotColors[i] or {1, 1, 1}
-                    love.graphics.setColor(color[1], color[2], color[3], 1)
-                    love.graphics.rectangle("fill", slotX + colorSquareOffset, slotY + colorSquareOffset, colorSquareSize, colorSquareSize)
+                    -- Draw item sprite (64x64, with 32px padding on each side)
+                    local spriteSize = 64
+                    local spriteOffset = 32 -- 32px padding
+                    local spriteCenterX = slotX + spriteOffset + spriteSize / 2
+                    local spriteCenterY = slotY + spriteOffset + spriteSize / 2
+
+                    -- Draw the item sprite if it has sprite info
+                    if item.spriteSheet and item.spriteFrame then
+                        local iffy = require("lib.iffy")
+                        love.graphics.setColor(1, 1, 1, 1)
+                        -- Scale from 32x32 to 64x64 (scale = 2)
+                        local scale = spriteSize / 32
+                        iffy.draw(item.spriteSheet, item.spriteFrame, spriteCenterX - spriteSize/2, spriteCenterY - spriteSize/2, 0, scale, scale)
+                    else
+                        -- Fallback: draw colored square if no sprite
+                        local color = slotColors[i] or {1, 1, 1}
+                        love.graphics.setColor(color[1], color[2], color[3], 1)
+                        love.graphics.rectangle("fill", slotX + spriteOffset, slotY + spriteOffset, spriteSize, spriteSize)
+                    end
 
                     -- Draw border around entire slot
                     love.graphics.setColor(1, 1, 1, 1)
@@ -252,7 +297,62 @@ function ShopUISystem:handleMousePressed(x, y, button)
         self.mousePressed = true
         self.mouseX = x
         self.mouseY = y
-        return false -- Don't consume the event, let other systems handle it too
+
+        -- Check if click is actually on a shop UI element
+        local player = self.ecsWorld:getPlayer()
+        if player then
+            local playerPos = player:getComponent("Position")
+            local playerSprite = player:getComponent("SpriteRenderer")
+
+            if playerPos and playerSprite then
+                local playerCenterX = playerPos.x + playerSprite.width / 2
+                local playerCenterY = playerPos.y + playerSprite.height / 2
+
+                local shops = self.ecsWorld:getEntitiesWithTag("Shop")
+                for _, shop in ipairs(shops) do
+                    local shopPos = shop:getComponent("Position")
+                    local shopSprite = shop:getComponent("SpriteRenderer")
+                    local shopComp = shop:getComponent("Shop")
+
+                    if shopPos and shopSprite and shopComp then
+                        local shopCenterX = shopPos.x + shopSprite.width / 2
+                        local shopCenterY = shopPos.y + shopSprite.height / 2
+
+                        local dx = playerCenterX - shopCenterX
+                        local dy = playerCenterY - shopCenterY
+                        local distance = math.sqrt(dx * dx + dy * dy)
+
+                        local interactionRange = shop.interactionRange or 80
+                        if distance <= interactionRange then
+                            -- Player is in range, check if click is on any shop UI element
+                            local shopWorldX = shopPos.x + shopSprite.width / 2
+                            local shopWorldY = shopPos.y
+                            local screenX, screenY = shopWorldX, shopWorldY
+
+                            if gameState and gameState.camera and gameState.camera.toScreen then
+                                screenX, screenY = gameState.camera:toScreen(shopWorldX, shopWorldY)
+                            end
+
+                            -- Check all 3 item slots
+                            local slotSize = 128
+                            local slotSpacing = 160
+
+                            for i = 1, 3 do
+                                local slotX = screenX + (i - 2) * slotSpacing - slotSize / 2
+                                local slotY = screenY - 60
+
+                                -- Check if mouse is within this slot's bounds
+                                if x >= slotX and x <= slotX + slotSize and
+                                   y >= slotY and y <= slotY + slotSize then
+                                    -- Click is on a shop UI element, consume it
+                                    return true
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
     end
     return false
 end

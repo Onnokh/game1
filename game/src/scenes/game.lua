@@ -105,6 +105,7 @@ function GameScene.load()
   local HUDSystem = require("src.systems.UISystems.HUDSystem")
   local PhaseTextSystem = require("src.systems.UISystems.PhaseTextSystem")
   local CoinCounterSystem = require("src.systems.UISystems.CoinCounterSystem")
+  local InventoryDisplaySystem = require("src.systems.UISystems.InventoryDisplaySystem")
   local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
   local LootPickupLabelSystem = require("src.systems.UISystems.LootPickupLabelSystem")
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
@@ -128,6 +129,7 @@ function GameScene.load()
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
   uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
   uiWorld:addSystem(CoinCounterSystem.new())
+  uiWorld:addSystem(InventoryDisplaySystem.new(ecsWorld))
   uiWorld:addSystem(OxygenCounterSystem.new(ecsWorld))
   uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
@@ -290,7 +292,7 @@ function GameScene.addMonster(x, y, type)
   return monster
 end
 
--- Handle mouse press for debugging
+-- Handle mouse press
 function GameScene.mousepressed(x, y, button, gameState)
   -- First check if UI systems can handle the press
   if uiWorld then
@@ -298,7 +300,7 @@ function GameScene.mousepressed(x, y, button, gameState)
       if system.handleMousePressed then
         local handled = system:handleMousePressed(x, y, button)
         if handled then
-          return -- UI system handled the press, don't process further
+          return true -- UI system handled the press, don't process further
         end
       end
     end
@@ -312,6 +314,9 @@ function GameScene.mousepressed(x, y, button, gameState)
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
     GameScene.addMonster(worldX, worldY, "slime")
   end
+
+  -- Click was not handled by UI
+  return false
 end
 
 -- Handle mouse release

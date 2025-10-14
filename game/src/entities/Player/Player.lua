@@ -12,6 +12,7 @@ local Oxygen = require("src.components.Oxygen")
 local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
+local Inventory = require("src.components.Inventory")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -144,6 +145,9 @@ function Player.create(x, y, world, physicsWorld)
     -- Create animator component with idle animation
     local animator = Animator.new(PlayerConfig.IDLE_ANIMATION)
 
+    -- Create inventory component
+    local inventory = Inventory.new()
+
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
     playerEntity:addComponent("Movement", movement)
@@ -158,6 +162,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Oxygen", oxygen)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("GroundShadow", groundShadow)
+    playerEntity:addComponent("Inventory", inventory)
 
     if world then
         world:addEntity(playerEntity)

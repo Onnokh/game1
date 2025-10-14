@@ -51,6 +51,9 @@ function IffySprites.load()
   -- Load coin spritesheet (1x9 grid, 9 frames)
   loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)
 
+  -- Load items spritesheet (16x27 grid, 32x32 per item)
+  loadSpritesheet("items", "resources/loot/items.png", 16, 27)
+
   -- Load tree spritesheet (1x1 grid, 48x64)
   loadSpritesheet("tree", "resources/objects/tree.png", 1, 1)
 

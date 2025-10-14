@@ -38,7 +38,7 @@ function CoinEntity.create(x, y, value, attractorRadius, world, physicsWorld, ve
     end
 
     -- Create sprite renderer for coin spritesheet (9 frames)
-    local spriteRenderer = SpriteRenderer.new("coin", 16, 16) -- Original 16x16 coin sprites
+    local spriteRenderer = SpriteRenderer.new(nil, 16, 16) -- Use nil for animated sprites
     spriteRenderer.scaleX = .5 -- Scale down to 8x8 visual size
     spriteRenderer.scaleY = .5 -- Scale down to 8x8 visual size
 

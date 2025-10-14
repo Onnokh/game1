@@ -956,6 +956,12 @@ function overlayStats.drawToggleControls(statsWidth)
   end
   overlayStats.zoomButtonBounds = {}  -- Clear previous bounds
 
+  -- Store gold button bounds for click detection
+  if not overlayStats.goldButtonBounds then
+    overlayStats.goldButtonBounds = {}
+  end
+  overlayStats.goldButtonBounds = {}  -- Clear previous bounds
+
   -- Define toggle list with keys and descriptions
   -- Only show keyboard shortcuts for implemented toggles
   local toggleList = {
@@ -968,9 +974,11 @@ function overlayStats.drawToggleControls(statsWidth)
     {"F4", "Tiles (GID)", overlayStats.showTileDebug},
   }
 
-  -- Calculate panel height (title + zoom buttons + toggles)
+  -- Calculate panel height (title + zoom buttons + toggles + gold button)
   local buttonSize = 20
-  local panelHeight = padding + lineHeight + 5 + buttonSize + 10 + (#toggleList * lineHeight) + padding
+  local goldButtonHeight = 25
+  local goldButtonSpacing = 10
+  local panelHeight = padding + lineHeight + 5 + buttonSize + 10 + (#toggleList * lineHeight) + goldButtonSpacing + goldButtonHeight + padding
 
   -- Draw panel background
   love.graphics.setColor(0, 0, 0, 0.8)
@@ -1102,6 +1110,44 @@ function overlayStats.drawToggleControls(statsWidth)
       love.graphics.print("OFF", statusX - 5, y)
     end
   end
+
+  -- Draw "Add 100 Gold" button below the toggles
+  local goldButtonY = titleY + (#toggleList * lineHeight) + goldButtonSpacing
+  local goldButtonWidth = panelWidth - 20
+  local goldButtonX = 20
+
+  -- Get mouse position for hover effect
+  local mouseX, mouseY = love.mouse.getPosition()
+  local isHoveringGoldButton = mouseX >= goldButtonX and mouseX <= goldButtonX + goldButtonWidth and
+                                mouseY >= goldButtonY and mouseY <= goldButtonY + goldButtonHeight
+
+  -- Draw button background with hover effect
+  if isHoveringGoldButton then
+    love.graphics.setColor(0.3, 0.6, 0.3, 0.9)
+  else
+    love.graphics.setColor(0.2, 0.5, 0.2, 0.8)
+  end
+  love.graphics.rectangle("fill", goldButtonX, goldButtonY, goldButtonWidth, goldButtonHeight)
+
+  -- Draw button border
+  love.graphics.setColor(0.4, 0.8, 0.4, 1)
+  love.graphics.rectangle("line", goldButtonX, goldButtonY, goldButtonWidth, goldButtonHeight)
+
+  -- Draw button text centered
+  love.graphics.setColor(1, 1, 1, 1)
+  local buttonText = "Add 100 Gold"
+  local textWidth = font:getWidth(buttonText)
+  local textX = goldButtonX + (goldButtonWidth - textWidth) / 2
+  local textY = goldButtonY + (goldButtonHeight - lineHeight) / 2
+  love.graphics.print(buttonText, textX, textY)
+
+  -- Store gold button bounds for click detection
+  table.insert(overlayStats.goldButtonBounds, {
+    x = goldButtonX,
+    y = goldButtonY,
+    width = goldButtonWidth,
+    height = goldButtonHeight
+  })
 
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.pop() -- Restore previous graphics state
@@ -1485,6 +1531,56 @@ function overlayStats.handleMousePressed(x, y, button)
         elseif index == 7 then
           overlayStats.showTileDebug = not overlayStats.showTileDebug
           print("Tile Debug:", overlayStats.showTileDebug and "ON" or "OFF")
+        end
+        return true
+      end
+    end
+  end
+
+  -- Check if click is within gold button bounds
+  if overlayStats.goldButtonBounds then
+    for _, bounds in ipairs(overlayStats.goldButtonBounds) do
+      if x >= bounds.x and x <= bounds.x + bounds.width and
+         y >= bounds.y and y <= bounds.y + bounds.height then
+        -- Add 100 gold to player
+        local gameState = require("src.core.GameState")
+        local EventBus = require("src.utils.EventBus")
+
+        if gameState then
+          -- Add coins using the proper GameState method
+          gameState.addCoins(100)
+
+          -- Play coin pickup sound
+          if _G.SoundManager then
+            _G.SoundManager.play("coin", 0.3, .7)
+          end
+
+          -- Get player position for the floating text
+          local playerX, playerY = 0, 0
+          if gameState.scenes and gameState.scenes.game and gameState.scenes.game.ecsWorld then
+            local playerEntity = gameState.scenes.game.ecsWorld:getPlayer()
+            if playerEntity then
+              local position = playerEntity:getComponent("Position")
+              local sprite = playerEntity:getComponent("SpriteRenderer")
+              if position then
+                playerX = position.x
+                playerY = position.y
+                if sprite then
+                  playerX = playerX + sprite.width * 0.5
+                end
+              end
+            end
+          end
+
+          -- Emit the coin pickup event to trigger floating text
+          EventBus.emit("coinPickedUp", {
+            amount = 100,
+            total = gameState.getTotalCoins(),
+            worldX = playerX,
+            worldY = playerY,
+          })
+
+          print("Added 100 gold! Total:", gameState.getTotalCoins())
         end
         return true
       end
