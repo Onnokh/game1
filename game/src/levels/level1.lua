@@ -15,7 +15,6 @@ local level1 = {
         theme = "tech",
         properties = {
             hasReactor = true,
-            hasShop = false,
             enemySpawns = false,
             safe = true,
         }
@@ -45,11 +44,9 @@ local level1 = {
                 weight = 100,
                 properties = {
                     hasReactor = false,
-                    hasShop = false,
                     enemySpawns = true,
                     safe = false,
-                    difficulty = 1,
-                    enemyTypes = { "slime", "skeleton" }
+                    enemyTypes = { "warhog" }
                 },
                 loot = {
                     coinMultiplier = 1.2,
@@ -65,10 +62,8 @@ local level1 = {
               weight = 100,
               properties = {
                   hasReactor = false,
-                  hasShop = false,
                   enemySpawns = true,
                   safe = false,
-                  difficulty = 1,
                   enemyTypes = { "slime", "skeleton" }
               },
               loot = {
@@ -77,6 +72,24 @@ local level1 = {
                   chestCount = { min = 1, max = 3 }
               }
           },
+          {
+            id = "shop_island",
+            name = "Shop Island",
+            mapPath = "resources/tiled/maps/islands/shop_island.lua",
+            theme = "forest",
+            weight = 100,
+            properties = {
+                hasReactor = false,
+                enemySpawns = false,
+                safe = false,
+                enemyTypes = {}
+            },
+            loot = {
+                coinMultiplier = 1.2,
+                rareLootChance = 0.1,
+                chestCount = { min = 1, max = 3 }
+            }
+        },
             -- Add more island types here as you create them
             -- {
             --     id = "desert_island",

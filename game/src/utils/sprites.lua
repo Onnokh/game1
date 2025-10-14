@@ -54,6 +54,33 @@ function IffySprites.load()
   -- Load tree spritesheet (1x1 grid, 48x64)
   loadSpritesheet("tree", "resources/objects/tree.png", 1, 1)
 
+  -- Create placeholder shop sprite (64x64 purple/magenta rectangle)
+  -- Generate ImageData procedurally
+  local shopImageData = love.image.newImageData(64, 64)
+  shopImageData:mapPixel(function(x, y, r, g, b, a)
+    -- Purple/magenta color (RGB: 200, 50, 200)
+    return 200/255, 50/255, 200/255, 1
+  end)
+  -- Create Image from ImageData
+  local shopImage = love.graphics.newImage(shopImageData)
+  shopImage:setFilter("nearest", "nearest")
+  -- Manually register with iffy (bypass newTileset since we have a procedural image)
+  if not iffy.spritesheets then
+    iffy.spritesheets = {}
+  end
+  if not iffy.images then
+    iffy.images = {}
+  end
+  if not iffy.tilesets then
+    iffy.tilesets = {}
+  end
+  -- Register both the spritesheet quad and the image
+  iffy.spritesheets["shop"] = {love.graphics.newQuad(0, 0, 64, 64, 64, 64)}
+  iffy.images["shop"] = shopImage
+  iffy.tilesets["shop"] = {64, 64} -- width, height
+  loadedSheets["shop"] = true
+  print("Loaded placeholder shop sprite (64x64 magenta rectangle)")
+
   -- load warhog spritesheets (4x4 grid, 64x64 per frame)
   loadSpritesheet("Warhog_Attack", "resources/warhog/Warhog_Attack.png", 4, 4)
   loadSpritesheet("Warhog_Death", "resources/warhog/Warhog_Death.png", 4, 4)

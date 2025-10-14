@@ -219,6 +219,10 @@ function OxygenSystem:drawTether()
         self.snapDuration = 0.15
         self.snapStartPos = {x = 0, y = 0}
         self.snapEndPos = {x = 0, y = 0}
+        self.flowPulses = {}
+        self.flowTimer = 0
+        self.flowInterval = 0.2
+        self.flowSpeed = 0.1
     end
 
     -- Find the reactor entity

@@ -74,9 +74,9 @@ function GameScene.load()
   GameScene.lightWorld = lightWorld
 
   -- Initialize ECS world with physics reference (Luven doesn't need lightWorld reference)
-  ecsWorld = World.new(physicsWorld, lightWorld)
-  -- Initialize UI world (separate from ECS)
-  uiWorld = World.new()
+  ecsWorld = World.new(physicsWorld, lightWorld, false)
+  -- Initialize UI world (separate from ECS, with drawOrder enabled for z-layering)
+  uiWorld = World.new(nil, nil, true)
 
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
@@ -111,13 +111,20 @@ function GameScene.load()
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
+  local SiegeIndicatorSystem = require("src.systems.UISystems.SiegeIndicatorSystem")
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
   local AggroVignetteSystem = require("src.systems.UISystems.AggroVignetteSystem")
   local WeaponIndicatorSystem = require("src.systems.UISystems.WeaponIndicatorSystem")
+  local ShopUISystem = require("src.systems.UISystems.ShopUISystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
+  uiWorld:addSystem(MenuSystem.new()) -- Menu systems first to consume clicks
+  uiWorld:addSystem(PauseMenuSystem.new())
+  uiWorld:addSystem(GameOverSystem.new())
+
   uiWorld:addSystem(healthBarSystem)
+  uiWorld:addSystem(SiegeIndicatorSystem.new(ecsWorld)) -- Draw siege indicators below other UI
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
   uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
   uiWorld:addSystem(CoinCounterSystem.new())
@@ -125,9 +132,7 @@ function GameScene.load()
   uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(LootPickupLabelSystem.new(ecsWorld))
-  uiWorld:addSystem(MenuSystem.new())
-  uiWorld:addSystem(PauseMenuSystem.new())
-  uiWorld:addSystem(GameOverSystem.new())
+  uiWorld:addSystem(ShopUISystem.new(ecsWorld)) -- After menus so clicks are blocked when paused
   uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
@@ -378,13 +383,32 @@ function GameScene.draw(gameState)
     end)
 
     -- Then draw screen-space UI elements (HUD, menus) outside camera transform
+    -- Use uiWorld:draw() which respects drawOrder for z-layering
     love.graphics.push()
     love.graphics.origin()
+
+    -- Build sorted list of screen-space systems
+    local screenSpaceSystems = {}
     for _, system in ipairs(uiWorld.systems) do
       if not system.isWorldSpace then
-        system:draw()
+        table.insert(screenSpaceSystems, system)
       end
     end
+
+    -- Sort by drawOrder if uiWorld has it enabled
+    if uiWorld.useDrawOrder then
+      table.sort(screenSpaceSystems, function(a, b)
+        local orderA = a.drawOrder or 0
+        local orderB = b.drawOrder or 0
+        return orderA < orderB
+      end)
+    end
+
+    -- Draw in sorted order
+    for _, system in ipairs(screenSpaceSystems) do
+      system:draw()
+    end
+
     love.graphics.pop()
   end
 end
