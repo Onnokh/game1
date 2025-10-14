@@ -176,6 +176,9 @@ function ShopUISystem:draw()
     local prevFont = love.graphics.getFont()
     if font then love.graphics.setFont(font) end
 
+    -- Get player's current coins for affordability checks
+    local playerCoins = gameState.getTotalCoins()
+
     -- Slot colors
     local slotColors = {
         {255/255, 68/255, 68/255},   -- Red
@@ -210,6 +213,9 @@ function ShopUISystem:draw()
                 local slotY = screenY - 60
 
                 if item then
+                    -- Check if player can afford this item
+                    local canAfford = playerCoins >= (item.cost or 0)
+
                     -- Draw black background
                     love.graphics.setColor(0, 0, 0, 0.9)
                     love.graphics.rectangle("fill", slotX, slotY, slotSize, slotSize)
@@ -223,19 +229,32 @@ function ShopUISystem:draw()
                     -- Draw the item sprite if it has sprite info
                     if item.spriteSheet and item.spriteFrame then
                         local iffy = require("lib.iffy")
-                        love.graphics.setColor(1, 1, 1, 1)
+                        -- Desaturate if player can't afford
+                        if canAfford then
+                            love.graphics.setColor(1, 1, 1, 1)
+                        else
+                            love.graphics.setColor(0.3, 0.3, 0.3, 1)
+                        end
                         -- Scale from 32x32 to 64x64 (scale = 2)
                         local scale = spriteSize / 32
                         iffy.draw(item.spriteSheet, item.spriteFrame, spriteCenterX - spriteSize/2, spriteCenterY - spriteSize/2, 0, scale, scale)
                     else
                         -- Fallback: draw colored square if no sprite
                         local color = slotColors[i] or {1, 1, 1}
-                        love.graphics.setColor(color[1], color[2], color[3], 1)
+                        if canAfford then
+                            love.graphics.setColor(color[1], color[2], color[3], 1)
+                        else
+                            love.graphics.setColor(color[1] * 0.3, color[2] * 0.3, color[3] * 0.3, 1)
+                        end
                         love.graphics.rectangle("fill", slotX + spriteOffset, slotY + spriteOffset, spriteSize, spriteSize)
                     end
 
-                    -- Draw border around entire slot
-                    love.graphics.setColor(1, 1, 1, 1)
+                    -- Draw border around entire slot (gray if can't afford, white if can)
+                    if canAfford then
+                        love.graphics.setColor(1, 1, 1, 1)
+                    else
+                        love.graphics.setColor(0.5, 0.5, 0.5, 1)
+                    end
                     love.graphics.setLineWidth(2)
                     love.graphics.rectangle("line", slotX, slotY, slotSize, slotSize)
                     love.graphics.setLineWidth(1)
@@ -252,17 +271,31 @@ function ShopUISystem:draw()
                     ui_text.drawOutlinedText(nameText, -nameWidth / 2, 0, {1, 1, 1, 1}, {0, 0, 0, 0.8}, 1)
                     love.graphics.pop()
 
-                    -- Draw price below slot
-                    love.graphics.setColor(1, 1, 0, 1) -- Yellow
-                    local priceText = tostring(item.cost) .. " coins"
-                    local priceWidth = font and font:getWidth(priceText) or 0
-                    local priceX = slotX + slotSize / 2
+                    -- Draw price below slot (red if can't afford, yellow if can)
+                    local priceColor = canAfford and {1, 1, 0, 1} or {1, 0, 0, 1}
+                    local priceText = tostring(item.cost)
+                    local priceTextWidth = font and font:getWidth(priceText) or 0
+
+                    -- Calculate total width (coin icon + spacing + text)
+                    local coinIconSize = 16 -- Coin sprite display size
+                    local spacing = 4 -- Spacing between coin and number
+                    local totalWidth = coinIconSize + spacing + priceTextWidth
+
+                    -- Center the entire price display
+                    local priceX = slotX + slotSize / 2 - totalWidth / 2
                     local priceY = slotY + slotSize + 6
 
-                    love.graphics.push()
-                    love.graphics.translate(priceX, priceY)
-                    ui_text.drawOutlinedText(priceText, -priceWidth / 2, 0, {1, 1, 0, 1}, {0, 0, 0, 0.8}, 1)
-                    love.graphics.pop()
+                    -- Draw coin icon
+                    local iffy = require("lib.iffy")
+                    love.graphics.setColor(1, 1, 1, 1) -- Coin sprite always full color
+                    local coinScale = coinIconSize / 16 -- Scale from 16px original to desired size
+                    local coinCenterY = priceY + (font and font:getHeight() or 16) / 2 - coinIconSize / 2
+                    iffy.draw("coin", 1, priceX, coinCenterY, 0, coinScale, coinScale)
+
+                    -- Draw price number to the right of coin
+                    local textX = priceX + coinIconSize + spacing
+                    love.graphics.setColor(priceColor[1], priceColor[2], priceColor[3], priceColor[4])
+                    ui_text.drawOutlinedText(priceText, textX, priceY, priceColor, {0, 0, 0, 0.8}, 1)
                 else
                     -- Draw empty/sold slot with same styling
                     -- Draw black background
