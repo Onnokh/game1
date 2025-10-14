@@ -10,7 +10,7 @@ return {
   tilewidth = 32,
   tileheight = 32,
   nextlayerid = 3,
-  nextobjectid = 19,
+  nextobjectid = 20,
   properties = {},
   tilesets = {
     {
@@ -138,34 +138,6 @@ return {
       properties = {},
       objects = {
         {
-          id = 7,
-          name = "Tree",
-          type = "",
-          shape = "rectangle",
-          x = 541,
-          y = 224.833,
-          width = 48,
-          height = 96,
-          rotation = 0,
-          gid = 549,
-          visible = true,
-          properties = {}
-        },
-        {
-          id = 8,
-          name = "Tree",
-          type = "",
-          shape = "rectangle",
-          x = 560.417,
-          y = 280.833,
-          width = 48,
-          height = 96,
-          rotation = 0,
-          gid = 549,
-          visible = true,
-          properties = {}
-        },
-        {
           id = 9,
           name = "Reactor",
           type = "",
@@ -197,8 +169,8 @@ return {
           name = "Siege",
           type = "",
           shape = "rectangle",
-          x = 593.333,
-          y = 138.334,
+          x = 608,
+          y = 224,
           width = 102.667,
           height = 96,
           rotation = 0,
@@ -300,6 +272,19 @@ return {
           height = 96,
           rotation = 0,
           gid = 549,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 19,
+          name = "Shop",
+          type = "",
+          shape = "rectangle",
+          x = 512,
+          y = 160,
+          width = 64,
+          height = 64,
+          rotation = 0,
           visible = true,
           properties = {}
         }

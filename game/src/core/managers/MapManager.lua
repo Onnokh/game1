@@ -359,7 +359,8 @@ local function spawnEntities(ecsWorld, physicsWorld)
             if obj.name == "Tree" then
                 Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
             elseif obj.name == "Shop" then
-                Shop.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
+                -- Shop is a rectangle object (not a tile), so y is at top (don't subtract height)
+                Shop.create(islandX + obj.x, islandY + obj.y, ecsWorld, physicsWorld)
             elseif obj.name == "MobSpawn" then
                 -- General mob spawn area (can be immediate or phase-based)
                 local amount = 1
