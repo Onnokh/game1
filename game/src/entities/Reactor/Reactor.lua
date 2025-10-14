@@ -33,27 +33,16 @@ function Reactor.create(x, y, world, physicsWorld)
     end
     local light = Light.new({
       {
-        radius = 140,
+        radius = 210,
         r = 180,
         g = 220,
         b = 255,
         a = 120,
-        offsetX = 20,
-        offsetY = 40,
-        flicker = true,
+        offsetX = 48,
+        offsetY = 48,
+        flicker = false,
         flickerRadiusAmplitude = 15,     -- gentle size pulsing
-    },
-    {
-      radius = 140,
-      r = 180,
-      g = 220,
-      b = 255,
-      a = 120,
-      offsetX = 76,
-      offsetY = 40,
-      flicker = true,
-      flickerRadiusAmplitude = 20,     -- gentle size pulsing
-  }
+    }
     })
 
     -- Create interactable component for reactor

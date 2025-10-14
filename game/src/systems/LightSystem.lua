@@ -1,40 +1,69 @@
 local System = require("src.core.System")
+local luven = require("lib.luven.luven")
 
 ---@class LightSystem : System
----@field lightWorld any
 local LightSystem = System:extend("LightSystem", {"Position", "Light"})
 
----Initialize light world reference when world is set
+---Initialize - no need for lightWorld reference with Luven
 function LightSystem:setWorld(world)
     System.setWorld(self, world)
-    self.lightWorld = world and world.lightWorld or nil
 end
 
 ---Ensure a light exists for a specific light config
 ---@param lightConfig table Single light configuration from the lights array
-local function ensureLightCreated(self, lightConfig)
-    if not self or not self.lightWorld then return end
+---@param x number Light x position
+---@param y number Light y position
+local function ensureLightCreated(self, lightConfig, x, y)
     if not lightConfig or lightConfig.enabled == false then return end
-    if lightConfig.lightRef then return end
+    if lightConfig.lightId then return end -- Already created
 
-    local Light = require("shadows.Light")
-    -- If flickering, create canvas large enough for maximum radius
-    local maxRadius = lightConfig.radius
+    -- Convert 0-255 color to 0-1 range for Luven
+    local r = (lightConfig.r or 255) / 255
+    local g = (lightConfig.g or 255) / 255
+    local b = (lightConfig.b or 255) / 255
+
+    -- Convert radius to power (Luven uses power as a multiplier)
+    -- Typical radius is 400, and we want that to be a reasonable size
+    -- The light sprite is 256px, so power of ~1.5-2 works well for radius 400
+    local power = (lightConfig.radius or 400) / 256
+
+    -- Create light based on whether it's flickering
     if lightConfig.flicker then
-        maxRadius = maxRadius + (lightConfig.flickerRadiusAmplitude or 10)
-        -- Add random offset so lights don't flicker in sync
-        lightConfig.flickerOffset = math.random() * 1000
-    end
-    local light = Light:new(self.lightWorld, maxRadius)
-    light:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, lightConfig.a)
+        -- Create flickering light
+        local flickerSpeed = lightConfig.flickerSpeed or 8
+        local rAmp = (lightConfig.flickerRadiusAmplitude or 10) / 255
+        local aAmp = (lightConfig.flickerAlphaAmplitude or 20) / 255
 
-    -- Force canvas to be destroyed and recreated at correct size
-    if lightConfig.flicker then
-        light:DestroyCanvas()
-        light:InitCanvas()
-    end
+        -- Calculate power range
+        local basePower = power
+        local minPower = math.max(0, basePower - (lightConfig.flickerRadiusAmplitude or 10) / 256)
+        local maxPower = basePower + (lightConfig.flickerRadiusAmplitude or 10) / 256
 
-    lightConfig.lightRef = light
+        -- Calculate color range (with alpha variation)
+        local minAlpha = math.max(0, 1 - aAmp)
+        local maxAlpha = math.min(1, 1 + aAmp)
+
+        local colorRange = luven.newColorRange(r, g, b, r, g, b, minAlpha, maxAlpha)
+        local powerRange = luven.newNumberRange(minPower, maxPower)
+        local speedRange = luven.newNumberRange(0.05, 0.15) -- Random flicker timing
+
+        lightConfig.lightId = luven.addFlickeringLight(
+            x, y,
+            colorRange,
+            powerRange,
+            speedRange,
+            luven.lightShapes.round -- default shape
+        )
+    else
+        -- Create normal light
+        local color = luven.newColor(r, g, b, 1)
+        lightConfig.lightId = luven.addNormalLight(
+            x, y,
+            color,
+            power,
+            luven.lightShapes.round -- default shape
+        )
+    end
 end
 
 ---Check if a light position is visible in the camera view
@@ -82,7 +111,7 @@ function LightSystem:update(dt)
         if position and lightComp and lightComp.lights then
             -- Iterate through all lights in the component
             for i, lightConfig in ipairs(lightComp.lights) do
-                -- Calculate light position for visibility check
+                -- Calculate light position
                 local defaultOX = spriteRenderer and (spriteRenderer.width or 0) / 2 or 0
                 local defaultOY = spriteRenderer and (spriteRenderer.height or 0) / 2 or 0
                 local lightX = position.x + (lightConfig.offsetX ~= nil and lightConfig.offsetX or defaultOX)
@@ -92,31 +121,17 @@ function LightSystem:update(dt)
                 -- Check if light is visible in camera view
                 local visible = isLightVisible(lightX, lightY, lightRadius, camera)
 
-                -- If light is disabled or not visible
-                if (lightConfig.enabled == false or not visible) and lightConfig.lightRef then
-                    -- Temporarily remove light from rendering (but keep the reference)
-                    lightConfig.lightRef:SetPosition(lightX, lightY, 0) -- Z=0 disables the light
+                -- If light is disabled or not visible, remove it
+                if (lightConfig.enabled == false or not visible) and lightConfig.lightId then
+                    luven.removeLight(lightConfig.lightId)
+                    lightConfig.lightId = nil
                 elseif lightConfig.enabled ~= false and visible then
-                    ensureLightCreated(self, lightConfig)
-                    if lightConfig.lightRef then
-                        lightConfig.lightRef:SetPosition(lightX, lightY, 1) -- Z=1 enables the light
+                    -- Ensure light exists
+                    ensureLightCreated(self, lightConfig, lightX, lightY)
 
-                        -- Apply flicker if enabled
-                        if lightConfig.flicker then
-                            local t = love.timer.getTime() + (lightConfig.flickerOffset or 0)
-                            local speed = lightConfig.flickerSpeed or 8
-                            local rAmp = lightConfig.flickerRadiusAmplitude or 10
-                            local aAmp = lightConfig.flickerAlphaAmplitude or 20
-                            local baseRadius = lightConfig.radius or 400
-                            local baseA = lightConfig.a or 255
-
-                            local n = math.sin(t * speed) * 0.6 + math.sin(t * (speed * 1.7) + 1.3) * 0.4
-                            local radius = baseRadius + n * rAmp
-                            local alpha = math.max(0, math.min(255, baseA + n * aAmp))
-
-                            lightConfig.lightRef:SetRadius(radius)
-                            lightConfig.lightRef:SetColor(lightConfig.r, lightConfig.g, lightConfig.b, alpha)
-                        end
+                    -- Update light position
+                    if lightConfig.lightId then
+                        luven.setLightPosition(lightConfig.lightId, lightX, lightY)
                     end
                 end
             end
@@ -131,9 +146,9 @@ function LightSystem:cleanup()
         local lightComp = entity:getComponent("Light")
         if lightComp and lightComp.lights then
             for i, lightConfig in ipairs(lightComp.lights) do
-                if lightConfig.lightRef then
-                    lightConfig.lightRef:Remove()
-                    lightConfig.lightRef = nil
+                if lightConfig.lightId then
+                    luven.removeLight(lightConfig.lightId)
+                    lightConfig.lightId = nil
                 end
             end
         end
@@ -141,5 +156,3 @@ function LightSystem:cleanup()
 end
 
 return LightSystem
-
-
