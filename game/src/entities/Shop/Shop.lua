@@ -13,13 +13,15 @@ local ShopEntity = {}
 ---@param world World ECS world to add the shop to
 ---@param physicsWorld table|nil Physics world for collision
 ---@param inventory table|nil Optional custom inventory
+---@param seed number|nil Optional seed for deterministic inventory generation
+---@param shopId string|nil Optional shop identifier for unique seed per shop
 ---@return Entity The created shop entity
-function ShopEntity.create(x, y, world, physicsWorld, inventory)
+function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
 
     local shop = Entity.new()
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new('shop', 64, 64)
-    local shopComponent = Shop.new(inventory)
+    local shopComponent = Shop.new(inventory, seed, shopId)
 
     -- Create pathfinding collision (similar to Reactor)
     local collider = PathfindingCollision.new(64, 48, "static", 0, 16)

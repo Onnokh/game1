@@ -197,6 +197,7 @@ function overlayStats.load()
   overlayStats.supportedFeatures.pixelShaderHighp = supported.pixelshaderhighp
   -- Cache fonts used by overlay to avoid per-frame allocations
   overlayFontMain = love.graphics.newFont(16)
+  overlayFontMedium = love.graphics.newFont(12)
   overlayFontSmall = love.graphics.newFont(8)
 end
 
@@ -880,8 +881,8 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
     local oldFont = love.graphics.getFont()
 
     -- Use small font for GIDs
-    if overlayFontSmall then
-      love.graphics.setFont(overlayFontSmall)
+    if overlayFontMedium then
+      love.graphics.setFont(overlayFontMedium)
     end
 
     -- Draw GIDs from world grid (includes islands AND bridges)
@@ -1406,6 +1407,19 @@ function overlayStats.draw(cameraX, cameraY, cameraScale)
     togglePanelWidth = contentWidth + padding
   end
   overlayStats.drawToggleControls(togglePanelWidth)
+
+  -- Draw seed at bottom left corner
+  local MapManager = require("src.core.managers.MapManager")
+  if MapManager.currentSeed then
+    local screenWidth, screenHeight = love.graphics.getDimensions()
+    love.graphics.setColor(1, 1, 1, 0.9)
+
+    local seedText = string.format("Seed: %d", MapManager.currentSeed)
+    local textHeight = font:getHeight()
+    local padding = 10
+
+    love.graphics.print(seedText, padding, screenHeight - textHeight - padding)
+  end
 
   love.graphics.pop()
 end

@@ -14,37 +14,8 @@ return {
   properties = {},
   tilesets = {
     {
-      name = "test",
-      firstgid = 1,
-      class = "",
-      tilewidth = 32,
-      tileheight = 32,
-      spacing = 0,
-      margin = 0,
-      columns = 15,
-      image = "../../../world.png",
-      imagewidth = 480,
-      imageheight = 480,
-      objectalignment = "unspecified",
-      tilerendersize = "tile",
-      fillmode = "stretch",
-      tileoffset = {
-        x = 0,
-        y = 0
-      },
-      grid = {
-        orientation = "orthogonal",
-        width = 32,
-        height = 32
-      },
-      properties = {},
-      wangsets = {},
-      tilecount = 225,
-      tiles = {}
-    },
-    {
       name = "Objects",
-      firstgid = 226,
+      firstgid = 1,
       class = "",
       tilewidth = 96,
       tileheight = 96,
@@ -80,6 +51,64 @@ return {
           height = 96
         }
       }
+    },
+    {
+      name = "test",
+      firstgid = 4,
+      class = "",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 15,
+      image = "../../../world.png",
+      imagewidth = 480,
+      imageheight = 480,
+      objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      wangsets = {},
+      tilecount = 225,
+      tiles = {}
+    },
+    {
+      name = "tiland",
+      firstgid = 229,
+      class = "",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 26,
+      image = "../../../tiland.png",
+      imagewidth = 832,
+      imageheight = 675,
+      objectalignment = "unspecified",
+      tilerendersize = "tile",
+      fillmode = "stretch",
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      wangsets = {},
+      tilecount = 546,
+      tiles = {}
     }
   },
   layers = {
@@ -102,15 +131,15 @@ return {
       encoding = "lua",
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 121, 124, 122, 124, 122, 124, 122, 124, 124, 124, 122, 124, 122, 125, 0, 0, 0,
-        0, 0, 0, 136, 137, 138, 139, 137, 137, 137, 138, 137, 138, 139, 139, 139, 140, 0, 0, 0,
-        0, 0, 0, 136, 137, 138, 139, 137, 138, 137, 138, 137, 137, 137, 138, 139, 140, 0, 0, 0,
-        0, 0, 0, 136, 137, 138, 139, 137, 138, 137, 138, 137, 138, 154, 154, 154, 176, 0, 0, 0,
-        0, 0, 0, 136, 137, 138, 139, 137, 138, 137, 137, 138, 158, 169, 169, 169, 170, 0, 0, 0,
-        0, 0, 0, 136, 137, 137, 137, 137, 138, 139, 137, 137, 138, 124, 124, 124, 128, 0, 0, 0,
-        0, 0, 0, 151, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 152, 154, 155, 0, 0, 0,
-        0, 0, 0, 166, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 167, 169, 170, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        0, 0, 465, 466, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 0, 0,
+        0, 0, 491, 492, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 0, 0,
+        0, 0, 595, 596, 518, 597, 598, 599, 600, 523, 524, 525, 526, 527, 528, 529, 530, 531, 0, 0,
+        0, 0, 621, 622, 544, 597, 598, 599, 600, 549, 550, 551, 552, 553, 554, 555, 556, 557, 0, 0,
+        0, 0, 647, 648, 570, 623, 624, 625, 626, 575, 576, 577, 578, 579, 580, 581, 582, 583, 0, 0,
+        0, 0, 673, 674, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 0, 0,
+        0, 0, 699, 700, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 0, 0,
+        0, 0, 725, 726, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739, 0, 0,
+        0, 0, 725, 726, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
       }
     },
     {

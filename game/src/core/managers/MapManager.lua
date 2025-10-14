@@ -96,7 +96,7 @@ local function generateIslands(levelConfig, baseIsland, seed)
         end
 
         local island = {
-            id = islandDef.id,
+            id = string.format("%s_%d", islandDef.id, i), -- Make each instance unique
             definition = islandDef,
             map = islandMap,
             x = 0,
@@ -365,7 +365,9 @@ local function spawnEntities(ecsWorld, physicsWorld)
                 Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
             elseif obj.name == "Shop" then
                 -- Shop is a rectangle object (not a tile), so y is at top (don't subtract height)
-                Shop.create(islandX + obj.x, islandY + obj.y, ecsWorld, physicsWorld)
+                -- Create unique shop ID using island and position for deterministic seed
+                local shopId = string.format("%s_shop_%d_%d", island.id, obj.x, obj.y)
+                Shop.create(islandX + obj.x, islandY + obj.y, ecsWorld, physicsWorld, nil, MapManager.currentSeed, shopId)
             elseif obj.name == "MobSpawn" then
                 -- General mob spawn area (can be immediate or phase-based)
                 local amount = 1

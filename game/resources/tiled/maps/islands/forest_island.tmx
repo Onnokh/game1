@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="20" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="70">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="20" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="5" nextobjectid="76">
  <editorsettings>
   <export target="forest_island.lua" format="lua"/>
  </editorsettings>
- <tileset firstgid="1" name="test" tilewidth="32" tileheight="32" tilecount="225" columns="15">
-  <image source="../../../world.png" width="480" height="480"/>
- </tileset>
- <tileset firstgid="226" name="Objects" tilewidth="96" tileheight="96" tilecount="2" columns="0">
+ <tileset firstgid="1" name="Objects" tilewidth="96" tileheight="96" tilecount="2" columns="0">
   <grid orientation="orthogonal" width="32" height="32"/>
   <tile id="1">
    <image source="../../../reactor/reactor-Sheet.png" width="96" height="96"/>
@@ -15,48 +12,33 @@
    <image source="../../../objects/tree.png" width="48" height="96"/>
   </tile>
  </tileset>
+ <tileset firstgid="4" name="test" tilewidth="32" tileheight="32" tilecount="225" columns="15">
+  <image source="../../../world.png" width="480" height="480"/>
+ </tileset>
+ <tileset firstgid="229" name="tiland" tilewidth="32" tileheight="32" tilecount="546" columns="26">
+  <image source="../../../tiland.png" width="832" height="675"/>
+ </tileset>
  <layer id="1" name="Tile Layer 1" width="20" height="10">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,121,124,122,124,122,124,122,124,124,124,122,124,122,125,0,0,0,
-0,0,0,136,137,138,139,137,137,137,138,137,138,139,139,139,140,0,0,0,
-0,0,0,136,137,138,139,137,138,137,138,137,137,137,138,139,140,0,0,0,
-0,0,0,136,137,138,139,137,138,137,138,137,138,137,138,139,140,0,0,0,
-0,0,0,136,137,138,139,137,138,137,137,138,137,138,139,139,140,0,0,0,
-0,0,0,136,137,137,137,137,138,139,137,137,137,137,138,139,140,0,0,0,
-0,0,0,151,152,152,152,152,152,152,152,152,152,152,152,154,155,0,0,0,
-0,0,0,166,167,167,167,167,167,167,167,167,167,167,167,169,170,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+0,0,465,466,466,467,468,469,470,471,472,473,474,475,476,477,478,479,0,0,
+0,0,491,492,492,493,494,495,496,497,498,499,500,501,502,503,504,505,0,0,
+0,0,595,596,518,597,598,599,600,523,524,525,526,527,528,529,530,531,0,0,
+0,0,621,622,544,597,598,599,600,549,550,551,552,553,554,555,556,557,0,0,
+0,0,647,648,570,623,624,625,626,575,576,577,578,579,580,581,582,583,0,0,
+0,0,673,674,674,675,676,677,678,679,680,681,682,683,684,685,686,687,0,0,
+0,0,699,700,700,701,702,703,704,705,706,707,708,709,710,711,712,713,0,0,
+0,0,725,726,726,727,728,729,730,731,732,733,734,735,736,737,738,739,0,0,
+0,0,725,726,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
  <objectgroup id="2" name="Objects">
-  <object id="2" name="Tree" gid="228" x="510" y="211" width="48" height="96"/>
-  <object id="27" name="Tree" gid="228" x="273.333" y="136" width="48" height="96"/>
-  <object id="29" name="Tree" gid="228" x="357.333" y="142.333" width="48" height="96"/>
-  <object id="30" name="Tree" gid="228" x="396.333" y="211.333" width="48" height="96"/>
-  <object id="31" name="Tree" gid="228" x="446.667" y="240.333" width="48" height="96"/>
-  <object id="32" name="Tree" gid="228" x="412" y="166" width="48" height="96"/>
-  <object id="33" name="Tree" gid="228" x="404" y="62.6667" width="48" height="96"/>
-  <object id="34" name="Tree" gid="228" x="499.333" y="107.667" width="48" height="96"/>
-  <object id="35" name="Tree" gid="228" x="471.5" y="139.5" width="48" height="96"/>
-  <object id="36" name="Tree" gid="228" x="448" y="76" width="48" height="96"/>
-  <object id="37" name="Tree" gid="228" x="159.5" y="153.5" width="48" height="96"/>
-  <object id="49" name="Tree" gid="228" x="226.333" y="221" width="48" height="96"/>
-  <object id="50" name="Tree" gid="228" x="112.666" y="221.333" width="48" height="96"/>
-  <object id="51" name="Tree" gid="228" x="163" y="250.333" width="48" height="96"/>
-  <object id="52" name="Tree" gid="228" x="128.333" y="176" width="48" height="96"/>
-  <object id="53" name="Tree" gid="228" x="120.333" y="72.667" width="48" height="96"/>
-  <object id="54" name="Tree" gid="228" x="215.666" y="117.667" width="48" height="96"/>
-  <object id="55" name="Tree" gid="228" x="187.833" y="149.5" width="48" height="96"/>
-  <object id="56" name="Tree" gid="228" x="164.333" y="86" width="48" height="96"/>
-  <object id="57" name="Tree" gid="228" x="369.833" y="218" width="48" height="96"/>
-  <object id="58" name="Tree" gid="228" x="256.166" y="218.333" width="48" height="96"/>
-  <object id="59" name="Tree" gid="228" x="306.5" y="247.333" width="48" height="96"/>
-  <object id="60" name="Tree" gid="228" x="271.833" y="173" width="48" height="96"/>
-  <object id="61" name="Tree" gid="228" x="263.833" y="69.667" width="48" height="96"/>
-  <object id="62" name="Tree" gid="228" x="359.166" y="114.667" width="48" height="96"/>
-  <object id="63" name="Tree" gid="228" x="331.333" y="146.5" width="48" height="96"/>
-  <object id="64" name="Tree" gid="228" x="307.833" y="83" width="48" height="96"/>
+  <object id="70" name="Tree" gid="3" x="422" y="148.667" width="48" height="96"/>
+  <object id="71" name="Tree" gid="3" x="116" y="84" width="48" height="96"/>
+  <object id="72" name="Tree" gid="3" x="198" y="178" width="48" height="96"/>
+  <object id="73" name="Tree" gid="3" x="292.667" y="71.3333" width="48" height="96"/>
+  <object id="74" name="Tree" gid="3" x="507.333" y="200.667" width="48" height="96"/>
+  <object id="75" name="Tree" gid="3" x="328" y="198.667" width="48" height="96"/>
  </objectgroup>
  <objectgroup id="4" name="Area">
   <object id="69" template="../../objects/MobSpawn.tx" x="192" y="96" width="287.23" height="97.5">

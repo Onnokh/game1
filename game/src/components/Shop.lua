@@ -6,8 +6,10 @@ Shop.__index = Shop
 
 ---Create a new Shop component
 ---@param inventory table|nil Optional custom inventory (array of item IDs as strings)
+---@param seed number|nil Optional seed for deterministic random generation
+---@param shopId string|nil Optional shop identifier for unique seed per shop
 ---@return Component|Shop
-function Shop.new(inventory)
+function Shop.new(inventory, seed, shopId)
     local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Shop"), Shop)
 
@@ -17,17 +19,31 @@ function Shop.new(inventory)
     if inventory then
         self.inventory = inventory
     else
-        self.inventory = self:generateRandomInventory()
+        self.inventory = self:generateRandomInventory(seed, shopId)
     end
 
     return self
 end
 
 ---Generate a random inventory with 2 items and 1 gear piece
+---@param seed number|nil Optional seed for deterministic random generation
+---@param shopId string|nil Optional shop identifier for unique seed per shop
 ---@return table Array of 3 random item IDs
-function Shop:generateRandomInventory()
+function Shop:generateRandomInventory(seed, shopId)
     local itemsModule = require("src.definitions.items")
     local gearModule = require("src.definitions.gear")
+
+    -- Use seed if provided for deterministic generation
+    if seed and shopId then
+        -- Create unique seed per shop by combining base seed with shop identifier
+        -- Use hash-like approach to create variation
+        local shopSeed = seed
+        for i = 1, #shopId do
+            shopSeed = shopSeed + string.byte(shopId, i) * i
+        end
+        math.randomseed(shopSeed)
+        print(string.format("[Shop] Using deterministic seed: %d (base: %d, id: %s)", shopSeed, seed, shopId))
+    end
 
     -- Get all available items and gear
     local allItems = {}
