@@ -115,8 +115,7 @@ function PathfindingSystem:initializePathfinding()
     -- Use JPS for fast pathfinding (annotation only happens once at load)
     self.pathfinder = Pathfinder(self.grid, 'JPS', 1) -- JPS algorithm, walkable value is 1
 
-    -- Annotate grid for JPS (expensive but only done once)
-    print("[PathfindingSystem] Annotating grid for JPS...")
+    -- Annotate grid for JPS
     local annotateStart = love.timer.getTime()
     self.pathfinder:annotateGrid()
     print(string.format("[PathfindingSystem] Grid annotation took %.2fs", love.timer.getTime() - annotateStart))

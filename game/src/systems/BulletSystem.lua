@@ -1,5 +1,6 @@
 local System = require("src.core.System")
 local DamageQueue = require("src.DamageQueue")
+local luven = require("lib.luven.luven")
 
 ---@class BulletSystem : System
 ---Handles bullet movement, collision detection, and lifetime management
@@ -121,9 +122,9 @@ function BulletSystem:removeBullet(bulletEntity, physicsCollision)
     local lightComp = bulletEntity:getComponent("Light")
     if lightComp and lightComp.lights then
         for i, lightConfig in ipairs(lightComp.lights) do
-            if lightConfig.lightRef then
-                lightConfig.lightRef:Remove()
-                lightConfig.lightRef = nil
+            if lightConfig.lightId then
+                luven.removeLight(lightConfig.lightId)
+                lightConfig.lightId = nil
             end
         end
     end

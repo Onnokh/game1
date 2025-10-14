@@ -28,6 +28,7 @@
         "maps/islands/base_island.tmx": {
             "expandedObjectLayers": [
                 5,
+                5,
                 10
             ],
             "scale": 1.5,
@@ -75,6 +76,11 @@
             ],
             "scale": 3,
             "selectedLayer": 1,
+            "expandedObjectLayers": [
+                4
+            ],
+            "scale": 1.8584375,
+            "selectedLayer": 2,
             "viewCenter": {
                 "x": 320,
                 "y": 160.16666666666666

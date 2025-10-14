@@ -34,7 +34,7 @@ function Light.new(opts)
                 a = lightConfig.a or 255,
                 offsetX = lightConfig.offsetX,
                 offsetY = lightConfig.offsetY,
-                lightRef = nil,
+                lightId = nil, -- Changed from lightRef to lightId for Luven
                 enabled = lightConfig.enabled ~= false,
                 flicker = lightConfig.flicker == true,
                 flickerSpeed = lightConfig.flickerSpeed or 8,
@@ -53,7 +53,7 @@ function Light.new(opts)
                 a = opts.a or 255,
                 offsetX = opts.offsetX,
                 offsetY = opts.offsetY,
-                lightRef = nil,
+                lightId = nil, -- Changed from lightRef to lightId for Luven
                 enabled = opts.enabled ~= false,
                 flicker = opts.flicker == true,
                 flickerSpeed = opts.flickerSpeed or 8,
@@ -67,5 +67,3 @@ function Light.new(opts)
 end
 
 return Light
-
-

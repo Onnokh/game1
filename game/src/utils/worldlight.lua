@@ -1,11 +1,11 @@
-local LightWorld = require "shadows.LightWorld"
+local luven = require "lib.luven.luven"
 
-local lw = nil
-local ambient = { r = 255, g = 240, b = 255, a = 255 }
+local initialized = false
+local ambient = { r = 1.0, g = 0.94, b = 1.0, a = 1.0 } -- Default: bright (0-1 range for Luven)
 local tween = {
   active = false,
-  start = { r = 255, g = 240, b = 255, a = 255 },
-  target = { r = 255, g = 240, b = 255, a = 255 },
+  start = { r = 1.0, g = 0.94, b = 1.0, a = 1.0 },
+  target = { r = 1.0, g = 0.94, b = 1.0, a = 1.0 },
   elapsed = 0,
   duration = 0
 }
@@ -13,33 +13,50 @@ local tween = {
 local M = {}
 
 function M.init()
-  if lw then return lw end
-  lw = LightWorld:new()
-  lw:SetColor(ambient.r, ambient.g, ambient.b, ambient.a)
-  return lw
+  if initialized then return luven end
+
+  -- Initialize Luven with screen dimensions, and disable integrated camera (we use our own)
+  local screenWidth = love.graphics.getWidth()
+  local screenHeight = love.graphics.getHeight()
+  luven.init(screenWidth, screenHeight, false) -- false = don't use Luven's camera
+
+  -- Set initial ambient color
+  luven.setAmbientLightColor({ ambient.r, ambient.g, ambient.b, ambient.a })
+
+  initialized = true
+  return luven
 end
 
 function M.get()
-  return lw
+  return luven
 end
 
 function M.setAmbientColor(r, g, b, a, duration)
-  local targetA = a or 255
-  if duration and duration > 0 and lw then
+  -- Convert from 0-255 range to 0-1 range for Luven
+  local targetR = r / 255
+  local targetG = g / 255
+  local targetB = b / 255
+  local targetA = (a or 255) / 255
+
+  if duration and duration > 0 and initialized then
     tween.active = true
     tween.start.r, tween.start.g, tween.start.b, tween.start.a = ambient.r, ambient.g, ambient.b, ambient.a
-    tween.target.r, tween.target.g, tween.target.b, tween.target.a = r, g, b, targetA
+    tween.target.r, tween.target.g, tween.target.b, tween.target.a = targetR, targetG, targetB, targetA
     tween.elapsed = 0
     tween.duration = duration
   else
-    ambient.r, ambient.g, ambient.b, ambient.a = r, g, b, targetA
-    if lw and lw.SetColor then lw:SetColor(ambient.r, ambient.g, ambient.b, ambient.a) end
+    ambient.r, ambient.g, ambient.b, ambient.a = targetR, targetG, targetB, targetA
+    if initialized then
+      luven.setAmbientLightColor({ ambient.r, ambient.g, ambient.b, ambient.a })
+    end
     tween.active, tween.elapsed, tween.duration = false, 0, 0
   end
 end
 
 function M.update(dt, camera)
-  if not lw or not camera then return end
+  if not initialized then return end
+
+  -- Handle ambient color tweening
   if tween.active then
     tween.elapsed = tween.elapsed + dt
     local d = tween.duration > 0 and tween.duration or 0
@@ -49,25 +66,20 @@ function M.update(dt, camera)
     ambient.g = lerp(tween.start.g, tween.target.g, u)
     ambient.b = lerp(tween.start.b, tween.target.b, u)
     ambient.a = lerp(tween.start.a, tween.target.a, u)
-    lw:SetColor(ambient.r, ambient.g, ambient.b, ambient.a)
+    luven.setAmbientLightColor({ ambient.r, ambient.g, ambient.b, ambient.a })
     if u >= 1 then tween.active = false end
   end
 
-  local camX, camY, scale = camera.x, camera.y, camera.scale
-  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
-  lw:SetPosition(camX - (halfW / scale), camY - (halfH / scale), scale)
-  lw:Update()
+  -- Update Luven (for flickering lights, etc.)
+  luven.update(dt)
 end
 
 function M.cleanup()
-  if not lw then return end
-  if lw.Lights then
-    for _, light in pairs(lw.Lights) do if light and light.Remove then light:Remove() end end
-  end
-  if lw.Canvas then lw.Canvas:release() end
-  lw = nil
+  if not initialized then return end
+
+  -- Dispose of Luven (removes all lights and releases canvases)
+  luven.dispose()
+  initialized = false
 end
 
 return M
-
-

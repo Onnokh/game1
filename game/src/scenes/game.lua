@@ -17,7 +17,6 @@ local PathfindingSystem = require("src.systems.PathfindingSystem")
 local RenderSystem = require("src.systems.RenderSystem")
 local AnimationSystem = require("src.systems.AnimationSystem")
 local GroundShadowSystem = require("src.systems.GroundShadowSystem")
-local ShadowSystem = require("src.systems.ShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
@@ -69,11 +68,12 @@ function GameScene.load()
   physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
 
-  -- Initialize Shädows lighting system via WorldLight manager
-  lightWorld = WorldLight.init()
+  -- Initialize Luven lighting system via WorldLight manager
+  WorldLight.init()
+  lightWorld = WorldLight.get()
   GameScene.lightWorld = lightWorld
 
-  -- Initialize ECS world with physics and light world references
+  -- Initialize ECS world with physics reference (Luven doesn't need lightWorld reference)
   ecsWorld = World.new(physicsWorld, lightWorld)
   -- Initialize UI world (separate from ECS)
   uiWorld = World.new()
@@ -94,7 +94,6 @@ function GameScene.load()
   ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
-  ecsWorld:addSystem(ShadowSystem.new()) -- Update shadow bodies
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
   ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
@@ -343,8 +342,14 @@ end
 
 -- Draw the game scene
 function GameScene.draw(gameState)
-  -- Draw the world first
+  local WorldLight = require("src.utils.worldlight")
+  local luven = WorldLight.get()
+
+  -- Apply camera transform for world rendering and light positions
   gameState.camera:draw(function()
+    -- Begin Luven lighting (renders lights to lightmap in world space)
+    luven.drawBegin()
+
     -- Draw all islands using MapManager (with camera frustum culling)
     MapManager.draw(gameState.camera)
 
@@ -357,13 +362,10 @@ function GameScene.draw(gameState)
     if ecsWorld then
       ecsWorld:draw()
     end
-
-    -- Render Shädows lighting (outside camera transform to avoid double transforms)
-    if lightWorld then
-      lightWorld:Draw()
-    end
-
   end)
+
+  -- End Luven lighting (applies lightmap in screen space, outside camera transform)
+  luven.drawEnd()
   -- Draw UI elements
   if uiWorld then
     -- First draw world-space UI elements (health bars) inside camera transform

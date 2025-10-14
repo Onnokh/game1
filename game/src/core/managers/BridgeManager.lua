@@ -354,10 +354,6 @@ function BridgeManager.detectBridges(islands, tileSize, grid, gridWidth, gridHei
                         toDirection = "north"
                     end
 
-                    print(string.format("[BridgeManager] '%s' → '%s': Tiles (%d,%d) → (%d,%d) [%d options, picked #%d, dist=%.1f, %s→%s]",
-                        island1.id, island2.id, bestTile1.tileX, bestTile1.tileY, bestTile2.tileX, bestTile2.tileY,
-                        #validPairs, randomIndex, chosen.dist, fromDirection, toDirection))
-
                     table.insert(bridges, {
                         fromTile = {x = bestTile1.tileX, y = bestTile1.tileY},
                         toTile = {x = bestTile2.tileX, y = bestTile2.tileY},
@@ -802,8 +798,6 @@ function BridgeManager.markBridgeTilesWalkable(grid)
             end
         end
     end
-
-    print(string.format("[BridgeManager] Marked %d bridge tiles as walkable", tilesMarked))
 end
 
 ---Unload and reset BridgeManager
