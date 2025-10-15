@@ -278,7 +278,7 @@ local function drawLights()
     -- lastActiveLightIndex updated in luven.update()
     for i = 1, #currentLights do
         local light = currentLights[i]
-        if (light.enabled) then
+        if light and light.enabled then
             lgSetColor(light.color)
             lgDraw(light.shape.sprite, light.x, light.y, light.angle, light.scaleX * light.power, light.scaleY * light.power, light.shape.originX, light.shape.originY)
         end
@@ -367,7 +367,7 @@ function luven.update(dt)
 
     for i = 1, #currentLights do
         local light = currentLights[i]
-        if (light.enabled) then
+        if light and light.enabled then
             if (light.type == lightTypes.flickering) then
                 if (light.flickTimer > 0) then
                     light.flickTimer = light.flickTimer - dt
@@ -406,7 +406,7 @@ end
 
 function luven.removeAllLights()
     for _, v in ipairs(currentLights) do
-        if (v.enabled) then
+        if v and v.enabled then
             luven.removeLight(v.id)
         end
     end
@@ -664,6 +664,14 @@ end
 
 function luven.getLightScale(lightId)
     return currentLights[lightId].scaleX, currentLights[lightId].scaleY
+end
+
+function luven.removeLight(lightId)
+    if currentLights[lightId] then
+        currentLights[lightId].enabled = false
+        -- Don't set to nil to avoid breaking the array iteration
+        -- The light will be skipped in the update loop since enabled = false
+    end
 end
 
 return luven

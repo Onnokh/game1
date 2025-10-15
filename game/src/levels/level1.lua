@@ -17,6 +17,7 @@ local level1 = {
             hasReactor = true,
             enemySpawns = false,
             safe = true,
+            fireflies = true
         }
     },
 
@@ -46,7 +47,8 @@ local level1 = {
                     hasReactor = false,
                     enemySpawns = true,
                     safe = false,
-                    enemyTypes = { "warhog" }
+                    enemyTypes = { "warhog" },
+                    fireflies = true
                 },
                 loot = {
                     coinMultiplier = 1.2,
@@ -64,7 +66,8 @@ local level1 = {
                   hasReactor = false,
                   enemySpawns = true,
                   safe = false,
-                  enemyTypes = { "slime", "skeleton" }
+                  enemyTypes = { "slime", "skeleton" },
+                  fireflies = true
               },
               loot = {
                   coinMultiplier = 1.2,

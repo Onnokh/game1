@@ -9,6 +9,26 @@ function LightSystem:setWorld(world)
     System.setWorld(self, world)
 end
 
+---Remove an entity from this system and clean up its lights
+---@param entity Entity The entity to remove
+function LightSystem:removeEntity(entity)
+    -- Clean up lights before removing entity
+    local light = entity:getComponent("Light")
+    if light then
+        -- Remove lights from Luven first, then disable them
+            for _, lightConfig in ipairs(light.lights) do
+                if lightConfig.lightId then
+                    luven.removeLight(lightConfig.lightId)
+                end
+                lightConfig.enabled = false
+                lightConfig.lightId = nil  -- Clear the light ID
+            end
+    end
+
+    -- Call parent removeEntity method
+    System.removeEntity(self, entity)
+end
+
 ---Ensure a light exists for a specific light config
 ---@param lightConfig table Single light configuration from the lights array
 ---@param x number Light x position

@@ -105,11 +105,12 @@ end
 ---Remove an entity from the world
 ---@param entity Entity The entity to remove
 function World:removeEntity(entity)
-    entity:destroy()
-    -- Remove from all systems
+    -- Remove from all systems FIRST (while components still exist)
     for _, system in ipairs(self.systems) do
         system:removeEntity(entity)
     end
+    -- Then destroy the entity (clears components)
+    entity:destroy()
     -- Remove from entities list
     for i = #self.entities, 1, -1 do
         if self.entities[i].id == entity.id then

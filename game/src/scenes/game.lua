@@ -31,6 +31,7 @@ local CoinPickupSystem = require("src.systems.CoinPickupSystem")
 local CoinAttractionSystem = require("src.systems.CoinAttractionSystem")
 local AttackColliderSystem = require("src.systems.AttackColliderSystem")
 local LightSystem = require("src.systems.LightSystem")
+local FireflySystem = require("src.systems.FireflySystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
@@ -99,6 +100,8 @@ function GameScene.load()
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
+  local fireflySystem = FireflySystem.new() -- Manage firefly spawning and movement
+  ecsWorld:addSystem(fireflySystem)
   ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
   ecsWorld:addSystem(FootprintsSystem.new()) -- Draw footprints below sprites
   ecsWorld:addSystem(DashShadowRenderSystem.new()) -- Render dash shadows
@@ -164,6 +167,13 @@ function GameScene.load()
 
   -- Set camera on ECS world for frustum culling in systems (e.g., LightSystem)
   ecsWorld:setCamera(GameState.camera)
+
+  -- Set islands data and world grid for FireflySystem
+  if fireflySystem then
+    local allMaps = MapManager.getAllMaps()
+    fireflySystem:setIslands(allMaps)
+    fireflySystem:setWorldGrid(world, tileSize)
+  end
 
   -- Store references for debugging
   GameScene.borderColliders = borderColliders

@@ -95,6 +95,20 @@ function Light:serialize()
     }
 end
 
+---Destroy this light component and clean up any resources
+function Light:destroy()
+    -- Remove lights from Luven if they have lightIds
+    local luven = require("lib.luven.luven")
+    for _, light in ipairs(self.lights) do
+        if light.lightId then
+            -- Try to remove the light from Luven
+            -- Since Luven doesn't have individual light removal, we'll mark it as disabled
+            -- and let the LightSystem handle the cleanup
+            light.enabled = false
+        end
+    end
+end
+
 ---Deserialize Light component from saved data
 ---@param data table Serialized light data
 ---@return Light Recreated Light component
