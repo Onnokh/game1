@@ -31,11 +31,9 @@ function Moving:onEnter(stateMachine, entity)
     if not existingSound then
         local walkingSound = SoundManager.playLooping("running", 0.4) -- Lower volume for walking
         stateMachine:setGlobalData("movementSound", walkingSound)
-        print("Moving: Created new movement sound")
     else
         -- Reuse existing instance to avoid restarting; adjust volume for walking
         existingSound:setVolume(0.4 * SoundManager.getSFXVolume())
-        print("Moving: Reusing movement sound (walking volume)")
     end
 end
 

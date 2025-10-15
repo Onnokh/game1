@@ -27,7 +27,6 @@ function Idle:onEnter(stateMachine, entity)
 
     -- Stop any movement sound when entering idle (single global reference)
     local movementSound = stateMachine:getGlobalData("movementSound")
-    print("Idle: Stopping movementSound:", movementSound ~= nil)
     if movementSound then
         movementSound:stop()
         stateMachine:setGlobalData("movementSound", nil)

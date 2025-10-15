@@ -5,13 +5,13 @@ local PlayerConfig = {}
 -- Movement speeds (multipliers of base speed)
 PlayerConfig.WALKING_SPEED = .8        -- Normal walking speed
 PlayerConfig.RUNNING_SPEED = 1.5        -- Running speed multiplier (50% faster)
-PlayerConfig.DASH_SPEED = 3           -- Dash speed multiplier (3x faster)
+PlayerConfig.DASH_SPEED = 4           -- Dash speed multiplier (3x faster)
 
 -- Extra burst multiplier applied only on dash start
-PlayerConfig.DASH_BURST_MULTIPLIER = 1.5
+PlayerConfig.DASH_BURST_MULTIPLIER = 2
 
 -- Dash mechanics
-PlayerConfig.DASH_DURATION = .5        -- How long dash lasts (seconds)
+PlayerConfig.DASH_DURATION = .15        -- How long dash lasts (seconds)
 PlayerConfig.DASH_COOLDOWN = .1        -- Cooldown between dashes (seconds)
 
 
@@ -70,5 +70,10 @@ PlayerConfig.WALKING_PARTICLES = {
     },
     spawnRate = 0.15        -- How often to spawn particles (seconds)
 }
+
+-- Dash shadow effects
+PlayerConfig.DASH_SHADOW_DISTANCE = 25  -- Pixels between shadows
+PlayerConfig.DASH_SHADOW_FADE_TIME = 0.2  -- How fast shadows fade after dash ends
+PlayerConfig.DASH_SHADOW_OPACITY = 0.3  -- Initial opacity of shadows
 
 return PlayerConfig

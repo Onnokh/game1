@@ -34,6 +34,8 @@ local LightSystem = require("src.systems.LightSystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
+local DashShadowSystem = require("src.systems.DashShadowSystem")
+local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
 local ShaderManager = require("src.core.managers.ShaderManager")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -81,6 +83,7 @@ function GameScene.load()
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
+  ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
   ecsWorld:addSystem(WeaponSystem.new()) -- Handle weapon switching and syncing
   ecsWorld:addSystem(AttackSystem.new()) -- Handle attacks
@@ -96,6 +99,7 @@ function GameScene.load()
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
   ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
+  ecsWorld:addSystem(DashShadowRenderSystem.new()) -- Render dash shadows
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
   ecsWorld:addSystem(ParticleRenderSystem.new()) -- Render particles above sprites
   ecsWorld:addSystem(AimLineRenderSystem.new()) -- Draw aiming line for ranged weapons
