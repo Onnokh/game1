@@ -35,9 +35,10 @@ local FireflySystem = require("src.systems.FireflySystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
-local DashShadowSystem = require("src.systems.DashShadowSystem")
-local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
-local ShaderManager = require("src.core.managers.ShaderManager")
+  local DashShadowSystem = require("src.systems.DashShadowSystem")
+  local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
+  local DashChargesSystem = require("src.systems.DashChargesSystem")
+  local ShaderManager = require("src.core.managers.ShaderManager")
   local FootprintsSystem = require("src.systems.FootprintsSystem")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
@@ -85,6 +86,7 @@ function GameScene.load()
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
+  ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
   ecsWorld:addSystem(WeaponSystem.new()) -- Handle weapon switching and syncing
@@ -122,7 +124,6 @@ function GameScene.load()
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
   local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
   local SiegeIndicatorSystem = require("src.systems.UISystems.SiegeIndicatorSystem")
-  local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
   local AggroVignetteSystem = require("src.systems.UISystems.AggroVignetteSystem")
   local DashSpeedLinesSystem = require("src.systems.UISystems.DashSpeedLinesSystem")
@@ -136,11 +137,10 @@ function GameScene.load()
 
   uiWorld:addSystem(healthBarSystem)
   uiWorld:addSystem(SiegeIndicatorSystem.new(ecsWorld)) -- Draw siege indicators below other UI
-  uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference
+  uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference (includes dash charges and oxygen)
   uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
   uiWorld:addSystem(CoinCounterSystem.new())
   uiWorld:addSystem(InventoryDisplaySystem.new(ecsWorld))
-  uiWorld:addSystem(OxygenCounterSystem.new(ecsWorld))
   uiWorld:addSystem(PhaseTextSystem.new())
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(LootPickupLabelSystem.new(ecsWorld))

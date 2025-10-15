@@ -14,6 +14,7 @@ local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
 local Inventory = require("src.components.Inventory")
 local FootprintsEmitter = require("src.components.FootprintsEmitter")
+local DashCharges = require("src.components.DashCharges")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -85,9 +86,9 @@ function Player.create(x, y, world, physicsWorld)
         -- Priority-based state system (like modern engines!)
         local InputHelpers = require("src.utils.input")
 
-        -- Check dash cooldown before allowing dash
-        local dashCooldown = stateMachine:getGlobalData("dashCooldown") or 0
-        local canDash = dashCooldown <= 0
+        -- Check dash charges before allowing dash
+        local dashCharges = entity:getComponent("DashCharges")
+        local canDash = dashCharges and dashCharges:canDash() or false
 
         if InputHelpers.hasMovementInput(GameState.input) and InputHelpers.isActionInput(GameState.input) and canDash then
             return "dash"      -- Highest priority - dash when space is pressed and cooldown is ready
@@ -149,6 +150,9 @@ function Player.create(x, y, world, physicsWorld)
     -- Create inventory component
     local inventory = Inventory.new()
 
+    -- Create dash charges component
+    local dashCharges = DashCharges.new(PlayerConfig.DASH_MAX_CHARGES, PlayerConfig.DASH_CHARGE_REGEN_TIME)
+
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
     playerEntity:addComponent("Movement", movement)
@@ -164,6 +168,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("GroundShadow", groundShadow)
     playerEntity:addComponent("Inventory", inventory)
+    playerEntity:addComponent("DashCharges", dashCharges)
     -- Add footprints emitter (paused during dash)
     playerEntity:addComponent("FootprintsEmitter", FootprintsEmitter.new({
         spacing = 15,

@@ -151,12 +151,3 @@ For more detailed technical information about development workflows, build confi
 ## References
 
 Inspired by and adapted from [LOVE VSCode Game Template](https://github.com/Keyslam/LOVE-VSCode-Game-Template), [LÖVE Actions](https://github.com/love-actions) and [love.js player](https://github.com/2dengine/love.js) from [2dengine](https://2dengine.com/).
-
-
-### Credits
-
-The sample "game" included in this template uses the following assets:
-- [Aargh! (male screams)](https://opengameart.org/content/aargh-male-screams)
-- [Eyeballs](https://opengameart.org/content/eyeballs)
-- [Fireplace Sound Loop](https://opengameart.org/content/fireplace-sound-loop)
-- [Parallax Backgrounds](https://opengameart.org/content/3-parallax-backgrounds)

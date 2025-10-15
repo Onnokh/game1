@@ -38,6 +38,7 @@ function Animation.new(startValue, targetValue, duration, easingName, onComplete
     self.loop = false
     self.yoyo = false
     self.yoyoDirection = 1
+    self.pulseMode = false
 
     -- Set easing function
     easingName = easingName or "linear"
@@ -71,9 +72,20 @@ function Animation:update(dt)
     -- Check if animation is complete
     if progress >= 1.0 then
         if self.yoyo then
-            -- Reverse direction
-            self.yoyoDirection = -self.yoyoDirection
-            self.elapsed = 0
+            -- Check if this is the second half of a pulse animation (shrinking back)
+            if self.pulseMode and self.yoyoDirection == -1 then
+                -- Pulse animation is complete
+                self.isComplete = true
+                self.value = self.startValue
+
+                if self.onComplete then
+                    self.onComplete()
+                end
+            else
+                -- Reverse direction for yoyo or first half of pulse
+                self.yoyoDirection = -self.yoyoDirection
+                self.elapsed = 0
+            end
         elseif self.loop then
             -- Restart from beginning
             self.elapsed = 0
@@ -110,6 +122,22 @@ end
 ---@return Animation
 function Animation:setYoyo(shouldYoyo)
     self.yoyo = shouldYoyo
+    return self
+end
+
+---Set animation to pulse (grow then shrink back)
+---@param shouldPulse boolean
+---@return Animation
+function Animation:setPulse(shouldPulse)
+    if shouldPulse then
+        -- For pulse, we want to go to target then back to start
+        self.yoyo = true
+        -- Pulse should complete the full cycle (grow + shrink)
+        self.pulseMode = true
+    else
+        self.yoyo = false
+        self.pulseMode = false
+    end
     return self
 end
 

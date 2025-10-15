@@ -12,7 +12,9 @@ PlayerConfig.DASH_BURST_MULTIPLIER = 2
 
 -- Dash mechanics
 PlayerConfig.DASH_DURATION = .25        -- How long dash lasts (seconds)
-PlayerConfig.DASH_COOLDOWN = .1        -- Cooldown between dashes (seconds)
+PlayerConfig.DASH_COOLDOWN = .1        -- Legacy cooldown (not used with charge system)
+PlayerConfig.DASH_MAX_CHARGES = 3      -- Maximum number of dash charges
+PlayerConfig.DASH_CHARGE_REGEN_TIME = 2.0  -- Time in seconds to regenerate one charge
 
 
 -- Animation settings

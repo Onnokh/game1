@@ -20,8 +20,11 @@ function Dash:onEnter(stateMachine, entity)
     stateMachine:setStateData("dashTime", 0)
     stateMachine:setStateData("dashDuration", PlayerConfig.DASH_DURATION)
 
-    -- Set cooldown to prevent immediate re-dash
-    stateMachine:setGlobalData("dashCooldown", PlayerConfig.DASH_COOLDOWN)
+    -- Consume a dash charge
+    local dashCharges = entity:getComponent("DashCharges")
+    if dashCharges then
+        dashCharges:consumeCharge()
+    end
 
     -- Lock the state machine to prevent transitions during dash
     stateMachine:lock()
