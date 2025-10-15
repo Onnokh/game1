@@ -96,15 +96,7 @@ function TileLightSpawner.spawnLightsForAllIslands(islands, ecsWorld)
 
     for _, island in ipairs(islands or {}) do
         local count = TileLightSpawner.spawnLightsForIsland(island, ecsWorld)
-        if count > 0 then
-            print(string.format("[TileLightSpawner] Island '%s': spawned %d tile lights",
-                island.definition.name or island.id, count))
-        end
         totalLights = totalLights + count
-    end
-
-    if totalLights > 0 then
-        print(string.format("[TileLightSpawner] Total tile lights spawned: %d", totalLights))
     end
 
     return totalLights

@@ -111,6 +111,17 @@ function GameScene.load()
   ecsWorld:addSystem(ParticleRenderSystem.new()) -- Render particles above sprites
   ecsWorld:addSystem(AimLineRenderSystem.new()) -- Draw aiming line for ranged weapons
 
+  -- Debug: count RenderSystem instances
+  do
+    local count = 0
+    for _, sys in ipairs(ecsWorld.systems) do
+      if tostring(sys.__name or ""):match("RenderSystem") then
+        count = count + 1
+      end
+    end
+    print(string.format("[Debug] RenderSystem instances: %d", count))
+  end
+
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
   local HUDSystem = require("src.systems.UISystems.HUDSystem")

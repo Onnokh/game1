@@ -84,13 +84,34 @@ function TiledMapLoader.load(mapPath)
     return map
 end
 
----Draw a map
+---Draw a map (tile layers only, skip object layers)
 ---@param map table The map instance to draw
 ---@param camera table|nil Optional camera for view culling
 function TiledMapLoader.draw(map, camera)
     if not map then return end
+
+    -- Temporarily hide all object layers to prevent Cartographer from drawing them
+    -- Object layers are handled by the game's entity system
+    local hiddenLayers = {}
+    if map.layers then
+        for i, layer in ipairs(map.layers) do
+            if layer.type == "objectgroup" then
+                layer.visible = false
+                table.insert(hiddenLayers, i)
+            end
+        end
+    end
+
+    -- Draw the map (only tile layers will be visible)
     if map.draw then
         map:draw()
+    end
+
+    -- Restore object layer visibility
+    for _, layerIndex in ipairs(hiddenLayers) do
+        if map.layers[layerIndex] then
+            map.layers[layerIndex].visible = true
+        end
     end
 end
 

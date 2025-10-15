@@ -34,6 +34,7 @@ function Tree.create(x, y, world, physicsWorld)
 
     -- Tag for easy querying
     tree:addTag("Tree")
+    tree:addTag("FoliageSway")
 
     if world then
         world:addEntity(tree)

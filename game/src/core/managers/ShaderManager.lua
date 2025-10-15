@@ -4,6 +4,9 @@ local ShaderManager = {}
 -- Shader cache
 local shaders = {}
 
+-- Noise texture cache
+local noiseTexture = nil
+
 ---Load a shader from files
 ---@param name string Name of the shader
 ---@param vertPath string Path to vertex shader file
@@ -50,6 +53,12 @@ function ShaderManager.setUniform(shader, name, value)
     end
 end
 
+---Get the wind noise texture for foliage sway
+---@return love.Image|nil
+function ShaderManager.getNoiseTexture()
+    return noiseTexture
+end
+
 ---Load all default shaders
 function ShaderManager.loadDefaultShaders()
     ShaderManager.loadShader("flash", "src/shaders/flash_shader.vert", "src/shaders/flash_shader.frag")
@@ -58,6 +67,12 @@ function ShaderManager.loadDefaultShaders()
     ShaderManager.loadShader("aim_line", "src/shaders/aim_line_shader.vert", "src/shaders/aim_line_shader.frag")
     ShaderManager.loadShader("outline", "src/shaders/outline_shader.vert", "src/shaders/outline_shader.frag")
     ShaderManager.loadShader("speed_lines", "src/shaders/speed_lines_shader.vert", "src/shaders/speed_lines_shader.frag")
+    ShaderManager.loadShader("foliage_sway", "src/shaders/foliage_sway_shader.vert", "src/shaders/foliage_sway_shader.frag")
+
+    -- Load wind noise texture for foliage sway (clear cache to regenerate with fixed tiling)
+    local NoiseGenerator = require("src.utils.noiseGenerator")
+    NoiseGenerator.clearCache()
+    noiseTexture = NoiseGenerator.getWindNoiseTexture()
 end
 
 return ShaderManager

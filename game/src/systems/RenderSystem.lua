@@ -57,6 +57,11 @@ function RenderSystem:draw()
             -- Apply outline shader if configured
             if spriteRenderer.outline and spriteRenderer.outline.enabled then
                 self:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
+            -- Apply foliage sway shader if entity has FoliageSway tag
+            elseif entity:hasTag("FoliageSway") then
+                self:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, animator)
+                -- Skip normal drawing since shader handles it
+                goto skip_drawing
             else
                 -- Normal drawing without outline
                 local hasDrawnSomething = false
@@ -125,16 +130,20 @@ function RenderSystem:draw()
                 if not hasDrawnSomething then
                     drawRectangle(x, y, spriteRenderer, isBullet)
                 end
+
             end
 
-            -- Draw with flash shader if entity is flashing
-            local flashEffect = entity:getComponent("FlashEffect")
-            if flashEffect and flashEffect:isCurrentlyFlashing() then
-                self:drawWithFlashShader(entity, x, y, spriteRenderer, animator, flashEffect)
+            -- Draw with flash shader if entity is flashing (but not if it has foliage sway)
+            if not entity:hasTag("FoliageSway") then
+                local flashEffect = entity:getComponent("FlashEffect")
+                if flashEffect and flashEffect:isCurrentlyFlashing() then
+                    self:drawWithFlashShader(entity, x, y, spriteRenderer, animator, flashEffect)
+                end
             end
 
             -- Reset color
             love.graphics.setColor(1, 1, 1, 1)
+            ::skip_drawing::
         end
     end
 end
@@ -205,6 +214,9 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
         local current = animator:getCurrentFrame()
 
         if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+            if entity:hasTag("Tree") then
+                print("[Foliage] anim draw id=", entity.id)
+            end
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = 24
             if iffy.tilesets[animator.sheet] then
@@ -228,6 +240,9 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
         local spriteSheet = spriteRenderer.sprite
 
         if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+            if entity:hasTag("Tree") then
+                print("[Foliage] sprite draw id=", entity.id)
+            end
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = spriteRenderer.width
             if iffy.tilesets[spriteSheet] then
@@ -352,61 +367,114 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
     love.graphics.pop()
 end
 
+---Draw entity with foliage sway shader
+---@param entity Entity The entity to draw
+---@param x number X position
+---@param y number Y position
+---@param spriteRenderer SpriteRenderer The sprite renderer component
+---@param animator Animator|nil The animator component
+function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, animator)
+    local ShaderManager = require("src.core.managers.ShaderManager")
+    local foliageSwayShader = ShaderManager.getShader("foliage_sway")
+    local noiseTexture = ShaderManager.getNoiseTexture()
 
----Draw oxygen safe zone around the reactor
---- This can be removed when we implement the tethered oxygen system
-function RenderSystem:drawOxygenSafeZone()
-    -- Get world reference
-    local world = nil
-    if #self.entities > 0 and self.entities[1]._world then
-        world = self.entities[1]._world
-    end
-
-    if not world then
+    if not foliageSwayShader or not noiseTexture then
+        -- Fallback to normal drawing if shader not available
         return
     end
 
-    -- Find the reactor entity
-    local reactor = nil
-    for _, entity in ipairs(world.entities) do
-        if entity:hasTag("Reactor") then
-            reactor = entity
-            break
+    -- Set the foliage sway shader
+    love.graphics.setShader(foliageSwayShader)
+
+    -- Set shader uniforms
+    foliageSwayShader:send("Time", love.timer.getTime())
+    foliageSwayShader:send("NoiseTexture", noiseTexture)
+    foliageSwayShader:send("WorldPosition", {x, y})
+
+    -- Get the actual texture dimensions from the image being drawn
+    local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
+
+    if animator and animator.sheet then
+        local iffy = require("lib.iffy")
+        local current = animator:getCurrentFrame()
+
+        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+            -- Get the actual image dimensions
+            local image = iffy.images[animator.sheet]
+            if image then
+                textureWidth, textureHeight = image:getDimensions()
+            end
+        end
+    elseif spriteRenderer.sprite then
+        local iffy = require("lib.iffy")
+        local spriteSheet = spriteRenderer.sprite
+
+        if iffy.images[spriteSheet] then
+            -- Get the actual image dimensions
+            textureWidth, textureHeight = iffy.images[spriteSheet]:getDimensions()
         end
     end
 
-    if not reactor then
-        return
+    foliageSwayShader:send("TextureSize", {textureWidth, textureHeight})
+
+    -- Draw the sprite (shader will handle the sway effect)
+    local isBullet = entity:hasTag("Bullet")
+    local hasDrawnSomething = false
+
+    -- Draw animation if it exists, otherwise draw static sprite (not both!)
+    if animator and animator.sheet then
+        local iffy = require("lib.iffy")
+        local current = animator:getCurrentFrame()
+
+        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+            -- Get the actual sprite frame dimensions from Iffy tileset
+            local frameWidth = 24
+            if iffy.tilesets[animator.sheet] then
+                frameWidth = iffy.tilesets[animator.sheet][1]
+            end
+
+            -- Adjust position for horizontal flipping to keep sprite centered
+            local drawX = x
+            if spriteRenderer.scaleX < 0 then
+                drawX = x + frameWidth
+            end
+
+            love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            hasDrawnSomething = true
+        end
+    elseif spriteRenderer.sprite then
+        local iffy = require("lib.iffy")
+        local spriteSheet = spriteRenderer.sprite
+
+        if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+            -- Get the actual sprite frame dimensions from Iffy tileset
+            local frameWidth = spriteRenderer.width
+            if iffy.tilesets[spriteSheet] then
+                frameWidth = iffy.tilesets[spriteSheet][1]
+            end
+
+            -- Adjust position for horizontal flipping to keep sprite centered
+            local drawX = x
+            if spriteRenderer.scaleX < 0 then
+                drawX = x + frameWidth
+            end
+
+            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            hasDrawnSomething = true
+        end
     end
 
-    -- Get reactor position
-    local position = reactor:getComponent("Position")
-    if not position then
-        return
+    -- Fallback: draw rectangle if nothing was drawn
+    if not hasDrawnSomething then
+        drawRectangle(x, y, spriteRenderer, isBullet)
     end
 
-    -- Get the safe zone radius from constants
-    local GameConstants = require("src.constants")
-    local safeRadius = GameConstants.REACTOR_SAFE_RADIUS
 
-    -- Calculate reactor center (reactor is 96x96)
-    local spriteRenderer = reactor:getComponent("SpriteRenderer")
-    local reactorCenterX = position.x + (spriteRenderer and spriteRenderer.width or 96) / 2
-    local reactorCenterY = position.y + (spriteRenderer and spriteRenderer.height or 96) / 2
-
-    -- Draw the oxygen safe zone as a semi-transparent circle
-    -- Use a cyan/light blue color to indicate "breathable air"
-    love.graphics.setColor(0.3, 0.7, 1.0, 0.15) -- Light blue with low opacity
-    love.graphics.circle("fill", reactorCenterX, reactorCenterY, safeRadius, 64)
-
-    -- Draw a slightly visible border
-    love.graphics.setColor(0.4, 0.8, 1.0, 0.4) -- Brighter blue for border
-    love.graphics.setLineWidth(2)
-    love.graphics.circle("line", reactorCenterX, reactorCenterY, safeRadius, 64)
-
-    -- Reset graphics state
+    -- Reset shader and color
+    love.graphics.setShader()
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setLineWidth(1)
 end
 
 return RenderSystem
+
+
