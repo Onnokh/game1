@@ -34,10 +34,10 @@ PlayerConfig.RUNNING_ANIMATION = {
 }
 
 PlayerConfig.DASH_ANIMATION = {
-  sheet = "new",
-  frames = {1, 2, 3, 4},
-  fps = 4,
-  loop = true
+  sheet = "heu_slide",
+  frames = {1, 2},
+  fps = 8,
+  loop = false
 }
 
 -- Physics settings
