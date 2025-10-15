@@ -11,7 +11,7 @@ PlayerConfig.DASH_SPEED = 4           -- Dash speed multiplier (3x faster)
 PlayerConfig.DASH_BURST_MULTIPLIER = 2
 
 -- Dash mechanics
-PlayerConfig.DASH_DURATION = .15        -- How long dash lasts (seconds)
+PlayerConfig.DASH_DURATION = .25        -- How long dash lasts (seconds)
 PlayerConfig.DASH_COOLDOWN = .1        -- Cooldown between dashes (seconds)
 
 
@@ -39,8 +39,8 @@ PlayerConfig.RUNNING_ANIMATION = {
 
 PlayerConfig.DASH_ANIMATION = {
   sheet = "heu_slide",
-  frames = {1, 2},
-  fps = 8,
+  frames = {2},
+  fps = 16,
   loop = false
 }
 
@@ -72,8 +72,8 @@ PlayerConfig.WALKING_PARTICLES = {
 }
 
 -- Dash shadow effects
-PlayerConfig.DASH_SHADOW_DISTANCE = 25  -- Pixels between shadows
+PlayerConfig.DASH_SHADOW_DISTANCE = 45  -- Pixels between shadows
 PlayerConfig.DASH_SHADOW_FADE_TIME = 0.2  -- How fast shadows fade after dash ends
-PlayerConfig.DASH_SHADOW_OPACITY = 0.3  -- Initial opacity of shadows
+PlayerConfig.DASH_SHADOW_OPACITY = 0.1  -- Initial opacity of shadows
 
 return PlayerConfig

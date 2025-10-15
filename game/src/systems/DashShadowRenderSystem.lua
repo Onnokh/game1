@@ -38,7 +38,7 @@ function DashShadowRenderSystem:draw()
                 -- Motion blur effect: draw multiple slightly offset copies
                 local baseOpacity = dashShadow:getOpacity()
                 local blurSteps = 4  -- Number of blur layers
-                local blurOffset = 3  -- Pixels to offset each blur layer
+                local blurOffset = 6  -- Pixels to offset each blur layer
 
                 -- Get dash direction for motion blur direction from stored dash direction
                 local blurDirX = dashShadow.dashDirX or 0
@@ -46,7 +46,7 @@ function DashShadowRenderSystem:draw()
 
                 -- Draw motion blur layers (further back = more transparent)
                 for i = blurSteps, 1, -1 do
-                    local blurAlpha = baseOpacity * (0.3 * i / blurSteps)  -- Fade each layer
+                    local blurAlpha = baseOpacity * (1 * i / blurSteps)  -- Fade each layer
                     love.graphics.setColor(1, 1, 1, blurAlpha)
 
                     local offsetX = blurDirX * blurOffset * i

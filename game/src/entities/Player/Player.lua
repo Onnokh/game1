@@ -13,6 +13,7 @@ local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
 local Inventory = require("src.components.Inventory")
+local FootprintsEmitter = require("src.components.FootprintsEmitter")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -163,6 +164,18 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("GroundShadow", groundShadow)
     playerEntity:addComponent("Inventory", inventory)
+    -- Add footprints emitter (paused during dash)
+    playerEntity:addComponent("FootprintsEmitter", FootprintsEmitter.new({
+        spacing = 15,
+        lifetime = 5,
+        baseAlpha = 0.45,
+        limbs = {
+            { lateral = -3, phase = 0.0 },
+            { lateral =  3, phase = 0.5 }
+        },
+        maxCount = 300,
+        pausedByStates = { "dash" }
+    }))
 
     if world then
         world:addEntity(playerEntity)

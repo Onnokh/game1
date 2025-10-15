@@ -37,6 +37,7 @@ local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local DashShadowSystem = require("src.systems.DashShadowSystem")
 local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
 local ShaderManager = require("src.core.managers.ShaderManager")
+  local FootprintsSystem = require("src.systems.FootprintsSystem")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
 local worldWidth = 0  -- Will be set by loaded map
@@ -99,6 +100,7 @@ function GameScene.load()
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
   ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
+  ecsWorld:addSystem(FootprintsSystem.new()) -- Draw footprints below sprites
   ecsWorld:addSystem(DashShadowRenderSystem.new()) -- Render dash shadows
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
   ecsWorld:addSystem(ParticleRenderSystem.new()) -- Render particles above sprites
