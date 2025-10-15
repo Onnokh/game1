@@ -363,6 +363,8 @@ local function spawnEntities(ecsWorld, physicsWorld)
         for _, obj in ipairs(objects.other or {}) do
             if obj.name == "Tree" then
                 Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
+            elseif obj.name == "Tree2" then
+                Tree2.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
             elseif obj.name == "Shop" then
                 -- Shop is a rectangle object (not a tile), so y is at top (don't subtract height)
                 -- Create unique shop ID using island and position for deterministic seed
@@ -475,6 +477,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed)
     end
     if not Tree then
         Tree = require("src.entities.Decoration.Tree")
+    end
+    if not Tree2 then
+        Tree2 = require("src.entities.Decoration.Tree2")
     end
     if not Shop then
         Shop = require("src.entities.Shop.Shop")
