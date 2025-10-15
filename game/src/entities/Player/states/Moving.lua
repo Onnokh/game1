@@ -53,28 +53,42 @@ function Moving:onUpdate(stateMachine, entity, dt)
     -- Access gameState from the global state
     local GameState = require("src.core.GameState")
     if GameState and GameState.input and movement then
-        local velocityX, velocityY = 0, 0
-        if GameState.input.left then velocityX = -movement.maxSpeed end
-        if GameState.input.right then velocityX = movement.maxSpeed end
-        if GameState.input.up then velocityY = -movement.maxSpeed end
-        if GameState.input.down then velocityY = movement.maxSpeed end
+        local desiredX, desiredY = 0, 0
+        if GameState.input.left then desiredX = -movement.maxSpeed end
+        if GameState.input.right then desiredX = movement.maxSpeed end
+        if GameState.input.up then desiredY = -movement.maxSpeed end
+        if GameState.input.down then desiredY = movement.maxSpeed end
 
-        -- Normalize diagonal movement to prevent faster diagonal movement
-        local magnitude = math.sqrt(velocityX * velocityX + velocityY * velocityY)
+        -- Normalize diagonal to maintain consistent top speed
+        local magnitude = math.sqrt(desiredX * desiredX + desiredY * desiredY)
         if magnitude > 0 then
-            local normalizedX = velocityX / magnitude
-            local normalizedY = velocityY / magnitude
-            velocityX = normalizedX * movement.maxSpeed
-            velocityY = normalizedY * movement.maxSpeed
+            local normalizedX = desiredX / magnitude
+            local normalizedY = desiredY / magnitude
+            desiredX = normalizedX * movement.maxSpeed
+            desiredY = normalizedY * movement.maxSpeed
         end
 
-        movement:setVelocity(velocityX, velocityY)
+        -- If no input, stop immediately to avoid gliding
+        if desiredX == 0 and desiredY == 0 then
+            movement:setVelocity(0, 0)
+        else
+            -- Accelerate current velocity toward desired velocity
+            local deltaX = desiredX - movement.velocityX
+            local deltaY = desiredY - movement.velocityY
+            local deltaLen = math.sqrt(deltaX * deltaX + deltaY * deltaY)
+            if deltaLen > 0 then
+                local maxStep = movement.acceleration * dt
+                local step = math.min(maxStep, deltaLen)
+                local ux, uy = deltaX / deltaLen, deltaY / deltaLen
+                movement:addVelocity(ux * step, uy * step)
+            end
+        end
 
         -- Spawn walking particles if moving and enough time has passed
-        if (velocityX ~= 0 or velocityY ~= 0) and PlayerConfig.WALKING_PARTICLES.enabled then
+        if (desiredX ~= 0 or desiredY ~= 0) and PlayerConfig.WALKING_PARTICLES.enabled then
             local lastSpawn = stateMachine:getStateData("lastParticleSpawn") or 0
             if walkTime - lastSpawn >= PlayerConfig.WALKING_PARTICLES.spawnRate then
-                self:spawnWalkingParticles(entity, velocityX, velocityY)
+                self:spawnWalkingParticles(entity, desiredX, desiredY)
                 stateMachine:setStateData("lastParticleSpawn", walkTime)
             end
         end

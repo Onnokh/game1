@@ -46,6 +46,22 @@ function Dash:onEnter(stateMachine, entity)
     stateMachine:setStateData("dashDirX", dashDirX)
     stateMachine:setStateData("dashDirY", dashDirY)
 
+    -- Apply a one-time dash impulse to velocity
+    local movement = entity:getComponent("Movement")
+    if movement then
+        -- Normalize diagonal
+        local mag = math.sqrt(dashDirX * dashDirX + dashDirY * dashDirY)
+        if mag > 0 then
+            dashDirX = dashDirX / mag
+            dashDirY = dashDirY / mag
+        end
+
+        -- Immediate burst: set velocity to a higher-than-dash speed once
+        local burst = movement.maxSpeed * PlayerConfig.DASH_SPEED * (PlayerConfig.DASH_BURST_MULTIPLIER or 1)
+        movement:setVelocity(dashDirX * burst, dashDirY * burst)
+        stateMachine:setStateData("dashBurst", burst)
+    end
+
     -- Stop any movement sound when entering dash (single global reference)
     local movementSound = stateMachine:getGlobalData("movementSound")
     if movementSound then
@@ -75,28 +91,8 @@ function Dash:onUpdate(stateMachine, entity, dt)
     dashTime = dashTime + dt
     stateMachine:setStateData("dashTime", dashTime)
 
-    -- Handle dash movement with high velocity using stored direction
-    local movement = entity:getComponent("Movement")
-
-    if movement then
-        local dashSpeed = movement.maxSpeed * PlayerConfig.DASH_SPEED
-
-        -- Use the stored dash direction from when dash started
-        local dashDirX = stateMachine:getStateData("dashDirX") or 0
-        local dashDirY = stateMachine:getStateData("dashDirY") or 1
-
-        -- Normalize diagonal movement to prevent faster diagonal movement
-        local magnitude = math.sqrt(dashDirX * dashDirX + dashDirY * dashDirY)
-        if magnitude > 0 then
-            dashDirX = dashDirX / magnitude
-            dashDirY = dashDirY / magnitude
-        end
-
-        local velocityX = dashDirX * dashSpeed
-        local velocityY = dashDirY * dashSpeed
-
-        movement:setVelocity(velocityX, velocityY)
-    end
+    -- Maintain a decaying speed floor along dash direction for strong burst feel
+    -- Impulse-based dash only; no per-frame enforcement
 
     -- Auto-transition out of dash when duration is over
     if dashTime >= dashDuration then
@@ -109,10 +105,18 @@ end
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
 function Dash:onExit(stateMachine, entity)
-    -- Clear velocity when exiting dash to prevent continued movement
+    -- Reset velocity at the end of dash only if no movement input is held
     local movement = entity:getComponent("Movement")
     if movement then
-        movement:setVelocity(0, 0)
+        local GameState = require("src.core.GameState")
+        local hasInput = false
+        if GameState and GameState.input then
+            local input = GameState.input
+            hasInput = (input.left or input.right or input.up or input.down) == true
+        end
+        if not hasInput then
+            movement:setVelocity(0, 0)
+        end
     end
 
     -- Unlock the state machine to allow transitions again

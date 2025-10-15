@@ -5,11 +5,15 @@ local PlayerConfig = {}
 -- Movement speeds (multipliers of base speed)
 PlayerConfig.WALKING_SPEED = .8        -- Normal walking speed
 PlayerConfig.RUNNING_SPEED = 1.5        -- Running speed multiplier (50% faster)
-PlayerConfig.DASH_SPEED = 2.5           -- Dash speed multiplier (3x faster)
+PlayerConfig.DASH_SPEED = 3           -- Dash speed multiplier (3x faster)
+
+-- Extra burst multiplier applied only on dash start
+PlayerConfig.DASH_BURST_MULTIPLIER = 1.5
 
 -- Dash mechanics
-PlayerConfig.DASH_DURATION = .8        -- How long dash lasts (seconds)
-PlayerConfig.DASH_COOLDOWN = 1        -- Cooldown between dashes (seconds)
+PlayerConfig.DASH_DURATION = .5        -- How long dash lasts (seconds)
+PlayerConfig.DASH_COOLDOWN = .1        -- Cooldown between dashes (seconds)
+
 
 -- Animation settings
 PlayerConfig.IDLE_ANIMATION = {
