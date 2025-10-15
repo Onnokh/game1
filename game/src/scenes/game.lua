@@ -116,6 +116,7 @@ function GameScene.load()
   local OxygenCounterSystem = require("src.systems.UISystems.OxygenCounterSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
   local AggroVignetteSystem = require("src.systems.UISystems.AggroVignetteSystem")
+  local DashSpeedLinesSystem = require("src.systems.UISystems.DashSpeedLinesSystem")
   local WeaponIndicatorSystem = require("src.systems.UISystems.WeaponIndicatorSystem")
   local ShopUISystem = require("src.systems.UISystems.ShopUISystem")
 
@@ -138,6 +139,7 @@ function GameScene.load()
   uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
+  uiWorld:addSystem(DashSpeedLinesSystem.new(ecsWorld)) -- Show speed lines when player is dashing
 
   -- Load complete world using MapManager (handles everything: islands, pathfinding, collisions, entities, camera)
   -- Check if we're loading from a save (which would have a specific seed)

@@ -8,8 +8,8 @@ PlayerConfig.RUNNING_SPEED = 1.5        -- Running speed multiplier (50% faster)
 PlayerConfig.DASH_SPEED = 2.5           -- Dash speed multiplier (3x faster)
 
 -- Dash mechanics
-PlayerConfig.DASH_DURATION = .4        -- How long dash lasts (seconds)
-PlayerConfig.DASH_COOLDOWN = 3        -- Cooldown between dashes (seconds)
+PlayerConfig.DASH_DURATION = .8        -- How long dash lasts (seconds)
+PlayerConfig.DASH_COOLDOWN = 1        -- Cooldown between dashes (seconds)
 
 -- Animation settings
 PlayerConfig.IDLE_ANIMATION = {
