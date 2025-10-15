@@ -19,17 +19,17 @@ GameConstants.TILE_SIZE = 32  -- Match Tiled map tile size
 GameConstants.MAX_BRIDGE_DISTANCE_TILES = 10 -- Maximum distance between islands for bridge generation
 
 -- Bridge tile GIDs
-GameConstants.BRIDGE_TILE_HORIZONTAL = {492, nil} -- Middle tiles for horizontal (east-west) bridges [top, bottom]
-GameConstants.BRIDGE_TILE_VERTICAL = 492         -- Middle tile for vertical (north-south) bridges
+GameConstants.BRIDGE_TILE_HORIZONTAL = {493, nil} -- Middle tiles for horizontal (east-west) bridges [top, bottom]
+GameConstants.BRIDGE_TILE_VERTICAL = 493         -- Middle tile for vertical (north-south) bridges
 
 -- Attachment patterns
-GameConstants.BRIDGE_ATTACH_NORTH = {nil, 492, nil} -- 1 row: left to right
-GameConstants.BRIDGE_ATTACH_EAST = {nil, 492, nil}  -- 1 column: top to bottom
+GameConstants.BRIDGE_ATTACH_NORTH = {nil, 493, nil} -- 1 row: left to right
+GameConstants.BRIDGE_ATTACH_EAST = {nil, 493, nil}  -- 1 column: top to bottom
 GameConstants.BRIDGE_ATTACH_SOUTH = {
-    {nil, 492, nil},  -- Row 1: left to right
-    {nil, 492, nil}   -- Row 2: left to right
+    {nil, 493, nil},  -- Row 1: left to right
+    {nil, 493, nil}   -- Row 2: left to right
 }
-GameConstants.BRIDGE_ATTACH_WEST = {nil, 492, nil}  -- 1 column: top to bottom
+GameConstants.BRIDGE_ATTACH_WEST = {nil, 493, nil}  -- 1 column: top to bottom
 
 -- Blocked tile GIDs (walls, obstacles, etc.)
 GameConstants.BLOCKED_TILE_GIDS = {699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 725, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739}
@@ -41,10 +41,10 @@ GameConstants.TILE_LIGHTS = {
     -- [GID] = { radius = 200, r = 255, g = 200, b = 100, offsetX = 16, offsetY = 16, flicker = true }
 
     -- Example light tiles (uncomment` and modify as needed):
-    [727] = { radius = 30, r = 255, g = 220, b = 150, offsetX = 24, offsetY = 14, flicker = true },
-    [730] = { radius = 20, r = 150, g = 220, b = 255, offsetX = 10, offsetY = 6, flicker = true },
-    [731] = { radius = 20, r = 150, g = 220, b = 255, offsetX = 24, offsetY = 6, flicker = true },
-    [734] = { radius = 30, r = 255, g = 220, b = 150, offsetX = 8, offsetY = 14, flicker = true },
+    [728] = { radius = 30, r = 255, g = 220, b = 150, offsetX = 24, offsetY = 14, flicker = true },
+    [731] = { radius = 20, r = 150, g = 220, b = 255, offsetX = 10, offsetY = 6, flicker = true },
+    [732] = { radius = 20, r = 150, g = 220, b = 255, offsetX = 24, offsetY = 6, flicker = true },
+    [735] = { radius = 30, r = 255, g = 220, b = 150, offsetX = 8, offsetY = 14, flicker = true },
 }
 
 -- Player constants
