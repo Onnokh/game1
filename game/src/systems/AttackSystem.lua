@@ -2,6 +2,7 @@ local System = require("src.core.System")
 local GameState = require("src.core.GameState")
 local EntityUtils = require("src.utils.entities")
 local Knockback = require("src.components.Knockback")
+local luven = require("lib.luven.luven")
 
 ---@class AttackSystem : System
 ---Handles attacks for entities with Attack component
@@ -329,9 +330,26 @@ function AttackSystem:spawnBullet(entity)
         directionY = directionY / directionLength
 
         -- Offset spawn position slightly in front of attacker to avoid self-collision
-        local spawnOffset = 16
+        local spawnOffset = 8
         spawnX = spawnX + directionX * spawnOffset
         spawnY = spawnY + directionY * spawnOffset
+
+        -- Create a short-lived cone flashing light to simulate muzzle flash
+        do
+            local angle = math.atan2(directionY, directionX)
+            -- Warm yellowish flash, brief and bright, stretched forward
+            luven.addFlashingLight(
+                spawnX,
+                spawnY,
+                luven.newColor(1, 0.95, 0.7, 1),
+                .25,   -- maxPower
+                0.06,  -- speed (seconds to peak; then auto-removes)
+                luven.lightShapes.cone,
+                angle,
+                1,   -- scaleX (stretch forward)
+                .5    -- scaleY
+            )
+        end
 
         -- Create bullet entity
         local BulletEntity = require("src.entities.Bullet")

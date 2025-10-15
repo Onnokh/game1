@@ -6,7 +6,7 @@ function Discovery.onEnter(gameState)
   local GameScene = require("src.scenes.game")
   if GameScene and GameScene.setAmbientColor then
     -- brighter daylight
-    GameScene.setAmbientColor(255, 240, 255, 255, 5)
+    GameScene.setAmbientColor(210, 210, 210, 255, 5)  -- Dark ambient lighting
   end
 end
 
