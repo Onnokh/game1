@@ -5,6 +5,7 @@ local PathfindingCollision = require("src.components.PathfindingCollision")
 local Shop = require("src.components.Shop")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
+local Light = require("src.components.Light")
 ---@class ShopEntity
 local ShopEntity = {}
 
@@ -33,6 +34,10 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
         collider:createCollider(physicsWorld, x, y)
     end
 
+    local light = Light.new({
+        { r = 255, g = 0, b = 255, radius = 48, offsetX = 36, offsetY = 16, flicker = false, flickerRadiusAmplitude = 1.2 }
+    })
+
     -- Store interaction range as entity property for ShopUISystem
     shop.interactionRange = 80
 
@@ -41,6 +46,7 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
     shop:addComponent("PathfindingCollision", collider)
     shop:addComponent("Animator", animation)
     shop:addComponent("Shop", shopComponent)
+    shop:addComponent("Light", light)
     shop:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = .8, heightFactor = .6, offsetY = 0 }))
 
     -- Tag for easy querying
