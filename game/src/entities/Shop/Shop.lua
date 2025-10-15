@@ -3,7 +3,8 @@ local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local PathfindingCollision = require("src.components.PathfindingCollision")
 local Shop = require("src.components.Shop")
-
+local GroundShadow = require("src.components.GroundShadow")
+local Animator = require("src.components.Animator")
 ---@class ShopEntity
 local ShopEntity = {}
 
@@ -20,7 +21,10 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
 
     local shop = Entity.new()
     local position = Position.new(x, y, 0)
-    local spriteRenderer = SpriteRenderer.new('shop', 64, 64)
+    local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
+    local animation = Animator.new({ sheet = 'shop', frames = {1}, fps = 1, loop = true })
+    animation:setAnimation({ sheet = 'shop', frames = {1, 2, 3, 4, 5, 6, 7, 8}, fps = 8, loop = true })
+
     local shopComponent = Shop.new(inventory, seed, shopId)
 
     -- Create pathfinding collision (similar to Reactor)
@@ -35,7 +39,9 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
     shop:addComponent("Position", position)
     shop:addComponent("SpriteRenderer", spriteRenderer)
     shop:addComponent("PathfindingCollision", collider)
+    shop:addComponent("Animator", animation)
     shop:addComponent("Shop", shopComponent)
+    shop:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = .8, heightFactor = .6, offsetY = 0 }))
 
     -- Tag for easy querying
     shop:addTag("Shop")
