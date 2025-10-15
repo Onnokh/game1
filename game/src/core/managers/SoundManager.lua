@@ -17,6 +17,8 @@ function SoundManager.load()
   -- Load sound effects
   SoundManager.loadSound("coin", "resources/sounds/coin2.mp3", "static")
   SoundManager.loadSound("gunshot", "resources/sounds/shot1.mp3", "static")
+  SoundManager.loadSound("running", "resources/sounds/running.mp3", "static")
+  SoundManager.loadSound("dash", "resources/sounds/dash2.mp3", "static")
 
   print("SoundManager: Sounds loaded successfully")
 end
@@ -65,6 +67,39 @@ function SoundManager.play(name, volume, pitch)
 
   -- Play the sound
   instance:play()
+end
+
+---Play a looping sound effect
+---@param name string The name of the sound to play
+---@param volume number|nil Optional volume override (0.0 to 1.0)
+---@param pitch number|nil Optional pitch (default 1.0)
+---@return table|nil The sound instance for stopping later
+function SoundManager.playLooping(name, volume, pitch)
+  local sound = sounds[name]
+  if not sound then
+    print("SoundManager: Sound '" .. name .. "' not found")
+    return nil
+  end
+
+  -- Clone the sound so we can play multiple instances
+  local instance = sound:clone()
+
+  -- Set volume
+  local finalVolume = (volume or 1.0) * sfxVolume
+  instance:setVolume(finalVolume)
+
+  -- Set pitch if provided
+  if pitch then
+    instance:setPitch(pitch)
+  end
+
+  -- Set looping
+  instance:setLooping(true)
+
+  -- Play the sound
+  instance:play()
+
+  return instance
 end
 
 ---Play music (replaces currently playing music)

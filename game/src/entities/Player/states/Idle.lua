@@ -5,6 +5,7 @@ Idle.__index = Idle
 setmetatable(Idle, {__index = require("src.core.State")})
 
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
+local SoundManager = require("src.core.managers.SoundManager")
 
 ---@return Idle The created idle state
 function Idle.new()
@@ -22,6 +23,14 @@ function Idle:onEnter(stateMachine, entity)
     local animator = entity:getComponent("Animator")
     if animator then
         animator:setAnimation(PlayerConfig.IDLE_ANIMATION)
+    end
+
+    -- Stop any movement sound when entering idle (single global reference)
+    local movementSound = stateMachine:getGlobalData("movementSound")
+    print("Idle: Stopping movementSound:", movementSound ~= nil)
+    if movementSound then
+        movementSound:stop()
+        stateMachine:setGlobalData("movementSound", nil)
     end
 end
 

@@ -5,6 +5,7 @@ Moving.__index = Moving
 setmetatable(Moving, {__index = require("src.core.State")})
 
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
+local SoundManager = require("src.core.managers.SoundManager")
 
 ---@return Moving The created moving state
 function Moving.new()
@@ -23,6 +24,18 @@ function Moving:onEnter(stateMachine, entity)
     local animator = entity:getComponent("Animator")
     if animator then
         animator:setAnimation(PlayerConfig.WALKING_ANIMATION)
+    end
+
+    -- Start or reuse movement sound globally; only adjust volume when switching
+    local existingSound = stateMachine:getGlobalData("movementSound")
+    if not existingSound then
+        local walkingSound = SoundManager.playLooping("running", 0.4) -- Lower volume for walking
+        stateMachine:setGlobalData("movementSound", walkingSound)
+        print("Moving: Created new movement sound")
+    else
+        -- Reuse existing instance to avoid restarting; adjust volume for walking
+        existingSound:setVolume(0.4 * SoundManager.getSFXVolume())
+        print("Moving: Reusing movement sound (walking volume)")
     end
 end
 

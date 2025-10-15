@@ -5,6 +5,7 @@ Dash.__index = Dash
 setmetatable(Dash, {__index = require("src.core.State")})
 
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
+local SoundManager = require("src.core.managers.SoundManager")
 
 ---@return Dash The created dash state
 function Dash.new()
@@ -45,11 +46,22 @@ function Dash:onEnter(stateMachine, entity)
     stateMachine:setStateData("dashDirX", dashDirX)
     stateMachine:setStateData("dashDirY", dashDirY)
 
+    -- Stop any movement sound when entering dash (single global reference)
+    local movementSound = stateMachine:getGlobalData("movementSound")
+    if movementSound then
+        movementSound:stop()
+        stateMachine:setGlobalData("movementSound", nil)
+        print("Dash: Stopped movement sound")
+    end
+
     -- Set dash animation when entering state
     local animator = entity:getComponent("Animator")
     if animator then
         animator:setAnimation(PlayerConfig.DASH_ANIMATION)
     end
+
+    -- Play dash sound effect
+    SoundManager.play("dash", 1) -- Higher volume for impact sound
 end
 
 ---Called every frame while in this state
