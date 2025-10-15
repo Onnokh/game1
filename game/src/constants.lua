@@ -19,17 +19,17 @@ GameConstants.TILE_SIZE = 32  -- Match Tiled map tile size
 GameConstants.MAX_BRIDGE_DISTANCE_TILES = 10 -- Maximum distance between islands for bridge generation
 
 -- Bridge tile GIDs
-GameConstants.BRIDGE_TILE_HORIZONTAL = {493, nil} -- Middle tiles for horizontal (east-west) bridges [top, bottom]
-GameConstants.BRIDGE_TILE_VERTICAL = 493         -- Middle tile for vertical (north-south) bridges
+GameConstants.BRIDGE_TILE_HORIZONTAL = {376, 402} -- Middle tiles for horizontal (east-west) bridges [top, bottom]
+GameConstants.BRIDGE_TILE_VERTICAL = 378         -- Middle tile for vertical (north-south) bridges
 
 -- Attachment patterns
-GameConstants.BRIDGE_ATTACH_NORTH = {nil, 493, nil} -- 1 row: left to right
-GameConstants.BRIDGE_ATTACH_EAST = {nil, 493, nil}  -- 1 column: top to bottom
+GameConstants.BRIDGE_ATTACH_NORTH = {nil, 488, nil}  -- Row 1: left to right
+GameConstants.BRIDGE_ATTACH_EAST = {536, 326, 588}  -- 1 column: top to bottom
 GameConstants.BRIDGE_ATTACH_SOUTH = {
-    {nil, 493, nil},  -- Row 1: left to right
-    {nil, 493, nil}   -- Row 2: left to right
+    {nil, 460, nil},  -- Row 1: left to right
+    {nil, 486, nil}   -- Row 2: left to right
 }
-GameConstants.BRIDGE_ATTACH_WEST = {nil, 493, nil}  -- 1 column: top to bottom
+GameConstants.BRIDGE_ATTACH_WEST = {540, 566, 592}  -- 1 column: top to bottom
 
 -- Blocked tile GIDs (walls, obstacles, etc.)
 GameConstants.BLOCKED_TILE_GIDS = {699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 725, 726, 727, 728, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739}
