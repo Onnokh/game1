@@ -25,7 +25,9 @@ local function getDepthY(entity)
     -- Try to get height from SpriteRenderer first
     local spriteRenderer = entity:getComponent("SpriteRenderer")
     if spriteRenderer then
-        bottomY = bottomY + spriteRenderer.height
+        -- Use custom depth sort height if available, otherwise use full height
+        local height = spriteRenderer.depthSortHeight or spriteRenderer.height
+        bottomY = bottomY + height
     else
         -- Fall back to PathfindingCollision if no sprite renderer
         local pathfindingCollision = entity:getComponent("PathfindingCollision")

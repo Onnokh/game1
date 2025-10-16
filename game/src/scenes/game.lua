@@ -18,6 +18,7 @@ local RenderSystem = require("src.systems.RenderSystem")
 local AnimationSystem = require("src.systems.AnimationSystem")
 local GroundShadowSystem = require("src.systems.GroundShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
+local TriggerZoneSystem = require("src.systems.TriggerZoneSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
@@ -85,6 +86,7 @@ function GameScene.load()
 
   -- Add systems to the ECS world (order matters!)
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
+  ecsWorld:addSystem(TriggerZoneSystem.new()) -- Handle trigger zone callbacks
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
   ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows

@@ -38,6 +38,25 @@ function CollisionSystem:setWorld(world)
                 if ua and type(ua) == "table" and ua.kind == "attack" then handle(a, b) end
                 if ub and type(ub) == "table" and ub.kind == "attack" then handle(b, a) end
 
+                -- Handle trigger zone collisions
+                local function handleTrigger(triggerFixture, otherFixture)
+                    if not triggerFixture then return end
+                    local u = triggerFixture:getUserData()
+                    if u and type(u) == "table" and u.kind == "trigger" and u.component then
+                        local triggerZone = u.component
+                        local otherU = otherFixture and otherFixture:getUserData() or nil
+                        local otherEntity = nil
+                        if otherU and type(otherU) == "table" and otherU.entity then
+                            otherEntity = otherU.entity
+                        end
+                        if otherEntity then
+                            triggerZone:addEntityInside(otherEntity)
+                        end
+                    end
+                end
+                if ua and type(ua) == "table" and ua.kind == "trigger" then handleTrigger(a, b) end
+                if ub and type(ub) == "table" and ub.kind == "trigger" then handleTrigger(b, a) end
+
                 -- Handle bullet collisions
                 local function handleBullet(bulletFixture, otherFixture)
                     if not bulletFixture then return end
@@ -75,7 +94,30 @@ function CollisionSystem:setWorld(world)
                 if ub and type(ub) == "table" and ub.kind == "bullet" then handleBullet(b, a) end
 
             end,
-            function() end, -- endContact
+            function(a, b, contact)
+                -- endContact
+                local ua = a and a:getUserData() or nil
+                local ub = b and b:getUserData() or nil
+
+                -- Handle trigger zone exits
+                local function handleTriggerExit(triggerFixture, otherFixture)
+                    if not triggerFixture then return end
+                    local u = triggerFixture:getUserData()
+                    if u and type(u) == "table" and u.kind == "trigger" and u.component then
+                        local triggerZone = u.component
+                        local otherU = otherFixture and otherFixture:getUserData() or nil
+                        local otherEntity = nil
+                        if otherU and type(otherU) == "table" and otherU.entity then
+                            otherEntity = otherU.entity
+                        end
+                        if otherEntity then
+                            triggerZone:removeEntityInside(otherEntity)
+                        end
+                    end
+                end
+                if ua and type(ua) == "table" and ua.kind == "trigger" then handleTriggerExit(a, b) end
+                if ub and type(ub) == "table" and ub.kind == "trigger" then handleTriggerExit(b, a) end
+            end, -- endContact
             function() end, -- preSolve
             function() end  -- postSolve
         )

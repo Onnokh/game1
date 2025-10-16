@@ -305,6 +305,9 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   -- Query all entities with PathfindingCollision components (pathfinding and physics collision) using the ECS system
   local entitiesWithPathfindingCollision = gameScene.ecsWorld:getEntitiesWith({"PathfindingCollision"})
 
+  -- Also get entities with CrystalCollider tag (child collider entities)
+  local crystalColliderEntities = gameScene.ecsWorld:getEntitiesWithTag("CrystalCollider")
+
   -- Draw pathfinding colliders for each entity
   for _, entity in ipairs(entitiesWithPathfindingCollision) do
     local pathfindingCollision = entity:getComponent("PathfindingCollision")
@@ -326,7 +329,72 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
 
       -- Draw Love2D physics collider manually (for static entities) or pathfinding bounds (for dynamic entities)
       if pathfindingCollision.collider and pathfindingCollision.collider.body and pathfindingCollision.collider.shape then
-        -- Static entities with physics bodies
+        -- Static entities with physics bodies - draw main fixture
+        local body = pathfindingCollision.collider.body
+        local shape = pathfindingCollision.collider.shape
+        local bodyX, bodyY = body:getPosition()
+        local bodyAngle = body:getAngle()
+
+        love.graphics.push()
+        love.graphics.translate(bodyX, bodyY)
+        love.graphics.rotate(bodyAngle)
+
+        -- Draw main shape
+        if shape:getType() == "rectangle" then
+          local w, h = shape:getDimensions()
+          love.graphics.rectangle("line", -w/2, -h/2, w, h)
+        elseif shape:getType() == "polygon" then
+          local points = {shape:getPoints()}
+          love.graphics.polygon("line", points)
+        elseif shape:getType() == "circle" then
+          local radius = shape:getRadius()
+          love.graphics.circle("line", 0, 0, radius)
+        end
+
+        -- Try to draw additional fixtures if they exist
+        local success, fixtures = pcall(body.getFixtures, body)
+        if success and fixtures then
+          for i, fixture in ipairs(fixtures) do
+            if fixture then
+              local additionalShape = fixture:getShape()
+              if additionalShape then
+                -- Draw additional shape
+                if additionalShape:getType() == "rectangle" then
+                  local w, h = additionalShape:getDimensions()
+                  love.graphics.rectangle("line", -w/2, -h/2, w, h)
+                elseif additionalShape:getType() == "polygon" then
+                  local points = {additionalShape:getPoints()}
+                  love.graphics.polygon("line", points)
+                elseif additionalShape:getType() == "circle" then
+                  local radius = additionalShape:getRadius()
+                  love.graphics.circle("line", 0, 0, radius)
+                end
+              end
+            end
+          end
+        end
+
+        love.graphics.pop()
+      elseif pathfindingCollision.collider then
+        -- Dynamic entities without physics bodies (pathfinding only)
+        local colliderX, colliderY = pathfindingCollision:getPosition()
+        love.graphics.rectangle("line", colliderX, colliderY, pathfindingCollision.width, pathfindingCollision.height)
+      end
+    end
+  end
+
+  -- Draw child collider entities (CrystalCollider tagged entities)
+  for _, entity in ipairs(crystalColliderEntities) do
+    local pathfindingCollision = entity:getComponent("PathfindingCollision")
+    local position = entity:getComponent("Position")
+
+    if pathfindingCollision and pathfindingCollision:hasCollider() and position then
+      -- Set color for child colliders (slightly different green)
+      love.graphics.setColor(0, 0.8, 0, 0.8) -- Darker green for child colliders
+      love.graphics.setLineWidth(1) -- Thinner line for child colliders
+
+      -- Draw Love2D physics collider for child colliders
+      if pathfindingCollision.collider and pathfindingCollision.collider.body and pathfindingCollision.collider.shape then
         local body = pathfindingCollision.collider.body
         local shape = pathfindingCollision.collider.shape
         local bodyX, bodyY = body:getPosition()
@@ -349,8 +417,8 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
         end
 
         love.graphics.pop()
-      elseif pathfindingCollision.collider then
-        -- Dynamic entities without physics bodies (pathfinding only)
+      else
+        -- Fallback: draw collider bounds manually
         local colliderX, colliderY = pathfindingCollision:getPosition()
         love.graphics.rectangle("line", colliderX, colliderY, pathfindingCollision.width, pathfindingCollision.height)
       end
@@ -404,6 +472,60 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
         end
 
         love.graphics.pop()
+      end
+    end
+  end
+
+  -- Query all entities with TriggerZone components (sensors) using the ECS system
+  local entitiesWithTriggerZone = gameScene.ecsWorld:getEntitiesWith({"TriggerZone"})
+
+  -- Debug: print number of trigger zones found
+  if #entitiesWithTriggerZone > 0 then
+    print(string.format("[Debug] Found %d trigger zones to render", #entitiesWithTriggerZone))
+  end
+
+  -- Draw trigger zones for each entity
+  for _, entity in ipairs(entitiesWithTriggerZone) do
+    local triggerZone = entity:getComponent("TriggerZone")
+    local position = entity:getComponent("Position")
+
+    if triggerZone and triggerZone:hasCollider() and position then
+      -- Debug: print trigger zone info
+      print(string.format("[Debug] Rendering trigger zone for entity %d, has collider: %s", entity.id, tostring(triggerZone:hasCollider())))
+
+      -- Set color for trigger zones (orange, semi-transparent)
+      love.graphics.setColor(1, 0.8, 0, 0.5)
+      love.graphics.setLineWidth(2)
+      -- Note: setLineStyle might not be available in all Love2D versions
+
+      -- Draw Love2D physics collider for trigger zones
+      if triggerZone.collider and triggerZone.collider.body and triggerZone.collider.shape then
+        local body = triggerZone.collider.body
+        local shape = triggerZone.collider.shape
+        local bodyX, bodyY = body:getPosition()
+        local bodyAngle = body:getAngle()
+
+        love.graphics.push()
+        love.graphics.translate(bodyX, bodyY)
+        love.graphics.rotate(bodyAngle)
+
+        -- Draw shape based on type
+        if shape:getType() == "rectangle" then
+          local w, h = shape:getDimensions()
+          love.graphics.rectangle("line", -w/2, -h/2, w, h)
+        elseif shape:getType() == "polygon" then
+          local points = {shape:getPoints()}
+          love.graphics.polygon("line", points)
+        elseif shape:getType() == "circle" then
+          local radius = shape:getRadius()
+          love.graphics.circle("line", 0, 0, radius)
+        end
+
+        love.graphics.pop()
+      else
+        -- Fallback: draw trigger zone bounds manually
+        local triggerX, triggerY = triggerZone:getPosition()
+        love.graphics.rectangle("line", triggerX, triggerY, triggerZone.width, triggerZone.height)
       end
     end
   end
