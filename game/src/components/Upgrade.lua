@@ -13,12 +13,12 @@ Upgrade.__index = Upgrade
 function Upgrade.new(world, crystalId)
     local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Upgrade"), Upgrade)
-    
+
     self.maxUpgrades = 3
     self.upgrades = {}
     self.world = world
     self.crystalId = crystalId or "unknown"
-    
+
     -- Generate initial upgrades if world is available
     if world then
         local player = world:getPlayer()
@@ -26,7 +26,7 @@ function Upgrade.new(world, crystalId)
             self:generateRandomUpgrades(player)
         end
     end
-    
+
     return self
 end
 
@@ -36,13 +36,13 @@ end
 function Upgrade:generateRandomUpgrades(player)
     local upgradesModule = require("src.definitions.upgrades")
     local tracker = player:getComponent("UpgradeTracker")
-    
+
     if not tracker then
         print("[Upgrade] Warning: Player has no UpgradeTracker component")
         self.upgrades = {}
         return self.upgrades
     end
-    
+
     -- Get all available upgrades that haven't reached max rank
     local availableUpgrades = {}
     for id, upgradeDef in pairs(upgradesModule.upgrades) do
@@ -50,29 +50,29 @@ function Upgrade:generateRandomUpgrades(player)
             table.insert(availableUpgrades, id)
         end
     end
-    
+
     -- If less than 3 upgrades available, just use what we have
     if #availableUpgrades == 0 then
         print(string.format("[Upgrade] Crystal %s: No upgrades available (all maxed out)", self.crystalId))
         self.upgrades = {}
         return self.upgrades
     end
-    
+
     -- Shuffle available upgrades
     for i = #availableUpgrades, 2, -1 do
         local j = math.random(i)
         availableUpgrades[i], availableUpgrades[j] = availableUpgrades[j], availableUpgrades[i]
     end
-    
+
     -- Take first 3 (or less if not enough available)
     self.upgrades = {}
     for i = 1, math.min(3, #availableUpgrades) do
         self.upgrades[i] = availableUpgrades[i]
     end
-    
+
     print(string.format("[Upgrade] Crystal %s: Generated %d upgrades: %s",
         self.crystalId, #self.upgrades, table.concat(self.upgrades, ", ")))
-    
+
     return self.upgrades
 end
 
@@ -83,7 +83,7 @@ function Upgrade:getUpgradeDefinition(upgradeId)
     if not upgradeId then
         return nil
     end
-    
+
     local upgradesModule = require("src.definitions.upgrades")
     return upgradesModule.getUpgrade(upgradeId)
 end
@@ -95,12 +95,12 @@ function Upgrade:getUpgrade(index)
     if index < 1 or index > self.maxUpgrades then
         return nil
     end
-    
+
     local upgradeId = self.upgrades[index]
     if not upgradeId then
         return nil
     end
-    
+
     return self:getUpgradeDefinition(upgradeId)
 end
 
@@ -119,27 +119,27 @@ function Upgrade:selectUpgrade(index, player)
         print("[Upgrade] Cannot select: invalid index")
         return nil
     end
-    
+
     local upgradeId = self.upgrades[index]
     if not upgradeId then
         print("[Upgrade] Cannot select: upgrade already selected or doesn't exist")
         return nil
     end
-    
+
     -- Get upgrade definition before removing
     local upgradeDef = self:getUpgradeDefinition(upgradeId)
     if not upgradeDef then
         print("[Upgrade] Cannot select: upgrade definition not found for " .. upgradeId)
         return nil
     end
-    
+
     print(string.format("[Upgrade] Selected '%s' from crystal %s", upgradeDef.name, self.crystalId))
-    
+
     -- Regenerate upgrades after selection
     if player then
         self:generateRandomUpgrades(player)
     end
-    
+
     return upgradeDef
 end
 

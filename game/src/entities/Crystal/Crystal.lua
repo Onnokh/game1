@@ -4,10 +4,8 @@ local SpriteRenderer = require("src.components.SpriteRenderer")
 local PathfindingCollision = require("src.components.PathfindingCollision")
 local TriggerZone = require("src.components.TriggerZone")
 local Upgrade = require("src.components.Upgrade")
--- local Crystal = require("src.components.Crystal")
-local GroundShadow = require("src.components.GroundShadow")
+local Interactable = require("src.components.Interactable")
 local Animator = require("src.components.Animator")
-local Light = require("src.components.Light")
 
 ---@class CrystalEntity
 local CrystalEntity = {}
@@ -92,11 +90,19 @@ function CrystalEntity.create(x, y, world, physicsWorld, inventory, seed, shopId
     --     { r = 255, g = 0, b = 255, radius = 48, offsetX = 56, offsetY = 32, flicker = false, flickerRadiusAmplitude = 1.2 }
     -- })
 
-    -- Store interaction range as entity property for UpgradeUISystem
-    crystalEntity.interactionRange = 20
-
     -- Upgrade component for upgrade selection
     local upgradeComponent = Upgrade.new(world, "crystal_" .. tostring(crystal.id))
+
+    -- Interactable component for E key interaction
+    local interactable = Interactable.new(
+        48, -- interaction range
+        function(player, crystalEntity)
+            -- Open upgrade UI for this crystal
+            local EventBus = require("src.utils.EventBus")
+            EventBus.emit("openCrystalUpgrade", { crystal = crystalEntity })
+        end,
+        "Press E to view upgrades"
+    )
 
     crystal:addComponent("Position", position)
     crystal:addComponent("SpriteRenderer", spriteRenderer)
@@ -104,6 +110,7 @@ function CrystalEntity.create(x, y, world, physicsWorld, inventory, seed, shopId
     crystal:addComponent("TriggerZone", stairsTrigger)
     crystal:addComponent("Animator", animation)
     crystal:addComponent("Upgrade", upgradeComponent)
+    crystal:addComponent("Interactable", interactable)
     -- crystal:addComponent("Light", light)
 
     -- Tag for easy querying

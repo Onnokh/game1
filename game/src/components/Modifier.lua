@@ -41,7 +41,7 @@ function Modifier:_getNestedValue(tbl, path)
     for key in path:gmatch("[^.]+") do
         table.insert(keys, key)
     end
-    
+
     local current = tbl
     for _, key in ipairs(keys) do
         if type(current) ~= "table" then
@@ -52,7 +52,7 @@ function Modifier:_getNestedValue(tbl, path)
             return nil
         end
     end
-    
+
     return current
 end
 
@@ -65,7 +65,7 @@ function Modifier:_setNestedValue(tbl, path, value)
     for key in path:gmatch("[^.]+") do
         table.insert(keys, key)
     end
-    
+
     local current = tbl
     for i = 1, #keys - 1 do
         local key = keys[i]
@@ -74,7 +74,7 @@ function Modifier:_setNestedValue(tbl, path, value)
         end
         current = current[key]
     end
-    
+
     current[keys[#keys]] = value
 end
 
@@ -88,17 +88,17 @@ function Modifier:apply(entity, targetPath, mode, value, source)
     if not entity then
         error("Modifier:apply - entity is nil")
     end
-    
+
     -- Parse path
     local componentName, statPath = self:_parsePath(targetPath)
-    
+
     -- Get component
     local component = entity:getComponent(componentName)
     if not component then
         print(string.format("[Modifier] Warning: Component '%s' not found on entity", componentName))
         return
     end
-    
+
     -- Store base value if this is the first modifier for this path
     if not self.baseValues[targetPath] then
         local currentValue = self:_getNestedValue(component, statPath)
@@ -109,16 +109,16 @@ function Modifier:apply(entity, targetPath, mode, value, source)
         self.baseValues[targetPath] = currentValue
         print(string.format("[Modifier] Stored base value for '%s': %s", targetPath, tostring(currentValue)))
     end
-    
+
     -- Add or update modifier
     self.activeModifiers[source] = {
         targetPath = targetPath,
         mode = mode,
         value = value
     }
-    
+
     print(string.format("[Modifier] Applied modifier '%s': %s %s at '%s'", source, mode, tostring(value), targetPath))
-    
+
     -- Recalculate stat
     self:_updateStat(entity, targetPath)
 end
@@ -131,12 +131,12 @@ function Modifier:remove(entity, source)
         print(string.format("[Modifier] Warning: Modifier source '%s' not found", source))
         return
     end
-    
+
     local targetPath = self.activeModifiers[source].targetPath
     self.activeModifiers[source] = nil
-    
+
     print(string.format("[Modifier] Removed modifier '%s' from '%s'", source, targetPath))
-    
+
     -- Recalculate stat
     self:_updateStat(entity, targetPath)
 end
@@ -151,14 +151,14 @@ function Modifier:_updateStat(entity, targetPath)
         print(string.format("[Modifier] Warning: No base value found for '%s'", targetPath))
         return
     end
-    
+
     -- Start with base value
     local finalValue = baseValue
-    
+
     -- Collect all modifiers for this path
     local addModifiers = 0
     local multiplyModifiers = 1.0
-    
+
     for source, modifier in pairs(self.activeModifiers) do
         if modifier.targetPath == targetPath then
             if modifier.mode == "add" then
@@ -168,14 +168,14 @@ function Modifier:_updateStat(entity, targetPath)
             end
         end
     end
-    
+
     -- Apply modifiers: first add, then multiply
     finalValue = (finalValue + addModifiers) * multiplyModifiers
-    
+
     -- Parse path and update component
     local componentName, statPath = self:_parsePath(targetPath)
     local component = entity:getComponent(componentName)
-    
+
     if component then
         self:_setNestedValue(component, statPath, finalValue)
         print(string.format("[Modifier] Updated '%s' from %.2f to %.2f", targetPath, baseValue, finalValue))

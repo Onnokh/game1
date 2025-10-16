@@ -93,6 +93,14 @@ function GameController.togglePause()
     return
   end
   GameController.paused = not GameController.paused
+
+  -- Emit event to show/hide pause menu
+  local EventBus = require("src.utils.EventBus")
+  if GameController.paused then
+    EventBus.emit("showPauseMenu", {})
+  else
+    EventBus.emit("hidePauseMenu", {})
+  end
 end
 
 function GameController.resetPauseState()
