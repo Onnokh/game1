@@ -10,6 +10,7 @@ local Player = nil
 local Reactor = nil
 local Tree = nil
 local Shop = nil
+local Crystal = nil
 local BridgeManager = nil
 local GameConstants = nil
 local MobManager = nil
@@ -366,10 +367,15 @@ local function spawnEntities(ecsWorld, physicsWorld)
             elseif obj.name == "Tree2" then
                 Tree2.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
             elseif obj.name == "Shop" then
-                -- Shop is a rectangle object (not a tile), so y is at top (don't subtract height)
+                -- Shop is bottom-left aligned in Tiled, so subtract height to get top-left position
                 -- Create unique shop ID using island and position for deterministic seed
                 local shopId = string.format("%s_shop_%d_%d", island.id, obj.x, obj.y)
-                Shop.create(islandX + obj.x, islandY + obj.y, ecsWorld, physicsWorld, nil, MapManager.currentSeed, shopId)
+                Shop.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, nil, MapManager.currentSeed, shopId)
+              elseif obj.name == "Crystal" then
+                -- Crystal is bottom-left aligned in Tiled, so subtract height to get top-left position
+                -- Create unique crystal ID using island and position for deterministic seed
+                local crystalId = string.format("%s_crystal_%d_%d", island.id, obj.x, obj.y)
+                Crystal.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, nil, MapManager.currentSeed, crystalId)
             elseif obj.name == "MobSpawn" then
                 -- General mob spawn area (can be immediate or phase-based)
                 local amount = 1
@@ -483,6 +489,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed)
     end
     if not Shop then
         Shop = require("src.entities.Shop.Shop")
+    end
+    if not Crystal then
+        Crystal = require("src.entities.Crystal.Crystal")
     end
     if not BridgeManager then
         BridgeManager = require("src.core.managers.BridgeManager")

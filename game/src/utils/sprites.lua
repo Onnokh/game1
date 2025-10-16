@@ -62,6 +62,9 @@ function IffySprites.load()
   -- Load shop spritesheet (1x1 grid, 64x64)
   loadSpritesheet("shop", "resources/objects/shop.png", 8, 1)
 
+  -- crystal spritesheet (14x1 grid, 112x112)
+  loadSpritesheet("crystal", "resources/objects/crystal.png", 14, 1)
+
 
   -- load warhog spritesheets (4x4 grid, 64x64 per frame)
   loadSpritesheet("Warhog_Attack", "resources/warhog/Warhog_Attack.png", 4, 4)
