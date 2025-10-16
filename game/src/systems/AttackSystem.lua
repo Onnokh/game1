@@ -318,6 +318,9 @@ function AttackSystem:spawnBullet(entity)
 
     -- Get spawn position (center of attacker)
     local spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
+    if EntityUtils.isPlayer(entity) then
+        spawnY = spawnY - 5
+    end
 
     -- Get bullet direction (normalized attack direction)
     local directionX = attack.attackDirectionX

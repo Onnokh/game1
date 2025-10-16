@@ -38,6 +38,8 @@ function IffySprites.load()
   loadSpritesheet("new", "resources/character/new.png", 4, 1)
   loadSpritesheet("new_walk", "resources/character/heu.png", 8, 1)
   loadSpritesheet("heu_slide", "resources/character/heu_slide.png", 2, 1)
+  loadSpritesheet("gun_idle", "resources/character/heu_gun.png", 18, 1)
+
 
   -- Load skeleton spritesheet (6x10 grid - 6 columns, 10 rows)
   loadSpritesheet("skeleton", "resources/skeleton/Skeleton.png", 6, 10)
