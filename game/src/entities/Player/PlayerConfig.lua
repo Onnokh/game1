@@ -18,17 +18,28 @@ PlayerConfig.DASH_CHARGE_REGEN_TIME = 2.0  -- Time in seconds to regenerate one 
 
 
 -- Animation settings
-PlayerConfig.IDLE_ANIMATION = {
-    sheet = "new",
-    frames = {1, 2, 3, 4},
-    fps = 4,
-    loop = true
-}
+-- PlayerConfig.IDLE_ANIMATION = {
+--     sheet = "new",
+--     frames = {1, 2, 3, 4},
+--     fps = 4,
+--     loop = true
+-- }
 
 PlayerConfig.WALKING_ANIMATION = {
   sheet = "new_walk",
   frames = {1, 2, 3, 4, 5, 6},
   fps = 10,
+  loop = true
+}
+
+-- TODO: add check for if gun is equipped
+-- if equipped, use gun_idle animation
+-- if not equipped, use idle animation
+
+PlayerConfig.IDLE_ANIMATION = {
+  sheet = "gun_idle",
+  frames = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+  fps = 8,
   loop = true
 }
 
