@@ -53,18 +53,26 @@ function TriggerEffects._createModifierEffect(config)
     local source = config.source or "unknown"
 
     local onEnter = function(entity, triggerZone)
-        -- Apply modifier to Movement component
-        local movement = entity:getComponent("Movement")
-        if movement and movement.addModifier then
-            movement:addModifier(source, stat, mode, value)
+        -- Apply modifier using centralized Modifier component
+        local modifier = entity:getComponent("Modifier")
+        if modifier then
+            -- Construct target path based on stat
+            local targetPath
+            if stat == "speed" then
+                targetPath = "Movement.maxSpeed"
+            else
+                -- For other stats, assume format is already correct or can be extended
+                targetPath = stat
+            end
+            modifier:apply(entity, targetPath, mode, value, source)
         end
     end
 
     local onExit = function(entity, triggerZone)
-        -- Remove modifier from Movement component
-        local movement = entity:getComponent("Movement")
-        if movement and movement.removeModifier then
-            movement:removeModifier(source)
+        -- Remove modifier using centralized Modifier component
+        local modifier = entity:getComponent("Modifier")
+        if modifier then
+            modifier:remove(entity, source)
         end
     end
 

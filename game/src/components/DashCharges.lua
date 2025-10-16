@@ -47,6 +47,11 @@ end
 function DashCharges:update(dt)
     local previousCharges = self.currentCharges
 
+    -- Start regeneration timer if we're below max charges and timer is at 0
+    if self.currentCharges < self.maxCharges and self.currentRegenTimer <= 0 then
+        self.currentRegenTimer = self.chargeRegenTime
+    end
+
     if self.currentCharges < self.maxCharges and self.currentRegenTimer > 0 then
         self.currentRegenTimer = self.currentRegenTimer - dt
         if self.currentRegenTimer <= 0 then

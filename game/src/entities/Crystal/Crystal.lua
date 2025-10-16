@@ -3,6 +3,7 @@ local Position = require("src.components.Position")
 local SpriteRenderer = require("src.components.SpriteRenderer")
 local PathfindingCollision = require("src.components.PathfindingCollision")
 local TriggerZone = require("src.components.TriggerZone")
+local Upgrade = require("src.components.Upgrade")
 -- local Crystal = require("src.components.Crystal")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
@@ -91,15 +92,18 @@ function CrystalEntity.create(x, y, world, physicsWorld, inventory, seed, shopId
     --     { r = 255, g = 0, b = 255, radius = 48, offsetX = 56, offsetY = 32, flicker = false, flickerRadiusAmplitude = 1.2 }
     -- })
 
-    -- Store interaction range as entity property for CrystalUISystem
-    crystalEntity.interactionRange = 80
+    -- Store interaction range as entity property for UpgradeUISystem
+    crystalEntity.interactionRange = 20
+
+    -- Upgrade component for upgrade selection
+    local upgradeComponent = Upgrade.new(world, "crystal_" .. tostring(crystal.id))
 
     crystal:addComponent("Position", position)
     crystal:addComponent("SpriteRenderer", spriteRenderer)
     crystal:addComponent("PathfindingCollision", crystalCollider)
     crystal:addComponent("TriggerZone", stairsTrigger)
     crystal:addComponent("Animator", animation)
-    -- crystal:addComponent("Crystal", crystalComponent)
+    crystal:addComponent("Upgrade", upgradeComponent)
     -- crystal:addComponent("Light", light)
 
     -- Tag for easy querying

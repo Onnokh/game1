@@ -9,7 +9,6 @@ local Component = require("src.core.Component")
 ---@field friction number Friction rate (0-1)
 ---@field direction string Current movement direction
 ---@field enabled boolean Whether movement is enabled
----@field activeModifiers table Active modifiers keyed by source identifier
 local Movement = {}
 Movement.__index = Movement
 
@@ -29,7 +28,6 @@ function Movement.new(maxSpeed, acceleration, friction)
     self.friction = friction or 0.8
     self.direction = "down"
     self.enabled = true
-    self.activeModifiers = {}
 
     return self
 end
@@ -89,55 +87,6 @@ function Movement:isMoving()
     return self.velocityX ~= 0 or self.velocityY ~= 0
 end
 
----Update movement stats based on active modifiers
----Recalculates maxSpeed from baseMaxSpeed and all active modifiers
-function Movement:updateStats()
-    -- Start with base speed
-    local finalSpeed = self.baseMaxSpeed
-
-    -- Apply all active modifiers
-    for source, modifier in pairs(self.activeModifiers) do
-        if modifier.stat == "speed" then
-            if modifier.mode == "multiply" then
-                finalSpeed = finalSpeed * modifier.value
-            elseif modifier.mode == "add" then
-                finalSpeed = finalSpeed + modifier.value
-            end
-        end
-    end
-
-    -- Update maxSpeed
-    self.maxSpeed = finalSpeed
-end
-
----Add a modifier to this movement component
----@param source string Unique identifier for the modifier source
----@param stat string Stat to modify (e.g., "speed")
----@param mode string Mode of modification ("multiply" or "add")
----@param value number Value to apply
-function Movement:addModifier(source, stat, mode, value)
-    self.activeModifiers[source] = {
-        stat = stat,
-        mode = mode,
-        value = value
-    }
-    self:updateStats()
-end
-
----Remove a modifier from this movement component
----@param source string Unique identifier for the modifier source
-function Movement:removeModifier(source)
-    self.activeModifiers[source] = nil
-    self:updateStats()
-end
-
----Check if a modifier is active
----@param source string Unique identifier for the modifier source
----@return boolean True if the modifier is active
-function Movement:hasModifier(source)
-    return self.activeModifiers[source] ~= nil
-end
-
 ---Serialize the Movement component for saving
 ---@return table Serialized movement data
 function Movement:serialize()
@@ -149,8 +98,7 @@ function Movement:serialize()
         acceleration = self.acceleration,
         friction = self.friction,
         direction = self.direction,
-        enabled = self.enabled,
-        activeModifiers = self.activeModifiers
+        enabled = self.enabled
     }
 end
 
@@ -163,8 +111,6 @@ function Movement.deserialize(data)
     movement.velocityY = data.velocityY or 0
     movement.direction = data.direction or "down"
     movement.enabled = data.enabled ~= false
-    movement.activeModifiers = data.activeModifiers or {}
-    movement:updateStats()
     return movement
 end
 

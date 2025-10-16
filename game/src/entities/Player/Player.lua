@@ -15,6 +15,8 @@ local Animator = require("src.components.Animator")
 local Inventory = require("src.components.Inventory")
 local FootprintsEmitter = require("src.components.FootprintsEmitter")
 local DashCharges = require("src.components.DashCharges")
+local UpgradeTracker = require("src.components.UpgradeTracker")
+local Modifier = require("src.components.Modifier")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -150,8 +152,12 @@ function Player.create(x, y, world, physicsWorld)
     -- Create inventory component
     local inventory = Inventory.new()
 
-    -- Create dash charges component
-    local dashCharges = DashCharges.new(PlayerConfig.DASH_MAX_CHARGES, PlayerConfig.DASH_CHARGE_REGEN_TIME)
+    -- Create dash charges component (start with 1 charge, can upgrade to 3)
+    local dashCharges = DashCharges.new(1, PlayerConfig.DASH_CHARGE_REGEN_TIME)
+
+    -- Create upgrade tracker and modifier components
+    local upgradeTracker = UpgradeTracker.new()
+    local modifier = Modifier.new()
 
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
@@ -169,7 +175,8 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("GroundShadow", groundShadow)
     playerEntity:addComponent("Inventory", inventory)
     playerEntity:addComponent("DashCharges", dashCharges)
-    -- Add footprints emitter (paused during dash)
+    playerEntity:addComponent("UpgradeTracker", upgradeTracker)
+    playerEntity:addComponent("Modifier", modifier)
     playerEntity:addComponent("FootprintsEmitter", FootprintsEmitter.new({
         spacing = 15,
         lifetime = 5,

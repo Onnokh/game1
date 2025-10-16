@@ -142,6 +142,7 @@ function GameScene.load()
   local DashSpeedLinesSystem = require("src.systems.UISystems.DashSpeedLinesSystem")
   local WeaponIndicatorSystem = require("src.systems.UISystems.WeaponIndicatorSystem")
   local ShopUISystem = require("src.systems.UISystems.ShopUISystem")
+  local UpgradeUISystem = require("src.systems.UISystems.UpgradeUISystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(MenuSystem.new()) -- Menu systems first to consume clicks
@@ -158,6 +159,7 @@ function GameScene.load()
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))
   uiWorld:addSystem(LootPickupLabelSystem.new(ecsWorld))
   uiWorld:addSystem(ShopUISystem.new(ecsWorld)) -- After menus so clicks are blocked when paused
+  uiWorld:addSystem(UpgradeUISystem.new(ecsWorld)) -- Crystal upgrade UI system
   uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
