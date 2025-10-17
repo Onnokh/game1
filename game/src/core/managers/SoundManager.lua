@@ -19,6 +19,7 @@ function SoundManager.load()
   SoundManager.loadSound("gunshot", "resources/sounds/shot1.mp3", "static")
   SoundManager.loadSound("running", "resources/sounds/running.mp3", "static")
   SoundManager.loadSound("dash", "resources/sounds/dash2.mp3", "static")
+  SoundManager.loadSound("upgrade_selected", "resources/sounds/upgrade_selected.mp3", "static")
 
   print("SoundManager: Sounds loaded successfully")
 end

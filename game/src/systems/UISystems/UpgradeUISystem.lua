@@ -3,6 +3,7 @@ local fonts = require("src.utils.fonts")
 local ui_text = require("src.utils.ui_text")
 local AnimationModule = require("src.core.Animation")
 local AnimationManager = AnimationModule.AnimationManager
+local panel = require("src.ui.utils.panel")
 
 ---@class UpgradeUISystem : System
 ---@field ecsWorld World
@@ -49,6 +50,19 @@ function UpgradeUISystem:openUpgradeUI(crystal)
     -- Pause the game
     local GameController = require("src.core.GameController")
     GameController.setPaused(true)
+
+    -- Stop any movement loop sounds
+    local player = self.ecsWorld:getPlayer()
+    if player then
+        local stateMachine = player:getComponent("StateMachine")
+        if stateMachine then
+            local movementSound = stateMachine:getGlobalData("movementSound")
+            if movementSound then
+                movementSound:stop()
+                stateMachine:setGlobalData("movementSound", nil)
+            end
+        end
+    end
 
     -- Start fade-in animation
     self.animationManager:create("ui_fade", 0.0, 1.0, 0.2, "linear")
@@ -126,11 +140,15 @@ function UpgradeUISystem:updateHoveredSlot()
         end
     end
 
-    -- Check skip button
+    -- Check skip button (positioned at right side of panel, 32px from edge)
+    local panelPadding = 64
+    local panelW = totalWidth + panelPadding * 2
+    local panelX = startX - panelPadding
+
     local buttonWidth = 150
     local buttonHeight = 50
-    local buttonX = (screenW - buttonWidth) / 2
-    local buttonY = centerY + slotSize + 100
+    local buttonX = panelX + panelW - 32 - buttonWidth
+    local buttonY = centerY + slotSize + 98
 
     if self.mouseX >= buttonX and self.mouseX <= buttonX + buttonWidth and
        self.mouseY >= buttonY and self.mouseY <= buttonY + buttonHeight then
@@ -153,11 +171,15 @@ function UpgradeUISystem:handleMouseClick()
     local startX = (screenW - totalWidth) / 2
     local centerY = screenH / 2 - slotSize / 2
 
-    -- Check skip button first
+    -- Check skip button first (positioned at right side of panel, 32px from edge)
+    local panelPadding = 64
+    local panelW = totalWidth + panelPadding * 2
+    local panelX = startX - panelPadding
+
     local buttonWidth = 150
     local buttonHeight = 50
-    local buttonX = (screenW - buttonWidth) / 2
-    local buttonY = centerY + slotSize + 100
+    local buttonX = panelX + panelW - 32 - buttonWidth
+    local buttonY = centerY + slotSize + 98
 
     if self.mouseX >= buttonX and self.mouseX <= buttonX + buttonWidth and
        self.mouseY >= buttonY and self.mouseY <= buttonY + buttonHeight then
@@ -236,6 +258,10 @@ function UpgradeUISystem:applyUpgrade(player, upgradeId, slotIndex)
 
     print(string.format("[UpgradeUI] Applied upgrade '%s' (Rank %d)", upgradeDef.name, currentRank + 1))
 
+    -- Play upgrade selected sound
+    local SoundManager = require("src.core.managers.SoundManager")
+    SoundManager.play("upgrade_selected", 1.0)
+
     -- Close UI after selecting upgrade
     self:closeUpgradeUI()
 end
@@ -284,6 +310,19 @@ function UpgradeUISystem:draw()
     local player = self.ecsWorld:getPlayer()
     local tracker = player and player:getComponent("UpgradeTracker")
 
+    -- Draw panel background around all 3 slots (including text below)
+    local panelPadding = 64
+    local fontHeight = font and font:getHeight() or 16
+    -- Calculate total height: slotSize + gap(10) + nameHeight + gap(5) + descHeight
+    local textAreaHeight = 10 + fontHeight + 5 + fontHeight
+    local contentHeight = slotSize + textAreaHeight
+
+    local panelX = startX - panelPadding
+    local panelY = centerY - panelPadding
+    local panelW = totalWidth + panelPadding * 2
+    local panelH = contentHeight + panelPadding * 2
+    panel.draw(panelX, panelY, panelW, panelH, fadeAlpha)
+
     -- Draw each slot
     for i = 1, 3 do
         local upgrade = upgradeComp:getUpgrade(i)
@@ -293,9 +332,9 @@ function UpgradeUISystem:draw()
         if upgrade then
             local isHovered = self.hoveredSlot == i
 
-            -- Draw background
-            love.graphics.setColor(0, 0, 0, 0.95 * fadeAlpha)
-            love.graphics.rectangle("fill", slotX, slotY, slotSize, slotSize)
+            -- Draw panel around slot with color change on hover
+            local panelColor = isHovered and {1, 1, 1} or {0.75, 0.75, 0.75}
+            panel.draw(slotX, slotY, slotSize, slotSize, fadeAlpha, panelColor)
 
             -- Draw upgrade sprite
             local spriteSize = 128
@@ -322,17 +361,6 @@ function UpgradeUISystem:draw()
                 end
             end
 
-            -- Draw border
-            if isHovered then
-                love.graphics.setColor(1, 1, 1, fadeAlpha)
-                love.graphics.setLineWidth(4)
-            else
-                love.graphics.setColor(0.7, 0.7, 0.7, fadeAlpha)
-                love.graphics.setLineWidth(2)
-            end
-            love.graphics.rectangle("line", slotX, slotY, slotSize, slotSize)
-            love.graphics.setLineWidth(1)
-
             -- Draw upgrade name with rank below slot
             love.graphics.setColor(1, 1, 1, fadeAlpha)
             local rankText = ""
@@ -356,42 +384,20 @@ function UpgradeUISystem:draw()
 
             ui_text.drawOutlinedText(descText, descX, descY, {0.8, 0.8, 0.8, fadeAlpha}, {0, 0, 0, 0.8 * fadeAlpha}, 1)
         else
-            -- Draw empty slot
-            love.graphics.setColor(0, 0, 0, 0.5 * fadeAlpha)
-            love.graphics.rectangle("fill", slotX, slotY, slotSize, slotSize)
-
-            -- Draw border
-            love.graphics.setColor(0.3, 0.3, 0.3, 0.5 * fadeAlpha)
-            love.graphics.setLineWidth(2)
-            love.graphics.rectangle("line", slotX, slotY, slotSize, slotSize)
-            love.graphics.setLineWidth(1)
+            -- Draw empty slot with panel
+            panel.draw(slotX, slotY, slotSize, slotSize, fadeAlpha * 0.5, {0.6, 0.6, 0.6})
         end
     end
 
-    -- Draw skip button
+    -- Draw skip button (positioned at right side of panel, 32px from edge)
     local buttonWidth = 150
     local buttonHeight = 50
-    local buttonX = (screenW - buttonWidth) / 2
-    local buttonY = centerY + slotSize + 100
+    local buttonX = panelX + panelW - 32 - buttonWidth
+    local buttonY = centerY + slotSize + 98
 
-    -- Draw button background
-    if self.skipButtonHovered then
-        love.graphics.setColor(0.2, 0.2, 0.2, 0.95 * fadeAlpha)
-    else
-        love.graphics.setColor(0, 0, 0, 0.95 * fadeAlpha)
-    end
-    love.graphics.rectangle("fill", buttonX, buttonY, buttonWidth, buttonHeight)
-
-    -- Draw button border
-    if self.skipButtonHovered then
-        love.graphics.setColor(1, 1, 1, fadeAlpha)
-        love.graphics.setLineWidth(4)
-    else
-        love.graphics.setColor(0.7, 0.7, 0.7, fadeAlpha)
-        love.graphics.setLineWidth(2)
-    end
-    love.graphics.rectangle("line", buttonX, buttonY, buttonWidth, buttonHeight)
-    love.graphics.setLineWidth(1)
+    -- Draw button panel with color change on hover
+    local buttonColor = self.skipButtonHovered and {0.5, 0.5, 0.5} or {0.3, 0.3, 0.3}
+    panel.draw(buttonX, buttonY, buttonWidth, buttonHeight, fadeAlpha, buttonColor)
 
     -- Draw "Skip" text
     love.graphics.setColor(1, 1, 1, fadeAlpha)
@@ -416,6 +422,15 @@ function UpgradeUISystem:handleMousePressed(x, y, button)
         self.mouseY = y
         self:handleMouseClick()
         return true -- Consume the click
+    end
+    return false
+end
+
+-- Called when a key is pressed
+function UpgradeUISystem:handleKeyPress(key)
+    if self.isOpen and key == "escape" then
+        self:closeUpgradeUI()
+        return true -- Consume the key press
     end
     return false
 end

@@ -94,6 +94,21 @@ function GameController.togglePause()
   end
   GameController.paused = not GameController.paused
 
+  -- Stop any movement loop sounds when pausing
+  if GameController.paused then
+    local player = GameState.ecsWorld and GameState.ecsWorld:getPlayer()
+    if player then
+      local stateMachine = player:getComponent("StateMachine")
+      if stateMachine then
+        local movementSound = stateMachine:getGlobalData("movementSound")
+        if movementSound then
+          movementSound:stop()
+          stateMachine:setGlobalData("movementSound", nil)
+        end
+      end
+    end
+  end
+
   -- Emit event to show/hide pause menu
   local EventBus = require("src.utils.EventBus")
   if GameController.paused then
@@ -154,6 +169,14 @@ end
 
 -- Input delegation (phases may intercept if needed, but systems stay in scenes)
 function GameController.keypressed(key)
+  -- When paused or game over, let UI systems handle input first
+  if GameController.paused or GameController.gameOver then
+    local handled = GameState.handleKeyPressed(key)
+    if handled then
+      return true
+    end
+  end
+
   -- Controller-level bindings
   if key == "escape" then
     if not GameController.gameOver then
@@ -161,14 +184,6 @@ function GameController.keypressed(key)
       return true
     end
     return true -- consume ESC during game over
-  end
-
-  -- When paused or game over, let UI systems handle input first
-  if GameController.paused or GameController.gameOver then
-    local handled = GameState.handleKeyPressed(key)
-    if handled then
-      return true
-    end
   end
 
   -- Phase switching (only when not paused/game over)

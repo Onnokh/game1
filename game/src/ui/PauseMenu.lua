@@ -3,6 +3,7 @@ local gameState = require("src.core.GameState")
 local UIElement = require("src.ui.UIElement")
 local Button = require("src.ui.Button")
 local fonts = require("src.utils.fonts")
+local panel = require("src.ui.utils.panel")
 
 ---@class PauseMenu: UIElement
 
@@ -115,13 +116,7 @@ function PauseMenu:draw()
     local tx = math.floor((sw - tw) / 2)
     local ty = math.floor((sh - th) / 2) - 48
 
-    -- Shadowed title
-    love.graphics.setColor(0, 0, 0, 0.9)
-    love.graphics.print(titleText, tx + 2, ty + 2)
-    love.graphics.setColor(0.85, 0.95, 1.0, 1)
-    love.graphics.print(titleText, tx, ty)
-
-    -- Draw buttons
+    -- Draw buttons (calculate positions first)
     local buttonFont = fonts.getUIFont(28) or prevFont
     local gap = 16
 
@@ -137,6 +132,23 @@ function PauseMenu:draw()
 
     local baseX = math.floor((sw - totalWidth) / 2)
     local baseY = ty + th + 36
+
+    -- Calculate button height
+    local buttonHeight = self.buttons[1] and self.buttons[1].height or 40
+
+    -- Draw panel background around title and buttons
+    local panelPadding = 40
+    local panelX = math.min(tx, baseX) - panelPadding
+    local panelY = ty - panelPadding
+    local panelW = math.max(tw, totalWidth) + panelPadding * 2
+    local panelH = (baseY + buttonHeight) - ty + panelPadding * 2
+    panel.draw(panelX, panelY, panelW, panelH, 1.0)
+
+    -- Shadowed title
+    love.graphics.setColor(0, 0, 0, 0.9)
+    love.graphics.print(titleText, tx + 2, ty + 2)
+    love.graphics.setColor(0.85, 0.95, 1.0, 1)
+    love.graphics.print(titleText, tx, ty)
 
     local currentX = baseX
     for _, btn in ipairs(self.buttons) do
