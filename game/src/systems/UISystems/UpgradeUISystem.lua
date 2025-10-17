@@ -25,6 +25,7 @@ function UpgradeUISystem.new(ecsWorld)
     self.mouseX = 0
     self.mouseY = 0
     self.hoveredSlot = nil
+    self.skipButtonHovered = false
 
     -- Animation manager
     self.animationManager = AnimationManager.new()
@@ -88,6 +89,7 @@ end
 
 function UpgradeUISystem:updateHoveredSlot()
     self.hoveredSlot = nil
+    self.skipButtonHovered = false
 
     if not self.isOpen or not self.activeCrystal then
         return
@@ -123,15 +125,21 @@ function UpgradeUISystem:updateHoveredSlot()
             end
         end
     end
+
+    -- Check skip button
+    local buttonWidth = 150
+    local buttonHeight = 50
+    local buttonX = (screenW - buttonWidth) / 2
+    local buttonY = centerY + slotSize + 100
+
+    if self.mouseX >= buttonX and self.mouseX <= buttonX + buttonWidth and
+       self.mouseY >= buttonY and self.mouseY <= buttonY + buttonHeight then
+        self.skipButtonHovered = true
+    end
 end
 
 function UpgradeUISystem:handleMouseClick()
     if not self.isOpen or not self.activeCrystal then
-        return
-    end
-
-    local player = self.ecsWorld:getPlayer()
-    if not player then
         return
     end
 
@@ -144,6 +152,23 @@ function UpgradeUISystem:handleMouseClick()
     local totalWidth = slotSpacing * 2 + slotSize
     local startX = (screenW - totalWidth) / 2
     local centerY = screenH / 2 - slotSize / 2
+
+    -- Check skip button first
+    local buttonWidth = 150
+    local buttonHeight = 50
+    local buttonX = (screenW - buttonWidth) / 2
+    local buttonY = centerY + slotSize + 100
+
+    if self.mouseX >= buttonX and self.mouseX <= buttonX + buttonWidth and
+       self.mouseY >= buttonY and self.mouseY <= buttonY + buttonHeight then
+        self:closeUpgradeUI()
+        return
+    end
+
+    local player = self.ecsWorld:getPlayer()
+    if not player then
+        return
+    end
 
     local upgradeComp = self.activeCrystal:getComponent("Upgrade")
     if not upgradeComp then
@@ -342,6 +367,41 @@ function UpgradeUISystem:draw()
             love.graphics.setLineWidth(1)
         end
     end
+
+    -- Draw skip button
+    local buttonWidth = 150
+    local buttonHeight = 50
+    local buttonX = (screenW - buttonWidth) / 2
+    local buttonY = centerY + slotSize + 100
+
+    -- Draw button background
+    if self.skipButtonHovered then
+        love.graphics.setColor(0.2, 0.2, 0.2, 0.95 * fadeAlpha)
+    else
+        love.graphics.setColor(0, 0, 0, 0.95 * fadeAlpha)
+    end
+    love.graphics.rectangle("fill", buttonX, buttonY, buttonWidth, buttonHeight)
+
+    -- Draw button border
+    if self.skipButtonHovered then
+        love.graphics.setColor(1, 1, 1, fadeAlpha)
+        love.graphics.setLineWidth(4)
+    else
+        love.graphics.setColor(0.7, 0.7, 0.7, fadeAlpha)
+        love.graphics.setLineWidth(2)
+    end
+    love.graphics.rectangle("line", buttonX, buttonY, buttonWidth, buttonHeight)
+    love.graphics.setLineWidth(1)
+
+    -- Draw "Skip" text
+    love.graphics.setColor(1, 1, 1, fadeAlpha)
+    local skipText = "Skip"
+    local textWidth = font and font:getWidth(skipText) or 0
+    local textHeight = font and font:getHeight() or 16
+    local textX = buttonX + buttonWidth / 2 - textWidth / 2
+    local textY = buttonY + buttonHeight / 2 - textHeight / 2
+
+    ui_text.drawOutlinedText(skipText, textX, textY, {1, 1, 1, fadeAlpha}, {0, 0, 0, 0.8 * fadeAlpha}, 1)
 
     love.graphics.pop()
 
