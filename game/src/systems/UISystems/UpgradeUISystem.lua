@@ -336,6 +336,37 @@ function UpgradeUISystem:draw()
             local panelColor = isHovered and {1, 1, 1} or {0.75, 0.75, 0.75}
             panel.draw(slotX, slotY, slotSize, slotSize, fadeAlpha, panelColor)
 
+            -- Draw rank panel at the top of the slot
+            if tracker then
+                local currentRank = tracker:getRank(upgrade.id)
+                local nextRank = currentRank + 1
+                local rankText = tostring(nextRank)
+
+                -- Small panel at top left
+                local rankPanelHeight = 48
+                local rankPanelWidth = 48
+                local rankPanelX = slotX - 24 -- Offset from left edge of the slot
+                local rankPanelY = slotY + 24 -- Offset from top edge of the slot
+
+                -- Draw rank panel using panel-015 style
+                panel.draw(rankPanelX, rankPanelY, rankPanelWidth, rankPanelHeight, fadeAlpha, panelColor, "015")
+
+                -- Draw rank text with larger font
+                local rankFont = select(1, fonts.getCameraScaled(24, 1, 24))
+                if rankFont then love.graphics.setFont(rankFont) end
+
+                love.graphics.setColor(1, 1, 1, fadeAlpha)
+                local rankTextWidth = rankFont and rankFont:getWidth(rankText) or 0
+                local rankTextHeight = rankFont and rankFont:getHeight() or 24
+                local rankTextX = rankPanelX + rankPanelWidth / 2 - rankTextWidth / 2
+                local rankTextY = rankPanelY + rankPanelHeight / 2 - rankTextHeight / 2
+
+                ui_text.drawOutlinedText(rankText, rankTextX, rankTextY, {0, 0, 0, fadeAlpha}, {0, 0, 0, 0.8 * fadeAlpha}, 1)
+
+                -- Restore original font
+                if font then love.graphics.setFont(font) end
+            end
+
             -- Draw upgrade sprite
             local spriteSize = 128
             local spriteX = slotX + (slotSize - spriteSize) / 2
@@ -361,14 +392,9 @@ function UpgradeUISystem:draw()
                 end
             end
 
-            -- Draw upgrade name with rank below slot
+            -- Draw upgrade name below slot
             love.graphics.setColor(1, 1, 1, fadeAlpha)
-            local rankText = ""
-            if tracker then
-                local currentRank = tracker:getRank(upgrade.id)
-                rankText = string.format(" (Rank %d)", currentRank + 1)
-            end
-            local nameText = (upgrade.name or "Upgrade") .. rankText
+            local nameText = upgrade.name or "Upgrade"
             local nameWidth = font and font:getWidth(nameText) or 0
             local nameX = slotX + slotSize / 2 - nameWidth / 2
             local nameY = slotY + slotSize + 10
