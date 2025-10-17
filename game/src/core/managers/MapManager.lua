@@ -219,7 +219,7 @@ local function buildPathfindingGrid(tileSize, camWidth, camHeight)
 
     -- Pre-allocate grid
     local world = {}
-    local emptyTile = { walkable = false, type = 0 }
+    local emptyTile = { walkable = false, gid = 0 }
     for x = 1, worldWidth do
         world[x] = {}
         for y = 1, worldHeight do
@@ -262,7 +262,6 @@ local function buildPathfindingGrid(tileSize, camWidth, camHeight)
                         -- Store ALL tiles (walkable and blocked)
                         world[worldTileX][worldTileY] = {
                             walkable = tileData.walkable,
-                            type = tileData.type,
                             gid = tileData.gid
                         }
                         if tileData.walkable then
@@ -302,13 +301,11 @@ local function createCollisionBodiesFromWorldGrid(worldGrid, gridWidth, gridHeig
             local tile = worldGrid[x] and worldGrid[x][y]
             if tile then
                 collisionGrid[x][y] = {
-                    type = tile.type or 0,
                     gid = tile.gid or 0,
                     walkable = tile.walkable or false
                 }
             else
                 collisionGrid[x][y] = {
-                    type = 0,
                     gid = 0,
                     walkable = false
                 }

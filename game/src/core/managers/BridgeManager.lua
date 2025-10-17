@@ -696,11 +696,9 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                             end
                             local checkY = tileY1 + yOffset
                             if grid[tileX] and grid[tileX][checkY] then
-                                -- Use same walkability check as island tiles
-                                local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
+                                -- Bridge tiles are always walkable
                                 grid[tileX][checkY] = {
-                                    walkable = isWalkable,
-                                    type = isWalkable and 1 or 3,
+                                    walkable = true,
                                     gid = gid
                                 }
                                 tilesMarked = tilesMarked + 1
@@ -711,10 +709,9 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                     -- Middle section - horizontal bridge (only top row)
                     if grid[tileX] and grid[tileX][tileY1] then
                         local gid = GameConstants.BRIDGE_TILE_HORIZONTAL[1]
-                        local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
+                        -- Bridge tiles are always walkable
                         grid[tileX][tileY1] = {
-                            walkable = isWalkable,
-                            type = isWalkable and 1 or 3,
+                            walkable = true,
                             gid = gid
                         }
                         tilesMarked = tilesMarked + 1
@@ -756,11 +753,9 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                                     local checkX = tileX1 + xOffset
                                     local checkY = tileY + (rowIdx - 1)
                                     if grid[checkX] and grid[checkX][checkY] then
-                                        -- Use same walkability check as island tiles
-                                        local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
+                                        -- Bridge tiles are always walkable
                                         grid[checkX][checkY] = {
-                                            walkable = isWalkable,
-                                            type = isWalkable and 1 or 3,
+                                            walkable = true,
                                             gid = gid
                                         }
                                         tilesMarked = tilesMarked + 1
@@ -777,11 +772,9 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                                 local xOffset = i - 2
                                 local checkX = tileX1 + xOffset
                                 if grid[checkX] and grid[checkX][tileY] then
-                                    -- Use same walkability check as island tiles
-                                    local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
+                                    -- Bridge tiles are always walkable
                                     grid[checkX][tileY] = {
-                                        walkable = isWalkable,
-                                        type = isWalkable and 1 or 3,
+                                        walkable = true,
                                         gid = gid
                                     }
                                     tilesMarked = tilesMarked + 1
@@ -793,10 +786,9 @@ function BridgeManager.markBridgeTilesWalkable(grid)
                     -- Middle section - single tile (vertical bridge)
                     if grid[tileX1] and grid[tileX1][tileY] then
                         local gid = GameConstants.BRIDGE_TILE_VERTICAL
-                        local isWalkable = TiledMapLoader.getTileType(gid) ~= TiledMapLoader.TILE_BLOCKED
+                        -- Bridge tiles are always walkable
                         grid[tileX1][tileY] = {
-                            walkable = isWalkable,
-                            type = isWalkable and 1 or 3,
+                            walkable = true,
                             gid = gid
                         }
                         tilesMarked = tilesMarked + 1

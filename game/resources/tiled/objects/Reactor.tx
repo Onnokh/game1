@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<template>
- <tileset firstgid="1" source="../Objects.tsx"/>
- <object name="Reactor" gid="2" width="96" height="96"/>
-</template>

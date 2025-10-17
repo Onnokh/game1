@@ -56,25 +56,6 @@ local level1 = {
                     chestCount = { min = 1, max = 3 }
                 }
             },
-            {
-              id = "empty_island",
-              name = "Empty Island",
-              mapPath = "resources/tiled/maps/islands/empty_island.lua",
-              theme = "forest",
-              weight = 100,
-              properties = {
-                  hasReactor = false,
-                  enemySpawns = true,
-                  safe = false,
-                  enemyTypes = { "slime", "skeleton" },
-                  fireflies = true
-              },
-              loot = {
-                  coinMultiplier = 1.2,
-                  rareLootChance = 0.1,
-                  chestCount = { min = 1, max = 3 }
-              }
-          },
           {
             id = "shop_island",
             name = "Shop Island",

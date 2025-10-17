@@ -245,21 +245,6 @@ return {
           gid = 553,
           visible = true,
           properties = {}
-        },
-        {
-          id = 34,
-          name = "MobSpawn",
-          type = "",
-          shape = "rectangle",
-          x = 1000,
-          y = 130,
-          width = 160,
-          height = 337,
-          rotation = 0,
-          visible = true,
-          properties = {
-            ["amount"] = 0
-          }
         }
       }
     },
@@ -276,7 +261,23 @@ return {
       parallaxx = 1,
       parallaxy = 1,
       properties = {},
-      objects = {}
+      objects = {
+        {
+          id = 34,
+          name = "MobSpawn",
+          type = "",
+          shape = "rectangle",
+          x = 1000,
+          y = 130,
+          width = 160,
+          height = 337,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["amount"] = 0
+          }
+        }
+      }
     }
   }
 }

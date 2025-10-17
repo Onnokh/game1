@@ -7,22 +7,6 @@ local TiledMapLoader = {}
 -- Cache loaded maps to avoid reloading
 local mapCache = {}
 local cartographer = require("lib.cartographer")
-local GameConstants = require("src.constants")
-
----=============================================================================
---- TILE TYPE CONSTANTS
----=============================================================================
-
-TiledMapLoader.TILE_EMPTY = 0
-TiledMapLoader.TILE_GRASS = 1
-TiledMapLoader.TILE_BLOCKED = 3
-TiledMapLoader.TILE_WORLDEDGE = 2
-
--- Convert blocked tile GIDs array to hash table for O(1) lookups
-local BLOCKED_GIDS_LOOKUP = {}
-for _, gid in ipairs(GameConstants.BLOCKED_TILE_GIDS) do
-    BLOCKED_GIDS_LOOKUP[gid] = true
-end
 
 ---=============================================================================
 --- MAP LOADING (Cartographer)
@@ -136,37 +120,6 @@ function TiledMapLoader.clearCache(mapPath)
 end
 
 ---=============================================================================
---- TILE UTILITIES
----=============================================================================
-
----Get tile collision type from GID
----@param gid number Tile GID
----@return number Tile type constant
-function TiledMapLoader.getTileType(gid)
-    if gid == 0 then return TiledMapLoader.TILE_EMPTY end
-    if BLOCKED_GIDS_LOOKUP[gid] then return TiledMapLoader.TILE_BLOCKED end
-    return TiledMapLoader.TILE_GRASS
-end
-
----Check if a tile type is walkable
----@param tileType number Tile type constant
----@return boolean True if walkable
-function TiledMapLoader.isWalkable(tileType)
-    return tileType == TiledMapLoader.TILE_GRASS
-end
-
----Get tile type name for debugging
----@param tileType number Tile type constant
----@return string Tile type name
-function TiledMapLoader.getTileTypeName(tileType)
-    if tileType == TiledMapLoader.TILE_EMPTY then return "EMPTY" end
-    if tileType == TiledMapLoader.TILE_GRASS then return "GRASS" end
-    if tileType == TiledMapLoader.TILE_BLOCKED then return "BLOCKED" end
-    if tileType == TiledMapLoader.TILE_WORLDEDGE then return "WORLDEDGE" end
-    return "UNKNOWN"
-end
-
----=============================================================================
 --- COLLISION PARSING
 ---=============================================================================
 
@@ -174,13 +127,26 @@ end
 ---@param tiledMap table Cartographer map instance
 ---@param width number Map width in tiles
 ---@param height number Map height in tiles
----@return table Collision grid [x][y] with type, gid, walkable
+---@return table Collision grid [x][y] with gid, walkable
 function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
     local grid = {}
-    local layer = tiledMap.layers and tiledMap.layers[1]
 
-    if not layer or layer.type ~= "tilelayer" then
-        print("[TiledMapLoader] WARNING: No tile layer found in map")
+    -- Find Walkable and Background layers by name
+    local walkableLayer = nil
+    local backgroundLayer = nil
+
+    for _, layer in ipairs(tiledMap.layers) do
+        if layer.type == "tilelayer" then
+            if layer.name == "Walkable" then
+                walkableLayer = layer
+            elseif layer.name == "Background" then
+                backgroundLayer = layer
+            end
+        end
+    end
+
+    if not walkableLayer then
+        print("[TiledMapLoader] WARNING: No 'Walkable' layer found in map")
         return grid
     end
 
@@ -188,14 +154,17 @@ function TiledMapLoader.parseCollisionGrid(tiledMap, width, height)
     for y = 1, height do
         for x = 1, width do
             if not grid[x] then grid[x] = {} end
-            local gid = layer.data[(y - 1) * width + x]
 
-            -- A tile is walkable if it exists (gid > 0) and is not blocked
-            local tileType = TiledMapLoader.getTileType(gid)
-            local isWalkable = (gid ~= 0) and not BLOCKED_GIDS_LOOKUP[gid]
+            local walkableGid = walkableLayer.data[(y - 1) * width + x]
+            local backgroundGid = backgroundLayer and backgroundLayer.data[(y - 1) * width + x] or 0
+
+            -- A tile is walkable ONLY if Walkable layer has non-zero GID
+            local isWalkable = (walkableGid ~= nil and walkableGid > 0)
+
+            -- Store the GID (prefer walkable, fallback to background for rendering)
+            local gid = walkableGid and walkableGid > 0 and walkableGid or backgroundGid
 
             grid[x][y] = {
-                type = tileType,
                 gid = gid,
                 walkable = isWalkable
             }
@@ -227,12 +196,9 @@ function TiledMapLoader.getTileDebugInfo(worldX, worldY, collisionGrid, tileSize
     end
 
     local tileData = collisionGrid[tileX][tileY]
-    local tileTypeName = TiledMapLoader.getTileTypeName(tileData.type)
 
     return {
         gid = tileData.gid,
-        tileType = tileData.type,
-        tileTypeName = tileTypeName,
         tileX = tileX,
         tileY = tileY,
         walkable = tileData.walkable
