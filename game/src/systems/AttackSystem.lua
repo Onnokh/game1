@@ -354,6 +354,19 @@ function AttackSystem:spawnBullet(entity)
             bulletLifetime,
             piercing
         )
+
+        -- Apply recoil to player
+        if EntityUtils.isPlayer(entity) and weapon then
+            local weaponData = weapon:getCurrentWeapon()
+            if weaponData and weaponData.recoilKnockback then
+                local movement = entity:getComponent("Movement")
+                if movement then
+                    -- Apply recoil in opposite direction of shot
+                    local recoilVelocity = weaponData.recoilKnockback * 150
+                    movement:addVelocity(-directionX * recoilVelocity, -directionY * recoilVelocity)
+                end
+            end
+        end
     end
 end
 

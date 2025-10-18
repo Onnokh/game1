@@ -13,7 +13,8 @@ Weapon.__index = Weapon
 ---@field damage number Damage dealt
 ---@field range number Range (melee range or bullet range)
 ---@field cooldown number Time between attacks
----@field knockback number Knockback force
+---@field knockback number Knockback force applied to targets
+---@field recoilKnockback number|nil Knockback force applied to shooter when firing
 ---@field bulletSpeed number|nil Speed of bullets (ranged only)
 ---@field bulletLifetime number|nil Lifetime of bullets in seconds (ranged only)
 ---@field piercing boolean|nil Can bullet pierce through enemies (ranged only)

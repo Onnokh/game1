@@ -77,7 +77,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     bullet:addComponent("SpriteRenderer", spriteRenderer)
     bullet:addComponent("Bullet", bulletComponent)
     bullet:addComponent("PhysicsCollision", physicsCollision)
-    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .89, widthFactor = 1, heightFactor = 0.35, offsetY = 8 }))
+    bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 1, heightFactor = 0.75, offsetY = 8 }))
     bullet:addComponent("Light", Light.new({ r = 100, g = 150, b = 255, a = 255, radius = 16 }))
 
     -- Add to world
