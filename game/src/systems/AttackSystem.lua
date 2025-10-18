@@ -337,23 +337,6 @@ function AttackSystem:spawnBullet(entity)
         spawnX = spawnX + directionX * spawnOffset
         spawnY = spawnY + directionY * spawnOffset
 
-        -- Create a short-lived cone flashing light to simulate muzzle flash
-        do
-            local angle = math.atan2(directionY, directionX)
-            -- Warm yellowish flash, brief and bright, stretched forward
-            luven.addFlashingLight(
-                spawnX,
-                spawnY,
-                luven.newColor(1, 0.95, 0.7, 1),
-                .25,   -- maxPower
-                0.06,  -- speed (seconds to peak; then auto-removes)
-                luven.lightShapes.cone,
-                angle,
-                1,   -- scaleX (stretch forward)
-                .5    -- scaleY
-            )
-        end
-
         -- Create bullet entity
         local BulletEntity = require("src.entities.Bullet")
 

@@ -111,17 +111,21 @@ function RenderSystem:draw()
                     if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
                         -- Get the actual sprite frame dimensions from Iffy tileset
                         local frameWidth = spriteRenderer.width
+                        local frameHeight = spriteRenderer.height
                         if iffy.tilesets[spriteSheet] then
                             frameWidth = iffy.tilesets[spriteSheet][1]
+                            frameHeight = iffy.tilesets[spriteSheet][2]
                         end
 
-                        -- Adjust position for horizontal flipping to keep sprite centered
-                        local drawX = x
-                        if spriteRenderer.scaleX < 0 then
-                            drawX = x + frameWidth
-                        end
+                        -- Calculate origin offset for center rotation
+                        local ox = frameWidth / 2
+                        local oy = frameHeight / 2
 
-                        love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                        -- Draw with center as origin for proper rotation
+                        local drawX = x + ox
+                        local drawY = y + oy
+
+                        love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
                         hasDrawnSomething = true
                     end
                 end
@@ -245,17 +249,21 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
             end
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = spriteRenderer.width
+            local frameHeight = spriteRenderer.height
             if iffy.tilesets[spriteSheet] then
                 frameWidth = iffy.tilesets[spriteSheet][1]
+                frameHeight = iffy.tilesets[spriteSheet][2]
             end
 
-            -- Adjust position for horizontal flipping to keep sprite centered
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + frameWidth
-            end
+            -- Calculate origin offset for center rotation
+            local ox = frameWidth / 2
+            local oy = frameHeight / 2
 
-            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            -- Draw with center as origin for proper rotation
+            local drawX = x + ox
+            local drawY = y + oy
+
+            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
             hasDrawnSomething = true
         end
     end
@@ -340,17 +348,21 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
         if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = spriteRenderer.width
+            local frameHeight = spriteRenderer.height
             if iffy.tilesets[spriteSheet] then
                 frameWidth = iffy.tilesets[spriteSheet][1]
+                frameHeight = iffy.tilesets[spriteSheet][2]
             end
 
-            -- Adjust position for horizontal flipping to keep sprite centered
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + frameWidth
-            end
+            -- Calculate origin offset for center rotation
+            local ox = frameWidth / 2
+            local oy = frameHeight / 2
 
-            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            -- Draw with center as origin for proper rotation
+            local drawX = x + ox
+            local drawY = y + oy
+
+            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
             hasDrawnSomething = true
         end
     end
@@ -449,17 +461,21 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
         if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = spriteRenderer.width
+            local frameHeight = spriteRenderer.height
             if iffy.tilesets[spriteSheet] then
                 frameWidth = iffy.tilesets[spriteSheet][1]
+                frameHeight = iffy.tilesets[spriteSheet][2]
             end
 
-            -- Adjust position for horizontal flipping to keep sprite centered
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + frameWidth
-            end
+            -- Calculate origin offset for center rotation
+            local ox = frameWidth / 2
+            local oy = frameHeight / 2
 
-            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            -- Draw with center as origin for proper rotation
+            local drawX = x + ox
+            local drawY = y + oy
+
+            love.graphics.draw(iffy.images[spriteSheet], iffy.spritesheets[spriteSheet][1], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
             hasDrawnSomething = true
         end
     end

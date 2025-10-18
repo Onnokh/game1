@@ -123,9 +123,9 @@ function Player.create(x, y, world, physicsWorld)
             type = "ranged",
             damage = 8,
             range = 300,
-            cooldown = 0.50,
+            cooldown = 0.20,
             knockback = 1,
-            bulletSpeed = 800,
+            bulletSpeed = 350,
             bulletLifetime = 3,
             piercing = false
         }

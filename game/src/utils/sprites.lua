@@ -57,6 +57,9 @@ function IffySprites.load()
   -- Load items spritesheet (16x27 grid, 32x32 per item)
   loadSpritesheet("items", "resources/loot/items.png", 16, 27)
 
+  -- Load bullet sprite (1x1 grid, 16x16)
+  loadSpritesheet("bullet", "resources/bullet.png", 1, 1)
+
   -- Load tree spritesheet (1x1 grid, 48x64)
   loadSpritesheet("tree", "resources/objects/tree.png", 1, 1)
   loadSpritesheet("tree2", "resources/objects/tree2.png", 1, 1)

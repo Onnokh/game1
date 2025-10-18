@@ -479,19 +479,12 @@ function overlayStats.drawPhysicsColliders(cameraX, cameraY, cameraScale)
   -- Query all entities with TriggerZone components (sensors) using the ECS system
   local entitiesWithTriggerZone = gameScene.ecsWorld:getEntitiesWith({"TriggerZone"})
 
-  -- Debug: print number of trigger zones found
-  if #entitiesWithTriggerZone > 0 then
-    print(string.format("[Debug] Found %d trigger zones to render", #entitiesWithTriggerZone))
-  end
-
   -- Draw trigger zones for each entity
   for _, entity in ipairs(entitiesWithTriggerZone) do
     local triggerZone = entity:getComponent("TriggerZone")
     local position = entity:getComponent("Position")
 
     if triggerZone and triggerZone:hasCollider() and position then
-      -- Debug: print trigger zone info
-      print(string.format("[Debug] Rendering trigger zone for entity %d, has collider: %s", entity.id, tostring(triggerZone:hasCollider())))
 
       -- Set color for trigger zones (orange, semi-transparent)
       love.graphics.setColor(1, 0.8, 0, 0.5)
