@@ -20,6 +20,7 @@ local Modifier = require("src.components.Modifier")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
+local weaponDefinitions = require("src.definitions.weapons")
 
 local Idle = require("src.entities.Player.states.Idle")
 local Moving = require("src.entities.Player.states.Moving")
@@ -109,29 +110,7 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("dash", Dash.new())
 
     -- Create weapon component with weapon inventory
-    local weaponInventory = {
-        melee = {
-            name = "Sword",
-            type = "melee",
-            damage = 12,
-            range = 30,
-            cooldown = 0.5,
-            knockback = 6
-        },
-        ranged = {
-            name = "Gun",
-            type = "ranged",
-            damage = 8,
-            range = 300,
-            cooldown = 0.15,
-            knockback = 1,
-            recoilKnockback = 0.05,
-            bulletSpeed = 350,
-            bulletLifetime = 3,
-            piercing = false,
-            glowColor = {0.4, 0.7, 1.0}
-        }
-    }
+    local weaponInventory = weaponDefinitions.getAllWeapons()
     local weapon = Weapon.new("ranged", weaponInventory)
 
     -- Create attack component (tracks attack execution state)
