@@ -52,6 +52,17 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     -- Rotate sprite to match bullet direction
     spriteRenderer:setRotation(bulletComponent:getAngle())
 
+    -- Set glow color from weapon if available
+    if owner then
+        local weapon = owner:getComponent("Weapon")
+        if weapon then
+            local weaponData = weapon:getCurrentWeapon()
+            if weaponData and weaponData.glowColor then
+                spriteRenderer:setGlowColor(weaponData.glowColor[1], weaponData.glowColor[2], weaponData.glowColor[3])
+            end
+        end
+    end
+
     -- Circular physics collider for bullet collision detection (sensor)
     -- PhysicsCollision already creates sensors by default (non-blocking)
     local physicsCollision = PhysicsCollision.new(8, 8, "dynamic",0, 0, "circle")
@@ -78,7 +89,7 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     bullet:addComponent("Bullet", bulletComponent)
     bullet:addComponent("PhysicsCollision", physicsCollision)
     bullet:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 1, heightFactor = 0.75, offsetY = 8 }))
-    bullet:addComponent("Light", Light.new({ r = 100, g = 150, b = 255, a = 255, radius = 16 }))
+    bullet:addComponent("Light", Light.new({ r = 100, g = 150, b = 255, a = 255, radius = 24 }))
 
     -- Add to world
     if world then

@@ -57,6 +57,11 @@ function RenderSystem:draw()
             -- Apply outline shader if configured
             if spriteRenderer.outline and spriteRenderer.outline.enabled then
                 self:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
+            -- Apply glow shader if entity is a bullet
+            elseif isBullet then
+                self:drawWithGlowShader(entity, x, y, spriteRenderer, animator)
+                -- Skip normal drawing since shader handles it
+                goto skip_drawing
             -- Apply foliage sway shader if entity has FoliageSway tag
             elseif entity:hasTag("FoliageSway") then
                 self:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, animator)
@@ -485,6 +490,85 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
         drawRectangle(x, y, spriteRenderer, isBullet)
     end
 
+
+    -- Reset shader and color
+    love.graphics.setShader()
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+---Draw entity with glow shader (for bullets)
+---@param entity Entity The entity to draw
+---@param x number X position
+---@param y number Y position
+---@param spriteRenderer SpriteRenderer The sprite renderer component
+---@param animator Animator|nil The animator component
+function RenderSystem:drawWithGlowShader(entity, x, y, spriteRenderer, animator)
+    local ShaderManager = require("src.core.managers.ShaderManager")
+    local glowShader = ShaderManager.getShader("glow")
+
+    if not glowShader then
+        -- Fallback to normal drawing if shader not available
+        return
+    end
+
+    -- Pulsing effect based on time
+    local time = love.timer.getTime()
+    local pulse = 1.0 + math.sin(time * 4.0) * 0.2
+
+    -- Get glow color from sprite renderer or use default cyan/blue
+    local glowColor = {0.4, 0.7, 1.0}
+    if spriteRenderer.glowColor then
+        glowColor = {spriteRenderer.glowColor.r, spriteRenderer.glowColor.g, spriteRenderer.glowColor.b}
+    end
+
+    -- Bullets typically use static sprites, not animations
+    if spriteRenderer.sprite then
+        local iffy = require("lib.iffy")
+        local spriteSheet = spriteRenderer.sprite
+
+        if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+            -- Get the actual sprite frame dimensions from Iffy tileset
+            local frameWidth = spriteRenderer.width
+            local frameHeight = spriteRenderer.height
+            if iffy.tilesets[spriteSheet] then
+                frameWidth = iffy.tilesets[spriteSheet][1]
+                frameHeight = iffy.tilesets[spriteSheet][2]
+            end
+
+            -- Calculate origin offset for center rotation
+            local ox = frameWidth / 2
+            local oy = frameHeight / 2
+
+            -- Draw with center as origin for proper rotation
+            local drawX = x + ox
+            local drawY = y + oy
+
+            local image = iffy.images[spriteSheet]
+            local quad = iffy.spritesheets[spriteSheet][1]
+
+            -- Draw outer glow layers (multiple passes with offset and transparency)
+            love.graphics.setShader()
+            for i = 3, 1, -1 do
+                local offset = i * 1.5 * pulse
+                local alpha = (0.3 / i) * pulse
+                love.graphics.setColor(glowColor[1], glowColor[2], glowColor[3], alpha)
+
+                -- Draw glow in 8 directions (cardinal + diagonal)
+                for angle = 0, 7 do
+                    local rad = (angle * math.pi) / 4
+                    local offsetX = math.cos(rad) * offset
+                    local offsetY = math.sin(rad) * offset
+                    love.graphics.draw(image, quad, drawX + offsetX, drawY + offsetY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
+                end
+            end
+
+            -- Draw the core bullet with shader for extra brightness
+            love.graphics.setShader(glowShader)
+            glowShader:send("Time", time)
+            love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
+            love.graphics.draw(image, quad, drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
+        end
+    end
 
     -- Reset shader and color
     love.graphics.setShader()

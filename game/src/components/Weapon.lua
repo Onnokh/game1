@@ -18,6 +18,7 @@ Weapon.__index = Weapon
 ---@field bulletSpeed number|nil Speed of bullets (ranged only)
 ---@field bulletLifetime number|nil Lifetime of bullets in seconds (ranged only)
 ---@field piercing boolean|nil Can bullet pierce through enemies (ranged only)
+---@field glowColor table|nil RGB color for bullet glow {r, g, b} (0-1 range)
 
 ---Create a new Weapon component
 ---@param currentWeapon string Starting weapon ID

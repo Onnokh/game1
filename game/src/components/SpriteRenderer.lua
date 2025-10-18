@@ -11,6 +11,7 @@
 ---@field offsetY number Y offset from entity position
 ---@field facingMouse boolean Whether the sprite should face the mouse
 ---@field outline table|nil Outline configuration {enabled, color, thickness}
+---@field glowColor table|nil RGB color for glow effect {r, g, b}
 local SpriteRenderer = {}
 SpriteRenderer.__index = SpriteRenderer
 
@@ -36,6 +37,7 @@ function SpriteRenderer.new(sprite, width, height)
     self.facingMouse = false
     self.spriteIndex = nil
     self.outline = nil -- Outline configuration {enabled, color, thickness}
+    self.glowColor = nil -- RGB color for glow effect {r, g, b}
 
     return self
 end
@@ -92,6 +94,19 @@ function SpriteRenderer:clearOutline()
     self.outline = nil
 end
 
+---Set glow color for bullet glow effect
+---@param r number Red component (0-1)
+---@param g number Green component (0-1)
+---@param b number Blue component (0-1)
+function SpriteRenderer:setGlowColor(r, g, b)
+    self.glowColor = {r = r, g = g, b = b}
+end
+
+---Clear glow color
+function SpriteRenderer:clearGlowColor()
+    self.glowColor = nil
+end
+
 ---Serialize the SpriteRenderer component for saving
 ---@return table Serialized sprite renderer data
 function SpriteRenderer:serialize()
@@ -116,6 +131,11 @@ function SpriteRenderer:serialize()
                 b = self.outline.color.b,
                 a = self.outline.color.a
             }
+        } or nil,
+        glowColor = self.glowColor and {
+            r = self.glowColor.r,
+            g = self.glowColor.g,
+            b = self.glowColor.b
         } or nil
     }
 end
@@ -135,6 +155,7 @@ function SpriteRenderer.deserialize(data)
     renderer.facingMouse = data.facingMouse or false
     renderer.spriteIndex = data.spriteIndex
     renderer.outline = data.outline
+    renderer.glowColor = data.glowColor
     return renderer
 end
 

@@ -68,6 +68,7 @@ function ShaderManager.loadDefaultShaders()
     ShaderManager.loadShader("outline", "src/shaders/outline_shader.vert", "src/shaders/outline_shader.frag")
     ShaderManager.loadShader("speed_lines", "src/shaders/speed_lines_shader.vert", "src/shaders/speed_lines_shader.frag")
     ShaderManager.loadShader("foliage_sway", "src/shaders/foliage_sway_shader.vert", "src/shaders/foliage_sway_shader.frag")
+    ShaderManager.loadShader("glow", "src/shaders/glow_shader.vert", "src/shaders/glow_shader.frag")
 
     -- Load wind noise texture for foliage sway (clear cache to regenerate with fixed tiling)
     local NoiseGenerator = require("src.utils.noiseGenerator")

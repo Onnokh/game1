@@ -128,7 +128,8 @@ function Player.create(x, y, world, physicsWorld)
             recoilKnockback = 0.05,
             bulletSpeed = 350,
             bulletLifetime = 3,
-            piercing = false
+            piercing = false,
+            glowColor = {0.4, 0.7, 1.0}
         }
     }
     local weapon = Weapon.new("ranged", weaponInventory)
