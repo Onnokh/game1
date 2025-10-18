@@ -70,6 +70,18 @@ local upgrades = {
         maxRank = 2, -- Can upgrade twice (1 -> 2 -> 3)
         spriteSheet = "items",
         spriteFrame = 147  -- Speed potion sprite (reusing)
+    },
+
+    piercing = {
+        id = "piercing",
+        name = "Piercing Shots",
+        description = "Bullets pierce through enemies",
+        targetPath = "Weapon.inventory.ranged.piercing",
+        modifierType = "set",
+        modifierValue = true,
+        maxRank = 1, -- Can only be taken once
+        spriteSheet = "items",
+        spriteFrame = 148  -- Rage potion sprite
     }
 }
 

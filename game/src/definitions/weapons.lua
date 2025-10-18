@@ -33,7 +33,7 @@ local function getWeapon(id)
     return weapons[id]
 end
 
----Get all weapon definitions
+---Get all weapon definitions (returns reference to immutable definitions)
 ---@return table<string, WeaponData>
 local function getAllWeapons()
     return weapons

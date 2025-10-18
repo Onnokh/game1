@@ -247,8 +247,31 @@ function UpgradeUISystem:applyUpgrade(player, upgradeId, slotIndex)
     local currentRank = tracker:getRank(upgradeId)
     local source = "upgrade_" .. upgradeId .. "_rank_" .. tostring(currentRank + 1)
 
-    -- Apply modifier
-    modifier:apply(player, upgradeDef.targetPath, upgradeDef.modifierType, upgradeDef.modifierValue, source)
+    -- Check if this is a weapon upgrade (path starts with "Weapon.inventory.")
+    local isWeaponUpgrade = upgradeDef.targetPath and upgradeDef.targetPath:match("^Weapon%.inventory%.")
+
+    if isWeaponUpgrade then
+        -- Handle weapon upgrades directly
+        local weapon = player:getComponent("Weapon")
+        if not weapon then
+            print("[UpgradeUI] Player has no Weapon component")
+            return
+        end
+
+        -- Parse the weapon path: "Weapon.inventory.weaponId.statName"
+        local weaponId, statName = upgradeDef.targetPath:match("^Weapon%.inventory%.([^.]+)%.([^.]+)$")
+        if not weaponId or not statName then
+            print("[UpgradeUI] Invalid weapon upgrade path: " .. tostring(upgradeDef.targetPath))
+            return
+        end
+
+        -- Apply weapon override directly
+        weapon:setWeaponOverride(weaponId, statName, upgradeDef.modifierValue)
+        print(string.format("[UpgradeUI] Applied weapon override: %s.%s = %s", weaponId, statName, tostring(upgradeDef.modifierValue)))
+    else
+        -- Apply regular stat modifier
+        modifier:apply(player, upgradeDef.targetPath, upgradeDef.modifierType, upgradeDef.modifierValue, source)
+    end
 
     -- Increment rank
     tracker:incrementRank(upgradeId)

@@ -2,7 +2,8 @@ local Component = require("src.core.Component")
 
 ---@class Weapon : Component
 ---@field currentWeapon string Currently equipped weapon ID
----@field inventory table<string, WeaponData> Available weapons by ID
+---@field inventory table<string, WeaponData> Available weapons by ID (immutable base definitions)
+---@field weaponOverrides table<string, table> Per-weapon stat overrides (e.g., {ranged = {piercing = true}})
 ---@field canSwitch boolean Whether weapon switching is allowed
 local Weapon = {}
 Weapon.__index = Weapon
@@ -29,6 +30,7 @@ function Weapon.new(currentWeapon, inventory)
 
     self.currentWeapon = currentWeapon or "melee"
     self.inventory = inventory or {}
+    self.weaponOverrides = {} -- Per-weapon stat overrides
     self.canSwitch = true
 
     return self
@@ -84,10 +86,30 @@ function Weapon:switchNext()
     return self.currentWeapon
 end
 
----Get the current weapon data
----@return WeaponData|nil The current weapon data
+---Get the current weapon data with overrides applied
+---@return WeaponData|nil The current weapon data merged with any overrides
 function Weapon:getCurrentWeapon()
-    return self.inventory[self.currentWeapon]
+    local baseWeapon = self.inventory[self.currentWeapon]
+    if not baseWeapon then
+        return nil
+    end
+
+    -- If no overrides for this weapon, return base weapon directly
+    local overrides = self.weaponOverrides[self.currentWeapon]
+    if not overrides or next(overrides) == nil then
+        return baseWeapon
+    end
+
+    -- Merge base weapon with overrides (shallow copy with overrides applied)
+    local effectiveWeapon = {}
+    for key, value in pairs(baseWeapon) do
+        effectiveWeapon[key] = value
+    end
+    for key, value in pairs(overrides) do
+        effectiveWeapon[key] = value
+    end
+
+    return effectiveWeapon
 end
 
 ---Add a weapon to inventory
@@ -125,12 +147,36 @@ function Weapon:getWeaponList()
     return weapons
 end
 
+---Set an override for a specific weapon stat
+---@param weaponId string The weapon ID (e.g., "melee", "ranged")
+---@param statName string The stat to override (e.g., "piercing", "damage")
+---@param value any The value to set
+function Weapon:setWeaponOverride(weaponId, statName, value)
+    if not self.weaponOverrides[weaponId] then
+        self.weaponOverrides[weaponId] = {}
+    end
+    self.weaponOverrides[weaponId][statName] = value
+    print(string.format("[Weapon] Set override for %s.%s = %s", weaponId, statName, tostring(value)))
+end
+
+---Get an override value for a specific weapon stat
+---@param weaponId string The weapon ID
+---@param statName string The stat name
+---@return any|nil The override value, or nil if not set
+function Weapon:getWeaponOverride(weaponId, statName)
+    if not self.weaponOverrides[weaponId] then
+        return nil
+    end
+    return self.weaponOverrides[weaponId][statName]
+end
+
 ---Serialize the Weapon component for saving
 ---@return table Serialized weapon data
 function Weapon:serialize()
     return {
         currentWeapon = self.currentWeapon,
         inventory = self.inventory,
+        weaponOverrides = self.weaponOverrides,
         canSwitch = self.canSwitch
     }
 end
@@ -140,6 +186,7 @@ end
 ---@return Weapon Recreated Weapon component
 function Weapon.deserialize(data)
     local weapon = Weapon.new(data.currentWeapon, data.inventory)
+    weapon.weaponOverrides = data.weaponOverrides or {}
     weapon.canSwitch = data.canSwitch ~= false
     return weapon
 end
