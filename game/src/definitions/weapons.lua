@@ -22,7 +22,7 @@ local weapons = {
         bulletSpeed = 350,
         bulletLifetime = 3,
         piercing = false,
-        glowColor = {0.0, 0.0, 1.0}
+        glowColor = {1.0, 0.85, 0.6}
     }
 }
 

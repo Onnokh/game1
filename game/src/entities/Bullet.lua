@@ -52,13 +52,16 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     -- Rotate sprite to match bullet direction
     spriteRenderer:setRotation(bulletComponent:getAngle())
 
-    -- Set glow color from weapon if available
+    -- Set glow color and sprite color from weapon if available
     if owner then
         local weapon = owner:getComponent("Weapon")
         if weapon then
             local weaponData = weapon:getCurrentWeapon()
             if weaponData and weaponData.glowColor then
+                -- Set glow color for the halo effect
                 spriteRenderer:setGlowColor(weaponData.glowColor[1], weaponData.glowColor[2], weaponData.glowColor[3])
+                -- Tint the sprite itself with the same color (since sprite is now white)
+                spriteRenderer:setColor(weaponData.glowColor[1], weaponData.glowColor[2], weaponData.glowColor[3], 1.0)
             end
         end
     end

@@ -515,8 +515,8 @@ function RenderSystem:drawWithGlowShader(entity, x, y, spriteRenderer, animator)
     local time = love.timer.getTime()
     local pulse = 1.0 + math.sin(time * 4.0) * 0.2
 
-    -- Get glow color from sprite renderer or use default cyan/blue
-    local glowColor = {0.4, 0.7, 1.0}
+    -- Get glow color from sprite renderer or use default bright white/orange
+    local glowColor = {1.0, 0.85, 0.6}
     if spriteRenderer.glowColor then
         glowColor = {spriteRenderer.glowColor.r, spriteRenderer.glowColor.g, spriteRenderer.glowColor.b}
     end
