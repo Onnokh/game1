@@ -6,13 +6,11 @@ local DashChargesHUD = require("src.ui.DashChargesHUD")
 local DashChargesSystem = System:extend("DashChargesSystem", {})
 
 ---Create a new DashChargesSystem
----@param ecsWorld World
 ---@return DashChargesSystem
-function DashChargesSystem.new(ecsWorld)
+function DashChargesSystem.new()
     ---@class DashChargesSystem
     local self = System.new()
     setmetatable(self, DashChargesSystem)
-    self.ecsWorld = ecsWorld
     self.isWorldSpace = false -- This UI system draws in screen space
 
     return self
@@ -20,11 +18,11 @@ end
 
 ---Draw the dash charges HUD
 function DashChargesSystem:draw()
-    if self.ecsWorld then
+    if self.world then
         print("Dash UI Debug - DashChargesSystem draw() called")
-        DashChargesHUD.draw(self.ecsWorld)
+        DashChargesHUD.draw(self.world)
     else
-        print("Dash UI Debug - No ecsWorld in DashChargesSystem")
+        print("Dash UI Debug - No world in DashChargesSystem")
     end
 end
 
