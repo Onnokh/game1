@@ -142,6 +142,7 @@ function GameScene.load()
   local WeaponIndicatorSystem = require("src.systems.UISystems.WeaponIndicatorSystem")
   local ShopUISystem = require("src.systems.UISystems.ShopUISystem")
   local UpgradeUISystem = require("src.systems.UISystems.UpgradeUISystem")
+  local MinimapSystem = require("src.systems.UISystems.MinimapSystem")
 
   local healthBarSystem = HealthBarSystem.new(ecsWorld)
   uiWorld:addSystem(MenuSystem.new()) -- Menu systems first to consume clicks
@@ -162,6 +163,7 @@ function GameScene.load()
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
   uiWorld:addSystem(DashSpeedLinesSystem.new(ecsWorld)) -- Show speed lines when player is dashing
+  uiWorld:addSystem(MinimapSystem.new(ecsWorld)) -- Show minimap with shops and upgrade stations
 
   -- Load complete world using MapManager (handles everything: islands, pathfinding, collisions, entities, camera)
   -- Check if we're loading from a save (which would have a specific seed)

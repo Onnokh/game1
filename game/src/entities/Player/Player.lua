@@ -17,6 +17,7 @@ local FootprintsEmitter = require("src.components.FootprintsEmitter")
 local DashCharges = require("src.components.DashCharges")
 local UpgradeTracker = require("src.components.UpgradeTracker")
 local Modifier = require("src.components.Modifier")
+local MinimapIcon = require("src.components.MinimapIcon")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
@@ -169,6 +170,7 @@ function Player.create(x, y, world, physicsWorld)
         maxCount = 300,
         pausedByStates = { "dash" }
     }))
+    playerEntity:addComponent("MinimapIcon", MinimapIcon.new("player", {r = 255, g = 255, b = 0}, 6)) -- Yellow icon, slightly larger
 
     if world then
         world:addEntity(playerEntity)

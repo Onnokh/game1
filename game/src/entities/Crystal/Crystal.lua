@@ -6,6 +6,7 @@ local TriggerZone = require("src.components.TriggerZone")
 local Upgrade = require("src.components.Upgrade")
 local Interactable = require("src.components.Interactable")
 local Animator = require("src.components.Animator")
+local MinimapIcon = require("src.components.MinimapIcon")
 
 ---@class CrystalEntity
 local CrystalEntity = {}
@@ -111,6 +112,7 @@ function CrystalEntity.create(x, y, world, physicsWorld, inventory, seed, shopId
     crystal:addComponent("Animator", animation)
     crystal:addComponent("Upgrade", upgradeComponent)
     crystal:addComponent("Interactable", interactable)
+    crystal:addComponent("MinimapIcon", MinimapIcon.new("upgrade", {r = 0, g = 255, b = 255}, 5)) -- Cyan diamond icon
     -- crystal:addComponent("Light", light)
 
     -- Tag for easy querying

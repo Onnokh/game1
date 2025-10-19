@@ -6,6 +6,7 @@ local Shop = require("src.components.Shop")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
 local Light = require("src.components.Light")
+local MinimapIcon = require("src.components.MinimapIcon")
 ---@class ShopEntity
 local ShopEntity = {}
 
@@ -48,6 +49,7 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
     shop:addComponent("Shop", shopComponent)
     shop:addComponent("Light", light)
     shop:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = .8, heightFactor = .6, offsetY = 0 }))
+    shop:addComponent("MinimapIcon", MinimapIcon.new("shop", {r = 255, g = 0, b = 255}, 5)) -- Purple icon
 
     -- Tag for easy querying
     shop:addTag("Shop")
