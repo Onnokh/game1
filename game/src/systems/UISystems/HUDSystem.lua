@@ -2,6 +2,7 @@ local System = require("src.core.System")
 local HealthBarHUD = require("src.ui.HealthBarHUD")
 local DashChargesHUD = require("src.ui.DashChargesHUD")
 local OxygenHUD = require("src.ui.OxygenHUD")
+local ActiveUpgradesHUD = require("src.ui.ActiveUpgradesHUD")
 
 ---@class HUDSystem : System
 ---@field ecsWorld World
@@ -9,7 +10,7 @@ local HUDSystem = System:extend("HUDSystem", {})
 
 function HUDSystem.new(ecsWorld, healthBarSystem)
 	---@class HUDSystem
-	local self = System.new({})
+	local self = System.new()
 	setmetatable(self, HUDSystem)
 	self.ecsWorld = ecsWorld
 	self.healthBarSystem = healthBarSystem -- Reference to HealthBarSystem for damage tracking
@@ -28,6 +29,9 @@ function HUDSystem:draw()
 
     -- Draw oxygen bar above the health bar
     OxygenHUD.draw(self.ecsWorld)
+
+    -- Draw active upgrades on the right side
+    ActiveUpgradesHUD.draw(self.ecsWorld)
 
     -- Delegate HUD damage numbers to HealthBarSystem
     if self.healthBarSystem and self.healthBarSystem.drawHUD then

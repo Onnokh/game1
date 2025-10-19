@@ -19,6 +19,24 @@ function PhaseText:draw()
     local gameState = require("src.core.GameState")
 
     local phaseText = tostring(gameState and gameState.phase or "")
+
+    -- During Siege phase, append attacker count
+    if phaseText == "Siege" then
+        local GameScene = require("src.scenes.game")
+        local ecsWorld = GameScene and GameScene.ecsWorld
+        if ecsWorld then
+            -- Count alive siege attackers
+            local attackers = ecsWorld:getEntitiesWithTag("SiegeAttacker")
+            local alive = 0
+            for _, e in ipairs(attackers) do
+                if not e.isDead then
+                    alive = alive + 1
+                end
+            end
+            phaseText = string.format("Siege: %d left", alive)
+        end
+    end
+
     local sw, _ = love.graphics.getDimensions()
     local prevFont = love.graphics.getFont()
     local r, g, b, a = love.graphics.getColor()

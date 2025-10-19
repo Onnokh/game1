@@ -36,11 +36,11 @@ local FireflySystem = require("src.systems.FireflySystem")
 local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
-  local DashShadowSystem = require("src.systems.DashShadowSystem")
-  local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
+local DashShadowSystem = require("src.systems.DashShadowSystem")
+local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
   local DashChargesSystem = require("src.systems.DashChargesSystem")
   local ShaderManager = require("src.core.managers.ShaderManager")
-  local FootprintsSystem = require("src.systems.FootprintsSystem")
+local FootprintsSystem = require("src.systems.FootprintsSystem")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
 local worldWidth = 0  -- Will be set by loaded map
@@ -135,7 +135,6 @@ function GameScene.load()
   local MenuSystem = require("src.systems.UISystems.MenuSystem")
   local PauseMenuSystem = require("src.systems.UISystems.PauseMenuSystem")
   local GameOverSystem = require("src.systems.UISystems.GameOverSystem")
-  local SiegeCounterSystem = require("src.systems.UISystems.SiegeCounterSystem")
   local SiegeIndicatorSystem = require("src.systems.UISystems.SiegeIndicatorSystem")
   local InteractionPromptSystem = require("src.systems.UISystems.InteractionPromptSystem")
   local AggroVignetteSystem = require("src.systems.UISystems.AggroVignetteSystem")
@@ -160,7 +159,6 @@ function GameScene.load()
   uiWorld:addSystem(LootPickupLabelSystem.new(ecsWorld))
   uiWorld:addSystem(ShopUISystem.new(ecsWorld)) -- After menus so clicks are blocked when paused
   uiWorld:addSystem(UpgradeUISystem.new(ecsWorld)) -- Crystal upgrade UI system
-  uiWorld:addSystem(SiegeCounterSystem.new())
   uiWorld:addSystem(InteractionPromptSystem.new(ecsWorld))
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
   uiWorld:addSystem(DashSpeedLinesSystem.new(ecsWorld)) -- Show speed lines when player is dashing
