@@ -16,9 +16,10 @@ function InventoryDisplaySystem.new(ecsWorld)
 
     self.ecsWorld = ecsWorld
 
-    -- Create the inventory display UI element anchored top-right
+    -- Create the inventory display UI element anchored bottom-left
     local screenW, screenH = love.graphics.getWidth(), love.graphics.getHeight()
-    self.inventoryDisplay = InventoryDisplay.new(screenW - 16, 16) -- 16px from top-right corner
+    local margin = 32
+    self.inventoryDisplay = InventoryDisplay.new(margin, screenH - margin) -- 32px from bottom-left corner
 
     return self
 end

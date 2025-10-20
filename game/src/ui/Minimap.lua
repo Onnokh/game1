@@ -5,7 +5,7 @@ local panel = require("src.ui.utils.panel")
 local gamera = require("lib.gamera")
 
 -- Minimap configuration
-local MINIMAP_SIZE = 400
+local MINIMAP_SIZE = 300
 local MINIMAP_PADDING = 20
 local MINIMAP_VISIBLE_RADIUS = 1500 -- World pixels visible around player
 local PANEL_PADDING = 8 -- Padding inside the panel for the minimap content
@@ -165,13 +165,15 @@ function Minimap.draw(playerX, playerY)
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
 
-    -- Calculate panel position (bottom-right with padding)
+    -- Calculate panel position (top-right with padding)
     local panelSize = MINIMAP_SIZE + (PANEL_PADDING * 2)
     local panelX = screenWidth - panelSize - MINIMAP_PADDING
-    local panelY = screenHeight - panelSize - MINIMAP_PADDING
+    local panelY = MINIMAP_PADDING
 
-    -- Draw panel background
-    -- panel.draw(panelX, panelY, panelSize, panelSize, 0.95, {0, 0, 0})
+    panel.draw(panelX, panelY, panelSize, panelSize, 0.5, {0, 0, 0}, nil)
+
+    -- Draw border on top
+    panel.draw(panelX, panelY, panelSize, panelSize, 1.0, {0.2, 0.2, 0.2}, "border-000")
 
     -- Calculate minimap content position (inside panel with padding)
     local minimapX = panelX + PANEL_PADDING

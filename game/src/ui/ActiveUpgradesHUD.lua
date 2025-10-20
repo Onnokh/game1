@@ -39,11 +39,15 @@ function ActiveUpgradesHUD.draw(world)
 
     local sw, sh = love.graphics.getDimensions()
     local marginX = 32
-    local marginY = 32
     local iconSize = 64
     local rankBadgeSize = 32
     local verticalSpacing = 8
     local nameOffset = 8 -- Gap between name and icon panel
+
+    -- Position below minimap
+    local minimapHeight = 300 + (8 * 2) -- MINIMAP_SIZE + PANEL_PADDING * 2
+    local minimapPadding = 20
+    local gapBelowMinimap = 32
 
     -- Load upgrades module to get upgrade definitions
     local upgradesModule = require("src.definitions.upgrades")
@@ -56,9 +60,9 @@ function ActiveUpgradesHUD.draw(world)
 
     local r, g, b, a = love.graphics.getColor()
 
-    -- Position from top right
+    -- Position from top right, below minimap
     local startX = sw - marginX - iconSize
-    local startY = marginY
+    local startY = minimapPadding + minimapHeight + gapBelowMinimap -- 368px
 
     -- Draw each upgrade
     local index = 0
@@ -70,7 +74,7 @@ function ActiveUpgradesHUD.draw(world)
                 local yPos = startY + index * (iconSize + verticalSpacing)
 
                 -- Draw icon panel background
-                panel.draw(startX, yPos, iconSize, iconSize, 1.0, {0.2, 0.2, 0.2})
+                panel.draw(startX, yPos, iconSize, iconSize, 1.0, {0.2, 0.2, 0.2}, "000")
 
                 -- Draw upgrade sprite/icon
                 if upgradeDef.spriteSheet and upgradeDef.spriteFrame then
@@ -88,9 +92,9 @@ function ActiveUpgradesHUD.draw(world)
                     iffy.draw(upgradeDef.spriteSheet, upgradeDef.spriteFrame, iconX, iconY, 0, scale, scale)
                 end
 
-                -- Draw rank badge (top-left corner of icon, offset by -16px)
-                local badgeX = startX - 16
-                local badgeY = yPos - 16
+                -- Draw rank badge (center-right of icon, 50% offset to the right)
+                local badgeX = startX + iconSize - (rankBadgeSize / 2)
+                local badgeY = yPos + (iconSize / 2) - (rankBadgeSize / 2)
                 panel.draw(badgeX, badgeY, rankBadgeSize, rankBadgeSize, 1.0, {0.8, 0.6, 0.2}, "015")
 
                 -- Draw rank number

@@ -15,6 +15,9 @@ function Panel.init()
 
     -- Load additional panel styles
     Panel.loadPanelStyle("015", "resources/ui/panel-015.png")
+
+    -- Load border styles
+    Panel.loadPanelStyle("border-000", "resources/ui/border-000.png")
 end
 
 ---Load a panel style
@@ -55,15 +58,24 @@ end
 ---@param height number Total height of the panel
 ---@param alpha number|nil Alpha transparency (0-1), defaults to 1.0
 ---@param color table|nil Color tint {r, g, b} (0-1), defaults to {1, 1, 1} (white/no tint)
----@param style string|nil Panel style ID (e.g., "000", "015"), defaults to "000"
+---@param style string|nil Panel style ID (e.g., "000", "015"), or nil for solid color
 function Panel.draw(x, y, width, height, alpha, color, style)
+    alpha = alpha or 1.0
+    color = color or {0.1, 0.1, 0.1}
+
+    -- If style is nil, draw a solid color rectangle
+    if style == nil then
+        local r, g, b, a = love.graphics.getColor()
+        love.graphics.setColor(color[1], color[2], color[3], alpha)
+        love.graphics.rectangle("fill", x, y, width, height)
+        love.graphics.setColor(r, g, b, a)
+        return
+    end
+
+    -- Otherwise, draw 9-slice panel
     if not Panel.images then
         Panel.init()
     end
-
-    alpha = alpha or 1.0
-    color = color or {0.1, 0.1, 0.1}
-    style = style or "000"
 
     -- Get the image and quads for this style
     local image = Panel.images[style]

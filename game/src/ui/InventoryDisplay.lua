@@ -2,8 +2,8 @@ local UIElement = require("src.ui.UIElement")
 local fonts = require("src.utils.fonts")
 
 ---@class InventoryDisplay : UIElement
----@field x number X position (top-right corner)
----@field y number Y position (top-right corner)
+---@field x number X position (left edge, bottom-left corner)
+---@field y number Y position (bottom edge, grows upward)
 ---@field items table Array of inventory items {id, name, amount}
 ---@field font love.Font Font for rendering text
 ---@field maxDisplayItems number Maximum items to display (default 10)
@@ -74,51 +74,54 @@ function InventoryDisplay:draw()
     -- Background height: padding + title + separator spacing + items + padding
     local bgHeight = padding + lineHeight + 4 + (#displayItems * itemSpacing) + padding
 
+    -- Calculate top position (draw upward from anchor point)
+    local topY = self.y - bgHeight
+
     -- Draw dark background
     love.graphics.setColor(0, 0, 0, 0.8)
-    love.graphics.rectangle("fill", self.x - bgWidth, self.y, bgWidth, bgHeight)
+    love.graphics.rectangle("fill", self.x, topY, bgWidth, bgHeight)
 
     -- Draw border
     love.graphics.setColor(1, 1, 1, 0.5)
     love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", self.x - bgWidth, self.y, bgWidth, bgHeight)
+    love.graphics.rectangle("line", self.x, topY, bgWidth, bgHeight)
     love.graphics.setLineWidth(1)
 
     -- Draw title
     love.graphics.setColor(1, 1, 0.5, 1) -- Light yellow for title
     local titleText = "Inventory"
     local titleWidth = self.font and self.font:getWidth(titleText) or 80
-    love.graphics.print(titleText, self.x - bgWidth + (bgWidth - titleWidth) / 2, self.y + padding)
+    love.graphics.print(titleText, self.x + (bgWidth - titleWidth) / 2, topY + padding)
 
     -- Draw separator line
     love.graphics.setColor(1, 1, 1, 0.3)
     love.graphics.setLineWidth(1)
     love.graphics.line(
-        self.x - bgWidth + padding,
-        self.y + padding + lineHeight + 2,
-        self.x - padding,
-        self.y + padding + lineHeight + 2
+        self.x + padding,
+        topY + padding + lineHeight + 2,
+        self.x + bgWidth - padding,
+        topY + padding + lineHeight + 2
     )
 
     -- Draw items
     love.graphics.setColor(1, 1, 1, 1) -- White text for items
     for i, item in ipairs(displayItems) do
         local text = string.format("%s x%d", item.name, item.amount)
-        local itemY = self.y + padding + (i * itemSpacing) + 4
+        local itemY = topY + padding + (i * itemSpacing) + 4
 
         -- Draw with shadow for readability
         love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.print(text, self.x - bgWidth + padding + 1, itemY + 1)
+        love.graphics.print(text, self.x + padding + 1, itemY + 1)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(text, self.x - bgWidth + padding, itemY)
+        love.graphics.print(text, self.x + padding, itemY)
     end
 
     -- If there are more items, show indicator
     if #self.items > self.maxDisplayItems then
         local moreText = string.format("... +%d more", #self.items - self.maxDisplayItems)
-        local moreY = self.y + bgHeight - padding - lineHeight
+        local moreY = topY + bgHeight - padding - lineHeight
         love.graphics.setColor(0.7, 0.7, 0.7, 1)
-        love.graphics.print(moreText, self.x - bgWidth + padding, moreY)
+        love.graphics.print(moreText, self.x + padding, moreY)
     end
 
     -- Restore graphics state

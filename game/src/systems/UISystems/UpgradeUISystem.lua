@@ -344,7 +344,7 @@ function UpgradeUISystem:draw()
     local panelY = centerY - panelPadding
     local panelW = totalWidth + panelPadding * 2
     local panelH = contentHeight + panelPadding * 2
-    panel.draw(panelX, panelY, panelW, panelH, fadeAlpha)
+    panel.draw(panelX, panelY, panelW, panelH, fadeAlpha, {0.1, 0.1, 0.1}, "000")
 
     -- Draw each slot
     for i = 1, 3 do
@@ -357,7 +357,7 @@ function UpgradeUISystem:draw()
 
             -- Draw panel around slot with color change on hover
             local panelColor = isHovered and {1, 1, 1} or {0.75, 0.75, 0.75}
-            panel.draw(slotX, slotY, slotSize, slotSize, fadeAlpha, panelColor)
+            panel.draw(slotX, slotY, slotSize, slotSize, fadeAlpha, panelColor, "000")
 
             -- Draw rank panel at the top of the slot
             if tracker then
