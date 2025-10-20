@@ -1078,6 +1078,12 @@ function overlayStats.drawToggleControls(statsWidth)
   end
   overlayStats.goldButtonBounds = {}  -- Clear previous bounds
 
+  -- Store timer button bounds for click detection
+  if not overlayStats.timerButtonBounds then
+    overlayStats.timerButtonBounds = {}
+  end
+  overlayStats.timerButtonBounds = {}  -- Clear previous bounds
+
   -- Define toggle list with keys and descriptions
   -- Only show keyboard shortcuts for implemented toggles
   local toggleList = {
@@ -1090,11 +1096,13 @@ function overlayStats.drawToggleControls(statsWidth)
     {"F4", "Tiles (GID)", overlayStats.showTileDebug},
   }
 
-  -- Calculate panel height (title + zoom buttons + toggles + gold button)
+  -- Calculate panel height (title + zoom buttons + toggles + gold button + timer button)
   local buttonSize = 20
   local goldButtonHeight = 25
+  local timerButtonHeight = 25
   local goldButtonSpacing = 10
-  local panelHeight = padding + lineHeight + 5 + buttonSize + 10 + (#toggleList * lineHeight) + goldButtonSpacing + goldButtonHeight + padding
+  local timerButtonSpacing = 10
+  local panelHeight = padding + lineHeight + 5 + buttonSize + 10 + (#toggleList * lineHeight) + goldButtonSpacing + goldButtonHeight + timerButtonSpacing + timerButtonHeight + padding
 
   -- Draw panel background
   love.graphics.setColor(0, 0, 0, 0.8)
@@ -1263,6 +1271,43 @@ function overlayStats.drawToggleControls(statsWidth)
     y = goldButtonY,
     width = goldButtonWidth,
     height = goldButtonHeight
+  })
+
+  -- Draw "Add 15 Seconds" button below the gold button
+  local timerButtonY = goldButtonY + goldButtonHeight + timerButtonSpacing
+  local timerButtonWidth = panelWidth - 20
+  local timerButtonX = 20
+
+  -- Get mouse position for hover effect
+  local isHoveringTimerButton = mouseX >= timerButtonX and mouseX <= timerButtonX + timerButtonWidth and
+                                mouseY >= timerButtonY and mouseY <= timerButtonY + timerButtonHeight
+
+  -- Draw button background with hover effect
+  if isHoveringTimerButton then
+    love.graphics.setColor(0.3, 0.3, 0.6, 0.9)
+  else
+    love.graphics.setColor(0.2, 0.2, 0.5, 0.8)
+  end
+  love.graphics.rectangle("fill", timerButtonX, timerButtonY, timerButtonWidth, timerButtonHeight)
+
+  -- Draw button border
+  love.graphics.setColor(0.4, 0.4, 0.8, 1)
+  love.graphics.rectangle("line", timerButtonX, timerButtonY, timerButtonWidth, timerButtonHeight)
+
+  -- Draw button text centered
+  love.graphics.setColor(1, 1, 1, 1)
+  local timerButtonText = "Add 15 Seconds"
+  local timerTextWidth = font:getWidth(timerButtonText)
+  local timerTextX = timerButtonX + (timerButtonWidth - timerTextWidth) / 2
+  local timerTextY = timerButtonY + (timerButtonHeight - lineHeight) / 2
+  love.graphics.print(timerButtonText, timerTextX, timerTextY)
+
+  -- Store timer button bounds for click detection
+  table.insert(overlayStats.timerButtonBounds, {
+    x = timerButtonX,
+    y = timerButtonY,
+    width = timerButtonWidth,
+    height = timerButtonHeight
   })
 
   love.graphics.setColor(1, 1, 1, 1)
@@ -1710,6 +1755,23 @@ function overlayStats.handleMousePressed(x, y, button)
           })
 
           print("Added 100 gold! Total:", gameState.getTotalCoins())
+        end
+        return true
+      end
+    end
+  end
+
+  -- Check if click is within timer button bounds
+  if overlayStats.timerButtonBounds then
+    for _, bounds in ipairs(overlayStats.timerButtonBounds) do
+      if x >= bounds.x and x <= bounds.x + bounds.width and
+         y >= bounds.y and y <= bounds.y + bounds.height then
+        -- Add 15 seconds to the game timer
+        local GameTimeManager = require("src.core.managers.GameTimeManager")
+
+        if GameTimeManager then
+          GameTimeManager.addTime(15)
+          print("Added 15 seconds to timer!")
         end
         return true
       end

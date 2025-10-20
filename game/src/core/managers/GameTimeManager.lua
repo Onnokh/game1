@@ -64,6 +64,13 @@ function GameTimeManager.formatTime(time)
     end
 end
 
+---Add time to the elapsed time (for debug purposes)
+---@param seconds number Seconds to add to the elapsed time
+function GameTimeManager.addTime(seconds)
+    GameTimeManager.elapsedTime = GameTimeManager.elapsedTime + seconds
+    print(string.format("[GameTimeManager] Added %d seconds. New time: %s", seconds, GameTimeManager.formatTime(GameTimeManager.elapsedTime)))
+end
+
 ---Get the current wave number based on elapsed time
 ---@return number Current wave number (1-based)
 function GameTimeManager.getCurrentWave()
