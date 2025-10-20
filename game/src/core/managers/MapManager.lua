@@ -335,7 +335,7 @@ end
 ---Spawn entities from all islands
 ---@param ecsWorld World ECS world
 ---@param physicsWorld love.World Physics world
----@return Entity Player entity
+---@return Entity|nil Player entity (nil if no spawn point found)
 local function spawnEntities(ecsWorld, physicsWorld)
     local spawnStart = love.timer.getTime()
     local playerEntity = nil
@@ -435,7 +435,7 @@ end
 ---Setup camera with proper bounds
 ---@param camWidth number Camera width
 ---@param camHeight number Camera height
----@param playerEntity Entity Player entity
+---@param playerEntity Entity|nil Player entity (nil when loading from save)
 ---@return table Camera object
 local function setupCamera(camWidth, camHeight, playerEntity)
     local gamera = require("lib.gamera")
@@ -463,8 +463,9 @@ end
 ---@param physicsWorld love.World Physics world for collision bodies
 ---@param ecsWorld World ECS world for entity spawning
 ---@param seed number|nil Optional random seed for map generation (used when loading saves for consistency)
+---@param skipEntitySpawn boolean|nil If true, skip entity spawning (used when loading from save)
 ---@return table World data containing grid, dimensions, camera bounds, player, etc.
-function MapManager.load(levelPath, physicsWorld, ecsWorld, seed)
+function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpawn)
     local startTime = love.timer.getTime()
 
     -- Load dependencies FIRST (lazy loading to avoid circular dependencies)
@@ -571,13 +572,19 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed)
         physicsWorld
     )
 
-    -- Spawn entities
-    local playerEntity = spawnEntities(ecsWorld, physicsWorld)
+    -- Spawn entities (skip if loading from save - SaveSystem will restore them)
+    local playerEntity = nil
+    if not skipEntitySpawn then
+        playerEntity = spawnEntities(ecsWorld, physicsWorld)
+        print("[MapManager] Entities spawned from map objects")
+    else
+        print("[MapManager] Skipping entity spawn (loading from save)")
+    end
 
-    -- Spawn tile lights for all islands
+    -- Always spawn tile lights (deterministic, static decorations)
     TileLightSpawner.spawnLightsForAllIslands(MapManager.maps, ecsWorld)
 
-    -- Setup camera
+    -- Setup camera (playerEntity will be nil if loading from save, updated later by SaveSystem)
     local camera = setupCamera(worldBounds.cameraWidth, worldBounds.cameraHeight, playerEntity)
 
     MapManager.initialized = true

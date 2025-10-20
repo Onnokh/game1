@@ -169,14 +169,15 @@ function GameScene.load()
   -- Check if we're loading from a save (which would have a specific seed)
   local SaveSystem = require("src.utils.SaveSystem")
   local savedSeed = SaveSystem.getPendingMapSeed()
-  local worldData = MapManager.load("src/levels/level1", physicsWorld, ecsWorld, savedSeed)
+  local skipEntitySpawn = SaveSystem.pendingLoadData ~= nil -- Skip entity spawn if loading from save
+  local worldData = MapManager.load("src/levels/level1", physicsWorld, ecsWorld, savedSeed, skipEntitySpawn)
 
   -- Extract world data
   world = worldData.grid
   worldWidth = worldData.gridWidth
   worldHeight = worldData.gridHeight
   tileSize = worldData.tileSize
-  playerEntity = worldData.playerEntity
+  playerEntity = worldData.playerEntity -- Will be nil if loading from save (updated later)
   borderColliders = worldData.collisionBodies
   GameState.camera = worldData.camera
 
