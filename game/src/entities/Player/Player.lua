@@ -22,6 +22,7 @@ local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
 local weaponDefinitions = require("src.definitions.weapons")
+local sprites = require("src.utils.sprites")
 
 local Idle = require("src.entities.Player.states.Idle")
 local Moving = require("src.entities.Player.states.Moving")
@@ -170,7 +171,8 @@ function Player.create(x, y, world, physicsWorld)
         maxCount = 300,
         pausedByStates = { "dash" }
     }))
-    playerEntity:addComponent("MinimapIcon", MinimapIcon.new("player", nil, 6)) -- No icon image, uses circle fallback
+    -- Add minimap icon with the player icon
+    playerEntity:addComponent("MinimapIcon", MinimapIcon.new("player", nil, 6, sprites.getImage("minimapPlayer")))
 
     if world then
         world:addEntity(playerEntity)

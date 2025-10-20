@@ -74,32 +74,15 @@ function MinimapSystem:draw()
                     playerPos.y
                 )
 
-                -- Draw icon if within minimap bounds
+                -- Draw icon
                 if iconX and iconY then
                     local screenX = minimapX + iconX
                     local screenY = minimapY + iconY
-
-                    -- Check bounds
-                    if screenX >= minimapX and screenX <= minimapX + 400 and
-                       screenY >= minimapY and screenY <= minimapY + 400 then
-
-                        -- Draw icon based on type
-                        self:drawIcon(screenX, screenY, minimapIcon)
-                    end
+                    self:drawIcon(screenX, screenY, minimapIcon)
                 end
             end
         end
     end
-
-    -- Draw player indicator (always centered)
-    local playerIconX = minimapX + 200 -- Center of minimap
-    local playerIconY = minimapY + 200
-
-    -- Draw player with outline
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.circle("fill", playerIconX, playerIconY, 7)
-    love.graphics.setColor(1, 1, 0, 1) -- Yellow
-    love.graphics.circle("fill", playerIconX, playerIconY, 6)
 end
 
 ---Draw an icon on the minimap
@@ -130,23 +113,6 @@ function MinimapSystem:drawIcon(x, y, minimapIcon)
             minimapIcon.icon:getWidth() / 2, -- origin X (center)
             minimapIcon.icon:getHeight() / 2 -- origin Y (center)
         )
-    elseif iconType == "upgrade" then
-        -- Cyan diamond shape with black outline
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.polygon("fill",
-            x, y - size - 1,
-            x + size + 1, y,
-            x, y + size + 1,
-            x - size - 1, y
-        )
-        love.graphics.setColor(r, g, b, 1)
-        love.graphics.polygon("fill",
-            x, y - size,
-            x + size, y,
-            x, y + size,
-            x - size, y
-        )
-
     else
         -- Default: simple circle
         love.graphics.setColor(0, 0, 0, 1)

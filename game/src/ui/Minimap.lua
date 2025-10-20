@@ -7,7 +7,7 @@ local gamera = require("lib.gamera")
 -- Minimap configuration
 local MINIMAP_SIZE = 400
 local MINIMAP_PADDING = 20
-local MINIMAP_VISIBLE_RADIUS = 1000 -- World pixels visible around player
+local MINIMAP_VISIBLE_RADIUS = 1500 -- World pixels visible around player
 local PANEL_PADDING = 8 -- Padding inside the panel for the minimap content
 local CACHE_UPDATE_THRESHOLD = 100 -- Update cache when player moves this many pixels
 
@@ -89,18 +89,17 @@ function Minimap.worldToMinimap(worldX, worldY, playerX, playerY)
     return minimapX, minimapY
 end
 
----Check if world coordinates are within minimap visible range
+---Check if world coordinates are within minimap visible range (square bounds)
 ---@param worldX number World X position
 ---@param worldY number World Y position
 ---@param playerX number Player world X position
 ---@param playerY number Player world Y position
 ---@return boolean True if within visible range
 function Minimap.isInVisibleRange(worldX, worldY, playerX, playerY)
-    local dx = worldX - playerX
-    local dy = worldY - playerY
-    local distSq = dx * dx + dy * dy
-    local radiusSq = MINIMAP_VISIBLE_RADIUS * MINIMAP_VISIBLE_RADIUS
-    return distSq <= radiusSq
+    local dx = math.abs(worldX - playerX)
+    local dy = math.abs(worldY - playerY)
+    -- Check square bounds since minimap displays a square area
+    return dx <= MINIMAP_VISIBLE_RADIUS and dy <= MINIMAP_VISIBLE_RADIUS
 end
 
 ---Draw portion of world terrain centered on player position
@@ -119,30 +118,44 @@ function Minimap.drawTerrain(minimapX, minimapY, playerX, playerY)
     local canvasX = playerX * worldTerrainScale
     local canvasY = playerY * worldTerrainScale
 
-    -- Create a quad to draw the portion centered on player
-    local halfSize = MINIMAP_SIZE / 2
-    local quadX = math.max(0, canvasX - halfSize)
-    local quadY = math.max(0, canvasY - halfSize)
-    local quadW = MINIMAP_SIZE
-    local quadH = MINIMAP_SIZE
-
-    -- Clamp to canvas bounds
+    -- Canvas dimensions
     local canvasW = worldTerrainCanvas:getWidth()
     local canvasH = worldTerrainCanvas:getHeight()
 
-    if quadX + quadW > canvasW then
-        quadX = math.max(0, canvasW - quadW)
+    -- Calculate desired view rectangle (can extend beyond canvas)
+    local halfSize = MINIMAP_SIZE / 2
+    local viewX = canvasX - halfSize
+    local viewY = canvasY - halfSize
+    local viewW = MINIMAP_SIZE
+    local viewH = MINIMAP_SIZE
+
+    -- Calculate intersection with actual canvas bounds
+    local quadX = math.max(0, viewX)
+    local quadY = math.max(0, viewY)
+    local quadW = math.min(viewW, canvasW - quadX)
+    local quadH = math.min(viewH, canvasH - quadY)
+
+    -- If view extends beyond left/top, adjust width/height
+    if viewX < 0 then
+        quadW = math.min(viewW + viewX, canvasW)
     end
-    if quadY + quadH > canvasH then
-        quadY = math.max(0, canvasH - quadH)
+    if viewY < 0 then
+        quadH = math.min(viewH + viewY, canvasH)
     end
 
-    -- Create quad for the portion we want to draw
-    local quad = love.graphics.newQuad(quadX, quadY, quadW, quadH, canvasW, canvasH)
+    -- Calculate screen offset for the drawable portion
+    local offsetX = quadX - viewX
+    local offsetY = quadY - viewY
 
-    -- Draw the portion of the world canvas
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(worldTerrainCanvas, quad, minimapX, minimapY)
+    -- Only draw if there's something to draw
+    if quadW > 0 and quadH > 0 then
+        -- Create quad for the portion we can actually draw
+        local quad = love.graphics.newQuad(quadX, quadY, quadW, quadH, canvasW, canvasH)
+
+        -- Draw the portion of the world canvas, offset to maintain centering
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(worldTerrainCanvas, quad, minimapX + offsetX, minimapY + offsetY)
+    end
 end
 
 ---Draw the minimap
@@ -158,7 +171,7 @@ function Minimap.draw(playerX, playerY)
     local panelY = screenHeight - panelSize - MINIMAP_PADDING
 
     -- Draw panel background
-    panel.draw(panelX, panelY, panelSize, panelSize, 0.95, {0.9, 0.9, 0.9})
+    -- panel.draw(panelX, panelY, panelSize, panelSize, 0.95, {0, 0, 0})
 
     -- Calculate minimap content position (inside panel with padding)
     local minimapX = panelX + PANEL_PADDING

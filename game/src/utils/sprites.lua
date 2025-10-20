@@ -98,8 +98,9 @@ function IffySprites.load()
   loadImage("menuBackground", "resources/menu/background.jpg")
 
   -- Load minimap icons
-  loadImage("minimapShop", "resources/icons/siege.png")
+  loadImage("minimapShop", "resources/icons/shop.png")
   loadImage("minimapUpgrade", "resources/icons/upgrade.png")
+  loadImage("minimapPlayer", "resources/icons/player.png")
 
   print("Iffy sprites loaded successfully")
 
