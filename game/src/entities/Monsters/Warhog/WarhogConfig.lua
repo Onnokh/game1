@@ -3,7 +3,7 @@
 local WarhogConfig = {}
 
 -- Movement speeds (multipliers of base speed)
-WarhogConfig.WALKING_SPEED = 0.4        -- Slower than player
+WarhogConfig.WALKING_SPEED = 0.2        -- Slower than player
 WarhogConfig.WANDER_RADIUS = 8 -- 1 tile wander radius
 
 -- Animation settings
@@ -37,11 +37,11 @@ WarhogConfig.DEATH_ANIMATION = {
 
 -- Chase behavior
 WarhogConfig.CHASE_RANGE = 5 -- tiles
-WarhogConfig.ATTACK_RANGE_TILES = .8 -- stop within this many tiles of target
+WarhogConfig.ATTACK_RANGE_TILES = .2 -- stop within this many tiles of target
 
 -- Attack settings
-WarhogConfig.ATTACK_COOLDOWN = 1.2 -- seconds
-WarhogConfig.ATTACK_DAMAGE = 32
+WarhogConfig.ATTACK_COOLDOWN = 3 -- seconds
+WarhogConfig.ATTACK_DAMAGE = 2
 WarhogConfig.ATTACK_KNOCKBACK = 4
 
 -- Physics settings
@@ -63,8 +63,8 @@ WarhogConfig.DRAW_HEIGHT = 16
 WarhogConfig.PATHFINDING_OFFSET_Y = WarhogConfig.SPRITE_HEIGHT - WarhogConfig.COLLIDER_HEIGHT - 18
 
 -- Combat settings
-WarhogConfig.HEALTH = 50
-WarhogConfig.MAX_HEALTH = 50
+WarhogConfig.HEALTH = 6
+WarhogConfig.MAX_HEALTH = 6
 
 return WarhogConfig
 

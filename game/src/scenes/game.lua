@@ -40,6 +40,8 @@ local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
   local DashChargesSystem = require("src.systems.DashChargesSystem")
   local ShaderManager = require("src.core.managers.ShaderManager")
 local FootprintsSystem = require("src.systems.FootprintsSystem")
+local EnemySpawnerSystem = require("src.systems.EnemySpawnerSystem")
+local WaveTimerSystem = require("src.systems.UISystems.WaveTimerSystem")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
 local worldWidth = 0  -- Will be set by loaded map
@@ -87,6 +89,7 @@ function GameScene.load()
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(TriggerZoneSystem.new()) -- Handle trigger zone callbacks
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
+  -- EnemySpawnerSystem moved after PathfindingSystem (line 221) so it can access the grid
   ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
@@ -147,6 +150,7 @@ function GameScene.load()
   uiWorld:addSystem(GameOverSystem.new())
 
   uiWorld:addSystem(healthBarSystem)
+  uiWorld:addSystem(WaveTimerSystem.new(ecsWorld)) -- Display game time at center-top
   uiWorld:addSystem(EliteIndicatorSystem.new(ecsWorld)) -- Draw elite indicators below other UI
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference (includes dash charges)
   uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
@@ -217,6 +221,9 @@ function GameScene.load()
   ecsWorld:addSystem(PathfindingSystem.new(world, worldWidth, worldHeight, tileSize))
   print(string.format("[GameScene] Pathfinding system init took %.2fs", love.timer.getTime() - pathfindingStart))
 
+  -- Add EnemySpawnerSystem after PathfindingSystem so it can access the grid for validation
+  ecsWorld:addSystem(EnemySpawnerSystem.new(ecsWorld, physicsWorld))
+
   -- Check if there's pending save data to load
   local SaveSystem = require("src.utils.SaveSystem")
   if SaveSystem.pendingLoadData then
@@ -254,6 +261,11 @@ function GameScene.update(dt, gameState)
 
   -- Update all maps through MapManager (with camera culling)
   MapManager.update(dt, gameState.camera)
+
+  -- Update game time manager
+  if gameState.gameTimeManager then
+    gameState.gameTimeManager.update(dt)
+  end
 
   -- Update physics world FIRST so positions are current
   if physicsWorld then

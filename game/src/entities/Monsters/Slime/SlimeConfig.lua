@@ -39,7 +39,7 @@ SlimeConfig.PROJECTILE_LIFETIME = 2.5
 
 -- Attack settings
 SlimeConfig.ATTACK_COOLDOWN = 1.5 -- seconds - slower attack rate
-SlimeConfig.ATTACK_DAMAGE = 25 -- Less damage than skeleton
+SlimeConfig.ATTACK_DAMAGE = 6
 SlimeConfig.ATTACK_KNOCKBACK = 3
 
 SlimeConfig.DYING_ANIMATION = {
@@ -68,8 +68,8 @@ SlimeConfig.DRAW_HEIGHT = 16
 SlimeConfig.PATHFINDING_OFFSET_Y = SlimeConfig.SPRITE_HEIGHT - SlimeConfig.COLLIDER_HEIGHT - 24
 
 -- Combat settings
-SlimeConfig.HEALTH = 40
-SlimeConfig.MAX_HEALTH = 40
+SlimeConfig.HEALTH = 8
+SlimeConfig.MAX_HEALTH = 8
 
 return SlimeConfig
 

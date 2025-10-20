@@ -85,6 +85,13 @@ function DamageSystem:handleEntityDeath(entity, damageEvent)
         source = damageEvent.source
     })
 
+    -- Check if the player died and trigger game over
+    if entity:hasTag("Player") then
+        local GameController = require("src.core.GameController")
+        GameController.setGameOver()
+        print("Player died - triggering game over")
+    end
+
     -- Check if this is a skeleton that should go into dying state
     local stateMachine = entity:getComponent("StateMachine")
     if stateMachine and stateMachine.states and stateMachine.states["dying"] then

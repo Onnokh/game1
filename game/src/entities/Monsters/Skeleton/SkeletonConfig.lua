@@ -23,7 +23,7 @@ SkeletonConfig.WALKING_ANIMATION = {
 
 -- Chase behavior
 SkeletonConfig.CHASE_RANGE = 5 -- tiles
-SkeletonConfig.ATTACK_RANGE_TILES = 3.5 -- Ranged attack - can attack from distance
+SkeletonConfig.ATTACK_RANGE_TILES = 4 -- Ranged attack - can attack from distance
 SkeletonConfig.PREFERRED_CHASE_RANGE_TILES = 3 -- Maintains 3 tiles distance (inside attack range)
 
 -- Projectile settings
@@ -31,8 +31,8 @@ SkeletonConfig.PROJECTILE_SPEED = 200
 SkeletonConfig.PROJECTILE_LIFETIME = 2.0
 
 -- Attack settings
-SkeletonConfig.ATTACK_COOLDOWN = 1.2 -- seconds
-SkeletonConfig.ATTACK_DAMAGE = 32
+SkeletonConfig.ATTACK_COOLDOWN = 3 -- seconds
+SkeletonConfig.ATTACK_DAMAGE = 4
 SkeletonConfig.ATTACK_KNOCKBACK = 4
 
 SkeletonConfig.DYING_ANIMATION = {
@@ -61,7 +61,7 @@ SkeletonConfig.DRAW_HEIGHT = 22
 SkeletonConfig.PATHFINDING_OFFSET_Y = SkeletonConfig.SPRITE_HEIGHT - SkeletonConfig.COLLIDER_HEIGHT - 8
 
 -- Combat settings
-SkeletonConfig.HEALTH = 50
-SkeletonConfig.MAX_HEALTH = 50
+SkeletonConfig.HEALTH = 10
+SkeletonConfig.MAX_HEALTH = 10
 
 return SkeletonConfig

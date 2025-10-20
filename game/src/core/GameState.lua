@@ -1,5 +1,6 @@
 local GameConstants = require("src.constants")
 local gamera = require("lib.gamera")
+local GameTimeManager = require("src.core.managers.GameTimeManager")
 
 -- Single source of truth for a fresh run's starting values
 local DEFAULT_RUN = {
@@ -39,7 +40,8 @@ local GameState = {
   camera = nil, -- Will be initialized with gamera
   player = {},
   coins = {},
-  mapData = nil -- Map data for debugging
+  mapData = nil, -- Map data for debugging
+  gameTimeManager = nil -- Game time manager for wave spawning
 }
 
 ---Initialize the game state
@@ -63,6 +65,10 @@ function GameState.load()
     1,  -- -- will be updated in setCameraBounds when scene is loaded
     1  -- -- will be updated in setCameraBounds when scene is loaded
   )
+
+  -- Initialize game time manager
+  GameTimeManager.init()
+  GameState.gameTimeManager = GameTimeManager
 
   -- Initialize scenes
   GameState.scenes = {
