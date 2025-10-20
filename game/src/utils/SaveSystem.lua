@@ -13,7 +13,7 @@ SaveSystem.skippedComponents = {}
 -- Tags that should be saved (persistent entities)
 local PERSISTENT_TAGS = {
     "Player", "Monster", "Coin",
-    "Reactor", "Shop", "Tree", "SiegeAttacker"
+    "Reactor", "Shop", "Tree", "SiegeAttacker", "Crystal"
 }
 
 -- Entity type to module path mapping (DRY approach)
@@ -25,7 +25,8 @@ local ENTITY_PATHS = {
     Coin = "src.entities.Coin",
     Shop = "src.entities.Shop.Shop",
     Reactor = "src.entities.Reactor.Reactor",
-    Tree = "src.entities.Decoration.Tree"
+    Tree = "src.entities.Decoration.Tree",
+    Crystal = "src.entities.Crystal.Crystal"
 }
 
 ---Get entity factory function for a given entity type
