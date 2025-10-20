@@ -7,6 +7,7 @@ local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
 local Light = require("src.components.Light")
 local MinimapIcon = require("src.components.MinimapIcon")
+local sprites = require("src.utils.sprites")
 ---@class ShopEntity
 local ShopEntity = {}
 
@@ -49,7 +50,9 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
     shop:addComponent("Shop", shopComponent)
     shop:addComponent("Light", light)
     shop:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = .8, heightFactor = .6, offsetY = 0 }))
-    shop:addComponent("MinimapIcon", MinimapIcon.new("shop", {r = 255, g = 0, b = 255}, 5)) -- Purple icon
+
+    -- Add minimap icon with the siege icon
+    shop:addComponent("MinimapIcon", MinimapIcon.new("shop", nil, 5, sprites.getImage("minimapShop")))
 
     -- Tag for easy querying
     shop:addTag("Shop")

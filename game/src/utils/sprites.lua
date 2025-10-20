@@ -7,7 +7,7 @@ local iffy = require("lib.iffy")
 -- Loads any spritesheet with configurable grid dimensions
 local loadedSheets = {}
 local assetsLoaded = false
-local menuBackgroundImage = nil
+local images = {}
 
 local function loadSpritesheet(name, path, cols, rows)
   if loadedSheets[name] then return end
@@ -24,6 +24,23 @@ local function loadSpritesheet(name, path, cols, rows)
   loadedSheets[name] = true
 
   print(string.format("Loaded spritesheet '%s' with %dx%d grid (%d total frames)", name, cols, rows, cols * rows))
+end
+
+local function loadImage(name, path)
+  if images[name] then return end
+
+  local ok, imgOrErr = pcall(function()
+    local img = love.graphics.newImage(path)
+    img:setFilter("nearest", "nearest")
+    return img
+  end)
+
+  if ok then
+    images[name] = imgOrErr
+    print(string.format("Loaded image '%s'", name))
+  else
+    print(string.format("ERROR loading image '%s': %s", name, imgOrErr))
+  end
 end
 
 -- Initialize all sprites using Iffy
@@ -77,17 +94,12 @@ function IffySprites.load()
   loadSpritesheet("Warhog_Idle", "resources/warhog/Warhog_Idle.png", 4, 4)
   loadSpritesheet("Warhog_Walk", "resources/warhog/Warhog_Walk.png", 4, 4)
 
-  -- Load menu background as a standalone image (not using iffy)
-  local okBg, imgOrErr = pcall(function()
-    local img = love.graphics.newImage("resources/menu/background.jpg")
-    img:setFilter("nearest", "nearest")
-    return img
-  end)
-  if okBg then
-    menuBackgroundImage = imgOrErr
-  else
-    print("ERROR loading menu background:", imgOrErr)
-  end
+  -- Load standalone images (not using iffy)
+  loadImage("menuBackground", "resources/menu/background.jpg")
+
+  -- Load minimap icons
+  loadImage("minimapShop", "resources/icons/siege.png")
+  loadImage("minimapUpgrade", "resources/icons/upgrade.png")
 
   print("Iffy sprites loaded successfully")
 
@@ -230,15 +242,21 @@ end
 
 -- Draw the menu background scaled to cover the screen using raw image
 function IffySprites.drawMenuBackground()
-  if not menuBackgroundImage then return end
-  local iw, ih = menuBackgroundImage:getWidth(), menuBackgroundImage:getHeight()
+  local menuBackground = images.menuBackground
+  if not menuBackground then return end
+  local iw, ih = menuBackground:getWidth(), menuBackground:getHeight()
   local sw, sh = love.graphics.getWidth(), love.graphics.getHeight()
   local scale = math.max(sw / iw, sh / ih)
   local drawW, drawH = iw * scale, ih * scale
   local dx = (sw - drawW) * 0.5
   local dy = (sh - drawH) * 0.5
   love.graphics.setColor(1, 1, 1)
-  love.graphics.draw(menuBackgroundImage, dx, dy, 0, scale, scale)
+  love.graphics.draw(menuBackground, dx, dy, 0, scale, scale)
+end
+
+-- Get a loaded image by name
+function IffySprites.getImage(name)
+  return images[name]
 end
 
 return IffySprites

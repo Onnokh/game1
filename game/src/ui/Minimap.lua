@@ -2,31 +2,72 @@
 ---UI component for rendering the minimap
 local Minimap = {}
 local panel = require("src.ui.utils.panel")
+local gamera = require("lib.gamera")
 
 -- Minimap configuration
 local MINIMAP_SIZE = 400
 local MINIMAP_PADDING = 20
 local MINIMAP_VISIBLE_RADIUS = 1000 -- World pixels visible around player
-local TILE_SAMPLE_RATE = 1 -- Sample every tile to ensure we don't miss 1-tile-wide bridges
 local PANEL_PADDING = 8 -- Padding inside the panel for the minimap content
+local CACHE_UPDATE_THRESHOLD = 100 -- Update cache when player moves this many pixels
 
--- Colors
-local WALKABLE_COLOR = {50/255, 50/255, 50/255, 1}
-local BLOCKED_COLOR = {1/255, 1/255, 1/255, 1}
+-- Full world terrain canvas (generated once at map load)
+local worldTerrainCanvas = nil
+local worldTerrainScale = nil
 
--- Terrain canvas
-local terrainCanvas = nil
-
----Initialize the minimap (create canvas)
+---Initialize the minimap (called at startup)
 function Minimap.init()
-    if not terrainCanvas then
-        local success, result = pcall(love.graphics.newCanvas, MINIMAP_SIZE, MINIMAP_SIZE)
-        if success then
-            terrainCanvas = result
-        else
-            print("[Minimap] Warning: Failed to create terrain canvas:", result)
-        end
+    -- Canvas will be created when terrain is generated
+end
+
+---Generate the full world terrain once (called when map loads)
+---Should be called from MapManager after map is loaded
+function Minimap.generateWorldTerrain()
+    -- Get world dimensions from GameState
+    local GameState = require("src.core.GameState")
+    if not GameState.mapData then
+        print("[Minimap] Warning: Cannot generate terrain - no map data")
+        return
     end
+
+    local worldWidth = GameState.mapData.width * GameState.mapData.tileSize
+    local worldHeight = GameState.mapData.height * GameState.mapData.tileSize
+
+    print(string.format("[Minimap] Generating world terrain canvas: %dx%d pixels", worldWidth, worldHeight))
+
+    -- Calculate scale to fit world into a reasonable canvas size
+    -- We'll create a canvas at the same scale as the minimap uses (0.2x)
+    worldTerrainScale = MINIMAP_SIZE / (MINIMAP_VISIBLE_RADIUS * 2)
+    local canvasWidth = math.ceil(worldWidth * worldTerrainScale)
+    local canvasHeight = math.ceil(worldHeight * worldTerrainScale)
+
+    -- Create canvas for the entire world
+    local success, result = pcall(love.graphics.newCanvas, canvasWidth, canvasHeight)
+    if not success then
+        print("[Minimap] Warning: Failed to create world terrain canvas:", result)
+        return
+    end
+
+    worldTerrainCanvas = result
+
+    -- Create a camera for the full world
+    local worldCamera = gamera.new(0, 0, worldWidth, worldHeight)
+    worldCamera:setWindow(0, 0, canvasWidth, canvasHeight)
+    worldCamera:setScale(worldTerrainScale)
+    worldCamera:setPosition(worldWidth / 2, worldHeight / 2)
+
+    -- Render the entire world to the canvas ONCE
+    love.graphics.setCanvas(worldTerrainCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+
+    worldCamera:draw(function()
+        local MapManager = require("src.core.managers.MapManager")
+        MapManager.draw(worldCamera)
+    end)
+
+    love.graphics.setCanvas()
+
+    print("[Minimap] World terrain generated successfully")
 end
 
 ---Convert world coordinates to minimap pixel coordinates
@@ -62,87 +103,46 @@ function Minimap.isInVisibleRange(worldX, worldY, playerX, playerY)
     return distSq <= radiusSq
 end
 
----Render terrain to canvas (updates every frame)
----@param collisionGrid table The collision grid from GameState
----@param gridWidth number Grid width in tiles
----@param gridHeight number Grid height in tiles
----@param tileSize number Size of each tile in world pixels
+---Draw portion of world terrain centered on player position
+---@param minimapX number Minimap screen X position
+---@param minimapY number Minimap screen Y position
 ---@param playerX number Player world X position
 ---@param playerY number Player world Y position
-function Minimap.renderTerrain(collisionGrid, gridWidth, gridHeight, tileSize, playerX, playerY)
-    if not terrainCanvas then
-        Minimap.init()
+function Minimap.drawTerrain(minimapX, minimapY, playerX, playerY)
+    if not worldTerrainCanvas then
+        -- Terrain hasn't been generated yet
+        return
     end
 
-    -- Render to canvas every frame
-    love.graphics.setCanvas(terrainCanvas)
-    love.graphics.clear(0, 0, 0, 0)
+    -- Calculate which portion of the world canvas to draw
+    -- Convert player world position to canvas coordinates
+    local canvasX = playerX * worldTerrainScale
+    local canvasY = playerY * worldTerrainScale
 
-        -- Calculate visible grid bounds
-        local GameConstants = require("src.constants")
-        local CoordinateUtils = require("src.utils.coordinates")
+    -- Create a quad to draw the portion centered on player
+    local halfSize = MINIMAP_SIZE / 2
+    local quadX = math.max(0, canvasX - halfSize)
+    local quadY = math.max(0, canvasY - halfSize)
+    local quadW = MINIMAP_SIZE
+    local quadH = MINIMAP_SIZE
 
-        local minWorldX = playerX - MINIMAP_VISIBLE_RADIUS
-        local maxWorldX = playerX + MINIMAP_VISIBLE_RADIUS
-        local minWorldY = playerY - MINIMAP_VISIBLE_RADIUS
-        local maxWorldY = playerY + MINIMAP_VISIBLE_RADIUS
+    -- Clamp to canvas bounds
+    local canvasW = worldTerrainCanvas:getWidth()
+    local canvasH = worldTerrainCanvas:getHeight()
 
-        local minGridX, minGridY = CoordinateUtils.worldToGrid(minWorldX, minWorldY)
-        local maxGridX, maxGridY = CoordinateUtils.worldToGrid(maxWorldX, maxWorldY)
+    if quadX + quadW > canvasW then
+        quadX = math.max(0, canvasW - quadW)
+    end
+    if quadY + quadH > canvasH then
+        quadY = math.max(0, canvasH - quadH)
+    end
 
-        -- Expand by 2 tiles in each direction to avoid edge artifacts when moving
-        minGridX = minGridX - 2
-        minGridY = minGridY - 2
-        maxGridX = maxGridX + 2
-        maxGridY = maxGridY + 2
+    -- Create quad for the portion we want to draw
+    local quad = love.graphics.newQuad(quadX, quadY, quadW, quadH, canvasW, canvasH)
 
-        -- Clamp to grid bounds
-        minGridX = math.max(1, minGridX)
-        minGridY = math.max(1, minGridY)
-        maxGridX = math.min(gridWidth, maxGridX)
-        maxGridY = math.min(gridHeight, maxGridY)
-
-        -- Sample and render tiles
-        for gridX = minGridX, maxGridX, TILE_SAMPLE_RATE do
-            for gridY = minGridY, maxGridY, TILE_SAMPLE_RATE do
-                -- Check if walkable (collisionGrid is worldMap[x][y] structure)
-                local tileData = collisionGrid[gridX] and collisionGrid[gridX][gridY]
-                local isWalkable = tileData and tileData.walkable or false
-
-                -- Convert grid to world coordinates (gridToWorld already returns center of tile)
-                local worldX, worldY = CoordinateUtils.gridToWorld(gridX, gridY)
-
-                -- Convert to minimap coordinates
-                local minimapX, minimapY = Minimap.worldToMinimap(worldX, worldY, playerX, playerY)
-
-                -- Calculate tile draw size
-                local scale = MINIMAP_SIZE / (MINIMAP_VISIBLE_RADIUS * 2)
-                local tileDrawSize = tileSize * scale
-                local halfTile = tileDrawSize / 2
-
-                -- Skip if tile is completely outside minimap bounds (allow partially visible tiles)
-                if minimapX + halfTile >= 0 and minimapX - halfTile <= MINIMAP_SIZE and
-                   minimapY + halfTile >= 0 and minimapY - halfTile <= MINIMAP_SIZE then
-
-                    -- Set color based on walkability
-                    if isWalkable then
-                        love.graphics.setColor(WALKABLE_COLOR)
-                    else
-                        love.graphics.setColor(BLOCKED_COLOR)
-                    end
-
-                    -- Draw tile
-                    love.graphics.rectangle("fill",
-                        minimapX - halfTile,
-                        minimapY - halfTile,
-                        tileDrawSize,
-                        tileDrawSize
-                    )
-                end
-            end
-        end
-
-        love.graphics.setCanvas()
+    -- Draw the portion of the world canvas
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(worldTerrainCanvas, quad, minimapX, minimapY)
 end
 
 ---Draw the minimap
@@ -164,21 +164,19 @@ function Minimap.draw(playerX, playerY)
     local minimapX = panelX + PANEL_PADDING
     local minimapY = panelY + PANEL_PADDING
 
-    -- Draw cached terrain
-    if terrainCanvas then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(terrainCanvas, minimapX, minimapY)
-    end
+    -- Draw portion of world terrain centered on player
+    Minimap.drawTerrain(minimapX, minimapY, playerX, playerY)
 
     return minimapX, minimapY
 end
 
 ---Cleanup minimap resources
 function Minimap.cleanup()
-    if terrainCanvas then
-        terrainCanvas:release()
-        terrainCanvas = nil
+    if worldTerrainCanvas then
+        worldTerrainCanvas:release()
+        worldTerrainCanvas = nil
     end
+    worldTerrainScale = nil
 end
 
 return Minimap

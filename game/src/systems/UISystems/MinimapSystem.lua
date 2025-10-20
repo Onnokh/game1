@@ -42,15 +42,7 @@ function MinimapSystem:draw()
         return
     end
 
-    local collisionGrid = GameState.mapData.collisionGrid
-    local gridWidth = GameState.mapData.width or 100
-    local gridHeight = GameState.mapData.height or 100
-    local tileSize = GameState.mapData.tileSize or 32
-
-    -- Render terrain (cached)
-    Minimap.renderTerrain(collisionGrid, gridWidth, gridHeight, tileSize, playerPos.x, playerPos.y)
-
-    -- Draw minimap background and get position
+    -- Draw minimap (includes terrain and background)
     local minimapX, minimapY = Minimap.draw(playerPos.x, playerPos.y)
 
     -- Query entities from ecsWorld (not from self.entities which is uiWorld)
@@ -124,14 +116,20 @@ function MinimapSystem:drawIcon(x, y, minimapIcon)
     local g = color.g / 255
     local b = color.b / 255
 
-    -- Draw based on icon type
-    if iconType == "shop" then
-        -- Purple circle with black outline
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.circle("fill", x, y, size + 1)
-        love.graphics.setColor(r, g, b, 1)
-        love.graphics.circle("fill", x, y, size)
-
+    -- Draw icon image if available, otherwise draw shape based on type
+    if minimapIcon.icon then
+        -- Draw the icon image without color tinting
+        local iconSize = size * 4 -- Scale up the icon size
+        love.graphics.setColor(1, 1, 1, 1) -- White (no tint)
+        love.graphics.draw(
+            minimapIcon.icon,
+            x, y,
+            0, -- rotation
+            iconSize / minimapIcon.icon:getWidth(), -- scale X
+            iconSize / minimapIcon.icon:getHeight(), -- scale Y
+            minimapIcon.icon:getWidth() / 2, -- origin X (center)
+            minimapIcon.icon:getHeight() / 2 -- origin Y (center)
+        )
     elseif iconType == "upgrade" then
         -- Cyan diamond shape with black outline
         love.graphics.setColor(0, 0, 0, 1)

@@ -170,7 +170,7 @@ function Player.create(x, y, world, physicsWorld)
         maxCount = 300,
         pausedByStates = { "dash" }
     }))
-    playerEntity:addComponent("MinimapIcon", MinimapIcon.new("player", {r = 255, g = 255, b = 0}, 6)) -- Yellow icon, slightly larger
+    playerEntity:addComponent("MinimapIcon", MinimapIcon.new("player", nil, 6)) -- No icon image, uses circle fallback
 
     if world then
         world:addEntity(playerEntity)

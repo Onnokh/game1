@@ -7,6 +7,7 @@ local Upgrade = require("src.components.Upgrade")
 local Interactable = require("src.components.Interactable")
 local Animator = require("src.components.Animator")
 local MinimapIcon = require("src.components.MinimapIcon")
+local sprites = require("src.utils.sprites")
 
 ---@class CrystalEntity
 local CrystalEntity = {}
@@ -112,7 +113,9 @@ function CrystalEntity.create(x, y, world, physicsWorld, inventory, seed, shopId
     crystal:addComponent("Animator", animation)
     crystal:addComponent("Upgrade", upgradeComponent)
     crystal:addComponent("Interactable", interactable)
-    crystal:addComponent("MinimapIcon", MinimapIcon.new("upgrade", {r = 0, g = 255, b = 255}, 5)) -- Cyan diamond icon
+
+    -- Add minimap icon with the upgrade icon
+    crystal:addComponent("MinimapIcon", MinimapIcon.new("upgrade", nil, 5, sprites.getImage("minimapUpgrade")))
     -- crystal:addComponent("Light", light)
 
     -- Tag for easy querying

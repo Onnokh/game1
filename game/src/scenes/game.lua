@@ -201,6 +201,10 @@ function GameScene.load()
     collisionGrid = world
   }
 
+  -- Generate minimap terrain once (static terrain rendered to canvas)
+  local Minimap = require("src.ui.Minimap")
+  Minimap.generateWorldTerrain()
+
   -- Create global particle entity for bullet impacts and other effects
   do
     local Entity = require("src.core.Entity")
