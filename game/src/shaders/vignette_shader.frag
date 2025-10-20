@@ -41,7 +41,6 @@ vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords)
     float pixelOn = step(0.5, border);
 
     // If pixelOn == 1.0, render red pixel with varying opacity based on edge proximity
-    // For the future - Oxygen safe zone blue color (0.4, 0.8, 1.0)
     vec3 redColor = vec3(0.3, 0.1, 0.1); // Very dark red
 
     if (pixelOn > 0.5) {

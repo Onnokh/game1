@@ -27,15 +27,6 @@ function EntityUtils.findPlayer(world)
     return nil
 end
 
----Find the reactor entity in the world
----@param world World The ECS world to search in
----@return Entity|nil The reactor entity if found
-function EntityUtils.findReactor(world)
-    if world then
-      return world:getEntitiesWithTag("Reactor")[1]
-    end
-    return nil
-end
 
 ---Get the visual center of an entity (accounting for sprite size)
 ---@param entity Entity The entity to get the center of
@@ -182,9 +173,9 @@ function EntityUtils.findValidTilesInRadius(centerX, centerY, radius)
             end
         end
     end
-    
+
     if #validTiles == 0 then
-        print(string.format("[EntityUtils] WARNING: findValidTilesInRadius found 0 tiles at (%d,%d) radius %d (grid %dx%d)", 
+        print(string.format("[EntityUtils] WARNING: findValidTilesInRadius found 0 tiles at (%d,%d) radius %d (grid %dx%d)",
             centerX, centerY, radius, mapData.width, mapData.height))
     end
 

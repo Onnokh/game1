@@ -8,7 +8,6 @@ local StateMachine = require("src.components.StateMachine")
 local Attack = require("src.components.Attack")
 local Weapon = require("src.components.Weapon")
 local Health = require("src.components.Health")
-local Oxygen = require("src.components.Oxygen")
 local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
@@ -122,8 +121,6 @@ function Player.create(x, y, world, physicsWorld)
     -- Create health component
     local health = Health.new(100) -- 100 max health
 
-    -- Create oxygen component
-    local oxygen = Oxygen.new(100) -- 100 max oxygen
 
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
@@ -153,7 +150,6 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Weapon", weapon)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
-    playerEntity:addComponent("Oxygen", oxygen)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("GroundShadow", groundShadow)
     playerEntity:addComponent("Inventory", inventory)

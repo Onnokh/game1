@@ -211,12 +211,11 @@ end
 
 ---Parse objects from object layers
 ---@param tiledMap table Cartographer map instance
----@return table Categorized objects {spawn, enemies, reactors, other}
+---@return table Categorized objects {spawn, enemies, other}
 function TiledMapLoader.parseObjects(tiledMap)
     local objects = {
         spawn = nil,
         enemies = {},
-        reactors = {},
         other = {}
     }
 
@@ -230,8 +229,6 @@ function TiledMapLoader.parseObjects(tiledMap)
                         objects.spawn = { x = obj.x, y = obj.y }
                     elseif obj.name:match("^Enemy") or obj.type == "enemy" then
                         table.insert(objects.enemies, obj)
-                    elseif obj.name:match("^Reactor") or obj.type == "reactor" then
-                        table.insert(objects.reactors, obj)
                     else
                         table.insert(objects.other, obj)
                     end

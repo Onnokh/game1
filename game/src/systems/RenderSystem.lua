@@ -32,8 +32,6 @@ end
 ---Draw all entities with Position and SpriteRenderer components
 function RenderSystem:draw()
 
-    -- Draw oxygen safe zone at tile level (behind entities)
-    -- self:drawOxygenSafeZone()
 
     -- Use the depth sorting utility for proper 2D layering
     local sortedEntities = DepthSorting.sortEntities(self.entities)
@@ -94,19 +92,6 @@ function RenderSystem:draw()
                     end
                 end
 
-                -- Draw oxygen tether between animation and static sprite layers (only for reactor)
-                if entity:hasTag("Reactor") then
-                    -- Find OxygenSystem in the world and call its tether drawing method
-                    if self.world then
-                        for _, system in ipairs(self.world.systems) do
-                            -- Check if this system has the drawTether method (it's the OxygenSystem)
-                            if system.drawTether then
-                                system:drawTether()
-                                break
-                            end
-                        end
-                    end
-                end
 
                 -- Then, draw static sprite overlay if it exists (can be on top of animation)
                 if spriteRenderer.sprite then

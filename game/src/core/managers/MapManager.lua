@@ -7,7 +7,6 @@ local MapManager = {}
 -- Dependencies (lazy loaded to avoid circular dependencies)
 local TiledMapLoader = nil
 local Player = nil
-local Reactor = nil
 local Tree = nil
 local Shop = nil
 local Crystal = nil
@@ -352,10 +351,6 @@ local function spawnEntities(ecsWorld, physicsWorld)
             playerEntity = Player.create(islandX + objects.spawn.x, islandY + objects.spawn.y, ecsWorld, physicsWorld)
         end
 
-        -- Spawn reactors
-        for _, obj in ipairs(objects.reactors or {}) do
-            Reactor.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
-        end
 
         -- Spawn other objects
         for _, obj in ipairs(objects.other or {}) do
@@ -475,9 +470,6 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpaw
     end
     if not Player then
         Player = require("src.entities.Player.Player")
-    end
-    if not Reactor then
-        Reactor = require("src.entities.Reactor.Reactor")
     end
     if not Tree then
         Tree = require("src.entities.Decoration.Tree")

@@ -1,6 +1,5 @@
 local GameState = require("src.core.GameState")
 local EventBus = require("src.utils.EventBus")
-local Reactor = require("src.entities.Reactor.Reactor")
 
 ---@class GameController
 ---@field currentPhase string
@@ -30,16 +29,6 @@ function GameController.load()
     GameController.phases[GameController.currentPhase].onEnter(GameState)
   end
 
-  -- Subscribe once for game-over trigger on reactor death
-  EventBus.subscribe("entityDied", function(payload)
-    local entity = payload and payload.entity
-    if entity and entity:hasTag("Reactor") then
-      -- Ensure reactor-specific visual shutdown runs
-      Reactor.handleDeath(entity)
-      -- Then enter game-over state via controller
-      GameController.setGameOver()
-    end
-  end)
 
 end
 

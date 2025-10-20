@@ -10,7 +10,6 @@ local GameConstants = require("src.constants")
 function MonsterBehaviors.updateTarget(entity, config)
     local EntityUtils = require("src.utils.entities")
     local player = EntityUtils.findPlayer(entity._world)
-    local reactor = EntityUtils.findReactor(entity._world)
 
     local monsterPos = entity:getComponent("Position")
     if not monsterPos then
@@ -21,11 +20,9 @@ function MonsterBehaviors.updateTarget(entity, config)
     local chaseRange = config.CHASE_RANGE * GameConstants.TILE_SIZE
     local pathfindingCollision = entity:getComponent("PathfindingCollision")
 
-    -- Calculate distances and check line of sight for both targets
+    -- Calculate distance and check line of sight for player
     local playerDistance = math.huge
-    local reactorDistance = math.huge
     local playerHasLOS = false
-    local reactorHasLOS = false
 
     if player and not player.isDead then
         local px, py = EntityUtils.getClosestPointOnTarget(monsterPos.x, monsterPos.y, player)
@@ -35,26 +32,10 @@ function MonsterBehaviors.updateTarget(entity, config)
         playerHasLOS = not pathfindingCollision or pathfindingCollision:hasLineOfSightTo(px, py, nil)
     end
 
-    if reactor and not reactor.isDead then
-        local rx, ry = EntityUtils.getClosestPointOnTarget(monsterPos.x, monsterPos.y, reactor)
-        local dx = rx - monsterPos.x
-        local dy = ry - monsterPos.y
-        reactorDistance = math.sqrt(dx*dx + dy*dy)
-        -- Reactor doesn't need line of sight check (it's a static structure)
-        reactorHasLOS = true
-    end
-
-    -- Choose target based on priority, then distance
-    -- Priority 1: Player (always preferred)
-    -- Priority 2: Reactor (only if player is not available)
+    -- Target player if within range and has line of sight
     local chosenTarget = nil
-
-    -- Check player first (HIGHEST PRIORITY - always prefer player over reactor)
     if player and playerDistance <= chaseRange and playerHasLOS then
         chosenTarget = player
-    -- Only target reactor if player is not available
-    elseif reactor and reactorDistance <= chaseRange and reactorHasLOS then
-        chosenTarget = reactor
     end
 
     entity.target = chosenTarget

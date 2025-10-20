@@ -33,7 +33,6 @@ local CoinAttractionSystem = require("src.systems.CoinAttractionSystem")
 local AttackColliderSystem = require("src.systems.AttackColliderSystem")
 local LightSystem = require("src.systems.LightSystem")
 local FireflySystem = require("src.systems.FireflySystem")
-local OxygenSystem = require("src.systems.OxygenSystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local DashShadowSystem = require("src.systems.DashShadowSystem")
@@ -99,7 +98,6 @@ function GameScene.load()
   ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die
   ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
   ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
-  ecsWorld:addSystem(OxygenSystem.new()) -- Handle oxygen decay when outside reactor zone
   ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
@@ -151,7 +149,7 @@ function GameScene.load()
 
   uiWorld:addSystem(healthBarSystem)
   uiWorld:addSystem(SiegeIndicatorSystem.new(ecsWorld)) -- Draw siege indicators below other UI
-  uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference (includes dash charges and oxygen)
+  uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference (includes dash charges)
   uiWorld:addSystem(WeaponIndicatorSystem.new(ecsWorld))
   uiWorld:addSystem(CoinCounterSystem.new())
   uiWorld:addSystem(InventoryDisplaySystem.new(ecsWorld))

@@ -64,9 +64,6 @@ function IffySprites.load()
   -- Load slime spritesheet (8x3 grid - 8 columns, 3 rows)
   loadSpritesheet("slime", "resources/slime/Slime_Green.png", 8, 3)
 
-  -- Load reactor spritesheet (1x1 grid, 64x64)
-  loadSpritesheet("reactor", "resources/reactor/reactor-Sheet.png", 1, 1)
-  loadSpritesheet("reactor-light", "resources/reactor/reactor-light.png", 1, 1)
 
   -- Load coin spritesheet (1x9 grid, 9 frames)
   loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)

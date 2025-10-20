@@ -68,11 +68,8 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     local tx, ty = EntityUtils.getClosestPointOnTarget(sx, sy, target)
 
     -- Decide steering: direct follow if line-of-sight; otherwise end chase
-    -- Exception: reactor doesn't need line of sight (static structure)
     local directLOS = false
-    if target:hasTag("Reactor") then
-        directLOS = true -- Always chase reactor
-    elseif pathfindingCollision and pathfindingCollision:hasCollider() then
+    if pathfindingCollision and pathfindingCollision:hasCollider() then
         directLOS = pathfindingCollision:hasLineOfSightTo(tx, ty, nil)
     else
         directLOS = true

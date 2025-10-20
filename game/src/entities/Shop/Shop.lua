@@ -30,7 +30,7 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
 
     local shopComponent = Shop.new(inventory, seed, shopId)
 
-    -- Create pathfinding collision (similar to Reactor)
+    -- Create pathfinding collision
     local collider = PathfindingCollision.new(64, 48, "static", 0, 16)
     if physicsWorld then
         collider:createCollider(physicsWorld, x, y)
