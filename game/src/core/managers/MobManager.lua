@@ -76,7 +76,7 @@ function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, e
 
             local enemy = creator(spawnX, spawnY, ecsWorld, physicsWorld)
 
-            -- Add tag if specified (e.g., "SiegeAttacker")
+            -- Add tag if specified (e.g., "Elite")
             if enemy and tagToAdd and enemy.addTag then
                 enemy:addTag(tagToAdd)
             end
@@ -147,52 +147,7 @@ function MobManager.spawnImmediateEnemies(ecsWorld, physicsWorld)
     return totalSpawned
 end
 
----Spawn enemies from MobSpawn areas for a specific phase
----@param phaseName string Phase name (e.g., "Siege")
----@param ecsWorld World ECS world
----@param physicsWorld love.World Physics world
----@param tagToAdd string|nil Optional tag to add to spawned enemies (e.g., "SiegeAttacker")
----@return number Number of enemies spawned
-function MobManager.spawnPhaseEnemies(phaseName, ecsWorld, physicsWorld, tagToAdd)
-    if not ecsWorld or not physicsWorld then
-        return 0
-    end
 
-    print(string.format("[MobManager] ===== PHASE ENEMY SPAWNING: %s =====", phaseName))
-
-    local totalSpawned = 0
-    local areasProcessed = 0
-
-    -- Find all MobSpawn areas for this phase
-    for _, spawnArea in ipairs(MobManager.mobSpawnAreas) do
-        if spawnArea.phase == phaseName then
-            areasProcessed = areasProcessed + 1
-            local spawned = MobManager.spawnEnemiesInArea(
-                spawnArea.x,
-                spawnArea.y,
-                spawnArea.width,
-                spawnArea.height,
-                spawnArea.amount,
-                spawnArea.islandDef,
-                ecsWorld,
-                physicsWorld,
-                tagToAdd,
-                true -- Ignore enemySpawns flag for phase-based spawns (Siege can attack anywhere!)
-            )
-
-            totalSpawned = totalSpawned + spawned
-        end
-    end
-
-    if totalSpawned > 0 then
-        print(string.format("[MobManager] ===== %s PHASE SPAWN COMPLETE: %d enemies from %d areas =====",
-            phaseName, totalSpawned, areasProcessed))
-    else
-        print(string.format("[MobManager] ===== NO SPAWNS FOR %s PHASE (no areas configured) =====", phaseName))
-    end
-
-    return totalSpawned
-end
 
 ---Get all MobSpawn areas for a specific phase
 ---@param phaseName string|nil Phase name (e.g., "Siege"), or nil for all

@@ -13,7 +13,7 @@ SaveSystem.skippedComponents = {}
 -- Tags that should be saved (persistent entities)
 local PERSISTENT_TAGS = {
     "Player", "Monster", "Coin",
-    "Shop", "Tree", "SiegeAttacker", "Crystal"
+    "Shop", "Tree", "Elite", "Crystal"
 }
 
 -- Entity type to module path mapping (DRY approach)
@@ -185,17 +185,10 @@ function SaveSystem.serializeGameState()
 
         -- Game progress
         gameState = {
-            phase = GameState.phase or "Discovery",
-            day = GameState.day or 1,
             coins = {
                 total = GameState.coins.total or 0,
                 collectedThisSession = GameState.coins.collectedThisSession or 0
             }
-        },
-
-        -- Controller state
-        controller = {
-            currentPhase = GameController.currentPhase or "Discovery"
         },
 
         -- Level/map information
@@ -305,7 +298,7 @@ function SaveSystem.save()
     end
 
     -- Serialize to Lua table string
-    local serialized = "return " .. tableToString(saveData)
+    local serialized = "return " .. tableToString(saveData, 0)
 
     -- Write to file
     local success, err = pcall(function()
@@ -464,6 +457,7 @@ end
 
 ---Load game state from disk
 ---@return boolean success True if load succeeded
+---@return Entity|nil restoredPlayer The restored player entity if successful
 function SaveSystem.load()
     print("[SaveSystem] Loading game...")
 
@@ -512,6 +506,7 @@ end
 ---@param ecsWorld World The ECS world
 ---@param physicsWorld love.World The physics world
 ---@return boolean success True if restoration succeeded
+---@return Entity|nil restoredPlayer The restored player entity if successful
 function SaveSystem.restoreGameState(ecsWorld, physicsWorld)
     local saveData = SaveSystem.pendingLoadData
     if not saveData then
@@ -525,25 +520,7 @@ function SaveSystem.restoreGameState(ecsWorld, physicsWorld)
     local GameController = require("src.core.GameController")
 
     -- Restore game state
-    GameState.phase = saveData.gameState.phase
-    GameState.day = saveData.gameState.day
     GameState.coins = saveData.gameState.coins
-
-    -- Restore controller state (set phase directly without triggering onEnter/onExit)
-    local targetPhase = saveData.controller.currentPhase
-    if GameController.currentPhase ~= targetPhase then
-        print(string.format("[SaveSystem] Restoring phase to '%s' (without triggering phase transitions)", targetPhase))
-        GameController.currentPhase = targetPhase
-        GameState.phase = targetPhase
-
-        -- Apply phase-specific ambient lighting without spawning entities
-        local GameScene = require("src.scenes.game")
-        if targetPhase == "Siege" and GameScene and GameScene.setAmbientColor then
-            GameScene.setAmbientColor(70, 90, 140, 255, 0) -- Instant transition (0 duration)
-        elseif targetPhase == "Discovery" and GameScene and GameScene.setAmbientColor then
-            GameScene.setAmbientColor(255, 240, 255, 255, 0) -- Instant transition (0 duration)
-        end
-    end
 
     -- Clear existing entities (except those created by map)
     local entitiesToRemove = {}

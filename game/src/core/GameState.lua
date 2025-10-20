@@ -3,8 +3,6 @@ local gamera = require("lib.gamera")
 
 -- Single source of truth for a fresh run's starting values
 local DEFAULT_RUN = {
-  phase = "Discovery",
-  day = 1,
   coins = {
     total = 0,
     collectedThisSession = 0
@@ -20,8 +18,6 @@ local TableUtils = require("src.utils.table")
 ---@field input table Input state tracking
 ---@field camera table Camera system
 ---@field player table Player character data
----@field phase string Current gameplay phase name
----@field day integer Current in-game day counter
 
 local GameState = {
   currentScene = "game",
@@ -43,8 +39,6 @@ local GameState = {
   camera = nil, -- Will be initialized with gamera
   player = {},
   coins = {},
-  phase = nil,
-  day = nil,
   mapData = nil -- Map data for debugging
 }
 
@@ -53,8 +47,6 @@ function GameState.load()
 
   -- Start from a fresh deep copy of defaults for a clean run
   local runCopy = TableUtils.deepCopy(DEFAULT_RUN)
-  GameState.phase = runCopy.phase
-  GameState.day = runCopy.day
   GameState.coins = runCopy.coins
 
   -- Initialize player with constants only (spawn position comes from map)

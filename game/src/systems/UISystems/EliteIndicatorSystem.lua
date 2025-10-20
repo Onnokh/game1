@@ -1,14 +1,14 @@
 local System = require("src.core.System")
 
----@class SiegeIndicatorSystem : System
+---@class EliteIndicatorSystem : System
 ---@field ecsWorld World
 ---@field skullIcon love.Image
-local SiegeIndicatorSystem = System:extend("SiegeIndicatorSystem", {})
+local EliteIndicatorSystem = System:extend("EliteIndicatorSystem", {})
 
-function SiegeIndicatorSystem.new(ecsWorld)
-	---@class SiegeIndicatorSystem
+function EliteIndicatorSystem.new(ecsWorld)
+	---@class EliteIndicatorSystem
 	local self = System.new()
-	setmetatable(self, SiegeIndicatorSystem)
+	setmetatable(self, EliteIndicatorSystem)
 	self.ecsWorld = ecsWorld
 	self.isWorldSpace = true -- This UI system draws in world space (but also screen space for edges)
 
@@ -22,7 +22,7 @@ function SiegeIndicatorSystem.new(ecsWorld)
 end
 
 ---Update the pulse animation
-function SiegeIndicatorSystem:update(dt)
+function EliteIndicatorSystem:update(dt)
 	self.pulseTime = self.pulseTime + dt
 end
 
@@ -109,8 +109,8 @@ local function getScreenEdgeIntersection(centerX, centerY, targetX, targetY, scr
 	return centerX, centerY
 end
 
----Draw world-space skull indicators for siege attackers
-function SiegeIndicatorSystem:draw()
+---Draw world-space skull indicators for elite entities
+function EliteIndicatorSystem:draw()
 	local world = self.ecsWorld
 	if not world then return end
 
@@ -128,10 +128,10 @@ function SiegeIndicatorSystem:draw()
 	-- Get visible area in world coordinates
 	local visibleX, visibleY, visibleW, visibleH = camera:getVisible()
 
-	-- Get all siege attacker entities
-	local siegeEntities = world:getEntitiesWithTag("SiegeAttacker")
+	-- Get all elite entities
+	local eliteEntities = world:getEntitiesWithTag("Elite")
 
-	for _, entity in ipairs(siegeEntities) do
+	for _, entity in ipairs(eliteEntities) do
 		local position = entity:getComponent("Position")
 		local physicsCollision = entity:getComponent("PhysicsCollision")
 		local health = entity:getComponent("Health")
@@ -212,5 +212,4 @@ function SiegeIndicatorSystem:draw()
 	end
 end
 
-return SiegeIndicatorSystem
-
+return EliteIndicatorSystem
