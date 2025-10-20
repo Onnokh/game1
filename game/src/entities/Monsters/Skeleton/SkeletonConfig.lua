@@ -4,7 +4,6 @@ local SkeletonConfig = {}
 
 -- Movement speeds (multipliers of base speed)
 SkeletonConfig.WALKING_SPEED = 0.4        -- Slower than player
-SkeletonConfig.WANDER_RADIUS = 8 -- 1 tile wander radius
 
 -- Animation settings
 SkeletonConfig.IDLE_ANIMATION = {
@@ -22,7 +21,6 @@ SkeletonConfig.WALKING_ANIMATION = {
 }
 
 -- Chase behavior
-SkeletonConfig.CHASE_RANGE = 5 -- tiles
 SkeletonConfig.ATTACK_RANGE_TILES = 4 -- Ranged attack - can attack from distance
 SkeletonConfig.PREFERRED_CHASE_RANGE_TILES = 3 -- Maintains 3 tiles distance (inside attack range)
 

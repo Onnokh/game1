@@ -17,9 +17,6 @@ end
 ---@param stateMachine StateMachine The state machine
 ---@param entity Entity The entity this state belongs to
 function GenericIdle:onEnter(stateMachine, entity)
-    stateMachine:setStateData("idleTime", 0)
-    stateMachine:setStateData("targetIdleTime", math.random(1, 5)) -- Random idle time between 1-5 seconds
-
     -- Set idle animation when entering state
     local animator = entity:getComponent("Animator")
     if animator and self.config.IDLE_ANIMATION then
@@ -32,10 +29,6 @@ end
 ---@param entity Entity The entity this state belongs to
 ---@param dt number Delta time
 function GenericIdle:onUpdate(stateMachine, entity, dt)
-    -- Update idle timer
-    local idleTime = stateMachine:getStateData("idleTime") or 0
-    stateMachine:setStateData("idleTime", idleTime + dt)
-
     -- Stop movement
     local movement = entity:getComponent("Movement")
     if movement then

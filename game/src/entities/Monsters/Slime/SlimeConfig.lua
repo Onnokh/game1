@@ -7,7 +7,6 @@ SlimeConfig.WALKING_SPEED = 0.35        -- Walking speed multiplier (for Monster
 SlimeConfig.JUMP_SPEED = 60             -- Jump speed in pixels/second (absolute value)
 SlimeConfig.MIN_JUMP_DISTANCE = 1       -- Minimum jump distance in tiles
 SlimeConfig.MAX_JUMP_DISTANCE = 2       -- Maximum jump distance in tiles
-SlimeConfig.WANDER_RADIUS = 3           -- Smaller wander radius
 
 -- Animation settings (3 rows x 8 cols: 512px by 192px)
 -- Row 1: Idle (frames 1-4)
@@ -28,7 +27,6 @@ SlimeConfig.WALKING_ANIMATION = {
 }
 
 -- Chase behavior
-SlimeConfig.CHASE_RANGE = 6 -- tiles - longer sight range
 SlimeConfig.ATTACK_RANGE_TILES = 3.0 -- Ranged attack - can attack from distance
 SlimeConfig.ATTACK_RANGE_HYSTERESIS = 0.3 -- Buffer to prevent rapid state switching
 SlimeConfig.PREFERRED_CHASE_RANGE_TILES = SlimeConfig.ATTACK_RANGE_TILES - 0.5

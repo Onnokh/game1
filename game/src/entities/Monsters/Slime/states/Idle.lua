@@ -34,10 +34,6 @@ function Idle:onEnter(stateMachine, entity)
         movement.velocityY = 0
     end
 
-    -- Initialize idle timer for state tracking
-    stateMachine:setStateData("idleTime", 0)
-    local idleDuration = math.random() * 2 + 1 -- 1-3 seconds
-    stateMachine:setStateData("targetIdleTime", idleDuration)
 end
 
 ---Called every frame while in this state
@@ -90,9 +86,7 @@ function Idle:onUpdate(stateMachine, entity, dt)
             end
         end
     else
-        -- Normal idle - update idle timer
-        local idleTime = stateMachine:getStateData("idleTime") or 0
-        stateMachine:setStateData("idleTime", idleTime + dt)
+        -- Normal idle - no timer needed
     end
 end
 

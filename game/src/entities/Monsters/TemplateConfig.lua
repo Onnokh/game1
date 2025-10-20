@@ -5,7 +5,6 @@ local TemplateConfig = {}
 
 -- Movement speeds (multipliers of base speed)
 TemplateConfig.WALKING_SPEED = 0.4        -- Movement speed multiplier (0.4 = slower than player)
-TemplateConfig.WANDER_RADIUS = 8          -- Tiles to wander when idle
 
 -- Animation settings
 TemplateConfig.IDLE_ANIMATION = {
@@ -38,7 +37,6 @@ TemplateConfig.DYING_ANIMATION = {
 }
 
 -- Chase behavior
-TemplateConfig.CHASE_RANGE = 5           -- Tiles - how far monster detects targets
 TemplateConfig.ATTACK_RANGE_TILES = 0.8   -- Tiles - how close to get before attacking
 
 -- Attack settings
@@ -46,12 +44,6 @@ TemplateConfig.ATTACK_COOLDOWN = 1.2      -- Seconds between attacks
 TemplateConfig.ATTACK_DAMAGE = 32         -- Damage per attack
 TemplateConfig.ATTACK_KNOCKBACK = 4       -- Knockback force
 
--- Optional: Set for ranged units that maintain distance
--- TemplateConfig.PREFERRED_CHASE_RANGE_TILES = 3  -- Ranged unit: stay at 3 tiles distance
-
--- Optional: Projectile settings (only for ranged monsters)
--- TemplateConfig.PROJECTILE_SPEED = 180       -- Pixels per second
--- TemplateConfig.PROJECTILE_LIFETIME = 2.5    -- Seconds before despawn
 
 -- Physics settings (pathfinding collider)
 TemplateConfig.COLLIDER_WIDTH = 12        -- Pixels

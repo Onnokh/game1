@@ -22,7 +22,6 @@ local MonsterBehaviors = require("src.entities.Monsters.core.MonsterBehaviors")
 
 -- Generic state modules
 local GenericIdle = require("src.entities.Monsters.core.states.GenericIdle")
-local GenericWandering = require("src.entities.Monsters.core.states.GenericWandering")
 local GenericChasing = require("src.entities.Monsters.core.states.GenericChasing")
 local GenericAttacking = require("src.entities.Monsters.core.states.GenericAttacking")
 local GenericDying = require("src.entities.Monsters.core.states.GenericDying")
@@ -102,7 +101,7 @@ function MonsterFactory.create(options)
     end
 
     -- Create pathfinding component
-    local pathfinding = Pathfinding.new(x, y, config.WANDER_RADIUS)
+    local pathfinding = Pathfinding.new(x, y, 0)
 
     local animator = Animator.new(config.IDLE_ANIMATION)
 
@@ -134,7 +133,6 @@ function MonsterFactory.create(options)
 
     -- Add states (use custom states if provided, otherwise use generic ones)
     stateMachine:addState("idle", customStates.idle or GenericIdle.new(config))
-    stateMachine:addState("wandering", customStates.wandering or GenericWandering.new(config))
     stateMachine:addState("chasing", customStates.chasing or GenericChasing.new(config))
     stateMachine:addState("attacking", customStates.attacking or GenericAttacking.new(config))
     stateMachine:addState("dying", customStates.dying or GenericDying.new(config))

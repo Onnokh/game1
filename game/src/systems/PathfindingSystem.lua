@@ -254,6 +254,24 @@ function PathfindingSystem:update(dt)
                         local walkFactor = 0.6
                         movement.velocityX = (dx / dist) * (movement.maxSpeed * walkFactor)
                         movement.velocityY = (dy / dist) * (movement.maxSpeed * walkFactor)
+
+                        -- Handle sprite flipping for monsters
+                        if entity:hasTag("Monster") then
+                            local spriteRenderer = entity:getComponent("SpriteRenderer")
+                            if spriteRenderer then
+                                if movement.velocityX < -0.1 then
+                                    spriteRenderer.scaleX = -1
+                                elseif movement.velocityX > 0.1 then
+                                    spriteRenderer.scaleX = 1
+                                end
+                            end
+                        end
+
+                        -- Debug output for monsters
+                        if entity:hasTag("Monster") then
+                            print(string.format("[PathfindingSystem] Monster moving from (%.1f, %.1f) to (%.1f, %.1f) with velocity (%.1f, %.1f)",
+                                cx, cy, nextX, nextY, movement.velocityX, movement.velocityY))
+                        end
                     end
                 end
             end

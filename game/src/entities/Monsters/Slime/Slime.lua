@@ -3,7 +3,6 @@ local MonsterFactory = require("src.entities.Monsters.core.MonsterFactory")
 local SlimeIdle = require("src.entities.Monsters.Slime.states.Idle")
 local SlimeChasing = require("src.entities.Monsters.Slime.states.Chasing")
 local SlimeAttacking = require("src.entities.Monsters.Slime.states.Attacking")
-local SlimeWandering = require("src.entities.Monsters.Slime.states.Wandering")
 local SlimeJumpController = require("src.entities.Monsters.Slime.SlimeJumpController")
 local MonsterBehaviors = require("src.entities.Monsters.core.MonsterBehaviors")
 local GameConstants = require("src.constants")
@@ -24,7 +23,7 @@ local function slimeStateSelector(entity, dt)
     end
 
     -- Priority 2: Update target and check for detection
-    MonsterBehaviors.updateTarget(entity, SlimeConfig)
+    MonsterBehaviors.updateTarget(entity)
     local target = entity.target
 
     if target then
@@ -74,20 +73,6 @@ local function slimeStateSelector(entity, dt)
         return "idle"
     end
 
-    -- Handle idle/wandering transitions
-    if currentState == "idle" then
-        local idleTime = stateMachine:getStateData("idleTime") or 0
-        local targetIdleTime = stateMachine:getStateData("targetIdleTime") or 2
-        if idleTime >= targetIdleTime then
-            return "wandering"
-        end
-    elseif currentState == "wandering" then
-        local pathfinding = entity:getComponent("Pathfinding")
-        -- Check if wander target is reached (path is complete)
-        if pathfinding and pathfinding:isPathComplete() then
-            return "idle"
-        end
-    end
 
     return currentState
 end
@@ -115,8 +100,7 @@ function Slime.create(x, y, world, physicsWorld)
         customStates = {
             idle = SlimeIdle.new(jumpController),
             chasing = SlimeChasing.new(jumpController),
-            attacking = SlimeAttacking.new(jumpController),
-            wandering = SlimeWandering.new(jumpController)
+            attacking = SlimeAttacking.new(jumpController)
         },
         -- Use custom state selector with hysteresis
         stateSelector = slimeStateSelector

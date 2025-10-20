@@ -176,6 +176,12 @@ end
 ---@param y number Y position
 ---@return Entity|nil Spawned enemy entity or nil if failed
 function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
+    -- Safety check for valid coordinates
+    if not x or not y then
+        print(string.format("[EnemySpawnerSystem] Invalid coordinates: x=%s, y=%s", tostring(x), tostring(y)))
+        return nil
+    end
+
     local creator = nil
 
     if enemyType == "Slime" then
@@ -289,11 +295,16 @@ function EnemySpawnerSystem:update(dt)
         -- Calculate spawn position
         local spawnX, spawnY = self:calculateSpawnPosition(activeWave.shape, position.x, position.y)
 
-        -- Spawn enemy
-        local enemy = self:spawnEnemy(enemyType, spawnX, spawnY)
-        if enemy then
-            self.lastSpawnTime = GameTimeManager.getTime()
-            print(string.format("[EnemySpawnerSystem] Spawned %s at (%.1f, %.1f)", enemyType, spawnX, spawnY))
+        -- Only spawn if we got valid coordinates
+        if spawnX and spawnY then
+            -- Spawn enemy
+            local enemy = self:spawnEnemy(enemyType, spawnX, spawnY)
+            if enemy then
+                self.lastSpawnTime = GameTimeManager.getTime()
+                print(string.format("[EnemySpawnerSystem] Spawned %s at (%.1f, %.1f)", enemyType, spawnX, spawnY))
+            end
+        else
+            print(string.format("[EnemySpawnerSystem] Failed to find valid spawn position for %s", enemyType))
         end
     end
 end

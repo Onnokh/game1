@@ -53,7 +53,7 @@ function GenericChasing:onUpdate(stateMachine, entity, dt)
     local EntityUtils = require("src.utils.entities")
     local tx, ty = EntityUtils.getClosestPointOnTarget(sx, sy, target)
 
-    -- Decide steering: direct follow if line-of-sight; otherwise end chase
+    -- Always chase the target - use pathfinding when no direct LOS
     local directLOS = false
     if pathfindingCollision and pathfindingCollision:hasCollider() then
         directLOS = pathfindingCollision:hasLineOfSightTo(tx, ty, nil)
@@ -62,6 +62,9 @@ function GenericChasing:onUpdate(stateMachine, entity, dt)
     end
 
     if directLOS then
+        -- We have direct LOS - clear any pathfinding and chase directly
+        pathfinding.currentPath = nil
+        pathfinding.pathIndex = 1
         -- Direct chase: set velocity straight towards target
         local dx = tx - sx
         local dy = ty - sy
@@ -112,19 +115,43 @@ function GenericChasing:onUpdate(stateMachine, entity, dt)
                 end
             end
         end
-        -- Clear any existing path to avoid PathfindingSystem steering
-        pathfinding.currentPath = nil
-        pathfinding.pathIndex = 1
-        -- Set target for debug overlay
         pathfinding.targetX = tx
         pathfinding.targetY = ty
     else
-        -- No LOS: stop chasing immediately
-        pathfinding.currentPath = nil
-        pathfinding.pathIndex = 1
-        movement.velocityX = 0
-        movement.velocityY = 0
+        -- No direct LOS: use pathfinding to navigate around obstacles
+        -- Only start a new path if we don't have one or if target has moved significantly
+        local needsNewPath = pathfinding:isPathComplete()
+
+        if not needsNewPath and pathfinding.targetX and pathfinding.targetY then
+            -- Check if target has moved significantly (more than 1 tile)
+            local dx = tx - pathfinding.targetX
+            local dy = ty - pathfinding.targetY
+            local dist = math.sqrt(dx*dx + dy*dy)
+            needsNewPath = dist > GameConstants.TILE_SIZE
+        end
+
+        if needsNewPath then
+            local pathSuccess = pathfinding:startPathTo(sx, sy, tx, ty)
+            pathfinding.targetX = tx
+            pathfinding.targetY = ty
+
+            -- Debug output
+            if pathSuccess then
+                print(string.format("[GenericChasing] Pathfinding started successfully from (%.1f, %.1f) to (%.1f, %.1f)", sx, sy, tx, ty))
+            else
+                print(string.format("[GenericChasing] Pathfinding FAILED from (%.1f, %.1f) to (%.1f, %.1f)", sx, sy, tx, ty))
+            end
+        else
+            -- Update target position but keep existing path
+            pathfinding.targetX = tx
+            pathfinding.targetY = ty
+        end
+
+        -- Let PathfindingSystem handle movement via pathfinding
+        -- Don't set velocity here - PathfindingSystem will handle it
+        return -- Exit early to avoid setting velocities below
     end
+
 
     -- Speed tweak: move faster than wandering
     if movement then
@@ -143,4 +170,5 @@ function GenericChasing:onUpdate(stateMachine, entity, dt)
 end
 
 return GenericChasing
+
 

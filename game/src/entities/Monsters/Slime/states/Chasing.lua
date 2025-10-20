@@ -67,19 +67,13 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     local EntityUtils = require("src.utils.entities")
     local tx, ty = EntityUtils.getClosestPointOnTarget(sx, sy, target)
 
-    -- Decide steering: direct follow if line-of-sight; otherwise end chase
+    -- Always chase the target - use pathfinding when no direct LOS
     local directLOS = false
     if pathfindingCollision and pathfindingCollision:hasCollider() then
         directLOS = pathfindingCollision:hasLineOfSightTo(tx, ty, nil)
     else
         directLOS = true
     end
-
-    -- Clear any existing path to avoid PathfindingSystem steering
-    pathfinding.currentPath = nil
-    pathfinding.pathIndex = 1
-    pathfinding.targetX = tx
-    pathfinding.targetY = ty
 
     -- Calculate distances and tile size at the function level
     local dx = tx - sx
@@ -107,6 +101,12 @@ function Chasing:onUpdate(stateMachine, entity, dt)
     end
 
     if directLOS then
+        -- We have direct LOS - clear any pathfinding and chase directly
+        pathfinding.currentPath = nil
+        pathfinding.pathIndex = 1
+        -- Direct LOS: use jumping behavior
+        pathfinding.targetX = tx
+        pathfinding.targetY = ty
 
         local preferredRange = SlimeConfig.PREFERRED_CHASE_RANGE_TILES * tileSize
         local tolerance = tileSize * 0.3
@@ -172,16 +172,38 @@ function Chasing:onUpdate(stateMachine, entity, dt)
             end
         end
     else
-        -- No LOS: stop and reset jump state
-        movement.velocityX = 0
-        movement.velocityY = 0
-        if jc:isCurrentlyJumping() then
-            jc:finishJump()
+        -- No direct LOS: use pathfinding to navigate around obstacles
+        -- Only start a new path if we don't have one or if target has moved significantly
+        local needsNewPath = pathfinding:isPathComplete()
+
+        if not needsNewPath and pathfinding.targetX and pathfinding.targetY then
+            -- Check if target has moved significantly (more than 1 tile)
+            local dx = tx - pathfinding.targetX
+            local dy = ty - pathfinding.targetY
+            local dist = math.sqrt(dx*dx + dy*dy)
+            needsNewPath = dist > GameConstants.TILE_SIZE
         end
 
-        if animator then
-            animator:setAnimation(SlimeConfig.IDLE_ANIMATION)
+        if needsNewPath then
+            local pathSuccess = pathfinding:startPathTo(sx, sy, tx, ty)
+            pathfinding.targetX = tx
+            pathfinding.targetY = ty
+
+            -- Debug output
+            if pathSuccess then
+                print(string.format("[SlimeChasing] Pathfinding started successfully from (%.1f, %.1f) to (%.1f, %.1f)", sx, sy, tx, ty))
+            else
+                print(string.format("[SlimeChasing] Pathfinding FAILED from (%.1f, %.1f) to (%.1f, %.1f)", sx, sy, tx, ty))
+            end
+        else
+            -- Update target position but keep existing path
+            pathfinding.targetX = tx
+            pathfinding.targetY = ty
         end
+
+        -- Let PathfindingSystem handle movement via pathfinding
+        -- Don't set velocity here - PathfindingSystem will handle it
+        return -- Exit early to avoid setting velocities below
     end
 end
 

@@ -374,7 +374,7 @@ function GameScene.mousepressed(x, y, button, gameState)
     -- Add a monster at click position (convert screen to world coordinates)
     local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
     local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
-    GameScene.addMonster(worldX, worldY, "slime")
+    GameScene.addMonster(worldX, worldY, "warhog")
   end
 
   -- Click was not handled by UI

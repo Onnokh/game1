@@ -197,6 +197,17 @@ function PathfindingCollision:hasLineOfSightTo(targetX, targetY, ignoreFixture)
     end
 
     local startX, startY = self:getCenterPosition()
+
+    -- Check if start and target positions are too close (avoid zero-length ray)
+    local dx = targetX - startX
+    local dy = targetY - startY
+    local distanceSquared = dx*dx + dy*dy
+
+    -- If distance is very small, assume we have line of sight
+    if distanceSquared < 0.1 then
+        return true
+    end
+
     local blocked = false
 
     self.physicsWorld:rayCast(startX, startY, targetX, targetY, function(fixture, x, y, xn, yn, fraction)

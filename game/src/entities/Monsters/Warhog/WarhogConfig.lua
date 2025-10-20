@@ -4,7 +4,6 @@ local WarhogConfig = {}
 
 -- Movement speeds (multipliers of base speed)
 WarhogConfig.WALKING_SPEED = 0.2        -- Slower than player
-WarhogConfig.WANDER_RADIUS = 8 -- 1 tile wander radius
 
 -- Animation settings
 WarhogConfig.IDLE_ANIMATION = {
@@ -36,7 +35,6 @@ WarhogConfig.DEATH_ANIMATION = {
 }
 
 -- Chase behavior
-WarhogConfig.CHASE_RANGE = 5 -- tiles
 WarhogConfig.ATTACK_RANGE_TILES = .2 -- stop within this many tiles of target
 
 -- Attack settings
