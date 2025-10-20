@@ -4,7 +4,7 @@ local GameTimeManager = require("src.core.managers.GameTimeManager")
 -- Lazy-loaded monster modules
 local Slime = nil
 local Skeleton = nil
-local Warthog = nil
+local Warhog = nil
 
 ---@class EnemySpawnerSystem : System
 ---@field ecsWorld World
@@ -45,8 +45,8 @@ function EnemySpawnerSystem:loadMonsterModules()
     if not Skeleton then
         Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
     end
-    if not Warthog then
-        Warthog = require("src.entities.Monsters.Warhog.Warhog")
+    if not Warhog then
+        Warhog = require("src.entities.Monsters.Warhog.Warhog")
     end
 end
 
@@ -188,8 +188,8 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
         creator = Slime and Slime.create
     elseif enemyType == "Skeleton" then
         creator = Skeleton and Skeleton.create
-    elseif enemyType == "Warthog" then
-        creator = Warthog and Warthog.create
+    elseif enemyType == "Warhog" then
+        creator = Warhog and Warhog.create
     end
 
     if creator then

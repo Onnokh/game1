@@ -266,12 +266,6 @@ function PathfindingSystem:update(dt)
                                 end
                             end
                         end
-
-                        -- Debug output for monsters
-                        if entity:hasTag("Monster") then
-                            print(string.format("[PathfindingSystem] Monster moving from (%.1f, %.1f) to (%.1f, %.1f) with velocity (%.1f, %.1f)",
-                                cx, cy, nextX, nextY, movement.velocityX, movement.velocityY))
-                        end
                     end
                 end
             end
