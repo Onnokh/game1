@@ -67,11 +67,19 @@ function UpgradeUISystem:openUpgradeUI(crystal)
     -- Start fade-in animation
     self.animationManager:create("ui_fade", 0.0, 1.0, 0.2, "linear")
 
+    -- Emit crystal opened event for cursor manager
+    local EventBus = require("src.utils.EventBus")
+    EventBus.emit("crystalOpened", { crystal = crystal })
+
     print("[UpgradeUI] Opened upgrade UI for crystal " .. tostring(crystal.id))
 end
 
 ---Close the upgrade UI
 function UpgradeUISystem:closeUpgradeUI()
+    -- Emit crystal closed event for cursor manager (before clearing activeCrystal)
+    local EventBus = require("src.utils.EventBus")
+    EventBus.emit("crystalClosed", { crystal = self.activeCrystal })
+
     self.activeCrystal = nil
     self.isOpen = false
     self.hoveredSlot = nil

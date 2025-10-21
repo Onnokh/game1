@@ -2,9 +2,11 @@ local overlayStats = require("lib.overlayStats")
 local GameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
 local SoundManager = require("src.core.managers.SoundManager")
+local CursorManager = require("src.core.managers.CursorManager")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
+_G.CursorManager = CursorManager -- Make CursorManager globally accessible
 
 -- Load Lovebird for debugging
 local lovebird = require("lovebird")
@@ -25,6 +27,7 @@ local parallaxBg = {
   parallaxFactorX = 0.2, -- Camera movement influence (0.2 = moves 20% of camera speed)
   parallaxFactorY = 1.5 -- Vertical parallax factor
 }
+
 
 function love.load()
   -- Load parallax background sprite sheet
@@ -54,6 +57,9 @@ function love.load()
     print("Failed to load parallax background:", result)
   end
 
+  -- Load cursor manager
+  CursorManager.load()
+
   -- Initialize sound manager
   SoundManager.load()
 
@@ -69,6 +75,7 @@ function love.load()
 
   overlayStats.load() -- Should always be called last
 end
+
 
 function love.draw()
   -- Clear the screen first

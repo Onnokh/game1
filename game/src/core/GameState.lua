@@ -80,6 +80,10 @@ function GameState.load()
   if GameState.scenes[GameState.currentScene] and GameState.scenes[GameState.currentScene].load then
     GameState.scenes[GameState.currentScene].load()
   end
+
+  -- Emit initial scene change event for cursor manager
+  local EventBus = require("src.utils.EventBus")
+  EventBus.emit("sceneChanged", { sceneName = GameState.currentScene })
 end
 
 ---Reset run-specific state to start a fresh game
@@ -242,6 +246,10 @@ function GameState.changeScene(sceneName)
 
     -- Switch to new scene
     GameState.currentScene = sceneName
+
+    -- Emit scene change event for cursor manager
+    local EventBus = require("src.utils.EventBus")
+    EventBus.emit("sceneChanged", { sceneName = sceneName })
 
     -- Load new scene
     if GameState.scenes[sceneName].load then

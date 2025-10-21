@@ -94,9 +94,17 @@ function ShopUISystem:update(dt)
                 if not anim and not previousActiveShops[shop.id] then
                     -- Shop just entered range, create new scale-in animation
                     self.animationManager:create(animId, 0.0, 1.0, 0.25, "outBack")
+
+                    -- Emit shop entered event for cursor manager
+                    local EventBus = require("src.utils.EventBus")
+                    EventBus.emit("shopEntered", { shop = shop })
                 elseif anim and anim.targetValue == 0.0 then
                     -- Shop re-entered range while animating out, reverse the animation
                     anim:reverse()
+
+                    -- Emit shop entered event for cursor manager
+                    local EventBus = require("src.utils.EventBus")
+                    EventBus.emit("shopEntered", { shop = shop })
                 end
             end
         end
@@ -112,10 +120,18 @@ function ShopUISystem:update(dt)
                 -- Reverse to scale out
                 anim:reverse()
                 self.animatingOutShops[shop.id] = shop
+
+                -- Emit shop exited event for cursor manager
+                local EventBus = require("src.utils.EventBus")
+                EventBus.emit("shopExited", { shop = shop })
             elseif not anim then
                 -- Animation was already cleaned up, create new scale-out animation from 1.0
                 self.animationManager:create(animId, 1.0, 0.0, 0.25, "inQuad")
                 self.animatingOutShops[shop.id] = shop
+
+                -- Emit shop exited event for cursor manager
+                local EventBus = require("src.utils.EventBus")
+                EventBus.emit("shopExited", { shop = shop })
             end
         end
     end

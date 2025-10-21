@@ -10,6 +10,8 @@ uniform float dotSpacing;
 uniform float targetDotRadius;
 uniform float targetCrossThickness;
 
+uniform Image crosshairTexture;
+
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
 {
     // Calculate line direction and length
@@ -29,8 +31,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
     float targetArea = max(targetDotRadius, targetCrossThickness);
     bool nearTarget = distToTarget < targetArea;
 
-    // Clip at the start and end positions (but allow target marker area)
-    if (distAlongLine < 0.0 || (distAlongLine > lineLength && !nearTarget)) {
+    // Clip at the start and end positions (but allow target marker area and crosshair)
+    if (distAlongLine < 0.0 || (distAlongLine > lineLength && !nearTarget && !(!isHit && distAlongLine < lineLength + 120.0))) {
         discard;
     }
 
@@ -48,19 +50,44 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
     float distToDotCenter = sqrt(nearestDotDist * nearestDotDist + distFromLine * distFromLine);
 
     // Check if we're inside a dot (circular)
-    // But don't draw dots too close to the target marker
-    if (distToDotCenter < dotRadius && !nearTarget) {
+    // But don't draw dots too close to the target marker or beyond line length when crosshair is present
+    if (distToDotCenter < dotRadius && !nearTarget && !(!isHit && distAlongLine > lineLength)) {
         // Inside a dot
         return vec4(1.0, 1.0, 1.0, .5);
     }
 
-    // Draw target marker
-    if (distToTarget < targetDotRadius) {
-          // Draw circle at target
-        if (isHit) {
-            return vec4(1.0, 0.5, 0.5, 1.0);
-        } else {
-            return vec4(1.0, 1.0, 1.0, 1.0);
+    // Draw target marker (only when hitting something)
+    if (distToTarget < targetDotRadius && isHit) {
+        // Draw circle at target only when hitting
+        return vec4(1.0, 0.5, 0.5, 1.0);
+    }
+
+    // Draw crosshair texture at the end of the line when not hitting anything
+    if (!isHit && distAlongLine >= lineLength - 120.0 && distAlongLine <= lineLength + 120.0) {
+        // Calculate position relative to the end of the line
+        vec2 endPoint = startPos + lineNorm * lineLength;
+        vec2 toEnd = screen_coords - endPoint;
+
+        // Calculate distance from end point
+        float distFromEnd = length(toEnd);
+
+        // Draw crosshair texture within a larger radius to show the full crosshair
+        if (distFromEnd < 120.0) {
+            // Calculate texture coordinates
+            // Map screen coordinates to texture coordinates (0-1 range)
+            vec2 crosshairSize = vec2(120.0, 120.0); // Scaled down size
+            vec2 textureCoords = (toEnd + crosshairSize * 0.5) / crosshairSize;
+
+            // Clamp texture coordinates to valid range
+            textureCoords = clamp(textureCoords, vec2(0.0, 0.0), vec2(1.0, 1.0));
+
+            // Sample the crosshair texture
+            vec4 crosshairColor = Texel(crosshairTexture, textureCoords);
+
+            // Only draw if the texture has alpha (not transparent)
+            if (crosshairColor.a > 0.1) { // Lower threshold to catch more pixels
+                return crosshairColor;
+            }
         }
     }
 

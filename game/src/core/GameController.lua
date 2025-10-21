@@ -36,6 +36,7 @@ end
 
 function GameController.setPaused(paused)
   GameController.paused = not not paused
+
 end
 
 function GameController.togglePause()
@@ -59,6 +60,7 @@ function GameController.togglePause()
     end
   end
 
+
   -- Emit event to show/hide pause menu
   local EventBus = require("src.utils.EventBus")
   if GameController.paused then
@@ -71,11 +73,13 @@ end
 function GameController.resetPauseState()
   GameController.paused = false
   GameController.gameOver = false
+
 end
 
 function GameController.setGameOver()
   GameController.gameOver = true
   GameController.setPaused(true)
+
 end
 
 -- Restart the current game session (reload the current scene and reset pause/gameOver)

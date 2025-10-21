@@ -12,6 +12,9 @@ local GroundShadow = require("src.components.GroundShadow")
 ---@class Coin
 local CoinEntity = {}
 
+
+-- OKH: Todo: add instancing to reduce memory usage / performance.
+
 ---Create a new coin entity
 ---@param x number X position
 ---@param y number Y position
