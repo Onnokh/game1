@@ -38,7 +38,7 @@ PlayerConfig.WALKING_ANIMATION = {
 
 PlayerConfig.IDLE_ANIMATION = {
   sheet = "player_idle",
-  frames = {1, 2, 3, 4, 5, 6, 7, 8},
+  frames = {1, 2, 3, 4},
   fps = 8,
   loop = true
 }
@@ -52,8 +52,8 @@ PlayerConfig.RUNNING_ANIMATION = {
 
 PlayerConfig.DASH_ANIMATION = {
   sheet = "player_dash",
-  frames = {1, 2},
-  fps = 16,
+  frames = {1, 2, 3},
+  fps = 24,
   loop = false
 }
 
