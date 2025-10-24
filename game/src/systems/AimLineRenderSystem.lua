@@ -101,9 +101,17 @@ function AimLineRenderSystem:draw()
     local playerX = position.x + gunOffset.x
     local playerY = position.y + gunOffset.y + 3
 
-    -- Get current real-time mouse position to avoid frame lag
-    local screenMouseX, screenMouseY = love.mouse.getPosition()
-    local mouseX, mouseY = GameState.camera:toWorld(screenMouseX, screenMouseY)
+    -- Get mouse position (use auto-aim position if active, otherwise real mouse position)
+    local mouseX, mouseY
+    if GameState.input.autoAim then
+        -- Use auto-aim position from GameState
+        mouseX = GameState.input.mouseX
+        mouseY = GameState.input.mouseY
+    else
+        -- Use real mouse position
+        local screenMouseX, screenMouseY = love.mouse.getPosition()
+        mouseX, mouseY = GameState.camera:toWorld(screenMouseX, screenMouseY)
+    end
 
     -- Calculate direction from player to mouse
     local dx = mouseX - playerX
