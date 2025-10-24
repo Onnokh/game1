@@ -30,7 +30,7 @@ function CrystalEntity.create(x, y, world, physicsWorld, inventory, seed, shopId
     local position = Position.new(x, y, DepthSorting.getLayerZ("FOREGROUND")) -- Top crystal in front
     local spriteRenderer = SpriteRenderer.new(nil, 112, 112)
     spriteRenderer.depthSortHeight = 48 -- Only use top 16px for depth sorting
-    local animation = Animator.new({ sheet = 'crystal', frames = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, fps = 20, loop = true })
+    local animation = Animator.new({ layers = {'crystal'}, frames = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, fps = 20, loop = true })
 
     -- local crystalComponent = Crystal.new(inventory, seed, shopId)
 

@@ -25,8 +25,8 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
     local shop = Entity.new()
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new(nil, 64, 64)
-    local animation = Animator.new({ sheet = 'shop', frames = {1}, fps = 1, loop = true })
-    animation:setAnimation({ sheet = 'shop', frames = {1, 2, 3, 4, 5, 6, 7, 8}, fps = 8, loop = true })
+    local animation = Animator.new({ layers = {'shop'}, frames = {1}, fps = 1, loop = true })
+    animation:setAnimation({ layers = {'shop'}, frames = {1, 2, 3, 4, 5, 6, 7, 8}, fps = 8, loop = true })
 
     local shopComponent = Shop.new(inventory, seed, shopId)
 

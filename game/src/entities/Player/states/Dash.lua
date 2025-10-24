@@ -201,12 +201,13 @@ function Dash:spawnDashShadow(entity, stateMachine)
     )
 
     -- Capture current sprite frame and facing direction
-    if animator and animator.sheet then
+    if animator and animator.layers and #animator.layers > 0 then
         local currentFrame = animator:getCurrentFrame()
         local scaleX = spriteRenderer and spriteRenderer.scaleX or 1
         local scaleY = spriteRenderer and spriteRenderer.scaleY or 1
 
-        shadowComponent:setSpriteData(animator.sheet, currentFrame, scaleX, scaleY)
+        -- Use the first layer for shadow
+        shadowComponent:setSpriteData(animator.layers[1], currentFrame, scaleX, scaleY)
     end
 
     -- Store dash direction for motion blur

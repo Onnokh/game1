@@ -7,28 +7,28 @@ WarhogConfig.WALKING_SPEED = 0.2        -- Slower than player
 
 -- Animation settings
 WarhogConfig.IDLE_ANIMATION = {
-    sheet = "Warhog_Idle",
+    layers = {"Warhog_Idle"},
     frames = {5, 6, 7, 8},
     fps = 8,
     loop = true
 }
 
 WarhogConfig.WALKING_ANIMATION = {
-    sheet = "Warhog_Walk",
+    layers = {"Warhog_Walk"},
     frames = {9, 10, 11, 12},
     fps = 8,
     loop = true
 }
 
 WarhogConfig.ATTACK_ANIMATION = {
-    sheet = "Warhog_Attack",
+    layers = {"Warhog_Attack"},
     frames = {9, 10, 11, 12},
     fps = 4,
     loop = true
 }
 
 WarhogConfig.DEATH_ANIMATION = {
-    sheet = "Warhog_Death",
+    layers = {"Warhog_Death"},
     frames = {9, 10, 11, 12},
     fps = 8,
     loop = false

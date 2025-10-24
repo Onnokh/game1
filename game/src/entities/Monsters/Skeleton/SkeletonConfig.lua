@@ -7,14 +7,14 @@ SkeletonConfig.WALKING_SPEED = 0.4        -- Slower than player
 
 -- Animation settings
 SkeletonConfig.IDLE_ANIMATION = {
-    sheet = "skeleton",
+    layers = {"skeleton"},
     frames = {1, 2, 3, 4, 5, 6},
     fps = 3,
     loop = true
 }
 
 SkeletonConfig.WALKING_ANIMATION = {
-    sheet = "skeleton",
+    layers = {"skeleton"},
     frames = {25, 26, 27, 28, 29, 30}, -- Row 5 (0-indexed as 4), columns 1-6 (0-indexed: 4*6+0 = 24)
     fps = 6,
     loop = true
@@ -34,7 +34,7 @@ SkeletonConfig.ATTACK_DAMAGE = 4
 SkeletonConfig.ATTACK_KNOCKBACK = 4
 
 SkeletonConfig.DYING_ANIMATION = {
-    sheet = "skeleton",
+    layers = {"skeleton"},
     frames = {37, 38, 39, 40}, -- Row 7 (0-indexed as 6), columns 1-4 (6*6+1 = 37)
     fps = 8, -- 8 frames per second - 4 frames - 0.5 seconds
     loop = false

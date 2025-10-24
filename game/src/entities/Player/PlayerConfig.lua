@@ -26,8 +26,8 @@ PlayerConfig.DASH_CHARGE_REGEN_TIME = 2.0  -- Time in seconds to regenerate one 
 -- }
 
 PlayerConfig.WALKING_ANIMATION = {
-  sheet = "player_walk",
-  frames = {1, 2, 3, 4, 5, 6, 7, 8},
+  layers = {"player", "gun"},
+  frames = {4, 5, 6, 7, 8, 9, 10, 11},
   fps = 12,
   loop = true
 }
@@ -37,21 +37,21 @@ PlayerConfig.WALKING_ANIMATION = {
 -- if not equipped, use idle animation
 
 PlayerConfig.IDLE_ANIMATION = {
-  sheet = "player_idle",
-  frames = {1, 2, 3, 4},
+  layers = {"player", "gun"},
+  frames = {12, 13, 14, 15},
   fps = 8,
   loop = true
 }
 
 PlayerConfig.RUNNING_ANIMATION = {
-  sheet = "player_walk",
-  frames = {1, 2, 3, 4, 5, 6, 7, 8},
+  layers = {"player", "gun"},
+  frames = {4, 5, 6, 7, 8, 9, 10, 11},
   fps = 12,
   loop = true
 }
 
 PlayerConfig.DASH_ANIMATION = {
-  sheet = "player_dash",
+  layers = {"player", "gun"},
   frames = {1, 2, 3},
   fps = 24,
   loop = false

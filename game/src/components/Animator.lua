@@ -1,5 +1,5 @@
 ---@class Animator
----@field sheet string Name of the iffy tileset/spritesheet
+---@field layers table Array of sheet names for multi-layer animation
 ---@field frames table List of frame indices to play
 ---@field fps number Frames per second
 ---@field loop boolean Whether animation loops
@@ -9,13 +9,13 @@ local Animator = {}
 Animator.__index = Animator
 
 ---Create a new Animator component
----@param config table Animation config table with {sheet, frames, fps, loop}
+---@param config table Animation config table with {layers, frames, fps, loop}
 ---@return Component|Animator
 function Animator.new(config)
     local Component = require("src.core.Component")
     local self = setmetatable(Component.new("Animator"), Animator)
 
-    self.sheet = config.sheet
+    self.layers = config.layers or {""}
     self.frames = config.frames or {1}
     self.fps = config.fps or 6
     self.loop = config.loop ~= false
@@ -53,9 +53,9 @@ function Animator:getCurrentFrame()
 end
 
 ---Change the active animation
----@param config table Animation config table with {sheet, frames, fps, loop}
+---@param config table Animation config table with {layers, frames, fps, loop}
 function Animator:setAnimation(config)
-    self.sheet = config.sheet
+    self.layers = config.layers or self.layers
     self.frames = config.frames or self.frames
     self.fps = config.fps or self.fps
     if config.loop ~= nil then self.loop = config.loop end
@@ -67,7 +67,7 @@ end
 ---@return table Serialized animator data
 function Animator:serialize()
     return {
-        sheet = self.sheet,
+        layers = self.layers,
         frames = self.frames,
         fps = self.fps,
         loop = self.loop,
@@ -81,7 +81,7 @@ end
 ---@return Animator Recreated Animator component
 function Animator.deserialize(data)
     local animator = Animator.new({
-        sheet = data.sheet,
+        layers = data.layers,
         frames = data.frames,
         fps = data.fps,
         loop = data.loop

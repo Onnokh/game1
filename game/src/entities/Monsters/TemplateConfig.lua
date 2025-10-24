@@ -8,14 +8,14 @@ TemplateConfig.WALKING_SPEED = 0.4        -- Movement speed multiplier (0.4 = sl
 
 -- Animation settings
 TemplateConfig.IDLE_ANIMATION = {
-    sheet = "monster_sheet_name",        -- Name of sprite sheet
+    layers = {"monster_sheet_name"},      -- Name of sprite sheet
     frames = {1, 2, 3, 4},               -- Frame indices for animation
     fps = 6,                              -- Frames per second
     loop = true                           -- Whether animation loops
 }
 
 TemplateConfig.WALKING_ANIMATION = {
-    sheet = "monster_sheet_name",
+    layers = {"monster_sheet_name"},
     frames = {5, 6, 7, 8},
     fps = 8,
     loop = true
@@ -23,14 +23,14 @@ TemplateConfig.WALKING_ANIMATION = {
 
 -- Optional: Only needed if you have a custom attack animation
 -- TemplateConfig.ATTACK_ANIMATION = {
---     sheet = "monster_sheet_name",
+--     layers = {"monster_sheet_name"},
 --     frames = {9, 10, 11, 12},
 --     fps = 8,
 --     loop = true
 -- }
 
 TemplateConfig.DYING_ANIMATION = {
-    sheet = "monster_sheet_name",
+    layers = {"monster_sheet_name"},
     frames = {13, 14, 15, 16},
     fps = 8,
     loop = false                          -- Death animation should not loop

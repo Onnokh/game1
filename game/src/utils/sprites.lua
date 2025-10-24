@@ -51,12 +51,8 @@ function IffySprites.load()
   -- Note: World tiles are now handled by Cartographer, not Iffy
 
   -- Load character spritesheet (8x6 grid)
-  loadSpritesheet("character", "resources/character/AnimationSheet.png", 8, 6)
-  loadSpritesheet("new", "resources/character/new.png", 4, 1)
-  loadSpritesheet("player_walk", "resources/character/player_run.png", 8, 1)
-  loadSpritesheet("player_dash", "resources/character/player_dash.png", 3, 1)
-  loadSpritesheet("player_idle", "resources/character/player_idle.png", 4, 1)
-
+  loadSpritesheet("player", "resources/character/player.png", 16, 1)
+  loadSpritesheet("gun", "resources/character/player_gun.png", 16, 1)
 
   -- Load skeleton spritesheet (6x10 grid - 6 columns, 10 rows)
   loadSpritesheet("skeleton", "resources/skeleton/Skeleton.png", 6, 10)

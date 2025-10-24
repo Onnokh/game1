@@ -13,14 +13,14 @@ SlimeConfig.MAX_JUMP_DISTANCE = 2       -- Maximum jump distance in tiles
 -- Row 2: Walking (frames 9-16)
 -- Row 3: Death (frames 17-24)
 SlimeConfig.IDLE_ANIMATION = {
-    sheet = "slime",
+    layers = {"slime"},
     frames = {1, 2, 3, 4},
     fps = 4,
     loop = true
 }
 
 SlimeConfig.WALKING_ANIMATION = {
-    sheet = "slime",
+    layers = {"slime"},
     frames = {9, 10, 11, 12, 13, 14, 15, 16}, -- Row 2, all 8 frames
     fps = 6,
     loop = true
@@ -41,7 +41,7 @@ SlimeConfig.ATTACK_DAMAGE = 6
 SlimeConfig.ATTACK_KNOCKBACK = 3
 
 SlimeConfig.DYING_ANIMATION = {
-    sheet = "slime",
+    layers = {"slime"},
     frames = {17, 18, 19, 20, 21, 22, 23, 24}, -- Row 3, all 8 frames
     fps = 8,
     loop = false

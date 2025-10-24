@@ -69,26 +69,28 @@ function RenderSystem:draw()
                 -- Normal drawing without outline
                 local hasDrawnSomething = false
 
-                -- First, draw animation if it exists
-                if animator and animator.sheet then
+                -- Draw all animation layers
+                if animator and animator.layers then
                     local iffy = require("lib.iffy")
                     local current = animator:getCurrentFrame()
 
-                    if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-                        -- Get the actual sprite frame dimensions from Iffy tileset
-                        local frameWidth = 24
-                        if iffy.tilesets[animator.sheet] then
-                            frameWidth = iffy.tilesets[animator.sheet][1]
-                        end
+                    for _, sheetName in ipairs(animator.layers) do
+                        if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                            -- Get the actual sprite frame dimensions from Iffy tileset
+                            local frameWidth = 24
+                            if iffy.tilesets[sheetName] then
+                                frameWidth = iffy.tilesets[sheetName][1]
+                            end
 
-                        -- Adjust position for horizontal flipping to keep sprite centered
-                        local drawX = x
-                        if spriteRenderer.scaleX < 0 then
-                            drawX = x + frameWidth
-                        end
+                            -- Adjust position for horizontal flipping to keep sprite centered
+                            local drawX = x
+                            if spriteRenderer.scaleX < 0 then
+                                drawX = x + frameWidth
+                            end
 
-                        love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-                        hasDrawnSomething = true
+                            love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                            hasDrawnSomething = true
+                        end
                     end
                 end
 
@@ -175,15 +177,18 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
     -- Get the actual texture dimensions from the image being drawn
     local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
 
-    if animator and animator.sheet then
+    if animator and animator.layers and #animator.layers > 0 then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
 
-        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-            -- Get the actual image dimensions
-            local image = iffy.images[animator.sheet]
-            if image then
-                textureWidth, textureHeight = image:getDimensions()
+        for _, sheetName in ipairs(animator.layers) do
+            if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                -- Get the actual image dimensions
+                local image = iffy.images[sheetName]
+                if image then
+                    textureWidth, textureHeight = image:getDimensions()
+                    break -- Use dimensions from first valid layer
+                end
             end
         end
     elseif spriteRenderer.sprite then
@@ -202,29 +207,31 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
     local isBullet = entity:hasTag("Bullet")
     local hasDrawnSomething = false
 
-    -- First, draw animation if it exists
-    if animator and animator.sheet then
+    -- Draw all animation layers
+    if animator and animator.layers then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
 
-        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-            if entity:hasTag("Tree") then
-                print("[Foliage] anim draw id=", entity.id)
-            end
-            -- Get the actual sprite frame dimensions from Iffy tileset
-            local frameWidth = 24
-            if iffy.tilesets[animator.sheet] then
-                frameWidth = iffy.tilesets[animator.sheet][1]
-            end
+        for _, sheetName in ipairs(animator.layers) do
+            if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                if entity:hasTag("Tree") then
+                    print("[Foliage] anim draw id=", entity.id)
+                end
+                -- Get the actual sprite frame dimensions from Iffy tileset
+                local frameWidth = 24
+                if iffy.tilesets[sheetName] then
+                    frameWidth = iffy.tilesets[sheetName][1]
+                end
 
-            -- Adjust position for horizontal flipping to keep sprite centered
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + frameWidth
-            end
+                -- Adjust position for horizontal flipping to keep sprite centered
+                local drawX = x
+                if spriteRenderer.scaleX < 0 then
+                    drawX = x + frameWidth
+                end
 
-            love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-            hasDrawnSomething = true
+                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                hasDrawnSomething = true
+            end
         end
     end
 
@@ -307,26 +314,28 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
     local isBullet = entity:hasTag("Bullet")
     local hasDrawnSomething = false
 
-    -- First, draw animation if it exists
-    if animator and animator.sheet then
+    -- Draw all animation layers
+    if animator and animator.layers then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
 
-        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-            -- Get the actual sprite frame dimensions from Iffy tileset
-            local frameWidth = 24
-            if iffy.tilesets[animator.sheet] then
-                frameWidth = iffy.tilesets[animator.sheet][1]
-            end
+        for _, sheetName in ipairs(animator.layers) do
+            if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                -- Get the actual sprite frame dimensions from Iffy tileset
+                local frameWidth = 24
+                if iffy.tilesets[sheetName] then
+                    frameWidth = iffy.tilesets[sheetName][1]
+                end
 
-            -- Adjust position for horizontal flipping to keep sprite centered
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + frameWidth
-            end
+                -- Adjust position for horizontal flipping to keep sprite centered
+                local drawX = x
+                if spriteRenderer.scaleX < 0 then
+                    drawX = x + frameWidth
+                end
 
-            love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
-            hasDrawnSomething = true
+                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                hasDrawnSomething = true
+            end
         end
     end
 
@@ -396,15 +405,18 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
     -- Get the actual texture dimensions from the image being drawn
     local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
 
-    if animator and animator.sheet then
+    if animator and animator.layers and #animator.layers > 0 then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
 
-        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
-            -- Get the actual image dimensions
-            local image = iffy.images[animator.sheet]
-            if image then
-                textureWidth, textureHeight = image:getDimensions()
+        for _, sheetName in ipairs(animator.layers) do
+            if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                -- Get the actual image dimensions
+                local image = iffy.images[sheetName]
+                if image then
+                    textureWidth, textureHeight = image:getDimensions()
+                    break -- Use dimensions from first valid layer
+                end
             end
         end
     elseif spriteRenderer.sprite then
@@ -424,15 +436,16 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
     local hasDrawnSomething = false
 
     -- Draw animation if it exists, otherwise draw static sprite (not both!)
-    if animator and animator.sheet then
+    if animator and animator.layers then
         local iffy = require("lib.iffy")
         local current = animator:getCurrentFrame()
 
-        if iffy.spritesheets[animator.sheet] and iffy.spritesheets[animator.sheet][current] then
+        for _, sheetName in ipairs(animator.layers) do
+            if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = 24
-            if iffy.tilesets[animator.sheet] then
-                frameWidth = iffy.tilesets[animator.sheet][1]
+            if iffy.tilesets[sheetName] then
+                frameWidth = iffy.tilesets[sheetName][1]
             end
 
             -- Adjust position for horizontal flipping to keep sprite centered
@@ -441,8 +454,9 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
                 drawX = x + frameWidth
             end
 
-            love.graphics.draw(iffy.images[animator.sheet], iffy.spritesheets[animator.sheet][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
             hasDrawnSomething = true
+            end
         end
     elseif spriteRenderer.sprite then
         local iffy = require("lib.iffy")
