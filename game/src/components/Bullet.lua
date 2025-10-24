@@ -11,6 +11,9 @@ local Component = require("src.core.Component")
 ---@field knockback number Knockback force applied on hit
 ---@field piercing boolean Whether the bullet can hit multiple targets
 ---@field hitEntities table<number, boolean> Set of entity IDs already hit (for piercing bullets)
+---@field scaleAnimation boolean Whether the bullet is currently scaling up
+---@field scaleAnimationDuration number Duration of the scale animation in seconds
+---@field scaleAnimationTime number Current time in the scale animation
 local Bullet = {}
 Bullet.__index = Bullet
 
@@ -45,6 +48,9 @@ function Bullet.new(velocityX, velocityY, speed, damage, lifetime, owner, knockb
     self.knockback = knockback or 0
     self.piercing = piercing or false
     self.hitEntities = {}
+    self.scaleAnimation = true
+    self.scaleAnimationDuration = 0.25 -- Quick 0.1 second scale animation
+    self.scaleAnimationTime = 0
 
     return self
 end
@@ -59,6 +65,14 @@ end
 ---@param dt number Delta time
 function Bullet:update(dt)
     self.lifetime = self.lifetime + dt
+
+    -- Update scale animation
+    if self.scaleAnimation then
+        self.scaleAnimationTime = self.scaleAnimationTime + dt
+        if self.scaleAnimationTime >= self.scaleAnimationDuration then
+            self.scaleAnimation = false
+        end
+    end
 end
 
 ---Check if this bullet has already hit a specific entity
@@ -78,6 +92,28 @@ end
 ---@return number Angle in radians
 function Bullet:getAngle()
     return math.atan2(self.velocityY, self.velocityX)
+end
+
+---Get the current scale based on animation
+---@return number Current scale factor (0.1 to 1.0)
+function Bullet:getCurrentScale()
+    if not self.scaleAnimation then
+        return 1.0
+    end
+
+    -- Use smooth easing function (ease-out)
+    local progress = self.scaleAnimationTime / self.scaleAnimationDuration
+    if progress >= 1.0 then
+        return 1.0
+    end
+
+    -- Start at 0.1 scale and ease to 1.0
+    local startScale = 0.1
+    local endScale = 1.0
+
+    -- Ease-out cubic function for smooth scaling
+    local easedProgress = 1 - math.pow(1 - progress, 3)
+    return startScale + (endScale - startScale) * easedProgress
 end
 
 return Bullet

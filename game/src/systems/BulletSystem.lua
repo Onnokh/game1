@@ -26,6 +26,9 @@ function BulletSystem:update(dt)
                 -- Move bullet
                 self:moveBullet(position, bullet, physicsCollision, dt)
 
+                -- Update bullet scale animation
+                self:updateBulletScale(entity, bullet)
+
                 -- Check for collisions with entities
                 self:checkCollisions(entity, position, bullet, physicsCollision)
             end
@@ -47,6 +50,17 @@ function BulletSystem:moveBullet(position, bullet, physicsCollision, dt)
         -- Read back the position from the physics body to keep ECS position in sync
         local x, y = physicsCollision:getPosition()
         position:setPosition(x, y)
+    end
+end
+
+---Update bullet scale animation
+---@param entity Entity The bullet entity
+---@param bullet Bullet The bullet component
+function BulletSystem:updateBulletScale(entity, bullet)
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    if spriteRenderer then
+        local currentScale = bullet:getCurrentScale()
+        spriteRenderer:setScale(currentScale, currentScale)
     end
 end
 

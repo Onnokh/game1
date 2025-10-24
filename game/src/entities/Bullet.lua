@@ -51,6 +51,8 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     local spriteRenderer = SpriteRenderer.new("bullet", 8, 8)
     -- Rotate sprite to match bullet direction
     spriteRenderer:setRotation(bulletComponent:getAngle())
+    -- Start with small scale for animation
+    spriteRenderer:setScale(0.3, 0.3)
 
     -- Set glow color and sprite color from weapon if available
     if owner then
