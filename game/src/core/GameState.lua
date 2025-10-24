@@ -109,6 +109,11 @@ function GameState.resetRunState()
   }
 
   -- Camera will be positioned when the player entity spawns from the map
+
+  -- Reset game time for fresh start
+  if GameState.gameTimeManager then
+    GameState.gameTimeManager.reset()
+  end
 end
 
 ---Update mouse position in world coordinates
