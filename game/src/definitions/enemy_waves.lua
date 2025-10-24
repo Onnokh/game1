@@ -1,6 +1,6 @@
 return {
   {
-      time = 10, -- start after 10 seconds
+      time = 100, -- start after 10 seconds
       duration = 30,
       enemies = {
           { type = "Warhog", count = 3 },

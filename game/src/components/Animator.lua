@@ -5,6 +5,10 @@
 ---@field loop boolean Whether animation loops
 ---@field time number Accumulated time
 ---@field playing boolean Is animation playing
+---@field layerRotations table Per-layer rotation values (key: layer name, value: rotation in radians)
+---@field layerOffsets table Per-layer position offsets (key: layer name, value: {x, y})
+---@field layerPivots table Per-layer rotation pivot points (key: layer name, value: {x, y})
+---@field layerScales table Per-layer scale values (key: layer name, value: {x, y})
 local Animator = {}
 Animator.__index = Animator
 
@@ -21,6 +25,10 @@ function Animator.new(config)
     self.loop = config.loop ~= false
     self.time = 0
     self.playing = true
+    self.layerRotations = {}
+    self.layerOffsets = {}
+    self.layerPivots = {}
+    self.layerScales = {}
 
     return self
 end
@@ -63,6 +71,65 @@ function Animator:setAnimation(config)
     self.playing = true
 end
 
+---Set rotation for a specific layer
+---@param layerName string The name of the layer
+---@param rotation number Rotation in radians
+function Animator:setLayerRotation(layerName, rotation)
+    self.layerRotations[layerName] = rotation
+end
+
+---Get rotation for a specific layer
+---@param layerName string The name of the layer
+---@return number Rotation in radians (0 if not set)
+function Animator:getLayerRotation(layerName)
+    return self.layerRotations[layerName] or 0
+end
+
+---Set pivot offset for a specific layer
+---@param layerName string The name of the layer
+---@param x number X offset
+---@param y number Y offset
+function Animator:setLayerOffset(layerName, x, y)
+    self.layerOffsets[layerName] = {x = x, y = y}
+end
+
+---Get pivot offset for a specific layer
+---@param layerName string The name of the layer
+---@return table Offset table {x, y} (returns {x=0, y=0} if not set)
+function Animator:getLayerOffset(layerName)
+    return self.layerOffsets[layerName] or {x = 0, y = 0}
+end
+
+---Set rotation pivot point for a specific layer
+---@param layerName string The name of the layer
+---@param x number X pivot point
+---@param y number Y pivot point
+function Animator:setLayerPivot(layerName, x, y)
+    self.layerPivots[layerName] = {x = x, y = y}
+end
+
+---Get rotation pivot point for a specific layer
+---@param layerName string The name of the layer
+---@return table Pivot table {x, y} (returns {x=0, y=0} if not set)
+function Animator:getLayerPivot(layerName)
+    return self.layerPivots[layerName] or {x = 0, y = 0}
+end
+
+---Set scale for a specific layer
+---@param layerName string The name of the layer
+---@param scaleX number X scale factor
+---@param scaleY number|nil Y scale factor, defaults to scaleX
+function Animator:setLayerScale(layerName, scaleX, scaleY)
+    self.layerScales[layerName] = {x = scaleX, y = scaleY or scaleX}
+end
+
+---Get scale for a specific layer
+---@param layerName string The name of the layer
+---@return table Scale table {x, y} (returns {x=1, y=1} if not set)
+function Animator:getLayerScale(layerName)
+    return self.layerScales[layerName] or {x = 1, y = 1}
+end
+
 ---Serialize the Animator component for saving
 ---@return table Serialized animator data
 function Animator:serialize()
@@ -72,13 +139,17 @@ function Animator:serialize()
         fps = self.fps,
         loop = self.loop,
         time = self.time,
-        playing = self.playing
+        playing = self.playing,
+        layerRotations = self.layerRotations,
+        layerOffsets = self.layerOffsets,
+        layerPivots = self.layerPivots,
+        layerScales = self.layerScales
     }
 end
 
 ---Deserialize Animator component from saved data
 ---@param data table Serialized animator data
----@return Animator Recreated Animator component
+---@return Animator|Component Recreated Animator component
 function Animator.deserialize(data)
     local animator = Animator.new({
         layers = data.layers,
@@ -88,6 +159,10 @@ function Animator.deserialize(data)
     })
     animator.time = data.time or 0
     animator.playing = data.playing ~= false
+    animator.layerRotations = data.layerRotations or {}
+    animator.layerOffsets = data.layerOffsets or {}
+    animator.layerPivots = data.layerPivots or {}
+    animator.layerScales = data.layerScales or {}
     return animator
 end
 

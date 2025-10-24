@@ -3,6 +3,7 @@ local EntityUtils = require("src.utils.entities")
 local GameState = require("src.core.GameState")
 local ShaderManager = require("src.core.managers.ShaderManager")
 local GameController = require("src.core.GameController")
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
 
 ---@class AimLineRenderSystem : System
 ---Renders an aiming line for ranged weapons from player to mouse cursor
@@ -88,8 +89,17 @@ function AimLineRenderSystem:draw()
         return
     end
 
-    -- Get player's visual center
-    local playerX, playerY = EntityUtils.getEntityVisualCenter(player, position)
+    -- Get player's sprite renderer and animator to get gun layer offset
+    local spriteRenderer = player:getComponent("SpriteRenderer")
+    local animator = player:getComponent("Animator")
+    if not spriteRenderer or not animator then
+        return
+    end
+
+    -- Get the gun layer offset (this already accounts for direction flipping)
+    local gunOffset = animator:getLayerOffset("gun")
+    local playerX = position.x + gunOffset.x
+    local playerY = position.y + gunOffset.y + 3
 
     -- Get current real-time mouse position to avoid frame lag
     local screenMouseX, screenMouseY = love.mouse.getPosition()
@@ -99,6 +109,14 @@ function AimLineRenderSystem:draw()
     local dx = mouseX - playerX
     local dy = mouseY - playerY
     local distanceToMouse = math.sqrt(dx * dx + dy * dy)
+
+    -- Apply start offset in the aiming direction
+    if distanceToMouse > 0 then
+        local normalizedDx = dx / distanceToMouse
+        local normalizedDy = dy / distanceToMouse
+        playerX = playerX + normalizedDx * PlayerConfig.START_OFFSET
+        playerY = playerY + normalizedDy * PlayerConfig.START_OFFSET
+    end
 
     -- Limit aim line to maximum 150 pixels
     local maxLength = 100

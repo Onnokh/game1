@@ -68,7 +68,8 @@ PlayerConfig.COLLIDER_DAMPING = 0
 -- Sprite settings
 PlayerConfig.SPRITE_WIDTH = 32
 PlayerConfig.SPRITE_HEIGHT = 32
-
+-- Shooting position offset (relative to player position)
+PlayerConfig.START_OFFSET = 20  -- Additional offset forward from gun position to account for gun sprite width
 -- Walking particle effects
 PlayerConfig.WALKING_PARTICLES = {
     enabled = true,

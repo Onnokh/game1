@@ -3,6 +3,7 @@ local GameState = require("src.core.GameState")
 local EntityUtils = require("src.utils.entities")
 local Knockback = require("src.components.Knockback")
 local luven = require("lib.luven.luven")
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
 
 ---@class AttackSystem : System
 ---Handles attacks for entities with Attack component
@@ -316,10 +317,22 @@ function AttackSystem:spawnBullet(entity)
       _G.SoundManager.play("gunshot", .75, 1)
     end
 
-    -- Get spawn position (center of attacker)
-    local spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
+    -- Get spawn position
+    local spawnX, spawnY
     if EntityUtils.isPlayer(entity) then
-        spawnY = spawnY - 5
+        -- Use gun layer offset for player (this already accounts for direction flipping)
+        local animator = entity:getComponent("Animator")
+        if animator then
+            local gunOffset = animator:getLayerOffset("gun")
+            spawnX = position.x + gunOffset.x
+            spawnY = position.y + gunOffset.y + 3
+        else
+            -- Fallback to visual center if no animator
+            spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
+        end
+    else
+        -- Use visual center for non-player entities
+        spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
     end
 
     -- Get bullet direction (normalized attack direction)
@@ -332,10 +345,11 @@ function AttackSystem:spawnBullet(entity)
         directionX = directionX / directionLength
         directionY = directionY / directionLength
 
-        -- Offset spawn position slightly in front of attacker to avoid self-collision
+        -- Apply start offset to account for gun sprite width, then add spawn offset to avoid self-collision
+        local startOffset = PlayerConfig.START_OFFSET or 15
         local spawnOffset = 8
-        spawnX = spawnX + directionX * spawnOffset
-        spawnY = spawnY + directionY * spawnOffset
+        spawnX = spawnX + directionX * (startOffset / 2 + spawnOffset)
+        spawnY = spawnY + directionY * (startOffset / 2  + spawnOffset)
 
         -- Create bullet entity
         local BulletEntity = require("src.entities.Bullet")

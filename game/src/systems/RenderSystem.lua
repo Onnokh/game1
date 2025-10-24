@@ -82,13 +82,33 @@ function RenderSystem:draw()
                                 frameWidth = iffy.tilesets[sheetName][1]
                             end
 
-                            -- Adjust position for horizontal flipping to keep sprite centered
-                            local drawX = x
-                            if spriteRenderer.scaleX < 0 then
-                                drawX = x + frameWidth
-                            end
+                            -- Check if this layer has a specific rotation
+                            local layerRotation = animator:getLayerRotation(sheetName)
+                            local layerOffset = animator:getLayerOffset(sheetName)
+                            local layerPivot = animator:getLayerPivot(sheetName)
 
-                            love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                            if layerRotation ~= 0 then
+                                -- Draw with layer-specific rotation and pivot offset
+                                local ox = layerPivot.x
+                                local oy = layerPivot.y
+                                local drawX = x + layerOffset.x
+                                local drawY = y + layerOffset.y
+
+                                -- Use layer-specific scale if available, otherwise use sprite scale
+                                local layerScale = animator:getLayerScale(sheetName)
+                                local scaleX = layerScale.x
+                                local scaleY = layerScale.y
+
+                                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
+                            else
+                                -- Use normal drawing logic
+                                local drawX = x
+                                if spriteRenderer.scaleX < 0 then
+                                    drawX = x + frameWidth
+                                end
+
+                                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                            end
                             hasDrawnSomething = true
                         end
                     end
@@ -136,6 +156,19 @@ function RenderSystem:draw()
                     self:drawWithFlashShader(entity, x, y, spriteRenderer, animator, flashEffect)
                 end
             end
+
+            -- -- Debug: Draw red square at gun layer offset point for player entities
+            -- if entity:hasTag("Player") and animator then
+            --     local layerOffset = animator:getLayerOffset("gun")
+            --     if layerOffset.x ~= 0 or layerOffset.y ~= 0 then
+            --         local debugX = x + layerOffset.x
+            --         local debugY = y + layerOffset.y
+
+            --         love.graphics.setColor(1, 0, 0, 1) -- Red color
+            --         love.graphics.rectangle("fill", debugX - 2, debugY - 2, 4, 4) -- 4x4 red square
+            --         love.graphics.setColor(1, 1, 1, 1) -- Reset color
+            --     end
+            -- end
 
             -- Reset color
             love.graphics.setColor(1, 1, 1, 1)
@@ -223,13 +256,33 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
                     frameWidth = iffy.tilesets[sheetName][1]
                 end
 
-                -- Adjust position for horizontal flipping to keep sprite centered
-                local drawX = x
-                if spriteRenderer.scaleX < 0 then
-                    drawX = x + frameWidth
-                end
+                -- Check if this layer has a specific rotation
+                local layerRotation = animator:getLayerRotation(sheetName)
+                local layerOffset = animator:getLayerOffset(sheetName)
+                local layerPivot = animator:getLayerPivot(sheetName)
 
-                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                if layerRotation ~= 0 then
+                    -- Draw with layer-specific rotation and pivot offset
+                    local ox = layerPivot.x
+                    local oy = layerPivot.y
+                    local drawX = x + layerOffset.x
+                    local drawY = y + layerOffset.y
+
+                    -- Use layer-specific scale if available, otherwise use sprite scale
+                    local layerScale = animator:getLayerScale(sheetName)
+                    local scaleX = layerScale.x
+                    local scaleY = layerScale.y
+
+                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
+                else
+                    -- Use normal drawing logic
+                    local drawX = x
+                    if spriteRenderer.scaleX < 0 then
+                        drawX = x + frameWidth
+                    end
+
+                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                end
                 hasDrawnSomething = true
             end
         end
@@ -327,13 +380,33 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
                     frameWidth = iffy.tilesets[sheetName][1]
                 end
 
-                -- Adjust position for horizontal flipping to keep sprite centered
-                local drawX = x
-                if spriteRenderer.scaleX < 0 then
-                    drawX = x + frameWidth
-                end
+                -- Check if this layer has a specific rotation
+                local layerRotation = animator:getLayerRotation(sheetName)
+                local layerOffset = animator:getLayerOffset(sheetName)
+                local layerPivot = animator:getLayerPivot(sheetName)
 
-                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                if layerRotation ~= 0 then
+                    -- Draw with layer-specific rotation and pivot offset
+                    local ox = layerPivot.x
+                    local oy = layerPivot.y
+                    local drawX = x + layerOffset.x
+                    local drawY = y + layerOffset.y
+
+                    -- Use layer-specific scale if available, otherwise use sprite scale
+                    local layerScale = animator:getLayerScale(sheetName)
+                    local scaleX = layerScale.x
+                    local scaleY = layerScale.y
+
+                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
+                else
+                    -- Use normal drawing logic
+                    local drawX = x
+                    if spriteRenderer.scaleX < 0 then
+                        drawX = x + frameWidth
+                    end
+
+                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                end
                 hasDrawnSomething = true
             end
         end
@@ -448,13 +521,28 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
                 frameWidth = iffy.tilesets[sheetName][1]
             end
 
-            -- Adjust position for horizontal flipping to keep sprite centered
-            local drawX = x
-            if spriteRenderer.scaleX < 0 then
-                drawX = x + frameWidth
-            end
+            -- Check if this layer has a specific rotation
+            local layerRotation = animator:getLayerRotation(sheetName)
+            local layerOffset = animator:getLayerOffset(sheetName)
+            local layerPivot = animator:getLayerPivot(sheetName)
 
-            love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            if layerRotation ~= 0 then
+                -- Draw with layer-specific rotation and pivot offset
+                local ox = layerPivot.x
+                local oy = layerPivot.y
+                local drawX = x + layerOffset.x
+                local drawY = y + layerOffset.y
+
+                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
+            else
+                -- Use normal drawing logic
+                local drawX = x
+                if spriteRenderer.scaleX < 0 then
+                    drawX = x + frameWidth
+                end
+
+                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+            end
             hasDrawnSomething = true
             end
         end

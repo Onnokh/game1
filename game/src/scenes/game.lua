@@ -20,6 +20,7 @@ local GroundShadowSystem = require("src.systems.GroundShadowSystem")
 local CollisionSystem = require("src.systems.CollisionSystem")
 local TriggerZoneSystem = require("src.systems.TriggerZoneSystem")
 local MouseFacingSystem = require("src.systems.MouseFacingSystem")
+local GunRotationSystem = require("src.systems.GunRotationSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
 local BulletSystem = require("src.systems.BulletSystem")
@@ -256,6 +257,7 @@ function GameScene.update(dt, gameState)
   -- Add mouse facing system once player exists (needs gameState)
   if playerEntity and not mouseFacingSystemAdded then
     ecsWorld:addSystem(MouseFacingSystem.new(gameState))
+    ecsWorld:addSystem(GunRotationSystem.new(gameState))
     mouseFacingSystemAdded = true
   end
 

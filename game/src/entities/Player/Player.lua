@@ -129,6 +129,11 @@ function Player.create(x, y, world, physicsWorld)
     -- Create animator component with idle animation
     local animator = Animator.new(PlayerConfig.IDLE_ANIMATION)
 
+    -- Set the rotation point for the gun layer (pivot point)
+    -- Adjust these values to set where the gun should rotate around
+    -- For example: (12, 8) would be 12 pixels right and 8 pixels down from the gun sprite's center
+    animator:setLayerOffset("gun", 10, 16)
+
     -- Create inventory component
     local inventory = Inventory.new()
 
