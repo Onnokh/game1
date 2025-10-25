@@ -62,6 +62,11 @@ function MonsterFactory.create(options)
 
     local spriteRenderer = SpriteRenderer.new(nil, config.SPRITE_WIDTH, config.SPRITE_HEIGHT)
 
+    -- Apply outline if configured
+    if config.OUTLINE_COLOR then
+        spriteRenderer:setOutline(config.OUTLINE_COLOR)
+    end
+
     -- PathfindingCollision component
     local colliderWidth, colliderHeight = config.COLLIDER_WIDTH, config.COLLIDER_HEIGHT
     local colliderShape = config.COLLIDER_SHAPE

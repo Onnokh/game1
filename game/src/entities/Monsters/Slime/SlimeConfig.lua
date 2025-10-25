@@ -73,5 +73,8 @@ SlimeConfig.PATHFINDING_OFFSET_Y = SlimeConfig.SPRITE_HEIGHT - SlimeConfig.COLLI
 SlimeConfig.HEALTH = 8
 SlimeConfig.MAX_HEALTH = 8
 
+-- Outline settings
+SlimeConfig.OUTLINE_COLOR = {r = 0, g = 0, b = 0, a = .5} -- Light gray outline
+
 return SlimeConfig
 

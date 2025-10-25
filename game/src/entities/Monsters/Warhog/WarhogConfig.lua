@@ -69,5 +69,8 @@ WarhogConfig.PATHFINDING_OFFSET_Y = WarhogConfig.SPRITE_HEIGHT /2 - WarhogConfig
 WarhogConfig.HEALTH = 6
 WarhogConfig.MAX_HEALTH = 6
 
+-- Outline settings
+WarhogConfig.OUTLINE_COLOR = {r = 0, g = 0, b = 0, a = .5} -- Light gray outline
+
 return WarhogConfig
 

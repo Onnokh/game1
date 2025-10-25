@@ -143,8 +143,14 @@ function AimLineRenderSystem:draw()
     local closestFraction = 1.0
 
     if world.physicsWorld then
-        -- Raycast from player to limited end position
-        world.physicsWorld:rayCast(playerX, playerY, endX, endY, function(fixture, x, y, xn, yn, fraction)
+        -- Check if start and end points are different to avoid Box2D assertion error
+        local rayDx = endX - playerX
+        local rayDy = endY - playerY
+        local rayDistance = math.sqrt(rayDx * rayDx + rayDy * rayDy)
+
+        if rayDistance > 0.001 then -- Small threshold to avoid zero-length rays
+            -- Raycast from player to limited end position
+            world.physicsWorld:rayCast(playerX, playerY, endX, endY, function(fixture, x, y, xn, yn, fraction)
             -- Check if this is a static object (walls, obstacles)
             local body = fixture:getBody()
             if body:getType() == "static" then
@@ -161,6 +167,7 @@ function AimLineRenderSystem:draw()
             -- Return 1 to continue the raycast (ignore dynamic objects like enemies)
             return 1
         end)
+        end
     end
 
     -- Convert world coordinates to screen coordinates

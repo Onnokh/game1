@@ -66,4 +66,7 @@ SkeletonConfig.PATHFINDING_OFFSET_Y = SkeletonConfig.SPRITE_HEIGHT - SkeletonCon
 SkeletonConfig.HEALTH = 10
 SkeletonConfig.MAX_HEALTH = 10
 
+-- Outline settings
+SkeletonConfig.OUTLINE_COLOR = {r = 0, g = 0, b = 0, a = .5} -- Light gray outline
+
 return SkeletonConfig

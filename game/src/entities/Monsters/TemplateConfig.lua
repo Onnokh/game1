@@ -69,6 +69,8 @@ TemplateConfig.DRAW_HEIGHT = 22           -- Height for physics interaction
 TemplateConfig.HEALTH = 50                -- Starting health
 TemplateConfig.MAX_HEALTH = 50            -- Maximum health
 
+-- Outline settings (optional)
+-- TemplateConfig.OUTLINE_COLOR = {r = 1.0, g = 1.0, b = 1.0, a = 0.8} -- White outline example
 
 return TemplateConfig
 
