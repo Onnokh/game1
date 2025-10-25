@@ -182,6 +182,9 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
         return nil
     end
 
+    -- 5% chance to spawn as elite
+    local isElite = math.random() <= 0.05
+
     local creator = nil
 
     if enemyType == "Slime" then
@@ -193,7 +196,7 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
     end
 
     if creator then
-        return creator(x, y, self.ecsWorld, self.physicsWorld)
+        return creator(x, y, self.ecsWorld, self.physicsWorld, isElite)
     else
         print(string.format("[EnemySpawnerSystem] WARNING: Unknown enemy type '%s'", enemyType))
         return nil

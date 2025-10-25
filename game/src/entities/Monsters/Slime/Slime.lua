@@ -82,8 +82,9 @@ end
 ---@param y number Y position
 ---@param world World The ECS world to add the slime to
 ---@param physicsWorld table|nil The physics world for collision
+---@param isElite boolean|nil Whether this slime should be an elite variant
 ---@return Entity The created slime entity
-function Slime.create(x, y, world, physicsWorld)
+function Slime.create(x, y, world, physicsWorld, isElite)
     -- Create shared jump controller for this slime instance
     local jumpController = SlimeJumpController.new()
 
@@ -94,6 +95,7 @@ function Slime.create(x, y, world, physicsWorld)
         physicsWorld = physicsWorld,
         config = SlimeConfig,
         tag = "Slime",
+        isElite = isElite or false,
         physicsOffsetX = SlimeConfig.SPRITE_WIDTH / 2 - SlimeConfig.DRAW_WIDTH / 2,
         physicsOffsetY = SlimeConfig.SPRITE_HEIGHT / 2 - SlimeConfig.DRAW_HEIGHT / 2,
         -- Use custom states for ranged behavior and jump controller

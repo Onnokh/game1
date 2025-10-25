@@ -50,10 +50,19 @@ function MonsterFactory.create(options)
     -- Optional custom state selector (if you want to override state priority logic)
     local customStateSelector = options.stateSelector
 
+    -- Elite variant flag
+    local isElite = options.isElite or false
+
     -- Create the monster entity
     local monster = Entity.new()
     monster:addTag(tag) -- Specific tag (e.g., "Skeleton", "Warhog")
     monster:addTag("Monster") -- Generic tag for all monsters
+
+    -- Add Elite tag if this is an elite variant
+    if isElite then
+        monster:addTag("Elite")
+    end
+
     monster.target = nil -- Current target (player or reactor)
 
     -- Create components
@@ -62,13 +71,22 @@ function MonsterFactory.create(options)
 
     local spriteRenderer = SpriteRenderer.new(nil, config.SPRITE_WIDTH, config.SPRITE_HEIGHT)
 
-    -- Apply outline if configured
-    if config.OUTLINE_COLOR then
+    -- Apply scaling for elite variants
+    if isElite then
+        spriteRenderer.scaleX = 1.2
+        spriteRenderer.scaleY = 1.2
+    end
+
+    -- Apply outline - white for elites, config color for normal monsters
+    if isElite then
+        spriteRenderer:setOutline({r = 1, g = 1, b = 1, a = 0.5})
+    elseif config.OUTLINE_COLOR then
         spriteRenderer:setOutline(config.OUTLINE_COLOR)
     end
 
     -- PathfindingCollision component
-    local colliderWidth, colliderHeight = config.COLLIDER_WIDTH, config.COLLIDER_HEIGHT
+    local colliderScale = isElite and 1.2 or 1
+    local colliderWidth, colliderHeight = config.COLLIDER_WIDTH * colliderScale, config.COLLIDER_HEIGHT * colliderScale
     local colliderShape = config.COLLIDER_SHAPE
     local pfOffsetX = pathfindingOffsetX or ((spriteRenderer.width - colliderWidth) / 2)
     local pfOffsetY = pathfindingOffsetY or (spriteRenderer.height - colliderHeight - 8)
@@ -88,8 +106,8 @@ function MonsterFactory.create(options)
     local phOffsetX = physicsOffsetX or (spriteRenderer.width / 2 - config.DRAW_WIDTH / 2)
     local phOffsetY = physicsOffsetY or (spriteRenderer.height / 2 - config.DRAW_HEIGHT / 2)
     local physicsCollision = PhysicsCollision.new(
-        config.DRAW_WIDTH,
-        config.DRAW_HEIGHT,
+        config.DRAW_WIDTH * colliderScale,
+        config.DRAW_HEIGHT * colliderScale,
         "dynamic",
         phOffsetX,
         phOffsetY,
@@ -110,10 +128,14 @@ function MonsterFactory.create(options)
 
     local animator = Animator.new(config.IDLE_ANIMATION)
 
-    -- Create health component
-    local health = Health.new(config.MAX_HEALTH, config.HEALTH)
+    -- Create health component with elite scaling
+    local healthMultiplier = isElite and 1.2 or 1
+    local health = Health.new(config.MAX_HEALTH * healthMultiplier, config.HEALTH * healthMultiplier)
+
+    -- Create attack component with elite scaling
+    local damageMultiplier = isElite and 1.2 or 1
     local attack = Attack.new(
-        config.ATTACK_DAMAGE,
+        config.ATTACK_DAMAGE * damageMultiplier,
         (config.ATTACK_RANGE_TILES or 1.0) * GameConstants.TILE_SIZE,
         config.ATTACK_COOLDOWN,
         "melee",
