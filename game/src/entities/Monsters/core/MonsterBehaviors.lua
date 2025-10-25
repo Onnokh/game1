@@ -58,9 +58,43 @@ function MonsterBehaviors.selectState(entity, dt, config)
 
         -- Priority: attacking > chasing
         if dist <= attackRange then
-            return "attacking"
+            -- If currently attacking and it's a frame-based attack, stay in attacking until animation completes
+            local animator = entity:getComponent("Animator")
+            if currentState == "attacking" and config.ATTACK_ANIMATION and config.ATTACK_ANIMATION.hitFrame and animator then
+                if animator.playing then
+                    return "attacking"  -- Stay in attacking until animation completes
+                else
+                    -- Animation completed, check if we can start a new attack
+                    local attack = entity:getComponent("Attack")
+                    if attack and attack:isReady(love.timer.getTime()) then
+                        return "attacking"  -- Start new attack if cooldown is ready
+                    else
+                        return "chasing"   -- Wait for cooldown in chasing state
+                    end
+                end
+            else
+                -- Not currently attacking or not frame-based attack
+                local attack = entity:getComponent("Attack")
+                if attack and attack:isReady(love.timer.getTime()) then
+                    return "attacking"
+                else
+                    return "chasing"  -- Wait for cooldown in chasing state
+                end
+            end
         else
-            return "chasing"
+            -- Target is out of range - check if we're mid-attack
+            local animator = entity:getComponent("Animator")
+            if config.ATTACK_ANIMATION and config.ATTACK_ANIMATION.hitFrame and animator and currentState == "attacking" then
+                -- Frame-based attack: complete the animation even if out of range
+                if animator.playing then
+                    return "attacking"  -- Stay in attacking until animation completes
+                else
+                    return "chasing"  -- Animation completed, can transition to chasing
+                end
+            else
+                -- Not in attacking state or not frame-based attack: transition to chasing when out of range
+                return "chasing"
+            end
         end
     end
 

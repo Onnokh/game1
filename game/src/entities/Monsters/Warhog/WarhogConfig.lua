@@ -23,8 +23,9 @@ WarhogConfig.WALKING_ANIMATION = {
 WarhogConfig.ATTACK_ANIMATION = {
     layers = {"Skull Boy"},
     frames = {29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41},
-    fps = 12,
-    loop = true
+    fps = 18,
+    loop = false,
+    hitFrame = 6  -- Frame 35 (index 6 in the 13-frame sequence) is when damage triggers
 }
 
 WarhogConfig.DEATH_ANIMATION = {
@@ -38,9 +39,13 @@ WarhogConfig.DEATH_ANIMATION = {
 WarhogConfig.ATTACK_RANGE_TILES = 1 -- stop within this many tiles of target
 
 -- Attack settings
-WarhogConfig.ATTACK_COOLDOWN = 1 -- seconds
+WarhogConfig.ATTACK_COOLDOWN = 0.722 -- seconds (matches animation duration: 13 frames / 18 fps)
 WarhogConfig.ATTACK_DAMAGE = 2
 WarhogConfig.ATTACK_KNOCKBACK = 4
+
+-- Hit area dimensions for attack collider
+WarhogConfig.ATTACK_HIT_WIDTH = 16   -- Width of the hit area
+WarhogConfig.ATTACK_HIT_HEIGHT = 24   -- Height of the hit area
 
 -- Physics settings
 WarhogConfig.COLLIDER_WIDTH = 12

@@ -44,6 +44,10 @@ TemplateConfig.ATTACK_COOLDOWN = 1.2      -- Seconds between attacks
 TemplateConfig.ATTACK_DAMAGE = 32         -- Damage per attack
 TemplateConfig.ATTACK_KNOCKBACK = 4       -- Knockback force
 
+-- Hit area dimensions for attack collider
+TemplateConfig.ATTACK_HIT_WIDTH = 16      -- Width of the hit area
+TemplateConfig.ATTACK_HIT_HEIGHT = 8      -- Height of the hit area
+
 
 -- Physics settings (pathfinding collider)
 TemplateConfig.COLLIDER_WIDTH = 12        -- Pixels

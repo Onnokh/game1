@@ -40,6 +40,10 @@ SlimeConfig.ATTACK_COOLDOWN = 1.5 -- seconds - slower attack rate
 SlimeConfig.ATTACK_DAMAGE = 6
 SlimeConfig.ATTACK_KNOCKBACK = 3
 
+-- Hit area dimensions for attack collider
+SlimeConfig.ATTACK_HIT_WIDTH = 24   -- Width of the hit area
+SlimeConfig.ATTACK_HIT_HEIGHT = 12  -- Height of the hit area
+
 SlimeConfig.DYING_ANIMATION = {
     layers = {"slime"},
     frames = {17, 18, 19, 20, 21, 22, 23, 24}, -- Row 3, all 8 frames

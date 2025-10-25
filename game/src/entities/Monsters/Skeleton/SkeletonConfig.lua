@@ -33,6 +33,10 @@ SkeletonConfig.ATTACK_COOLDOWN = 3 -- seconds
 SkeletonConfig.ATTACK_DAMAGE = 4
 SkeletonConfig.ATTACK_KNOCKBACK = 4
 
+-- Hit area dimensions for attack collider
+SkeletonConfig.ATTACK_HIT_WIDTH = 16   -- Width of the hit area
+SkeletonConfig.ATTACK_HIT_HEIGHT = 8   -- Height of the hit area
+
 SkeletonConfig.DYING_ANIMATION = {
     layers = {"skeleton"},
     frames = {37, 38, 39, 40}, -- Row 7 (0-indexed as 6), columns 1-4 (6*6+1 = 37)

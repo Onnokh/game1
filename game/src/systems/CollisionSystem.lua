@@ -28,6 +28,15 @@ function CollisionSystem:setWorld(world)
                             otherEntity = otherU.entity
                         end
                         if otherEntity and otherEntity ~= attackComp.attacker and not attackComp.hitEntities[otherEntity.id] then
+                            -- Check for friendly fire prevention
+                            local attackerIsMonster = attackComp.attacker and attackComp.attacker:hasTag("Monster")
+                            local targetIsMonster = otherEntity:hasTag("Monster")
+
+                            -- Prevent monster vs monster damage (friendly fire)
+                            if attackerIsMonster and targetIsMonster then
+                                return -- Skip damage for monster vs monster
+                            end
+
                             -- Enqueue damage
                             local DamageQueue = require("src.DamageQueue")
                             DamageQueue:push(otherEntity, attackComp.damage, attackComp.attacker, "physical", attackComp.knockback, nil)

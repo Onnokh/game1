@@ -76,7 +76,7 @@ function LootSystem:dropLoot(entity, dropTable, position)
                     Coin.create(coinX, coinY, world, physicsWorld, {
                         value = 1,
                         velocityX = velocityX,
-                        velocityY = velocityY
+                        velocityY = velocityY,
                     })
                 end
             end

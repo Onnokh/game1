@@ -14,7 +14,7 @@ function Coin.new(value, attractorRadius)
     local self = setmetatable(Component.new("Coin"), Coin)
 
     self.value = value or 1
-    self.attractorRadius = attractorRadius or 64 -- Default attraction radius of 64 pixels
+    self.attractorRadius = 150 -- Default attraction radius of 64 pixels
     self.spawnTime = love.timer.getTime() -- Record when this coin was created
 
     return self
