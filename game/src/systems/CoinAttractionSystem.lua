@@ -64,7 +64,7 @@ end
 ---@return number Movement speed
 function CoinAttractionSystem:calculateMovementSpeed(distance, maxRadius)
     -- Base movement speed
-    local baseSpeed = 80 -- Base movement speed
+    local baseSpeed = 100 -- Base movement speed
 
     -- Calculate normalized distance (0 at player, 1 at edge of radius)
     local normalizedDistance = distance / maxRadius
@@ -74,7 +74,7 @@ function CoinAttractionSystem:calculateMovementSpeed(distance, maxRadius)
     local easeInFactor = 1 - (1 - (1 - normalizedDistance)) ^ 2
 
     -- Apply ease-in to movement speed (starts slow, gets faster as it approaches)
-    local speed = baseSpeed * (0.3 + 0.7 * easeInFactor)
+    local speed = baseSpeed * (0.3 + 1.5 * easeInFactor)
 
     return speed
 end
