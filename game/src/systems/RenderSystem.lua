@@ -77,10 +77,7 @@ function RenderSystem:draw()
                     for _, sheetName in ipairs(animator.layers) do
                         if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
                             -- Get the actual sprite frame dimensions from Iffy tileset
-                            local frameWidth = 24
-                            if iffy.tilesets[sheetName] then
-                                frameWidth = iffy.tilesets[sheetName][1]
-                            end
+                            local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
 
                             -- Check if this layer has a specific rotation
                             local layerRotation = animator:getLayerRotation(sheetName)
@@ -251,10 +248,7 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
                     print("[Foliage] anim draw id=", entity.id)
                 end
                 -- Get the actual sprite frame dimensions from Iffy tileset
-                local frameWidth = 24
-                if iffy.tilesets[sheetName] then
-                    frameWidth = iffy.tilesets[sheetName][1]
-                end
+                local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
 
                 -- Check if this layer has a specific rotation
                 local layerRotation = animator:getLayerRotation(sheetName)
@@ -375,10 +369,7 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
         for _, sheetName in ipairs(animator.layers) do
             if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
                 -- Get the actual sprite frame dimensions from Iffy tileset
-                local frameWidth = 24
-                if iffy.tilesets[sheetName] then
-                    frameWidth = iffy.tilesets[sheetName][1]
-                end
+                local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
 
                 -- Check if this layer has a specific rotation
                 local layerRotation = animator:getLayerRotation(sheetName)
@@ -516,10 +507,7 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
         for _, sheetName in ipairs(animator.layers) do
             if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
             -- Get the actual sprite frame dimensions from Iffy tileset
-            local frameWidth = 24
-            if iffy.tilesets[sheetName] then
-                frameWidth = iffy.tilesets[sheetName][1]
-            end
+            local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
 
             -- Check if this layer has a specific rotation
             local layerRotation = animator:getLayerRotation(sheetName)
