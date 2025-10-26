@@ -81,6 +81,12 @@ function IffySprites.load()
   -- crystal spritesheet (14x1 grid, 112x112)
   loadSpritesheet("crystal", "resources/objects/crystal.png", 14, 1)
 
+  -- event spritesheet (11x3 grid, 128x128 per frame)
+  loadSpritesheet("event", "resources/objects/event-area.png", 11, 3)
+
+  -- event gem spritesheet (11x3 grid, 32x32 per frame)
+  loadSpritesheet("event-gem", "resources/objects/event-gem.png", 11, 3)
+
 
   -- load unified Skull Boy spritesheet (14x5 grid, 192x192 per frame)
   loadSpritesheet("Skull Boy", "resources/warhog/Skull Boy.png", 14, 5)

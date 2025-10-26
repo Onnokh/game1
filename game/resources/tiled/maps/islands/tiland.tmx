@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="35">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="46">
  <editorsettings>
   <export target="tiland.lua" format="lua"/>
  </editorsettings>
  <tileset firstgid="1" name="Islands" tilewidth="32" tileheight="32" tilecount="546" columns="26">
   <image source="../../../tiland.png" width="832" height="675"/>
  </tileset>
- <tileset firstgid="547" name="Objects" tilewidth="112" tileheight="112" tilecount="5" columns="0">
+ <tileset firstgid="547" name="Objects" tilewidth="128" tileheight="128" tilecount="6" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0" type="Reactor">
    <image source="../../../reactor/reactor-Sheet.png" width="96" height="96"/>
@@ -22,6 +22,9 @@
   </tile>
   <tile id="6" type="Tree">
    <image source="../../../objects/tree.png" width="48" height="96"/>
+  </tile>
+  <tile id="7" x="758" y="128" width="128" height="128">
+   <image source="../../../objects/event-area.png" width="1408" height="384"/>
   </tile>
  </tileset>
  <layer id="5" name="Background" width="40" height="20">
@@ -73,14 +76,23 @@
 </data>
  </layer>
  <objectgroup id="2" name="Objects">
-  <object id="10" name="Spawn" x="308.5" y="381.333">
+  <object id="10" name="Spawn" x="327" y="328.833">
    <point/>
   </object>
-  <object id="28" name="Reactor" gid="547" x="256" y="320" width="96" height="96"/>
-  <object id="29" name="Crystal" gid="548" x="384" y="320" width="112" height="112"/>
   <object id="30" name="Shop" gid="551" x="160" y="320" width="64" height="64"/>
-  <object id="31" name="Tree2" gid="552" x="466" y="98.5" width="64" height="64"/>
+  <object id="31" name="Tree2" gid="552" x="376" y="281.5" width="64" height="64"/>
   <object id="32" name="Tree" gid="553" x="116.5" y="127.5" width="48" height="96"/>
+  <object id="35" name="Event" gid="554" x="384" y="480" width="128" height="128"/>
+  <object id="36" name="Event" gid="554" x="368" y="234" width="128" height="128"/>
+  <object id="37" name="Event" gid="554" x="137" y="180" width="128" height="128"/>
+  <object id="38" name="Event" gid="554" x="125" y="470.5" width="128" height="128"/>
+  <object id="39" name="Tree2" gid="552" x="445" y="301.5" width="64" height="64"/>
+  <object id="40" name="Tree" gid="553" x="353.5" y="220.5" width="48" height="96"/>
+  <object id="41" name="Tree2" gid="552" x="448" y="169" width="64" height="64"/>
+  <object id="42" name="Tree" gid="553" x="249.5" y="454" width="48" height="96"/>
+  <object id="43" name="Tree" gid="553" x="114" y="419" width="48" height="96"/>
+  <object id="44" name="Tree" gid="553" x="356" y="471" width="48" height="96"/>
+  <object id="45" name="Tree" gid="553" x="490" y="426" width="48" height="96"/>
  </objectgroup>
  <objectgroup id="3" name="Area">
   <object id="11" template="../areas/Siege.tx" x="1062" y="107" width="130" height="366.333"/>
