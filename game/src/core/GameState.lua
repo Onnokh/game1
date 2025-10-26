@@ -34,6 +34,7 @@ local GameState = {
     attack = false,
     interact = false,
     switchWeapon = false,
+    autoAim = false,  -- NEW: Auto-aim toggle state
     mouseX = 0,
     mouseY = 0
   },
@@ -109,10 +110,16 @@ function GameState.resetRunState()
   }
 
   -- Camera will be positioned when the player entity spawns from the map
+
+  -- Reset game time for fresh start
+  if GameState.gameTimeManager then
+    GameState.gameTimeManager.reset()
+  end
 end
 
 ---Update mouse position in world coordinates
 function GameState.updateMousePosition()
+  -- Always update mouse position - AutoAimSystem will override it when there's a target
   local mouseX, mouseY = love.mouse.getPosition()
 
   -- Convert screen coordinates to world coordinates using gamera
@@ -166,6 +173,8 @@ function GameState.handleKeyPressed(key)
     GameState.input.interact = true
   elseif key == "q" then
     GameState.input.switchWeapon = true
+  elseif key == "t" then
+    GameState.input.autoAim = not GameState.input.autoAim
   end
 
   -- Pass to current scene

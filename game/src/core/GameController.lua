@@ -92,10 +92,14 @@ function GameController.restartGame()
   GameController.gameOver = false
   GameController.paused = false
 
-
-  -- Reload the game scene cleanly
+  -- Only reset run state if NOT loading from save
+  -- (Let save restoration populate everything)
   local GS = require("src.core.GameState")
-  if GS and GS.resetRunState then GS.resetRunState() end
+  if not isLoadingSave then
+    if GS and GS.resetRunState then GS.resetRunState() end
+  end
+
+  -- Reload the game scene
   if GS and GS.changeScene then
     GS.changeScene("game")
   end

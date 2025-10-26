@@ -90,4 +90,11 @@ function GameTimeManager.getCurrentWave()
     return 0
 end
 
+---Set the elapsed time directly (used for save restoration)
+---@param time number Time in seconds
+function GameTimeManager.setTime(time)
+    GameTimeManager.elapsedTime = time or 0
+    print(string.format("[GameTimeManager] Time set to %s", GameTimeManager.formatTime(GameTimeManager.elapsedTime)))
+end
+
 return GameTimeManager

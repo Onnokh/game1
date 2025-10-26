@@ -20,6 +20,14 @@ local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
 local MonsterBehaviors = require("src.entities.Monsters.core.MonsterBehaviors")
 
+-- Elite variant configuration
+local ELITE_SCALE = 1.2   -- Scale multiplier for elite monsters (affects sprite and colliders)
+local ELITE_HEALTH_MULTIPLIER = 3
+local ELITE_DAMAGE_MULTIPLIER = 2
+local ELITE_KNOCKBACK_MULTIPLIER = 6
+local ELITE_CHANCE = 0.05 -- Probability of spawning an elite variant (5%)
+local ELITE_OUTLINE_COLOR = {r = 1, g = 0.84, b = 0, a = 0.8} -- Gold outline for elite monsters
+
 -- Generic state modules
 local GenericIdle = require("src.entities.Monsters.core.states.GenericIdle")
 local GenericChasing = require("src.entities.Monsters.core.states.GenericChasing")
@@ -50,10 +58,19 @@ function MonsterFactory.create(options)
     -- Optional custom state selector (if you want to override state priority logic)
     local customStateSelector = options.stateSelector
 
+    -- Elite variant flag
+    local isElite = options.isElite or false
+
     -- Create the monster entity
     local monster = Entity.new()
     monster:addTag(tag) -- Specific tag (e.g., "Skeleton", "Warhog")
     monster:addTag("Monster") -- Generic tag for all monsters
+
+    -- Add Elite tag if this is an elite variant
+    if isElite then
+        monster:addTag("Elite")
+    end
+
     monster.target = nil -- Current target (player or reactor)
 
     -- Create components
@@ -62,11 +79,47 @@ function MonsterFactory.create(options)
 
     local spriteRenderer = SpriteRenderer.new(nil, config.SPRITE_WIDTH, config.SPRITE_HEIGHT)
 
+    -- Apply scaling for elite variants
+    if isElite then
+        spriteRenderer.scaleX = ELITE_SCALE
+        spriteRenderer.scaleY = ELITE_SCALE
+        -- Store the elite scale for later use by other systems
+        spriteRenderer.eliteScale = ELITE_SCALE
+
+        -- Center the scaled sprite using offset
+        -- When sprite scales, it grows from top-left, so we need to offset it back
+        local sizeDiffX = (spriteRenderer.width * ELITE_SCALE - spriteRenderer.width) / 2
+
+        -- Store the base offset for later use by other systems
+        spriteRenderer.baseOffsetX = -sizeDiffX
+        spriteRenderer.baseOffsetY = 0  -- Don't adjust Y offset
+        spriteRenderer.offsetX = -sizeDiffX
+        spriteRenderer.offsetY = 0  -- Don't adjust Y offset
+    else
+        spriteRenderer.eliteScale = 1.0
+    end
+
+    -- Apply outline - gold for elites, config color for normal monsters
+    if isElite then
+        spriteRenderer:setOutline(ELITE_OUTLINE_COLOR)
+    elseif config.OUTLINE_COLOR then
+        spriteRenderer:setOutline(config.OUTLINE_COLOR)
+    end
+
     -- PathfindingCollision component
-    local colliderWidth, colliderHeight = config.COLLIDER_WIDTH, config.COLLIDER_HEIGHT
+    local colliderScale = isElite and ELITE_SCALE or 1
+    local colliderWidth, colliderHeight = config.COLLIDER_WIDTH * colliderScale, config.COLLIDER_HEIGHT * colliderScale
     local colliderShape = config.COLLIDER_SHAPE
-    local pfOffsetX = pathfindingOffsetX or ((spriteRenderer.width - colliderWidth) / 2)
-    local pfOffsetY = pathfindingOffsetY or (spriteRenderer.height - colliderHeight - 8)
+
+    local pfOffsetX = pathfindingOffsetX or ((spriteRenderer.width - config.COLLIDER_WIDTH) / 2)
+    local basePfOffsetY = pathfindingOffsetY or (spriteRenderer.height - config.COLLIDER_HEIGHT - 8)
+
+    -- Adjust Y offset for elite scaling - when sprite grows, its bottom edge moves down
+    local pfOffsetY = basePfOffsetY
+    if isElite then
+        local spriteGrowth = (spriteRenderer.height * ELITE_SCALE - spriteRenderer.height) / 2
+        pfOffsetY = basePfOffsetY + spriteGrowth
+    end
     local pathfindingCollision = PathfindingCollision.new(
         colliderWidth,
         colliderHeight,
@@ -81,10 +134,17 @@ function MonsterFactory.create(options)
 
     -- PhysicsCollision component
     local phOffsetX = physicsOffsetX or (spriteRenderer.width / 2 - config.DRAW_WIDTH / 2)
-    local phOffsetY = physicsOffsetY or (spriteRenderer.height / 2 - config.DRAW_HEIGHT / 2)
+    local basePhOffsetY = physicsOffsetY or (spriteRenderer.height / 2 - config.DRAW_HEIGHT / 2)
+
+    -- Adjust Y offset for elite scaling - when sprite grows, its bottom edge moves down
+    local phOffsetY = basePhOffsetY
+    if isElite then
+        local spriteGrowth = (spriteRenderer.height * ELITE_SCALE - spriteRenderer.height) / 2
+        phOffsetY = basePhOffsetY + spriteGrowth
+    end
     local physicsCollision = PhysicsCollision.new(
-        config.DRAW_WIDTH,
-        config.DRAW_HEIGHT,
+        config.DRAW_WIDTH * colliderScale,
+        config.DRAW_HEIGHT * colliderScale,
         "dynamic",
         phOffsetX,
         phOffsetY,
@@ -105,14 +165,20 @@ function MonsterFactory.create(options)
 
     local animator = Animator.new(config.IDLE_ANIMATION)
 
-    -- Create health component
-    local health = Health.new(config.MAX_HEALTH, config.HEALTH)
+    -- Create health component with elite scaling
+    local healthMultiplier = isElite and ELITE_HEALTH_MULTIPLIER or 1
+    local health = Health.new(config.MAX_HEALTH * healthMultiplier, config.HEALTH * healthMultiplier)
+
+    -- Create attack component with elite scaling
+    local damageMultiplier = isElite and ELITE_DAMAGE_MULTIPLIER or 1
+    -- Apply knockback multiplier for elite variants
+    local knockbackMultiplier = isElite and ELITE_KNOCKBACK_MULTIPLIER or 1
     local attack = Attack.new(
-        config.ATTACK_DAMAGE,
+        config.ATTACK_DAMAGE * damageMultiplier,
         (config.ATTACK_RANGE_TILES or 1.0) * GameConstants.TILE_SIZE,
         config.ATTACK_COOLDOWN,
         "melee",
-        config.ATTACK_KNOCKBACK
+        config.ATTACK_KNOCKBACK * knockbackMultiplier
     )
 
     -- Create health bar component
@@ -157,6 +223,9 @@ function MonsterFactory.create(options)
 
     return monster
 end
+
+-- Export elite configuration
+MonsterFactory.ELITE_CHANCE = ELITE_CHANCE
 
 return MonsterFactory
 

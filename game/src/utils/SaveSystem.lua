@@ -188,7 +188,8 @@ function SaveSystem.serializeGameState()
             coins = {
                 total = GameState.coins.total or 0,
                 collectedThisSession = GameState.coins.collectedThisSession or 0
-            }
+            },
+            elapsedTime = GameState.gameTimeManager and GameState.gameTimeManager.getTime() or 0
         },
 
         -- Level/map information
@@ -521,6 +522,13 @@ function SaveSystem.restoreGameState(ecsWorld, physicsWorld)
 
     -- Restore game state
     GameState.coins = saveData.gameState.coins
+
+    -- Restore game time
+    if saveData.gameState.elapsedTime and GameState.gameTimeManager then
+        GameState.gameTimeManager.setTime(saveData.gameState.elapsedTime)
+        print(string.format("[SaveSystem] Restored game time: %s",
+            GameState.gameTimeManager.formatTime(saveData.gameState.elapsedTime)))
+    end
 
     -- Clear existing entities (except those created by map)
     local entitiesToRemove = {}

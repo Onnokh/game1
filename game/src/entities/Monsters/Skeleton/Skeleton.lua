@@ -11,8 +11,9 @@ local Skeleton = {}
 ---@param y number Y position
 ---@param world World The ECS world to add the skeleton to
 ---@param physicsWorld table|nil The physics world for collision
+---@param isElite boolean|nil Whether this skeleton should be an elite variant
 ---@return Entity The created skeleton entity
-function Skeleton.create(x, y, world, physicsWorld)
+function Skeleton.create(x, y, world, physicsWorld, isElite)
     return MonsterFactory.create({
         x = x,
         y = y,
@@ -20,6 +21,7 @@ function Skeleton.create(x, y, world, physicsWorld)
         physicsWorld = physicsWorld,
         config = SkeletonConfig,
         tag = "Skeleton",
+        isElite = isElite or false,
 
         -- Use custom states for ranged behavior
         customStates = {

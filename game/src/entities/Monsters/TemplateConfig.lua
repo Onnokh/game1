@@ -44,6 +44,10 @@ TemplateConfig.ATTACK_COOLDOWN = 1.2      -- Seconds between attacks
 TemplateConfig.ATTACK_DAMAGE = 32         -- Damage per attack
 TemplateConfig.ATTACK_KNOCKBACK = 4       -- Knockback force
 
+-- Hit area dimensions for attack collider
+TemplateConfig.ATTACK_HIT_WIDTH = 16      -- Width of the hit area
+TemplateConfig.ATTACK_HIT_HEIGHT = 8      -- Height of the hit area
+
 
 -- Physics settings (pathfinding collider)
 TemplateConfig.COLLIDER_WIDTH = 12        -- Pixels
@@ -65,6 +69,8 @@ TemplateConfig.DRAW_HEIGHT = 22           -- Height for physics interaction
 TemplateConfig.HEALTH = 50                -- Starting health
 TemplateConfig.MAX_HEALTH = 50            -- Maximum health
 
+-- Outline settings (optional)
+-- TemplateConfig.OUTLINE_COLOR = {r = 1.0, g = 1.0, b = 1.0, a = 0.8} -- White outline example
 
 return TemplateConfig
 

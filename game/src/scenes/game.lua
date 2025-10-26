@@ -43,6 +43,7 @@ local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
 local FootprintsSystem = require("src.systems.FootprintsSystem")
 local EnemySpawnerSystem = require("src.systems.EnemySpawnerSystem")
 local WaveTimerSystem = require("src.systems.UISystems.WaveTimerSystem")
+local AutoAimSystem = require("src.systems.AutoAimSystem")
 -- Use constants from the global constants module
 local tileSize = GameConstants.TILE_SIZE
 local worldWidth = 0  -- Will be set by loaded map
@@ -95,6 +96,7 @@ function GameScene.load()
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
   ecsWorld:addSystem(WeaponSystem.new()) -- Handle weapon switching and syncing
+  ecsWorld:addSystem(AutoAimSystem.new()) -- Handle auto-aim targeting (must run before AttackSystem)
   ecsWorld:addSystem(AttackSystem.new()) -- Handle attacks
   ecsWorld:addSystem(BulletSystem.new()) -- Handle bullet movement and collision
   ecsWorld:addSystem(AttackColliderSystem.new()) -- Manage ephemeral attack colliders

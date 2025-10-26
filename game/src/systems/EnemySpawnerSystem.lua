@@ -1,5 +1,6 @@
 local System = require("src.core.System")
 local GameTimeManager = require("src.core.managers.GameTimeManager")
+local MonsterFactory = require("src.entities.Monsters.core.MonsterFactory")
 
 -- Lazy-loaded monster modules
 local Slime = nil
@@ -182,6 +183,9 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
         return nil
     end
 
+    -- 5% chance to spawn as elite
+    local isElite = math.random() <= MonsterFactory.ELITE_CHANCE
+
     local creator = nil
 
     if enemyType == "Slime" then
@@ -193,7 +197,7 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
     end
 
     if creator then
-        return creator(x, y, self.ecsWorld, self.physicsWorld)
+        return creator(x, y, self.ecsWorld, self.physicsWorld, isElite)
     else
         print(string.format("[EnemySpawnerSystem] WARNING: Unknown enemy type '%s'", enemyType))
         return nil

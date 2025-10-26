@@ -15,8 +15,8 @@ local EventBus = require("src.utils.EventBus")
 function GenericDying.new(config)
     local self = setmetatable({}, GenericDying)
     self.config = config
-    self.duration = .5 -- 0.5 seconds total
-    self.fadeSpeed = .5 -- Fade out over 0.5 seconds
+    self.duration = .75 -- 0.75 seconds total
+    self.fadeSpeed = .75 -- Fade out over 0.5 seconds
     self.currentAlpha = 1.0
     return self
 end

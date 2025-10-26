@@ -17,13 +17,13 @@ local function loadSpritesheet(name, path, cols, rows)
   -- Set filter to "nearest" for crisp pixel art
   image:setFilter("nearest", "nearest")
   local sw, sh = image:getWidth(), image:getHeight()
-  local tileW, tileH = math.floor(sw / cols), math.floor(sh / rows)
+  local tileW, tileH = sw / cols, sh / rows
 
   -- Register with iffy
   iffy.newTileset(name, path, tileW, tileH, 0, 0, sw, sh)
   loadedSheets[name] = true
 
-  print(string.format("Loaded spritesheet '%s' with %dx%d grid (%d total frames)", name, cols, rows, cols * rows))
+  print(string.format("Loaded spritesheet '%s' with %dx%d grid (%d total frames) - Frame size: %.1fx%.1f", name, cols, rows, cols * rows, tileW, tileH))
 end
 
 local function loadImage(name, path)
@@ -42,6 +42,7 @@ local function loadImage(name, path)
     print(string.format("ERROR loading image '%s': %s", name, imgOrErr))
   end
 end
+
 
 -- Initialize all sprites using Iffy
 function IffySprites.load()
@@ -81,11 +82,8 @@ function IffySprites.load()
   loadSpritesheet("crystal", "resources/objects/crystal.png", 14, 1)
 
 
-  -- load warhog spritesheets (4x4 grid, 64x64 per frame)
-  loadSpritesheet("Warhog_Attack", "resources/warhog/Warhog_Attack.png", 4, 4)
-  loadSpritesheet("Warhog_Death", "resources/warhog/Warhog_Death.png", 4, 4)
-  loadSpritesheet("Warhog_Idle", "resources/warhog/Warhog_Idle.png", 4, 4)
-  loadSpritesheet("Warhog_Walk", "resources/warhog/Warhog_Walk.png", 4, 4)
+  -- load unified Skull Boy spritesheet (14x5 grid, 192x192 per frame)
+  loadSpritesheet("Skull Boy", "resources/warhog/Skull Boy.png", 14, 5)
 
   -- Load standalone images (not using iffy)
   loadImage("menuBackground", "resources/menu/background.jpg")
