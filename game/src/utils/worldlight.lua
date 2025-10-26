@@ -1,7 +1,7 @@
 local luven = require "lib.luven.luven"
 
 local initialized = false
-local ambient = { r = 1.0, g = 0.94, b = 1.0, a = 1.0 } -- Default: bright (0-1 range for Luven)
+local ambient = { r = 0.8, g = 0.8, b = 0.8, a = 1.0 } -- Default: dim (0-1 range for Luven)
 local tween = {
   active = false,
   start = { r = 1.0, g = 0.94, b = 1.0, a = 1.0 },

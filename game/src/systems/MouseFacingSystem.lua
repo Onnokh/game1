@@ -31,11 +31,11 @@ function MouseFacingSystem.new(gameState)
                 -- Determine if mouse is to the left or right of the sprite center
                 local shouldFlip = dx < 0
 
-                -- Update scaleX to flip the sprite horizontally
+                local baseScale = math.abs(spriteRenderer.scaleX) -- Get the absolute scale
                 if shouldFlip then
-                    spriteRenderer.scaleX = -1
+                    spriteRenderer.scaleX = -baseScale
                 else
-                    spriteRenderer.scaleX = 1
+                    spriteRenderer.scaleX = baseScale
                 end
             end
         end

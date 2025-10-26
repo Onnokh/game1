@@ -1,5 +1,6 @@
 local System = require("src.core.System")
 local GameTimeManager = require("src.core.managers.GameTimeManager")
+local MonsterFactory = require("src.entities.Monsters.core.MonsterFactory")
 
 -- Lazy-loaded monster modules
 local Slime = nil
@@ -183,7 +184,7 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
     end
 
     -- 5% chance to spawn as elite
-    local isElite = math.random() <= 0.05
+    local isElite = math.random() <= MonsterFactory.ELITE_CHANCE
 
     local creator = nil
 

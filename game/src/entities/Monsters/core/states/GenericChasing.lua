@@ -161,10 +161,19 @@ function GenericChasing:onUpdate(stateMachine, entity, dt)
     -- Flip sprite based on movement set by PathfindingSystem
     local spriteRenderer = entity:getComponent("SpriteRenderer")
     if spriteRenderer and movement then
+        local baseScale = spriteRenderer.eliteScale or 1.0 -- Use stored elite scale
         if movement.velocityX < -0.1 then
-            spriteRenderer.scaleX = -1
+            spriteRenderer.scaleX = -baseScale
+            -- Adjust X offset for flipped sprite
+            if spriteRenderer.baseOffsetX then
+                spriteRenderer.offsetX = -spriteRenderer.baseOffsetX
+            end
         elseif movement.velocityX > 0.1 then
-            spriteRenderer.scaleX = 1
+            spriteRenderer.scaleX = baseScale
+            -- Reset X offset for normal sprite
+            if spriteRenderer.baseOffsetX then
+                spriteRenderer.offsetX = spriteRenderer.baseOffsetX
+            end
         end
     end
 end
