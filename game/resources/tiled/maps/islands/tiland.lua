@@ -10,7 +10,7 @@ return {
   tilewidth = 32,
   tileheight = 32,
   nextlayerid = 6,
-  nextobjectid = 35,
+  nextobjectid = 36,
   properties = {},
   tilesets = {
     {
@@ -46,8 +46,8 @@ return {
       name = "Objects",
       firstgid = 547,
       class = "",
-      tilewidth = 112,
-      tileheight = 112,
+      tilewidth = 128,
+      tileheight = 128,
       spacing = 0,
       margin = 0,
       columns = 0,
@@ -65,7 +65,7 @@ return {
       },
       properties = {},
       wangsets = {},
-      tilecount = 5,
+      tilecount = 6,
       tiles = {
         {
           id = 0,
@@ -105,6 +105,14 @@ return {
           image = "../../../objects/tree.png",
           width = 48,
           height = 96
+        },
+        {
+          id = 7,
+          image = "../../../objects/event-area.png",
+          x = 758,
+          y = 128,
+          width = 128,
+          height = 128
         }
       }
     }
@@ -284,6 +292,20 @@ return {
           height = 96,
           rotation = 0,
           gid = 553,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 35,
+          name = "Event",
+          type = "",
+          shape = "rectangle",
+          x = 384,
+          y = 480,
+          width = 128,
+          height = 128,
+          rotation = 0,
+          gid = 554,
           visible = true,
           properties = {}
         }

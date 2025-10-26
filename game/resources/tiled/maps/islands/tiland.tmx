@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="35">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="6" nextobjectid="36">
  <editorsettings>
   <export target="tiland.lua" format="lua"/>
  </editorsettings>
  <tileset firstgid="1" name="Islands" tilewidth="32" tileheight="32" tilecount="546" columns="26">
   <image source="../../../tiland.png" width="832" height="675"/>
  </tileset>
- <tileset firstgid="547" name="Objects" tilewidth="112" tileheight="112" tilecount="5" columns="0">
+ <tileset firstgid="547" name="Objects" tilewidth="128" tileheight="128" tilecount="6" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0" type="Reactor">
    <image source="../../../reactor/reactor-Sheet.png" width="96" height="96"/>
@@ -22,6 +22,9 @@
   </tile>
   <tile id="6" type="Tree">
    <image source="../../../objects/tree.png" width="48" height="96"/>
+  </tile>
+  <tile id="7" x="758" y="128" width="128" height="128">
+   <image source="../../../objects/event-area.png" width="1408" height="384"/>
   </tile>
  </tileset>
  <layer id="5" name="Background" width="40" height="20">
@@ -81,6 +84,7 @@
   <object id="30" name="Shop" gid="551" x="160" y="320" width="64" height="64"/>
   <object id="31" name="Tree2" gid="552" x="466" y="98.5" width="64" height="64"/>
   <object id="32" name="Tree" gid="553" x="116.5" y="127.5" width="48" height="96"/>
+  <object id="35" name="Event" gid="554" x="384" y="480" width="128" height="128"/>
  </objectgroup>
  <objectgroup id="3" name="Area">
   <object id="11" template="../areas/Siege.tx" x="1062" y="107" width="130" height="366.333"/>
