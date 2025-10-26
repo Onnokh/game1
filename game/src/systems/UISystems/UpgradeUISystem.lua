@@ -8,7 +8,7 @@ local panel = require("src.ui.utils.panel")
 ---@class UpgradeUISystem : System
 ---@field ecsWorld World
 ---@field isOpen boolean
----@field activeCrystal Entity|nil
+---@field activeEvent Entity|nil
 ---@field mouseX number
 ---@field mouseY number
 ---@field hoveredSlot number|nil
@@ -20,7 +20,7 @@ function UpgradeUISystem.new(ecsWorld)
     setmetatable(self, UpgradeUISystem)
     self.ecsWorld = ecsWorld
     self.isOpen = false
-    self.activeCrystal = nil
+    self.activeEvent = nil
     self.isWorldSpace = false -- Draw in screen space
     self.drawOrder = 100 -- Draw on top of most things
     self.mouseX = 0
@@ -31,19 +31,19 @@ function UpgradeUISystem.new(ecsWorld)
     -- Animation manager
     self.animationManager = AnimationManager.new()
 
-    -- Listen for crystal interaction event
+    -- Listen for event interaction event
     local EventBus = require("src.utils.EventBus")
-    EventBus.subscribe("openCrystalUpgrade", function(data)
-        self:openUpgradeUI(data.crystal)
+    EventBus.subscribe("openEventUpgrade", function(data)
+        self:openUpgradeUI(data.event)
     end)
 
     return self
 end
 
----Open the upgrade UI for a crystal
----@param crystal Entity The crystal entity to show upgrades for
-function UpgradeUISystem:openUpgradeUI(crystal)
-    self.activeCrystal = crystal
+---Open the upgrade UI for an event
+---@param event Entity The event entity to show upgrades for
+function UpgradeUISystem:openUpgradeUI(event)
+    self.activeEvent = event
     self.isOpen = true
     self.hoveredSlot = nil
 
@@ -67,20 +67,20 @@ function UpgradeUISystem:openUpgradeUI(crystal)
     -- Start fade-in animation
     self.animationManager:create("ui_fade", 0.0, 1.0, 0.2, "linear")
 
-    -- Emit crystal opened event for cursor manager
+    -- Emit event opened event for cursor manager
     local EventBus = require("src.utils.EventBus")
-    EventBus.emit("crystalOpened", { crystal = crystal })
+    EventBus.emit("eventOpened", { event = event })
 
-    print("[UpgradeUI] Opened upgrade UI for crystal " .. tostring(crystal.id))
+    print("[UpgradeUI] Opened upgrade UI for event " .. tostring(event.id))
 end
 
 ---Close the upgrade UI
 function UpgradeUISystem:closeUpgradeUI()
-    -- Emit crystal closed event for cursor manager (before clearing activeCrystal)
+    -- Emit event closed event for cursor manager (before clearing activeEvent)
     local EventBus = require("src.utils.EventBus")
-    EventBus.emit("crystalClosed", { crystal = self.activeCrystal })
+    EventBus.emit("eventClosed", { event = self.activeEvent })
 
-    self.activeCrystal = nil
+    self.activeEvent = nil
     self.isOpen = false
     self.hoveredSlot = nil
 
@@ -113,7 +113,7 @@ function UpgradeUISystem:updateHoveredSlot()
     self.hoveredSlot = nil
     self.skipButtonHovered = false
 
-    if not self.isOpen or not self.activeCrystal then
+    if not self.isOpen or not self.activeEvent then
         return
     end
 
@@ -127,7 +127,7 @@ function UpgradeUISystem:updateHoveredSlot()
     local startX = (screenW - totalWidth) / 2
     local centerY = screenH / 2 - slotSize / 2
 
-    local upgradeComp = self.activeCrystal:getComponent("Upgrade")
+    local upgradeComp = self.activeEvent:getComponent("Upgrade")
     if not upgradeComp then
         return
     end
@@ -165,7 +165,7 @@ function UpgradeUISystem:updateHoveredSlot()
 end
 
 function UpgradeUISystem:handleMouseClick()
-    if not self.isOpen or not self.activeCrystal then
+    if not self.isOpen or not self.activeEvent then
         return
     end
 
@@ -200,7 +200,7 @@ function UpgradeUISystem:handleMouseClick()
         return
     end
 
-    local upgradeComp = self.activeCrystal:getComponent("Upgrade")
+    local upgradeComp = self.activeEvent:getComponent("Upgrade")
     if not upgradeComp then
         return
     end
@@ -238,7 +238,7 @@ function UpgradeUISystem:applyUpgrade(player, upgradeId, slotIndex)
 
     local tracker = player:getComponent("UpgradeTracker")
     local modifier = player:getComponent("Modifier")
-    local upgradeComp = self.activeCrystal:getComponent("Upgrade")
+    local upgradeComp = self.activeEvent:getComponent("Upgrade")
 
     if not tracker or not modifier or not upgradeComp then
         print("[UpgradeUI] Missing required components")
@@ -293,12 +293,16 @@ function UpgradeUISystem:applyUpgrade(player, upgradeId, slotIndex)
     local SoundManager = require("src.core.managers.SoundManager")
     SoundManager.play("upgrade_selected", 1.0)
 
+    -- Emit upgrade selected event (EventSystem will handle destruction)
+    local EventBus = require("src.utils.EventBus")
+    EventBus.emit("upgradeSelected", { event = self.activeEvent })
+
     -- Close UI after selecting upgrade
     self:closeUpgradeUI()
 end
 
 function UpgradeUISystem:draw()
-    if not self.isOpen or not self.activeCrystal then
+    if not self.isOpen or not self.activeEvent then
         return
     end
 
@@ -329,7 +333,7 @@ function UpgradeUISystem:draw()
     local startX = (screenW - totalWidth) / 2
     local centerY = screenH / 2 - slotSize / 2
 
-    local upgradeComp = self.activeCrystal:getComponent("Upgrade")
+    local upgradeComp = self.activeEvent:getComponent("Upgrade")
     if not upgradeComp then
         love.graphics.pop()
         if prevFont then love.graphics.setFont(prevFont) end

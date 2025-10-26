@@ -35,6 +35,7 @@ local AttackColliderSystem = require("src.systems.AttackColliderSystem")
 local LightSystem = require("src.systems.LightSystem")
 local FireflySystem = require("src.systems.FireflySystem")
 local InteractionSystem = require("src.systems.InteractionSystem")
+local EventSystem = require("src.systems.EventSystem")
 local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local DashShadowSystem = require("src.systems.DashShadowSystem")
 local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
@@ -105,6 +106,7 @@ function GameScene.load()
   ecsWorld:addSystem(CoinPickupSystem.new()) -- Handle coin pickup collisions
   ecsWorld:addSystem(CoinAttractionSystem.new()) -- Handle coin attraction to player
   ecsWorld:addSystem(InteractionSystem.new()) -- Handle interactions with interactable entities
+  ecsWorld:addSystem(EventSystem.new(ecsWorld)) -- Manage event lifecycle and animations
   ecsWorld:addSystem(FlashEffectSystem.new()) -- Update flash effects
   ecsWorld:addSystem(AnimationSystem.new()) -- Advance animations
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights

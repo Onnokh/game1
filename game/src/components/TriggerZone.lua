@@ -2,8 +2,8 @@ local Component = require("src.core.Component")
 
 ---@class TriggerZone : Component
 ---@field collider table|nil The physics collider object
----@field width number Width of the trigger zone
----@field height number Height of the trigger zone
+---@field width number Width of the trigger zone (or radius for circular)
+---@field height number Height of the trigger zone (or radius for circular)
 ---@field offsetX number Horizontal offset from entity top-left
 ---@field offsetY number Vertical offset from entity top-left
 ---@field onEnter function|nil Callback when entity enters trigger
@@ -11,6 +11,7 @@ local Component = require("src.core.Component")
 ---@field data table|nil Custom data for the trigger
 ---@field physicsWorld table|nil The physics world this collider belongs to
 ---@field entitiesInside table Set of entities currently inside the trigger
+---@field shapeType string Shape type: "rectangle" or "circle"
 local TriggerZone = {}
 TriggerZone.__index = TriggerZone
 
@@ -21,15 +22,16 @@ local function isBodyValid(body)
 end
 
 ---Create a new TriggerZone component
----@param width number Width of the trigger zone
----@param height number Height of the trigger zone
+---@param width number Width of the trigger zone (or radius for circular)
+---@param height number Height of the trigger zone (or radius for circular)
 ---@param offsetX number|nil Horizontal offset from entity top-left
 ---@param offsetY number|nil Vertical offset from entity top-left
 ---@param onEnter function|nil Callback when entity enters trigger
 ---@param onExit function|nil Callback when entity exits trigger
 ---@param data table|nil Custom data for the trigger
+---@param shapeType string|nil Shape type: "rectangle" or "circle" (default: "rectangle")
 ---@return Component|TriggerZone
-function TriggerZone.new(width, height, offsetX, offsetY, onEnter, onExit, data)
+function TriggerZone.new(width, height, offsetX, offsetY, onEnter, onExit, data, shapeType)
     local self = setmetatable(Component.new("TriggerZone"), TriggerZone)
 
     self.collider = nil
@@ -42,6 +44,7 @@ function TriggerZone.new(width, height, offsetX, offsetY, onEnter, onExit, data)
     self.data = data or {}
     self.physicsWorld = nil
     self.entitiesInside = {}
+    self.shapeType = shapeType or "rectangle"
 
     return self
 end
@@ -63,8 +66,16 @@ function TriggerZone:createCollider(physicsWorld, x, y)
         y + self.offsetY + self.height/2,
         "static")
 
-    -- Create rectangle shape for trigger zone
-    local shape = love.physics.newRectangleShape(self.width, self.height)
+    -- Create shape based on type
+    local shape
+    if self.shapeType == "circle" then
+        -- For circular trigger zones, use radius (width/height should be the same)
+        local radius = self.width / 2
+        shape = love.physics.newCircleShape(radius)
+    else
+        -- Default to rectangle shape
+        shape = love.physics.newRectangleShape(self.width, self.height)
+    end
 
     -- Create fixture and set as sensor (non-blocking)
     local fixture = love.physics.newFixture(body, shape)
@@ -179,7 +190,8 @@ function TriggerZone:serialize()
         height = self.height,
         offsetX = self.offsetX,
         offsetY = self.offsetY,
-        data = self.data
+        data = self.data,
+        shapeType = self.shapeType
         -- Note: onEnter and onExit callbacks are not serialized
     }
 end
@@ -195,7 +207,8 @@ function TriggerZone.deserialize(data)
         data.offsetY,
         nil, -- onEnter callback not restored
         nil, -- onExit callback not restored
-        data.data
+        data.data,
+        data.shapeType
     )
     -- Collider will be created by entity creation logic
     return triggerZone

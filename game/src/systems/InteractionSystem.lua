@@ -74,7 +74,23 @@ function InteractionSystem:findNearestInteractable()
         if interactable then
             local entityPos = entity:getComponent("Position")
             if entityPos then
-                local distance = CoordinateUtils.calculateDistance(playerPos, entityPos)
+                local distance
+
+                -- For Event entities, calculate distance to center instead of top-left
+                if entity:hasTag("Event") then
+                    local spriteRenderer = entity:getComponent("SpriteRenderer")
+                    if spriteRenderer then
+                        -- Calculate distance to center of the event (offset by half sprite size)
+                        local centerX = entityPos.x + spriteRenderer.width / 2
+                        local centerY = entityPos.y + spriteRenderer.height / 2
+                        distance = CoordinateUtils.calculateDistanceBetweenPoints(playerPos.x, playerPos.y, centerX, centerY)
+                    else
+                        distance = CoordinateUtils.calculateDistance(playerPos, entityPos)
+                    end
+                else
+                    distance = CoordinateUtils.calculateDistance(playerPos, entityPos)
+                end
+
                 if distance <= interactable.interactionRange and distance < nearestDistance then
                     if interactable:canPlayerInteract(self.playerEntity) then
                         nearestEntity = entity

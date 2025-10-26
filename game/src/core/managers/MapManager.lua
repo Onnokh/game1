@@ -10,6 +10,7 @@ local Player = nil
 local Tree = nil
 local Shop = nil
 local Crystal = nil
+local Event = nil
 local BridgeManager = nil
 local GameConstants = nil
 local MobManager = nil
@@ -368,6 +369,10 @@ local function spawnEntities(ecsWorld, physicsWorld)
                 -- Create unique crystal ID using island and position for deterministic seed
                 local crystalId = string.format("%s_crystal_%d_%d", island.id, obj.x, obj.y)
                 Crystal.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, nil, MapManager.currentSeed, crystalId)
+            elseif obj.name == "Event" then
+                -- Event is bottom-left aligned in Tiled, so subtract height to get top-left position
+                local eventType = "Upgrade" -- TODO: read from obj.properties.type later
+                Event.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, eventType)
             elseif obj.name == "MobSpawn" then
                 -- General mob spawn area (can be immediate or phase-based)
                 local amount = 1
@@ -482,6 +487,9 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpaw
     end
     if not Crystal then
         Crystal = require("src.entities.Crystal.Crystal")
+    end
+    if not Event then
+        Event = require("src.entities.Event.Event")
     end
     if not BridgeManager then
         BridgeManager = require("src.core.managers.BridgeManager")
