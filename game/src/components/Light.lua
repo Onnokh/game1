@@ -18,7 +18,6 @@ function Light.new(opts)
     opts = opts or {}
 
     -- Detect if this is an array of light configs or a single light config
-    -- Array detection: if opts[1] is a table, treat as multiple lights
     local isMultiLight = type(opts[1]) == "table"
     self.isMultiLight = isMultiLight
 
@@ -34,12 +33,8 @@ function Light.new(opts)
                 a = lightConfig.a or 255,
                 offsetX = lightConfig.offsetX,
                 offsetY = lightConfig.offsetY,
-                lightId = nil, -- Changed from lightRef to lightId for Luven
-                enabled = lightConfig.enabled ~= false,
-                flicker = lightConfig.flicker == true,
-                flickerSpeed = lightConfig.flickerSpeed or 8,
-                flickerRadiusAmplitude = lightConfig.flickerRadiusAmplitude or 10,
-                flickerAlphaAmplitude = lightConfig.flickerAlphaAmplitude or 20
+                lightId = nil,
+                enabled = lightConfig.enabled ~= false
             })
         end
     else
@@ -53,12 +48,8 @@ function Light.new(opts)
                 a = opts.a or 255,
                 offsetX = opts.offsetX,
                 offsetY = opts.offsetY,
-                lightId = nil, -- Changed from lightRef to lightId for Luven
-                enabled = opts.enabled ~= false,
-                flicker = opts.flicker == true,
-                flickerSpeed = opts.flickerSpeed or 8,
-                flickerRadiusAmplitude = opts.flickerRadiusAmplitude or 10,
-                flickerAlphaAmplitude = opts.flickerAlphaAmplitude or 20
+                lightId = nil,
+                enabled = opts.enabled ~= false
             }
         }
     end
@@ -69,7 +60,6 @@ end
 ---Serialize the Light component for saving
 ---@return table Serialized light data
 function Light:serialize()
-    -- Deep copy lights array but exclude lightId (will be recreated by LightSystem)
     local lightsData = {}
     for i, light in ipairs(self.lights) do
         lightsData[i] = {
@@ -80,12 +70,7 @@ function Light:serialize()
             a = light.a,
             offsetX = light.offsetX,
             offsetY = light.offsetY,
-            enabled = light.enabled,
-            flicker = light.flicker,
-            flickerSpeed = light.flickerSpeed,
-            flickerRadiusAmplitude = light.flickerRadiusAmplitude,
-            flickerAlphaAmplitude = light.flickerAlphaAmplitude
-            -- lightId excluded - will be recreated by LightSystem
+            enabled = light.enabled
         }
     end
 
@@ -97,13 +82,8 @@ end
 
 ---Destroy this light component and clean up any resources
 function Light:destroy()
-    -- Remove lights from Luven if they have lightIds
-    local luven = require("lib.luven.luven")
     for _, light in ipairs(self.lights) do
         if light.lightId then
-            -- Try to remove the light from Luven
-            -- Since Luven doesn't have individual light removal, we'll mark it as disabled
-            -- and let the LightSystem handle the cleanup
             light.enabled = false
         end
     end

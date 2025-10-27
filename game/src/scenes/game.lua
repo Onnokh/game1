@@ -78,12 +78,12 @@ function GameScene.load()
   physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
 
-  -- Initialize Luven lighting system via WorldLight manager
+  -- Initialize custom lighting system via WorldLight manager
   WorldLight.init()
   lightWorld = WorldLight.get()
   GameScene.lightWorld = lightWorld
 
-  -- Initialize ECS world with physics reference (Luven doesn't need lightWorld reference)
+  -- Initialize ECS world with physics reference
   ecsWorld = World.new(physicsWorld, lightWorld, false)
   -- Initialize UI world (separate from ECS, with drawOrder enabled for z-layering)
   uiWorld = World.new(nil, nil, true)
@@ -420,11 +420,8 @@ end
 
 -- Draw world content only (no UI) - for postprocessing pipeline
 function GameScene.drawWorld(gameState)
-  -- Apply camera transform for world rendering and light positions
+  -- Apply camera transform for world rendering
   gameState.camera:draw(function()
-    -- Begin Luven lighting (renders lights to lightmap in world space)
-    -- luven.drawBegin() -- TEMPORARILY DISABLED FOR POSTPROCESSING POC
-
     -- Draw all islands using MapManager (with camera frustum culling)
     MapManager.draw(gameState.camera)
 
@@ -439,8 +436,11 @@ function GameScene.drawWorld(gameState)
     end
   end)
 
-  -- End Luven lighting (applies lightmap in screen space, outside camera transform)
-  -- luven.drawEnd() -- TEMPORARILY DISABLED FOR POSTPROCESSING POC
+  -- Render darkness map to lightmap canvas (prepared for overlay later in main.lua)
+  local lightRenderer = lightWorld
+  if lightRenderer then
+    lightRenderer.renderDarknessMap(gameState.camera)
+  end
 end
 
 -- Draw UI elements only

@@ -172,9 +172,29 @@ function love.draw()
   -- Reset canvas to screen
   love.graphics.setCanvas()
 
-  -- Apply all postprocessing effects
+  -- Apply lighting FIRST (before postprocessing effects)
+  -- Create intermediate canvas for lit scene
+  local litCanvas = love.graphics.newCanvas(worldCanvas:getWidth(), worldCanvas:getHeight())
+  love.graphics.setCanvas(litCanvas)
   love.graphics.clear(0, 0, 0, 1)
-  PostprocessingManager.apply(worldCanvas, nil)
+  love.graphics.draw(worldCanvas, 0, 0)
+
+  -- Apply lighting overlay (multiply blend)
+  local GameScene = require("src.scenes.game")
+  local lightWorld = GameScene.lightWorld
+  if lightWorld and lightWorld.drawOverlay then
+    lightWorld.drawOverlay()
+  end
+
+  -- Reset canvas to screen
+  love.graphics.setCanvas()
+
+  -- Apply all postprocessing effects to the lit scene
+  love.graphics.clear(0, 0, 0, 1)
+  PostprocessingManager.apply(litCanvas, nil)
+
+  -- Cleanup intermediate canvas
+  litCanvas:release()
 
   -- Draw UI after postprocessing (unaffected by effects)
   local success2, err2 = pcall(function()
