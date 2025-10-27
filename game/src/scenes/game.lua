@@ -418,15 +418,12 @@ function GameScene.handleKeyPressed(key, gameState)
   return false
 end
 
--- Draw the game scene
-function GameScene.draw(gameState)
-  local WorldLight = require("src.utils.worldlight")
-  local luven = WorldLight.get()
-
+-- Draw world content only (no UI) - for postprocessing pipeline
+function GameScene.drawWorld(gameState)
   -- Apply camera transform for world rendering and light positions
   gameState.camera:draw(function()
     -- Begin Luven lighting (renders lights to lightmap in world space)
-    luven.drawBegin()
+    -- luven.drawBegin() -- TEMPORARILY DISABLED FOR POSTPROCESSING POC
 
     -- Draw all islands using MapManager (with camera frustum culling)
     MapManager.draw(gameState.camera)
@@ -443,8 +440,11 @@ function GameScene.draw(gameState)
   end)
 
   -- End Luven lighting (applies lightmap in screen space, outside camera transform)
-  luven.drawEnd()
-  -- Draw UI elements
+  -- luven.drawEnd() -- TEMPORARILY DISABLED FOR POSTPROCESSING POC
+end
+
+-- Draw UI elements only
+function GameScene.drawUI(gameState)
   if uiWorld then
     -- First draw world-space UI elements (health bars) inside camera transform
     gameState.camera:draw(function()
@@ -484,6 +484,12 @@ function GameScene.draw(gameState)
 
     love.graphics.pop()
   end
+end
+
+-- Draw everything (for backward compatibility)
+function GameScene.draw(gameState)
+  GameScene.drawWorld(gameState)
+  GameScene.drawUI(gameState)
 end
 
 -- Cleanup the game scene when switching away

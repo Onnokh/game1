@@ -3,6 +3,7 @@ local GameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
 local SoundManager = require("src.core.managers.SoundManager")
 local CursorManager = require("src.core.managers.CursorManager")
+local PostprocessingManager = require("src.core.managers.PostprocessingManager")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
@@ -10,6 +11,9 @@ _G.CursorManager = CursorManager -- Make CursorManager globally accessible
 
 -- Load Lovebird for debugging
 local lovebird = require("lovebird")
+
+-- World canvas for postprocessing
+local worldCanvas = nil
 
 -- Parallax background state
 local parallaxBg = {
@@ -74,11 +78,51 @@ function love.load()
   end
 
   overlayStats.load() -- Should always be called last
+
+  -- Create world canvas for postprocessing
+  local screenW, screenH = love.graphics.getDimensions()
+  worldCanvas = love.graphics.newCanvas(screenW, screenH)
+
+  -- Initialize bloom effect
+  local BloomEffect = require("src.effects.BloomEffect")
+  local bloomEffect = BloomEffect.new(screenW, screenH)
+  bloomEffect:setThreshold(0.85)
+  bloomEffect:setStrength(12.0)
+  bloomEffect:setIntensity(3.0)
+
+  -- Register bloom with PostprocessingManager
+  PostprocessingManager.addComplexEffect("bloom", bloomEffect, true) -- enabled
+
+  -- Initialize color grading effect
+  local ShaderManager = require("src.core.managers.ShaderManager")
+  local colorGradingShader = ShaderManager.getShader("color_grade")
+  if colorGradingShader then
+    PostprocessingManager.addEffect("color_grading", colorGradingShader, {
+      factors = {1.0, 1.0, 1.0} -- RGB multipliers, neutral
+    }, false) -- disabled by default
+  end
+
+  -- Initialize vignette effect
+  local vignetteShader = ShaderManager.getShader("vignette")
+  if vignetteShader then
+    PostprocessingManager.addEffect("vignette", vignetteShader, {
+      radius = 0.95,
+      softness = 0.5,
+      opacity = .25,
+      color = {0.0, 0.0, 0.0, 1.0} -- Black vignette
+    }, true) -- enabled
+  end
 end
 
 
 function love.draw()
-  -- Clear the screen first
+  -- Ensure canvas exists
+  if not worldCanvas then
+    return
+  end
+
+  -- Set canvas to world canvas for postprocessing
+  love.graphics.setCanvas(worldCanvas)
   love.graphics.clear(0, 0, 0, 1)
 
   -- Draw parallax scrolling background
@@ -114,17 +158,36 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color
   end
 
-  -- Draw via controller
+  -- Draw world content only (no UI) to canvas
   local success, err = pcall(function()
-    GameController.draw()
+    local GameScene = require("src.scenes.game")
+    GameScene.drawWorld(gameState)
   end)
 
   if not success then
-    print("Error in GameController.draw():", err)
+    print("Error in GameScene.drawWorld():", err)
     error(err)
   end
 
-  -- Pass camera position and scale for world space gridlines
+  -- Reset canvas to screen
+  love.graphics.setCanvas()
+
+  -- Apply all postprocessing effects
+  love.graphics.clear(0, 0, 0, 1)
+  PostprocessingManager.apply(worldCanvas, nil)
+
+  -- Draw UI after postprocessing (unaffected by effects)
+  local success2, err2 = pcall(function()
+    local GameScene = require("src.scenes.game")
+    GameScene.drawUI(gameState)
+  end)
+
+  if not success2 then
+    print("Error in GameScene.drawUI():", err2)
+    error(err2)
+  end
+
+  -- Draw overlayStats on top
   overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale)
 end
 
