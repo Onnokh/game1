@@ -12,7 +12,7 @@ local DamagePopupSystem = System:extend("DamagePopupSystem", {})
 
 function DamagePopupSystem.new(ecsWorld)
 	---@class DamagePopupSystem
-	local self = System.new({})
+	local self = System.new()
 	setmetatable(self, DamagePopupSystem)
 	self.popups = {}
 	self.ecsWorld = ecsWorld
@@ -141,14 +141,12 @@ function DamagePopupSystem:draw()
 		love.graphics.setColor(p.color.r, p.color.g, p.color.b, p.color.a)
 
 		-- Convert world position to screen coordinates
-		local screenX, screenY = p.worldX or 0, p.worldY or 0
-		if gameState and gameState.camera and gameState.camera.toScreen then
-			screenX, screenY = gameState.camera:toScreen(screenX, screenY)
-		end
+		local CoordinateUtils = require("src.utils.coordinates")
+		local screenX, screenY = CoordinateUtils.worldToScreen(p.worldX or 0, p.worldY or 0, gameState.camera)
 
     -- Choose an appropriate font size so it appears crisp at current zoom
     local cameraScale = (gameState and gameState.camera and gameState.camera.scale) or 1
-    local basePx = 14
+    local basePx = 32
     local font = nil
     font = select(1, fonts.getCameraScaled(basePx, cameraScale, 8))
 

@@ -188,6 +188,47 @@ function World:draw()
     end
 end
 
+---Draw only world-space systems (for camera transform)
+function World:drawWorldSpace()
+    for _, system in ipairs(self.systems) do
+        -- Only draw systems that explicitly mark themselves as world-space
+        -- or don't specify (default to world-space for ECS systems)
+        if system.isWorldSpace ~= false then
+            system:draw()
+        end
+    end
+end
+
+---Draw only screen-space systems (outside camera transform)
+function World:drawScreenSpace()
+    if self.useDrawOrder then
+        -- Create a sorted copy of systems based on drawOrder
+        local systemsToDraw = {}
+        for _, system in ipairs(self.systems) do
+            if system.isWorldSpace == false then
+                table.insert(systemsToDraw, system)
+            end
+        end
+
+        -- Sort by drawOrder
+        table.sort(systemsToDraw, function(a, b)
+            local orderA = a.drawOrder or 0
+            local orderB = b.drawOrder or 0
+            return orderA < orderB
+        end)
+
+        for _, system in ipairs(systemsToDraw) do
+            system:draw()
+        end
+    else
+        for _, system in ipairs(self.systems) do
+            if system.isWorldSpace == false then
+                system:draw()
+            end
+        end
+    end
+end
+
 ---Get all entities with specific components
 ---@param componentTypes table Array of component types
 ---@return table Array of entities that have all the specified components

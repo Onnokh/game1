@@ -53,14 +53,12 @@ function LootPickupLabelSystem:draw()
         local r, g, b, a = love.graphics.getColor()
 
         -- Convert world position to screen coordinates each frame
-        local screenX, screenY = l.worldX, l.worldY
-        if gameState and gameState.camera and gameState.camera.toScreen then
-            screenX, screenY = gameState.camera:toScreen(l.worldX, l.worldY)
-        end
+        local CoordinateUtils = require("src.utils.coordinates")
+        local screenX, screenY = CoordinateUtils.worldToScreen(l.worldX, l.worldY, gameState.camera)
 
         -- Choose a camera-scaled crisp font similar to damage numbers
         local cameraScale = (gameState and gameState.camera and gameState.camera.scale) or 1
-        local basePx = 8
+        local basePx = 24
         local font = select(1, fonts.getCameraScaled(basePx, cameraScale, 8))
         local prevFont = love.graphics.getFont()
 

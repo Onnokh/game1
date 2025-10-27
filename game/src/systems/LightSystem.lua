@@ -1,5 +1,5 @@
 local System = require("src.core.System")
-local luven = require("lib.luven.luven")
+local CustomLightRenderer = require("src.utils.CustomLightRenderer")
 
 ---@class LightSystem : System
 local LightSystem = System:extend("LightSystem", {"Position", "Light"})
@@ -15,14 +15,13 @@ function LightSystem:removeEntity(entity)
     -- Clean up lights before removing entity
     local light = entity:getComponent("Light")
     if light then
-        -- Remove lights from Luven first, then disable them
-            for _, lightConfig in ipairs(light.lights) do
-                if lightConfig.lightId then
-                    luven.removeLight(lightConfig.lightId)
-                end
-                lightConfig.enabled = false
-                lightConfig.lightId = nil  -- Clear the light ID
+        for _, lightConfig in ipairs(light.lights) do
+            if lightConfig.lightId then
+                CustomLightRenderer.removeLight(lightConfig.lightId)
             end
+            lightConfig.enabled = false
+            lightConfig.lightId = nil
+        end
     end
 
     -- Call parent removeEntity method
@@ -37,53 +36,14 @@ local function ensureLightCreated(self, lightConfig, x, y)
     if not lightConfig or lightConfig.enabled == false then return end
     if lightConfig.lightId then return end -- Already created
 
-    -- Convert 0-255 color to 0-1 range for Luven
-    local r = (lightConfig.r or 255) / 255
-    local g = (lightConfig.g or 255) / 255
-    local b = (lightConfig.b or 255) / 255
-
-    -- Convert radius to power (Luven uses power as a multiplier)
-    -- Typical radius is 400, and we want that to be a reasonable size
-    -- The light sprite is 256px, so power of ~1.5-2 works well for radius 400
-    local power = (lightConfig.radius or 400) / 256
-
-    -- Create light based on whether it's flickering
-    if lightConfig.flicker then
-        -- Create flickering light
-        local flickerSpeed = lightConfig.flickerSpeed or 8
-        local rAmp = (lightConfig.flickerRadiusAmplitude or 10) / 255
-        local aAmp = (lightConfig.flickerAlphaAmplitude or 20) / 255
-
-        -- Calculate power range
-        local basePower = power
-        local minPower = math.max(0, basePower - (lightConfig.flickerRadiusAmplitude or 10) / 256)
-        local maxPower = basePower + (lightConfig.flickerRadiusAmplitude or 10) / 256
-
-        -- Calculate color range (with alpha variation)
-        local minAlpha = math.max(0, 1 - aAmp)
-        local maxAlpha = math.min(1, 1 + aAmp)
-
-        local colorRange = luven.newColorRange(r, g, b, r, g, b, minAlpha, maxAlpha)
-        local powerRange = luven.newNumberRange(minPower, maxPower)
-        local speedRange = luven.newNumberRange(0.05, 0.15) -- Random flicker timing
-
-        lightConfig.lightId = luven.addFlickeringLight(
-            x, y,
-            colorRange,
-            powerRange,
-            speedRange,
-            luven.lightShapes.round -- default shape
-        )
-    else
-        -- Create normal light
-        local color = luven.newColor(r, g, b, 1)
-        lightConfig.lightId = luven.addNormalLight(
-            x, y,
-            color,
-            power,
-            luven.lightShapes.round -- default shape
-        )
-    end
+    lightConfig.lightId = CustomLightRenderer.addLight(
+        x, y,
+        lightConfig.radius or 400,
+        lightConfig.r or 255,
+        lightConfig.g or 255,
+        lightConfig.b or 255,
+        lightConfig.a or 255
+    )
 end
 
 ---Check if a light position is visible in the camera view
@@ -143,7 +103,7 @@ function LightSystem:update(dt)
 
                 -- If light is disabled or not visible, remove it
                 if (lightConfig.enabled == false or not visible) and lightConfig.lightId then
-                    luven.removeLight(lightConfig.lightId)
+                    CustomLightRenderer.removeLight(lightConfig.lightId)
                     lightConfig.lightId = nil
                 elseif lightConfig.enabled ~= false and visible then
                     -- Ensure light exists
@@ -151,7 +111,7 @@ function LightSystem:update(dt)
 
                     -- Update light position
                     if lightConfig.lightId then
-                        luven.setLightPosition(lightConfig.lightId, lightX, lightY)
+                        CustomLightRenderer.setLightPosition(lightConfig.lightId, lightX, lightY)
                     end
                 end
             end
@@ -167,7 +127,7 @@ function LightSystem:cleanup()
         if lightComp and lightComp.lights then
             for i, lightConfig in ipairs(lightComp.lights) do
                 if lightConfig.lightId then
-                    luven.removeLight(lightConfig.lightId)
+                    CustomLightRenderer.removeLight(lightConfig.lightId)
                     lightConfig.lightId = nil
                 end
             end

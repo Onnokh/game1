@@ -37,7 +37,7 @@ function ShopEntity.create(x, y, world, physicsWorld, inventory, seed, shopId)
     end
 
     local light = Light.new({
-        { r = 255, g = 0, b = 255, radius = 48, offsetX = 36, offsetY = 16, flicker = false, flickerRadiusAmplitude = 1.2 }
+        { r = 255, g = 0, b = 255, radius = 48, offsetX = 36, offsetY = 16 }
     })
 
     -- Store interaction range as entity property for ShopUISystem

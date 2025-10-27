@@ -3,6 +3,8 @@ local GameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
 local SoundManager = require("src.core.managers.SoundManager")
 local CursorManager = require("src.core.managers.CursorManager")
+local PostprocessingManager = require("src.core.managers.PostprocessingManager")
+local PixelRenderer = require("src.utils.PixelRenderer")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
@@ -10,6 +12,10 @@ _G.CursorManager = CursorManager -- Make CursorManager globally accessible
 
 -- Load Lovebird for debugging
 local lovebird = require("lovebird")
+
+-- World canvas for postprocessing
+local worldCanvas = nil
+local postprocessCanvas = nil
 
 -- Parallax background state
 local parallaxBg = {
@@ -74,17 +80,70 @@ function love.load()
   end
 
   overlayStats.load() -- Should always be called last
+
+  -- Initialize pixel-perfect renderer with zoom-scaled resolution
+  -- Base resolution: 160×90, multiplied by ZOOM_SCALE (1, 2, 3, or 4)
+  local GameConstants = require("src.constants")
+  local baseW, baseH = 160, 90
+  PixelRenderer.init(baseW * GameConstants.ZOOM_SCALE, baseH * GameConstants.ZOOM_SCALE)
+
+  -- Initialize lighting at the same resolution as pixel canvas (160×90)
+  local WorldLight = require("src.utils.worldlight")
+  local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+  WorldLight.init(canvasW, canvasH)
+
+  -- Create world canvas for postprocessing
+  local screenW, screenH = love.graphics.getDimensions()
+  worldCanvas = love.graphics.newCanvas(screenW, screenH)
+
+  -- Create postprocessing canvas
+  postprocessCanvas = love.graphics.newCanvas(screenW, screenH)
+
+  -- Initialize bloom effect
+  local BloomEffect = require("src.effects.BloomEffect")
+  local bloomEffect = BloomEffect.new(screenW, screenH)
+  bloomEffect:setThreshold(0.85)
+  bloomEffect:setStrength(12.0)
+  bloomEffect:setIntensity(3.0)
+
+  -- Register bloom with PostprocessingManager
+  PostprocessingManager.addComplexEffect("bloom", bloomEffect, true) -- enabled
+
+  -- Initialize color grading effect
+  local ShaderManager = require("src.core.managers.ShaderManager")
+  local colorGradingShader = ShaderManager.getShader("color_grade")
+  if colorGradingShader then
+    PostprocessingManager.addEffect("color_grading", colorGradingShader, {
+      factors = {1.0, 1.0, 1.0} -- RGB multipliers, neutral
+    }, false) -- disabled by default
+  end
+
+  -- Initialize vignette effect
+  local vignetteShader = ShaderManager.getShader("vignette")
+  if vignetteShader then
+    PostprocessingManager.addEffect("vignette", vignetteShader, {
+      radius = 0.95,
+      softness = 0.5,
+      opacity = .25,
+      color = {0.0, 0.0, 0.0, 1.0} -- Black vignette
+    }, true) -- enabled
+  end
 end
 
 
 function love.draw()
-  -- Clear the screen first
+  -- Ensure canvas exists
+  if not worldCanvas then
+    return
+  end
+
+  local screenW, screenH = love.graphics.getDimensions()
+
+  -- STEP 1: Draw parallax background at full resolution (before pixel rendering)
+  love.graphics.setCanvas(worldCanvas)
   love.graphics.clear(0, 0, 0, 1)
 
-  -- Draw parallax scrolling background
   if parallaxBg.image and #parallaxBg.quads > 0 then
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
     local imgW = parallaxBg.frameWidth * parallaxBg.scale
     local imgH = parallaxBg.frameHeight * parallaxBg.scale
 
@@ -114,17 +173,79 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color
   end
 
-  -- Draw via controller
+  -- Reset canvas to screen
+  love.graphics.setCanvas()
+
+  -- STEP 2: Draw pixel-perfect world content
+  PixelRenderer.begin()
+
+  local GameScene = require("src.scenes.game")
+
   local success, err = pcall(function()
-    GameController.draw()
+    -- Save current camera window
+    local oldX, oldY, oldW, oldH = gameState.camera:getWindow()
+
+    -- Temporarily set camera window to pixel canvas dimensions
+    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+    gameState.camera:setWindow(0, 0, canvasW, canvasH)
+
+    -- Draw world with pixel-perfect camera window
+    GameScene.drawWorld(gameState)
+
+    -- Render darkness map and lighting overlay
+    if GameScene.lightWorld and GameScene.lightWorld.renderDarknessMap then
+      GameScene.lightWorld.renderDarknessMap(gameState.camera)
+    end
+    if GameScene.lightWorld and GameScene.lightWorld.drawOverlay then
+      GameScene.lightWorld.drawOverlay()
+    end
+
+    -- Restore original camera window for full-res effects
+    gameState.camera:setWindow(oldX, oldY, oldW, oldH)
   end)
 
   if not success then
-    print("Error in GameController.draw():", err)
+    print("Error in GameScene.drawWorld():", err)
     error(err)
   end
 
-  -- Pass camera position and scale for world space gridlines
+  PixelRenderer.finish()
+
+  -- STEP 3: Apply postprocessing effects to pixel canvas
+  if not postprocessCanvas then
+    postprocessCanvas = love.graphics.newCanvas(screenW, screenH)
+  end
+
+  love.graphics.setCanvas(postprocessCanvas)
+  love.graphics.clear(0, 0, 0, 1)
+
+  -- Draw pixel canvas to full screen resolution for postprocessing
+  local pixelCanvas = PixelRenderer.getCanvas()
+  if pixelCanvas then
+    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+    local scale = PixelRenderer.getScale()
+    -- Round to integers to ensure pixel-perfect alignment
+    local drawX = math.floor((screenW - canvasW * scale) / 2 + 0.5)
+    local drawY = math.floor((screenH - canvasH * scale) / 2 + 0.5)
+
+    love.graphics.draw(pixelCanvas, drawX, drawY, 0, scale, scale)
+  end
+  love.graphics.setCanvas()
+
+  -- Apply postprocessing effects
+  PostprocessingManager.apply(postprocessCanvas)
+
+  -- STEP 4: Draw UI at full resolution (unaffected by pixel scaling)
+  local success2, err2 = pcall(function()
+    GameScene.drawUI(gameState)
+  end)
+
+  if not success2 then
+    print("Error in GameScene.drawUI():", err2)
+    error(err2)
+  end
+
+  -- Draw overlayStats on top
   overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale)
 end
 

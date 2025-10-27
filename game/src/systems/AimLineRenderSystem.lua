@@ -109,8 +109,9 @@ function AimLineRenderSystem:draw()
         mouseY = GameState.input.mouseY
     else
         -- Use real mouse position
+        local CoordinateUtils = require("src.utils.coordinates")
         local screenMouseX, screenMouseY = love.mouse.getPosition()
-        mouseX, mouseY = GameState.camera:toWorld(screenMouseX, screenMouseY)
+        mouseX, mouseY = CoordinateUtils.screenToWorld(screenMouseX, screenMouseY, GameState.camera)
     end
 
     -- Calculate direction from player to mouse
@@ -171,13 +172,9 @@ function AimLineRenderSystem:draw()
     end
 
     -- Convert world coordinates to screen coordinates
-    local screenStartX, screenStartY = playerX, playerY
-    local screenEndX, screenEndY = endX, endY
-
-    if GameState.camera and GameState.camera.toScreen then
-        screenStartX, screenStartY = GameState.camera:toScreen(playerX, playerY)
-        screenEndX, screenEndY = GameState.camera:toScreen(endX, endY)
-    end
+    local CoordinateUtils = require("src.utils.coordinates")
+    local screenStartX, screenStartY = CoordinateUtils.worldToScreen(playerX, playerY, GameState.camera)
+    local screenEndX, screenEndY = CoordinateUtils.worldToScreen(endX, endY, GameState.camera)
 
     -- Get the shader
     local shader = ShaderManager.getShader("aim_line")

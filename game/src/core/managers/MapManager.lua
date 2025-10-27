@@ -439,6 +439,7 @@ end
 ---@return table Camera object
 local function setupCamera(camWidth, camHeight, playerEntity)
     local gamera = require("lib.gamera")
+
     local camera = gamera.new(0, 0, camWidth, camHeight)
 
     if playerEntity then
@@ -448,8 +449,11 @@ local function setupCamera(camWidth, camHeight, playerEntity)
         end
     end
 
-    camera:setScale(GameConstants.CAMERA_SCALE)
+    -- Default camera scale is 1.0 (zoom controlled by PixelRenderer resolution via ZOOM_SCALE)
+    camera:setScale(1.0)
+
     print(string.format("[MapManager] Camera positioned at (%.2f, %.2f)", camera:getPosition()))
+    print(string.format("[MapManager] World bounds: %dx%d", camWidth, camHeight))
 
     return camera
 end
