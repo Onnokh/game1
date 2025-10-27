@@ -4,13 +4,13 @@ local initialized = false
 
 local M = {}
 
-function M.init()
+function M.init(canvasWidth, canvasHeight)
   if initialized then return CustomLightRenderer end
 
-  -- Initialize CustomLightRenderer with screen dimensions
-  local screenWidth = love.graphics.getWidth()
-  local screenHeight = love.graphics.getHeight()
-  CustomLightRenderer.init(screenWidth, screenHeight)
+  -- Initialize CustomLightRenderer with pixel canvas dimensions
+  canvasWidth = canvasWidth or love.graphics.getWidth()
+  canvasHeight = canvasHeight or love.graphics.getHeight()
+  CustomLightRenderer.init(canvasWidth, canvasHeight)
 
   initialized = true
   return CustomLightRenderer

@@ -25,19 +25,20 @@ local screenWidth = 0
 local screenHeight = 0
 
 -- Initialize the renderer
-function CustomLightRenderer.init(width, height)
+function CustomLightRenderer.init(canvasWidth, canvasHeight)
     if initialized then return end
 
-    print("[CustomLightRenderer] Initializing GPU-based lighting with size:", width, height)
-
-    screenWidth = width
-    screenHeight = height
+    screenWidth = canvasWidth
+    screenHeight = canvasHeight
 
     -- Create lightmap canvas
-    lightMap = love.graphics.newCanvas(width, height)
+    lightMap = love.graphics.newCanvas(canvasWidth, canvasHeight)
     if not lightMap then
         error("Failed to create lightmap canvas")
     end
+
+    -- Set nearest-neighbor filtering for pixel-perfect lighting
+    lightMap:setFilter("nearest", "nearest")
 
     -- Load the light shader
     local vertCode = love.filesystem.read("src/shaders/light.vert")
@@ -64,7 +65,6 @@ function CustomLightRenderer.init(width, height)
     lightColorImage:setFilter("nearest", "nearest")
 
     initialized = true
-    print("[CustomLightRenderer] Initialized successfully with GPU shader")
 end
 
 -- Get ambient color
@@ -149,6 +149,9 @@ function CustomLightRenderer.renderDarknessMap(camera)
         return
     end
 
+    -- Store the current canvas before switching to lightmap
+    local previousCanvas = love.graphics.getCanvas()
+
     -- Render to lightmap canvas
     love.graphics.setCanvas(lightMap)
 
@@ -173,6 +176,9 @@ function CustomLightRenderer.renderDarknessMap(camera)
         if light.enabled and lightCount < maxLights then
             -- Transform light position from world to screen coordinates
             local screenX, screenY = camera:toScreen(light.x, light.y)
+            -- Round to whole pixels for pixel-perfect lighting
+            screenX = math.floor(screenX + 0.5)
+            screenY = math.floor(screenY + 0.5)
             local normalizedX = screenX / screenW
             local normalizedY = screenY / screenH
 
@@ -234,7 +240,12 @@ function CustomLightRenderer.renderDarknessMap(camera)
         love.graphics.setShader()
     end
 
-    love.graphics.setCanvas()
+    -- Restore the previous canvas (or leave as screen if none)
+    if previousCanvas then
+        love.graphics.setCanvas(previousCanvas)
+    else
+        love.graphics.setCanvas()  -- Return to screen
+    end
 end
 
 -- Draw the darkness overlay on top of the world (called after world renders)
@@ -243,10 +254,18 @@ function CustomLightRenderer.drawOverlay()
         return
     end
 
-    -- Draw the lightmap with multiply blend to darken based on lightmap values
+    if not lightMap then
+        return
+    end
+
+    local currentCanvas = love.graphics.getCanvas()
+
+    -- Draw the lightmap with multiply blend mode
+    -- This darkens the world based on the lightmap values
+    -- White values = no darkening, dark values = more darkening
     love.graphics.setBlendMode("multiply", "premultiplied")
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(lightMap, 0, 0)
+    love.graphics.draw(lightMap, 0, 0, 0, 1, 1, 0, 0)
     love.graphics.setBlendMode("alpha")
 end
 

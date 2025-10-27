@@ -85,7 +85,7 @@
   <object id="35" name="Event" gid="554" x="384" y="480" width="128" height="128"/>
   <object id="36" name="Event" gid="554" x="368" y="234" width="128" height="128"/>
   <object id="37" name="Event" gid="554" x="137" y="180" width="128" height="128"/>
-  <object id="38" name="Event" gid="554" x="125" y="470.5" width="128" height="128"/>
+  <object id="38" name="Event" gid="554" x="125" y="470" width="128" height="128"/>
   <object id="39" name="Tree2" gid="552" x="445" y="301.5" width="64" height="64"/>
   <object id="40" name="Tree" gid="553" x="353.5" y="220.5" width="48" height="96"/>
   <object id="41" name="Tree2" gid="552" x="448" y="169" width="64" height="64"/>

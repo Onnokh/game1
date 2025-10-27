@@ -4,6 +4,7 @@ local gameState = require("src.core.GameState")
 local SoundManager = require("src.core.managers.SoundManager")
 local CursorManager = require("src.core.managers.CursorManager")
 local PostprocessingManager = require("src.core.managers.PostprocessingManager")
+local PixelRenderer = require("src.utils.PixelRenderer")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
@@ -14,6 +15,7 @@ local lovebird = require("lovebird")
 
 -- World canvas for postprocessing
 local worldCanvas = nil
+local postprocessCanvas = nil
 
 -- Parallax background state
 local parallaxBg = {
@@ -79,9 +81,23 @@ function love.load()
 
   overlayStats.load() -- Should always be called last
 
+  -- Initialize pixel-perfect renderer with zoom-scaled resolution
+  -- Base resolution: 160×90, multiplied by ZOOM_SCALE (1, 2, 3, or 4)
+  local GameConstants = require("src.constants")
+  local baseW, baseH = 160, 90
+  PixelRenderer.init(baseW * GameConstants.ZOOM_SCALE, baseH * GameConstants.ZOOM_SCALE)
+
+  -- Initialize lighting at the same resolution as pixel canvas (160×90)
+  local WorldLight = require("src.utils.worldlight")
+  local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+  WorldLight.init(canvasW, canvasH)
+
   -- Create world canvas for postprocessing
   local screenW, screenH = love.graphics.getDimensions()
   worldCanvas = love.graphics.newCanvas(screenW, screenH)
+
+  -- Create postprocessing canvas
+  postprocessCanvas = love.graphics.newCanvas(screenW, screenH)
 
   -- Initialize bloom effect
   local BloomEffect = require("src.effects.BloomEffect")
@@ -121,14 +137,13 @@ function love.draw()
     return
   end
 
-  -- Set canvas to world canvas for postprocessing
+  local screenW, screenH = love.graphics.getDimensions()
+
+  -- STEP 1: Draw parallax background at full resolution (before pixel rendering)
   love.graphics.setCanvas(worldCanvas)
   love.graphics.clear(0, 0, 0, 1)
 
-  -- Draw parallax scrolling background
   if parallaxBg.image and #parallaxBg.quads > 0 then
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
     local imgW = parallaxBg.frameWidth * parallaxBg.scale
     local imgH = parallaxBg.frameHeight * parallaxBg.scale
 
@@ -158,10 +173,35 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color
   end
 
-  -- Draw world content only (no UI) to canvas
+  -- Reset canvas to screen
+  love.graphics.setCanvas()
+
+  -- STEP 2: Draw pixel-perfect world content
+  PixelRenderer.begin()
+
+  local GameScene = require("src.scenes.game")
+
   local success, err = pcall(function()
-    local GameScene = require("src.scenes.game")
+    -- Save current camera window
+    local oldX, oldY, oldW, oldH = gameState.camera:getWindow()
+
+    -- Temporarily set camera window to pixel canvas dimensions
+    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+    gameState.camera:setWindow(0, 0, canvasW, canvasH)
+
+    -- Draw world with pixel-perfect camera window
     GameScene.drawWorld(gameState)
+
+    -- Render darkness map and lighting overlay
+    if GameScene.lightWorld and GameScene.lightWorld.renderDarknessMap then
+      GameScene.lightWorld.renderDarknessMap(gameState.camera)
+    end
+    if GameScene.lightWorld and GameScene.lightWorld.drawOverlay then
+      GameScene.lightWorld.drawOverlay()
+    end
+
+    -- Restore original camera window for full-res effects
+    gameState.camera:setWindow(oldX, oldY, oldW, oldH)
   end)
 
   if not success then
@@ -169,36 +209,34 @@ function love.draw()
     error(err)
   end
 
-  -- Reset canvas to screen
-  love.graphics.setCanvas()
+  PixelRenderer.finish()
 
-  -- Apply lighting FIRST (before postprocessing effects)
-  -- Create intermediate canvas for lit scene
-  local litCanvas = love.graphics.newCanvas(worldCanvas:getWidth(), worldCanvas:getHeight())
-  love.graphics.setCanvas(litCanvas)
-  love.graphics.clear(0, 0, 0, 1)
-  love.graphics.draw(worldCanvas, 0, 0)
-
-  -- Apply lighting overlay (multiply blend)
-  local GameScene = require("src.scenes.game")
-  local lightWorld = GameScene.lightWorld
-  if lightWorld and lightWorld.drawOverlay then
-    lightWorld.drawOverlay()
+  -- STEP 3: Apply postprocessing effects to pixel canvas
+  if not postprocessCanvas then
+    postprocessCanvas = love.graphics.newCanvas(screenW, screenH)
   end
 
-  -- Reset canvas to screen
+  love.graphics.setCanvas(postprocessCanvas)
+  love.graphics.clear(0, 0, 0, 1)
+
+  -- Draw pixel canvas to full screen resolution for postprocessing
+  local pixelCanvas = PixelRenderer.getCanvas()
+  if pixelCanvas then
+    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+    local scale = PixelRenderer.getScale()
+    -- Round to integers to ensure pixel-perfect alignment
+    local drawX = math.floor((screenW - canvasW * scale) / 2 + 0.5)
+    local drawY = math.floor((screenH - canvasH * scale) / 2 + 0.5)
+
+    love.graphics.draw(pixelCanvas, drawX, drawY, 0, scale, scale)
+  end
   love.graphics.setCanvas()
 
-  -- Apply all postprocessing effects to the lit scene
-  love.graphics.clear(0, 0, 0, 1)
-  PostprocessingManager.apply(litCanvas, nil)
+  -- Apply postprocessing effects
+  PostprocessingManager.apply(postprocessCanvas)
 
-  -- Cleanup intermediate canvas
-  litCanvas:release()
-
-  -- Draw UI after postprocessing (unaffected by effects)
+  -- STEP 4: Draw UI at full resolution (unaffected by pixel scaling)
   local success2, err2 = pcall(function()
-    local GameScene = require("src.scenes.game")
     GameScene.drawUI(gameState)
   end)
 

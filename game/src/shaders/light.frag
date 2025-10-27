@@ -52,7 +52,7 @@ vec4 effect(vec4 color, Image tex, vec2 textureCoords, vec2 screenCoords)
         float dist = distance(screenCoords, lightPos);
 
         // Calculate stepped pixel-art falloff (3 brightness rings)
-        float falloff = pixelFalloff(dist, radius, 3.0);
+        float falloff = pixelFalloff(dist, radius, 8.0);
 
         // Accumulate light contribution
         accumulatedLight += lc.rgb * falloff * intensity;
