@@ -3,6 +3,7 @@ local GameController = require("src.core.GameController")
 local gameState = require("src.core.GameState")
 local SoundManager = require("src.core.managers.SoundManager")
 local CursorManager = require("src.core.managers.CursorManager")
+local PostprocessingManager = require("src.core.managers.PostprocessingManager")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
@@ -10,6 +11,10 @@ _G.CursorManager = CursorManager -- Make CursorManager globally accessible
 
 -- Load Lovebird for debugging
 local lovebird = require("lovebird")
+
+-- World canvas for postprocessing
+local worldCanvas = nil
+local postprocessCanvas = nil
 
 -- Parallax background state
 local parallaxBg = {
@@ -28,6 +33,21 @@ local parallaxBg = {
   parallaxFactorY = 1.5 -- Vertical parallax factor
 }
 
+
+local function createRenderCanvases(screenW, screenH)
+  local newWorldCanvas = love.graphics.newCanvas(screenW, screenH)
+  local newPostprocessCanvas = love.graphics.newCanvas(screenW, screenH)
+
+  if worldCanvas then
+    worldCanvas:release()
+  end
+  if postprocessCanvas then
+    postprocessCanvas:release()
+  end
+
+  worldCanvas = newWorldCanvas
+  postprocessCanvas = newPostprocessCanvas
+end
 
 function love.load()
   -- Load parallax background sprite sheet
@@ -74,57 +94,167 @@ function love.load()
   end
 
   overlayStats.load() -- Should always be called last
+
+  -- Create world canvas for postprocessing
+  local screenW, screenH = love.graphics.getDimensions()
+  createRenderCanvases(screenW, screenH)
+
+  -- Initialize lighting at full resolution
+  local WorldLight = require("src.utils.worldlight")
+  WorldLight.init(screenW, screenH)
+
+  -- Initialize bloom effect
+  local BloomEffect = require("src.effects.BloomEffect")
+  local bloomEffect = BloomEffect.new(screenW, screenH)
+  bloomEffect:setThreshold(0.85)
+  bloomEffect:setStrength(12.0)
+  bloomEffect:setIntensity(3.0)
+
+  -- Register bloom with PostprocessingManager
+  PostprocessingManager.addComplexEffect("bloom", bloomEffect, true) -- enabled
+
+  -- Initialize color grading effect
+  local ShaderManager = require("src.core.managers.ShaderManager")
+  local colorGradingShader = ShaderManager.getShader("color_grade")
+  if colorGradingShader then
+    PostprocessingManager.addEffect("color_grading", colorGradingShader, {
+      factors = {1.0, 1.0, 1.0} -- RGB multipliers, neutral
+    }, false) -- disabled by default
+  end
+
+  -- Initialize vignette effect
+  local vignetteShader = ShaderManager.getShader("vignette")
+  if vignetteShader then
+    PostprocessingManager.addEffect("vignette", vignetteShader, {
+      radius = 0.95,
+      softness = 0.5,
+      opacity = .25,
+      color = {0.0, 0.0, 0.0, 1.0} -- Black vignette
+    }, true) -- enabled
+  end
 end
 
 
 function love.draw()
-  -- Clear the screen first
-  love.graphics.clear(0, 0, 0, 1)
+  -- Ensure canvas exists
+  if not worldCanvas then
+    return
+  end
 
-  -- Draw parallax scrolling background
-  if parallaxBg.image and #parallaxBg.quads > 0 then
-    local screenW = love.graphics.getWidth()
-    local screenH = love.graphics.getHeight()
-    local imgW = parallaxBg.frameWidth * parallaxBg.scale
-    local imgH = parallaxBg.frameHeight * parallaxBg.scale
+  local screenW, screenH = love.graphics.getDimensions()
 
-    -- Calculate how many times to tile the image
-    local tilesX = math.ceil(screenW / imgW) + 2
-    local tilesY = math.ceil(screenH / imgH) + 2
+  -- Ensure render canvases match current screen size
+  if not postprocessCanvas
+     or worldCanvas:getWidth() ~= screenW
+     or worldCanvas:getHeight() ~= screenH
+     or postprocessCanvas:getWidth() ~= screenW
+     or postprocessCanvas:getHeight() ~= screenH then
+    createRenderCanvases(screenW, screenH)
+  end
 
-    -- Apply camera-based parallax offset (moves slower than camera)
-    local cameraOffsetX = gameState.camera.x * parallaxBg.parallaxFactorX
-    local cameraOffsetY = gameState.camera.y * parallaxBg.parallaxFactorY
+  local currentSceneName = gameState.currentScene
+  local currentSceneModule = gameState.scenes[currentSceneName]
+  local isGameScene = currentSceneName == "game"
 
-    -- Combine automatic scroll with camera parallax
-    local totalOffsetX = (parallaxBg.offsetX + cameraOffsetX) % imgW
-    local totalOffsetY = cameraOffsetY % imgH
+  if isGameScene then
+    -- STEP 1 & 2: Draw parallax background and world content at full resolution
+    love.graphics.setCanvas(worldCanvas)
+    love.graphics.clear(0, 0, 0, 1)
 
-    -- Get current animation frame
-    local currentQuad = parallaxBg.quads[parallaxBg.currentFrame]
+    if parallaxBg.image and #parallaxBg.quads > 0 then
+      local imgW = parallaxBg.frameWidth * parallaxBg.scale
+      local imgH = parallaxBg.frameHeight * parallaxBg.scale
 
-    love.graphics.setColor(1, 1, 1, 0.5) -- Draw with some transparency
-    for y = -1, tilesY do
-      for x = -1, tilesX do
-        local drawX = (x * imgW) - totalOffsetX
-        local drawY = (y * imgH) - totalOffsetY
-        love.graphics.draw(parallaxBg.image, currentQuad, drawX, drawY, 0, parallaxBg.scale, parallaxBg.scale)
+      -- Calculate how many times to tile the image
+      local tilesX = math.ceil(screenW / imgW) + 2
+      local tilesY = math.ceil(screenH / imgH) + 2
+
+      -- Apply camera-based parallax offset (moves slower than camera)
+      local cameraOffsetX = gameState.camera.x * parallaxBg.parallaxFactorX
+      local cameraOffsetY = gameState.camera.y * parallaxBg.parallaxFactorY
+
+      -- Combine automatic scroll with camera parallax
+      local totalOffsetX = (parallaxBg.offsetX + cameraOffsetX) % imgW
+      local totalOffsetY = cameraOffsetY % imgH
+
+      -- Get current animation frame
+      local currentQuad = parallaxBg.quads[parallaxBg.currentFrame]
+
+      love.graphics.setColor(1, 1, 1, 0.5) -- Draw with some transparency
+      for y = -1, tilesY do
+        for x = -1, tilesX do
+          local drawX = (x * imgW) - totalOffsetX
+          local drawY = (y * imgH) - totalOffsetY
+          love.graphics.draw(parallaxBg.image, currentQuad, drawX, drawY, 0, parallaxBg.scale, parallaxBg.scale)
+        end
+      end
+      love.graphics.setColor(1, 1, 1, 1) -- Reset color
+    end
+
+    local GameScene = require("src.scenes.game")
+
+    local success, err = pcall(function()
+      -- Draw world content
+      GameScene.drawWorld(gameState)
+
+      -- Render darkness map and lighting overlay
+      if GameScene.lightWorld and GameScene.lightWorld.renderDarknessMap then
+        GameScene.lightWorld.renderDarknessMap(gameState.camera)
+      end
+      if GameScene.lightWorld and GameScene.lightWorld.drawOverlay then
+        GameScene.lightWorld.drawOverlay()
+      end
+    end)
+
+    if not success then
+      print("Error in GameScene.drawWorld():", err)
+      error(err)
+    end
+
+    love.graphics.setCanvas()
+
+    -- STEP 3: Apply postprocessing effects to full-resolution world canvas
+    if postprocessCanvas then
+      love.graphics.setCanvas(postprocessCanvas)
+      love.graphics.clear(0, 0, 0, 1)
+      love.graphics.draw(worldCanvas, 0, 0)
+      love.graphics.setCanvas()
+
+      -- Apply postprocessing effects
+      PostprocessingManager.apply(postprocessCanvas)
+    end
+
+    -- Draw screen-space effects AFTER postprocessing (e.g., aim line)
+    if GameScene.drawAimLine then
+      GameScene.drawAimLine(gameState)
+    end
+
+    -- STEP 4: Draw UI at full resolution (unaffected by pixel scaling)
+    local success2, err2 = pcall(function()
+      GameScene.drawUI(gameState)
+    end)
+
+    if not success2 then
+      print("Error in GameScene.drawUI():", err2)
+      error(err2)
+    end
+  else
+    love.graphics.setCanvas()
+    love.graphics.clear(0, 0, 0, 1)
+
+    if currentSceneModule and currentSceneModule.draw then
+      local successSceneDraw, errSceneDraw = pcall(function()
+        currentSceneModule.draw(gameState)
+      end)
+
+      if not successSceneDraw then
+        print(string.format("Error in %s.draw():", currentSceneName), errSceneDraw)
+        error(errSceneDraw)
       end
     end
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color
   end
 
-  -- Draw via controller
-  local success, err = pcall(function()
-    GameController.draw()
-  end)
-
-  if not success then
-    print("Error in GameController.draw():", err)
-    error(err)
-  end
-
-  -- Pass camera position and scale for world space gridlines
+  -- Draw overlayStats on top
   overlayStats.draw(gameState.camera.x, gameState.camera.y, gameState.camera.scale)
 end
 

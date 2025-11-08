@@ -5,7 +5,9 @@
 ---@field PLAYER_WIDTH number
 ---@field PLAYER_HEIGHT number
 ---@field PLAYER_SPEED number
----@field CAMERA_SCALE number
+---@field BASE_RENDER_WIDTH number
+---@field BASE_RENDER_HEIGHT number
+---@field ZOOM_SCALE number
 local GameConstants = {}
 
 -- Tile size (used for coordinate conversion)
@@ -40,8 +42,16 @@ GameConstants.PLAYER_WIDTH = 24
 GameConstants.PLAYER_HEIGHT = 24
 GameConstants.PLAYER_SPEED = 80 -- player speed in pixels per second
 
--- Camera constants
-GameConstants.CAMERA_SCALE = 3 -- Zoomed out to see more of the worldw
+-- Base render resolution (before scaling)
+GameConstants.BASE_RENDER_WIDTH = 160
+GameConstants.BASE_RENDER_HEIGHT = 90
+
+-- Zoom constants (controls render resolution multiplier)
+-- 1 = 160×90 (most pixelated)
+-- 2 = 320×180 (balanced)
+-- 3 = 480×270 (more detail)
+-- 4 = 640×360 (most detail, largest view)
+GameConstants.ZOOM_SCALE = 4
 
 
 return GameConstants

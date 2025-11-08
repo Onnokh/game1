@@ -44,9 +44,9 @@ function RenderSystem:draw()
             -- Set color
             love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
 
-            -- Calculate final position with offset
-            local x = position.x + spriteRenderer.offsetX
-            local y = position.y + spriteRenderer.offsetY
+            -- Calculate final position with offset, rounded to whole pixels
+            local x = math.floor(position.x + spriteRenderer.offsetX + 0.5)
+            local y = math.floor(position.y + spriteRenderer.offsetY + 0.5)
 
             -- If Animator exists and sheet is loaded with Iffy, draw that frame
             local animator = entity:getComponent("Animator")

@@ -56,6 +56,8 @@ SaveSystem.componentRegistry = {
     FlashEffect = { persistent = false },
     ParticleSystem = { persistent = false },
     Knockback = { persistent = false }, -- Transient state
+    MinimapIcon = { persistent = false }, -- UI-only marker data, recreated from entity factories
+    FootprintsEmitter = { persistent = false }, -- Visual-only effect emitter
 
     -- Components with custom serialization can be added here if needed
     -- Most components should implement serialize() method instead

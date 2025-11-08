@@ -69,14 +69,12 @@ function InteractionPromptSystem:draw()
     local r, g, b, a = love.graphics.getColor()
 
     -- Convert world position to screen coordinates
-    local screenX, screenY = self.currentPrompt.worldX, self.currentPrompt.worldY
-    if gameState and gameState.camera and gameState.camera.toScreen then
-        screenX, screenY = gameState.camera:toScreen(self.currentPrompt.worldX, self.currentPrompt.worldY)
-    end
+    local CoordinateUtils = require("src.utils.coordinates")
+    local screenX, screenY = CoordinateUtils.worldToScreen(self.currentPrompt.worldX, self.currentPrompt.worldY, gameState.camera)
 
     -- Choose a camera-scaled crisp font
     local cameraScale = (gameState and gameState.camera and gameState.camera.scale) or 1
-    local basePx = 6
+    local basePx = 18  -- Scaled up from 6 to account for coordinate conversion scaling
     local font = select(1, fonts.getCameraScaled(basePx, cameraScale, 8))
     local prevFont = love.graphics.getFont()
 

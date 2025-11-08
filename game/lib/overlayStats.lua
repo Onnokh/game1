@@ -216,16 +216,14 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
   -- Save current graphics state
   love.graphics.push("all")
 
-  -- Apply camera transform aligned with gamera (use top-left world position)
-  local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
-  local topLeftX = cameraX - (halfW / scale)
-  local topLeftY = cameraY - (halfH / scale)
-  love.graphics.scale(scale, scale)
-  love.graphics.translate(-topLeftX, -topLeftY)
-
   -- Set gridline color (semi-transparent white)
   love.graphics.setColor(1, 1, 1, 0.3)
   love.graphics.setLineWidth(1)
+
+  -- Use camera's draw method for proper coordinate transformation
+  local gameState = require("src.core.GameState")
+  if gameState and gameState.camera then
+    gameState.camera:draw(function()
 
   -- Try to get world bounds from MapManager
   local worldMinX, worldMinY, worldMaxX, worldMaxY
@@ -243,6 +241,9 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
     end
   else
     -- Fallback to camera-based bounds
+    local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
+    local topLeftX = cameraX - (halfW / scale)
+    local topLeftY = cameraY - (halfH / scale)
     worldMinX = topLeftX
     worldMinY = topLeftY
     worldMaxX = topLeftX + width / scale
@@ -267,6 +268,8 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
 
   -- Reset color
   love.graphics.setColor(1, 1, 1, 1)
+    end) -- Close camera:draw callback
+  end -- Close if gameState check
 
   -- Restore graphics state
   love.graphics.pop()
@@ -673,6 +676,9 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
   local screenWidth, screenHeight = love.graphics.getDimensions()
   local halfW, halfH = screenWidth / 2, screenHeight / 2
 
+  -- Import CoordinateUtils for proper coordinate conversion
+  local CoordinateUtils = require("src.utils.coordinates")
+
   -- Use main font for better readability
   if overlayFontMain then
     love.graphics.setFont(overlayFontMain)
@@ -700,17 +706,15 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
           prevWorldX, prevWorldY = pathfindingCollision:getCenterPosition()
         end
 
-        -- Convert to screen coordinates
-        local prevScreenX = halfW + (prevWorldX - cameraX) * scale
-        local prevScreenY = halfH + (prevWorldY - cameraY) * scale
+        -- Convert to screen coordinates using CoordinateUtils
+        local prevScreenX, prevScreenY = CoordinateUtils.worldToScreen(prevWorldX, prevWorldY, gameState.camera)
 
         -- Draw line from skeleton to first waypoint
         if pathfinding.pathIndex <= #pathfinding.currentPath._nodes then
           local firstNode = pathfinding.currentPath._nodes[pathfinding.pathIndex]
           local firstWorldX = (firstNode._x - 1) * tileSize + tileSize / 2
           local firstWorldY = (firstNode._y - 1) * tileSize + tileSize / 2
-          local firstScreenX = halfW + (firstWorldX - cameraX) * scale
-          local firstScreenY = halfH + (firstWorldY - cameraY) * scale
+          local firstScreenX, firstScreenY = CoordinateUtils.worldToScreen(firstWorldX, firstWorldY, gameState.camera)
 
           love.graphics.line(prevScreenX, prevScreenY, firstScreenX, firstScreenY)
           prevScreenX, prevScreenY = firstScreenX, firstScreenY
@@ -721,8 +725,7 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
           local node = pathfinding.currentPath._nodes[i]
           local worldX = (node._x - 1) * tileSize + tileSize / 2
           local worldY = (node._y - 1) * tileSize + tileSize / 2
-          local screenX = halfW + (worldX - cameraX) * scale
-          local screenY = halfH + (worldY - cameraY) * scale
+          local screenX, screenY = CoordinateUtils.worldToScreen(worldX, worldY, gameState.camera)
 
           love.graphics.line(prevScreenX, prevScreenY, screenX, screenY)
           prevScreenX, prevScreenY = screenX, screenY
@@ -735,8 +738,7 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
           local node = pathfinding.currentPath._nodes[i]
           local worldX = (node._x - 1) * tileSize + tileSize / 2
           local worldY = (node._y - 1) * tileSize + tileSize / 2
-          local screenX = halfW + (worldX - cameraX) * scale
-          local screenY = halfH + (worldY - cameraY) * scale
+          local screenX, screenY = CoordinateUtils.worldToScreen(worldX, worldY, gameState.camera)
 
           -- Only draw if waypoint is on screen
           if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
@@ -749,8 +751,7 @@ function overlayStats.drawPathfindingDebug(cameraX, cameraY, cameraScale)
 
       -- Draw target destination even if no path (e.g., direct chase)
       if pathfinding.targetX and pathfinding.targetY then
-        local targetScreenX = halfW + (pathfinding.targetX - cameraX) * scale
-        local targetScreenY = halfH + (pathfinding.targetY - cameraY) * scale
+        local targetScreenX, targetScreenY = CoordinateUtils.worldToScreen(pathfinding.targetX, pathfinding.targetY, gameState.camera)
 
         -- Only draw if target is on screen
         if targetScreenX >= 0 and targetScreenX <= screenWidth and targetScreenY >= 0 and targetScreenY <= screenHeight then
@@ -850,6 +851,9 @@ function overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
   local screenWidth, screenHeight = love.graphics.getDimensions()
   local halfW, halfH = screenWidth / 2, screenHeight / 2
 
+  -- Import CoordinateUtils for proper coordinate conversion
+  local CoordinateUtils = require("src.utils.coordinates")
+
   -- Query all entities with Position, SpriteRenderer, and StateMachine components
   local entitiesWithSprites = gameScene.ecsWorld:getEntitiesWith({"Position", "SpriteRenderer", "StateMachine"})
 
@@ -874,9 +878,8 @@ function overlayStats.drawEntityStateOverlays(cameraX, cameraY, cameraScale)
       local worldX = position.x + spriteRenderer.offsetX + (spriteRenderer.width / 2)
       local worldY = position.y + spriteRenderer.offsetY
 
-      -- Convert to screen coordinates (camera is centered)
-      local screenX = halfW + (worldX - cameraX) * scale
-      local screenY = halfH + (worldY - cameraY) * scale
+      -- Convert to screen coordinates using CoordinateUtils
+      local screenX, screenY = CoordinateUtils.worldToScreen(worldX, worldY, gameState.camera)
 
       -- Only draw if entity is on screen
       if screenX >= 0 and screenX <= screenWidth and screenY >= 0 and screenY <= screenHeight then
@@ -903,14 +906,11 @@ function overlayStats.drawMouseTileCoordinates(cameraX, cameraY, cameraScale)
     return
   end
 
-  local scale = cameraScale or 1.0
+  -- Convert mouse screen position to world position using CoordinateUtils
+  local CoordinateUtils = require("src.utils.coordinates")
   local mouseX, mouseY = love.mouse.getPosition()
-  local screenWidth, screenHeight = love.graphics.getDimensions()
-  local halfW, halfH = screenWidth / 2, screenHeight / 2
-
-  -- Convert mouse screen position to world position
-  local worldX = cameraX + (mouseX - halfW) / scale
-  local worldY = cameraY + (mouseY - halfH) / scale
+  local gameState = require("src.core.GameState")
+  local worldX, worldY = CoordinateUtils.screenToWorld(mouseX, mouseY, gameState.camera)
 
   -- Convert world position to tile coordinates
   local GameConstants = require("src.constants")
@@ -1010,17 +1010,21 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
           local worldX = (gridX - 1) * tileSize
           local worldY = (gridY - 1) * tileSize
 
-          -- Convert to screen coordinates
-          local screenX = halfW + (worldX - cameraX) * scale
-          local screenY = halfH + (worldY - cameraY) * scale
+          -- Convert to screen coordinates using CoordinateUtils
+          local screenX, screenY = CoordinateUtils.worldToScreen(worldX, worldY, GameState.camera)
 
           -- Only draw if visible
-          if screenX >= -tileSize * scale and screenX <= screenWidth and
-             screenY >= -tileSize * scale and screenY <= screenHeight then
+          if screenX >= -tileSize and screenX <= screenWidth and
+             screenY >= -tileSize and screenY <= screenHeight then
 
-            -- Draw tile border
+            -- Draw tile border (use actual tile size in screen space)
             love.graphics.setColor(0.5, 0.8, 1, 0.4)
-            love.graphics.rectangle("line", screenX, screenY, tileSize * scale, tileSize * scale)
+            -- Note: tiles are now in screen coordinates, derive size from camera transform
+            local screenX2 = select(1, CoordinateUtils.worldToScreen(worldX + tileSize, worldY, GameState.camera))
+            local screenY2 = select(2, CoordinateUtils.worldToScreen(worldX, worldY + tileSize, GameState.camera))
+            local tileScreenWidth = screenX2 and math.abs(screenX2 - screenX) or tileSize
+            local tileScreenHeight = screenY2 and math.abs(screenY2 - screenY) or tileSize
+            love.graphics.rectangle("line", screenX, screenY, tileScreenWidth, tileScreenHeight)
 
             -- Draw GID
             love.graphics.setColor(1, 1, 1, 1)
@@ -1028,7 +1032,7 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
 
             -- Show walkable status
             local status = tile.walkable and "W" or "B"
-            love.graphics.print(status, screenX + tileSize * scale - 12, screenY + tileSize * scale - 12)
+            love.graphics.print(status, screenX + tileScreenWidth - 12, screenY + tileScreenHeight - 12)
           end
         end
       end
