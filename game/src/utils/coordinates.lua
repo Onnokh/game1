@@ -18,7 +18,6 @@ end
 ---Convert grid coordinates to world coordinates
 ---@param gridX number Grid X coordinate
 ---@param gridY number Grid Y coordinate
----@param tileSize number Size of each tile
 ---@return number worldX
 ---@return number worldY
 function CoordinateUtils.gridToWorld(gridX, gridY)
@@ -106,6 +105,32 @@ function CoordinateUtils.clampToGridBounds(gridX, gridY, grid)
     local clampedGridY = math.max(minY, math.min(gridY, maxY))
 
     return clampedGridX, clampedGridY
+end
+
+---Convert world coordinates to screen coordinates
+---@param worldX number World X coordinate
+---@param worldY number World Y coordinate
+---@param camera table Gamera camera instance
+---@return number screenX, number screenY
+function CoordinateUtils.worldToScreen(worldX, worldY, camera)
+    if not camera or not camera.toScreen then
+        return worldX, worldY
+    end
+
+    return camera:toScreen(worldX, worldY)
+end
+
+---Convert screen coordinates to world coordinates
+---@param screenX number Screen X coordinate
+---@param screenY number Screen Y coordinate
+---@param camera table Gamera camera instance
+---@return number worldX, number worldY
+function CoordinateUtils.screenToWorld(screenX, screenY, camera)
+    if not camera or not camera.toWorld then
+        return screenX, screenY
+    end
+
+    return camera:toWorld(screenX, screenY)
 end
 
 return CoordinateUtils

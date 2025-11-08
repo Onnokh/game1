@@ -4,10 +4,13 @@ local GameScene = {}
 -- Scene state
 local world = {} -- For pathfinding and collision detection
 local GameConstants = require("src.constants")
+---@type PlayerConfig
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
 local MapManager = require("src.core.managers.MapManager")
 local BridgeManager = require("src.core.managers.BridgeManager")
+local CameraManager = require("src.core.managers.CameraManager")
 local GameState = require("src.core.GameState")
 
 -- ECS System
@@ -57,6 +60,16 @@ local playerCollider = nil
 local lightWorld = nil
 local mouseFacingSystemAdded = false -- Track if MouseFacingSystem has been added
 
+---@type LookAheadController
+local cameraLookAheadController
+cameraLookAheadController = CameraManager.createLookAheadController({
+  maxDistance = PlayerConfig.AIM_LINE_MAX_LENGTH or 100,
+  lookAheadDistance = PlayerConfig.CAMERA_LOOK_AHEAD_DISTANCE or PlayerConfig.AIM_LINE_MAX_LENGTH or 100,
+  deadzone = (PlayerConfig.CAMERA_LOOK_AHEAD_DEADZONE_FACTOR or 0.15) * GameConstants.TILE_SIZE,
+  smoothSpeed = PlayerConfig.CAMERA_LOOK_AHEAD_SMOOTH_SPEED or 10
+})
+---@cast cameraLookAheadController LookAheadController
+
 -- Physics
 local physicsWorld = nil
 local borderColliders = {}
@@ -69,21 +82,49 @@ GameScene.ecsWorld = ecsWorld
 GameScene.monsters = monsters
 GameScene.lightWorld = nil
 
+local function calculateDefaultCameraScale()
+  local baseWidth = (GameConstants.BASE_RENDER_WIDTH or 160) * (GameConstants.ZOOM_SCALE or 1)
+  local baseHeight = (GameConstants.BASE_RENDER_HEIGHT or 90) * (GameConstants.ZOOM_SCALE or 1)
+  local screenW, screenH = love.graphics.getDimensions()
+
+  if baseWidth <= 0 or baseHeight <= 0 or screenW <= 0 or screenH <= 0 then
+    return 1.0
+  end
+
+  local widthScale = screenW / baseWidth
+  local heightScale = screenH / baseHeight
+  local scale = math.min(widthScale, heightScale)
+
+  if scale <= 0 or scale ~= scale then
+    return 1.0
+  end
+
+  return scale
+end
+
 -- Initialize the game scene
 function GameScene.load()
   sprites.load()
   ShaderManager.loadDefaultShaders()
 
+  if cameraLookAheadController then
+    ---@diagnostic disable-next-line:undefined-field
+    cameraLookAheadController:reset()
+  end
+
   -- Initialize physics world (gravity: 0, 0 for top-down game)
   physicsWorld = love.physics.newWorld(0, 0, true)
   GameScene.physicsWorld = physicsWorld
 
-  -- Initialize Luven lighting system via WorldLight manager
-  WorldLight.init()
+  -- Get lighting system (initialized in main.lua with pixel canvas dimensions)
   lightWorld = WorldLight.get()
   GameScene.lightWorld = lightWorld
 
-  -- Initialize ECS world with physics reference (Luven doesn't need lightWorld reference)
+  -- Set dark ambient but not pitch black (20% brightness = 80% darkness)
+  -- This allows lights to be visible
+  WorldLight.setAmbientColor(120, 120, 120, 255, 0) -- R,G,B values 0-255 (20% brightness), final argument = duration (0 = instant)
+
+  -- Initialize ECS world with physics reference
   ecsWorld = World.new(physicsWorld, lightWorld, false)
   -- Initialize UI world (separate from ECS, with drawOrder enabled for z-layering)
   uiWorld = World.new(nil, nil, true)
@@ -92,7 +133,6 @@ function GameScene.load()
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(TriggerZoneSystem.new()) -- Handle trigger zone callbacks
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
-  -- EnemySpawnerSystem moved after PathfindingSystem (line 221) so it can access the grid
   ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
@@ -117,7 +157,12 @@ function GameScene.load()
   ecsWorld:addSystem(DashShadowRenderSystem.new()) -- Render dash shadows
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals
   ecsWorld:addSystem(ParticleRenderSystem.new()) -- Render particles above sprites
-  ecsWorld:addSystem(AimLineRenderSystem.new()) -- Draw aiming line for ranged weapons
+  -- Note: AimLineRenderSystem is a screen-space system but needs to stay in ECS world
+  -- to access player and physics world for raycasting
+  local aimLineSystem = AimLineRenderSystem.new()
+  aimLineSystem.isWorldSpace = false
+  ecsWorld:addSystem(aimLineSystem) -- Draw aiming line for ranged weapons
+  GameScene.aimLineSystem = aimLineSystem
 
   -- Debug: count RenderSystem instances
   do
@@ -302,18 +347,35 @@ function GameScene.update(dt, gameState)
       GameScene.playerCollider = playerCollider
     end
 
-    -- Set camera position centered on player sprite
+  end
+
+  -- Use debug camera scale if set, otherwise derive from zoom settings
+  local overlayStats = require("lib.overlayStats")
+  local defaultScale = calculateDefaultCameraScale()
+  local targetScale = overlayStats.debugCameraScale or defaultScale
+  gameState.camera:setScale(targetScale)
+
+  -- Set camera position centered on player sprite AFTER scale is set
+  -- This ensures the position clamping respects the correct zoom level
+  if playerEntity then
+    local position = playerEntity:getComponent("Position")
+    local spriteRenderer = playerEntity:getComponent("SpriteRenderer")
     if position and spriteRenderer then
       local centerX = position.x + spriteRenderer.width / 2
       local centerY = position.y + spriteRenderer.height / 2
-      gameState.camera:setPosition(centerX, centerY)
+      local aimX, aimY = centerX, centerY
+      if gameState and gameState.input then
+        aimX = gameState.input.mouseX or centerX
+        aimY = gameState.input.mouseY or centerY
+      end
+      if cameraLookAheadController then
+        ---@diagnostic disable-next-line:undefined-field
+        cameraLookAheadController:update(gameState.camera, centerX, centerY, aimX, aimY, dt)
+      else
+        gameState.camera:setPosition(centerX, centerY)
+      end
     end
   end
-
-  -- Use debug camera scale if set, otherwise use constant
-  local overlayStats = require("lib.overlayStats")
-  local targetScale = overlayStats.debugCameraScale or GameConstants.CAMERA_SCALE
-  gameState.camera:setScale(targetScale)
 
   -- Update world light (position and ambient tween)
   WorldLight.update(dt, gameState.camera)
@@ -378,8 +440,8 @@ function GameScene.mousepressed(x, y, button, gameState)
   if button == 2 then -- Right click
     print("Right click at:", x, y)
     -- Add a monster at click position (convert screen to world coordinates)
-    local worldX = gameState.camera.x + (x - love.graphics.getWidth() / 2) / gameState.camera.scale
-    local worldY = gameState.camera.y + (y - love.graphics.getHeight() / 2) / gameState.camera.scale
+    local CoordinateUtils = require("src.utils.coordinates")
+    local worldX, worldY = CoordinateUtils.screenToWorld(x, y, gameState.camera)
     GameScene.addMonster(worldX, worldY, "warhog")
   end
 
@@ -418,16 +480,10 @@ function GameScene.handleKeyPressed(key, gameState)
   return false
 end
 
--- Draw the game scene
-function GameScene.draw(gameState)
-  local WorldLight = require("src.utils.worldlight")
-  local luven = WorldLight.get()
-
-  -- Apply camera transform for world rendering and light positions
+-- Draw world content only (no UI) - for postprocessing pipeline
+function GameScene.drawWorld(gameState)
+  -- Apply camera transform for world rendering
   gameState.camera:draw(function()
-    -- Begin Luven lighting (renders lights to lightmap in world space)
-    luven.drawBegin()
-
     -- Draw all islands using MapManager (with camera frustum culling)
     MapManager.draw(gameState.camera)
 
@@ -436,26 +492,26 @@ function GameScene.draw(gameState)
     local map = baseIsland and baseIsland.map
     BridgeManager.draw(map)
 
-    -- Draw ECS entities
+    -- Draw ECS entities (world-space systems only)
     if ecsWorld then
-      ecsWorld:draw()
+      ecsWorld:drawWorldSpace()
     end
-  end)
 
-  -- End Luven lighting (applies lightmap in screen space, outside camera transform)
-  luven.drawEnd()
-  -- Draw UI elements
-  if uiWorld then
-    -- First draw world-space UI elements (health bars) inside camera transform
-    gameState.camera:draw(function()
+    -- Draw world-space UI elements (health bars) inside camera transform
+    if uiWorld then
       for _, system in ipairs(uiWorld.systems) do
         if system.isWorldSpace then
           system:draw()
         end
       end
-    end)
+    end
+  end)
+end
 
-    -- Then draw screen-space UI elements (HUD, menus) outside camera transform
+-- Draw UI elements only
+function GameScene.drawUI(gameState)
+  if uiWorld then
+    -- Draw screen-space UI elements (HUD, menus) outside camera transform
     -- Use uiWorld:draw() which respects drawOrder for z-layering
     love.graphics.push()
     love.graphics.origin()
@@ -484,6 +540,40 @@ function GameScene.draw(gameState)
 
     love.graphics.pop()
   end
+
+  -- Draw screen-space ECS systems (e.g., aim line)
+  if ecsWorld then
+    love.graphics.push()
+    love.graphics.origin()
+    for _, system in ipairs(ecsWorld.systems) do
+      if system.isWorldSpace == false and system ~= GameScene.aimLineSystem then
+        system:draw()
+      end
+    end
+    love.graphics.pop()
+  end
+end
+
+function GameScene.drawAimLine(gameState)
+  if not GameScene.aimLineSystem then
+    return
+  end
+
+  -- Ensure the system has world reference
+  if not GameScene.aimLineSystem.world and ecsWorld then
+    GameScene.aimLineSystem:setWorld(ecsWorld)
+  end
+
+  love.graphics.push()
+  love.graphics.origin()
+  GameScene.aimLineSystem:draw()
+  love.graphics.pop()
+end
+
+-- Draw everything (for backward compatibility)
+function GameScene.draw(gameState)
+  GameScene.drawWorld(gameState)
+  GameScene.drawUI(gameState)
 end
 
 -- Cleanup the game scene when switching away

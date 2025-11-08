@@ -33,7 +33,7 @@ function FireflyFactory.create(x, y, ecsWorld)
     local driftSpeed = 10 + seed * 10  -- 10-20 drift speed
     firefly:addComponent("Firefly", Firefly.new(0, vy, lifetime, driftSpeed))
 
-    -- Add light component with small warm yellow color and flicker
+    -- Add light component with small warm yellow color
     local lightOpts = {
         radius = size*3,  -- Small but visible radius
         r = 255,
@@ -42,11 +42,7 @@ function FireflyFactory.create(x, y, ecsWorld)
         a = 20,  -- Start with very low opacity for fade-in effect
         offsetX = size / 2,
         offsetY = size / 2,
-        enabled = true,
-        flicker = true,
-        flickerSpeed = 8,  -- Moderate flicker speed
-        flickerRadiusAmplitude = 2,  -- Small radius variation
-        flickerAlphaAmplitude = 30
+        enabled = true
     }
 
     firefly:addComponent("Light", Light.new(lightOpts))

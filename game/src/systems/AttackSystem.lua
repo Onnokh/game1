@@ -2,7 +2,6 @@ local System = require("src.core.System")
 local GameState = require("src.core.GameState")
 local EntityUtils = require("src.utils.entities")
 local Knockback = require("src.components.Knockback")
-local luven = require("lib.luven.luven")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 
 ---@class AttackSystem : System
