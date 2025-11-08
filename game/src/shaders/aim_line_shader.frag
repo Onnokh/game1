@@ -3,6 +3,10 @@ uniform vec2 endPos;
 uniform vec2 targetPos;
 uniform float time;
 uniform bool isHit;
+uniform float time;
+uniform float particleFrequency;
+uniform float particleSpeed;
+uniform float particleStrength;
 
 uniform float animationSpeed;
 uniform float dotRadius;
@@ -68,8 +72,32 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
         vec2 endPoint = startPos + lineNorm * lineLength;
         vec2 toEnd = screen_coords - endPoint;
 
+<<<<<<< Updated upstream
         // Calculate distance from end point
         float distFromEnd = length(toEnd);
+=======
+    // Foggy particles drifting along the beam
+    float axialProgress = clamp(distAlongLine / max(lineLength, 0.0001), 0.0, 1.0);
+    float radialMask = 1.0 - smoothstep(innerEdge, outerEdge, distToSegment);
+
+    float axialDistance = max(distAlongLine, 0.0);
+    float streakPos = fract(axialDistance * particleFrequency - time * particleSpeed);
+    float streakBand = smoothstep(0.0, 0.25, streakPos) * (1.0 - smoothstep(0.65, 1.0, streakPos));
+
+    float swirl = sin(axialDistance * particleFrequency * 1.1 + distToSegment * 6.0 - time * particleSpeed * 1.3) * 0.5 + 0.5;
+    float particleMask = streakBand * swirl * radialMask;
+
+    float particleContribution = particleMask * particleStrength;
+    vec3 particleColor = beamColor + vec3(0.5, 0.18, 0.18);
+    finalColor += particleColor * particleContribution;
+    intensity = max(intensity, beamFactor + particleContribution * 0.6);
+
+    if (isHit) {
+        float distToEnd = length(screen_coords - endPos);
+        float tipRadius = max(beamWidth * 1.5, 4.0);
+        float innerEdge = max(tipRadius - 0.5, 0.0);
+        float dotFactor = 1.0 - smoothstep(innerEdge, tipRadius, distToEnd);
+>>>>>>> Stashed changes
 
         // Draw crosshair texture within a larger radius to show the full crosshair
         if (distFromEnd < 120.0) {
