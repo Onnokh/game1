@@ -95,7 +95,6 @@ function GameScene.load()
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(TriggerZoneSystem.new()) -- Handle trigger zone callbacks
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
-  -- EnemySpawnerSystem moved after PathfindingSystem (line 221) so it can access the grid
   ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
@@ -125,6 +124,7 @@ function GameScene.load()
   local aimLineSystem = AimLineRenderSystem.new()
   aimLineSystem.isWorldSpace = false
   ecsWorld:addSystem(aimLineSystem) -- Draw aiming line for ranged weapons
+  GameScene.aimLineSystem = aimLineSystem
 
   -- Debug: count RenderSystem instances
   do
@@ -496,9 +496,38 @@ function GameScene.drawUI(gameState)
   if ecsWorld then
     love.graphics.push()
     love.graphics.origin()
-    ecsWorld:drawScreenSpace()
+    for _, system in ipairs(ecsWorld.systems) do
+      if system.isWorldSpace == false and system ~= GameScene.aimLineSystem then
+        system:draw()
+      end
+    end
     love.graphics.pop()
   end
+end
+
+function GameScene.drawAimLine(gameState)
+  if not GameScene.aimLineSystem then
+    return
+  end
+
+  -- Ensure the system has world reference
+  if not GameScene.aimLineSystem.world and ecsWorld then
+    GameScene.aimLineSystem:setWorld(ecsWorld)
+  end
+
+  -- Temporarily set camera window to pixel canvas dimensions for correct coordinate conversion
+  local PixelRenderer = require("src.utils.PixelRenderer")
+  local oldX, oldY, oldW, oldH = gameState.camera:getWindow()
+  local canvasW, canvasH = PixelRenderer.getBaseDimensions()
+  gameState.camera:setWindow(0, 0, canvasW, canvasH)
+
+  love.graphics.push()
+  love.graphics.origin()
+  GameScene.aimLineSystem:draw()
+  love.graphics.pop()
+
+  -- Restore camera window
+  gameState.camera:setWindow(oldX, oldY, oldW, oldH)
 end
 
 -- Draw everything (for backward compatibility)

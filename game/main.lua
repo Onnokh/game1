@@ -230,10 +230,16 @@ function love.draw()
 
     love.graphics.draw(pixelCanvas, drawX, drawY, 0, scale, scale)
   end
+
   love.graphics.setCanvas()
 
   -- Apply postprocessing effects
   PostprocessingManager.apply(postprocessCanvas)
+
+  -- Draw screen-space effects AFTER postprocessing (e.g., aim line)
+  if GameScene.drawAimLine then
+    GameScene.drawAimLine(gameState)
+  end
 
   -- STEP 4: Draw UI at full resolution (unaffected by pixel scaling)
   local success2, err2 = pcall(function()
