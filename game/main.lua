@@ -152,86 +152,106 @@ function love.draw()
     createRenderCanvases(screenW, screenH)
   end
 
-  -- STEP 1 & 2: Draw parallax background and world content at full resolution
-  love.graphics.setCanvas(worldCanvas)
-  love.graphics.clear(0, 0, 0, 1)
+  local currentSceneName = gameState.currentScene
+  local currentSceneModule = gameState.scenes[currentSceneName]
+  local isGameScene = currentSceneName == "game"
 
-  if parallaxBg.image and #parallaxBg.quads > 0 then
-    local imgW = parallaxBg.frameWidth * parallaxBg.scale
-    local imgH = parallaxBg.frameHeight * parallaxBg.scale
-
-    -- Calculate how many times to tile the image
-    local tilesX = math.ceil(screenW / imgW) + 2
-    local tilesY = math.ceil(screenH / imgH) + 2
-
-    -- Apply camera-based parallax offset (moves slower than camera)
-    local cameraOffsetX = gameState.camera.x * parallaxBg.parallaxFactorX
-    local cameraOffsetY = gameState.camera.y * parallaxBg.parallaxFactorY
-
-    -- Combine automatic scroll with camera parallax
-    local totalOffsetX = (parallaxBg.offsetX + cameraOffsetX) % imgW
-    local totalOffsetY = cameraOffsetY % imgH
-
-    -- Get current animation frame
-    local currentQuad = parallaxBg.quads[parallaxBg.currentFrame]
-
-    love.graphics.setColor(1, 1, 1, 0.5) -- Draw with some transparency
-    for y = -1, tilesY do
-      for x = -1, tilesX do
-        local drawX = (x * imgW) - totalOffsetX
-        local drawY = (y * imgH) - totalOffsetY
-        love.graphics.draw(parallaxBg.image, currentQuad, drawX, drawY, 0, parallaxBg.scale, parallaxBg.scale)
-      end
-    end
-    love.graphics.setColor(1, 1, 1, 1) -- Reset color
-  end
-
-  local GameScene = require("src.scenes.game")
-
-  local success, err = pcall(function()
-    -- Draw world content
-    GameScene.drawWorld(gameState)
-
-    -- Render darkness map and lighting overlay
-    if GameScene.lightWorld and GameScene.lightWorld.renderDarknessMap then
-      GameScene.lightWorld.renderDarknessMap(gameState.camera)
-    end
-    if GameScene.lightWorld and GameScene.lightWorld.drawOverlay then
-      GameScene.lightWorld.drawOverlay()
-    end
-  end)
-
-  if not success then
-    print("Error in GameScene.drawWorld():", err)
-    error(err)
-  end
-
-  love.graphics.setCanvas()
-
-  -- STEP 3: Apply postprocessing effects to full-resolution world canvas
-  if postprocessCanvas then
-    love.graphics.setCanvas(postprocessCanvas)
+  if isGameScene then
+    -- STEP 1 & 2: Draw parallax background and world content at full resolution
+    love.graphics.setCanvas(worldCanvas)
     love.graphics.clear(0, 0, 0, 1)
-    love.graphics.draw(worldCanvas, 0, 0)
+
+    if parallaxBg.image and #parallaxBg.quads > 0 then
+      local imgW = parallaxBg.frameWidth * parallaxBg.scale
+      local imgH = parallaxBg.frameHeight * parallaxBg.scale
+
+      -- Calculate how many times to tile the image
+      local tilesX = math.ceil(screenW / imgW) + 2
+      local tilesY = math.ceil(screenH / imgH) + 2
+
+      -- Apply camera-based parallax offset (moves slower than camera)
+      local cameraOffsetX = gameState.camera.x * parallaxBg.parallaxFactorX
+      local cameraOffsetY = gameState.camera.y * parallaxBg.parallaxFactorY
+
+      -- Combine automatic scroll with camera parallax
+      local totalOffsetX = (parallaxBg.offsetX + cameraOffsetX) % imgW
+      local totalOffsetY = cameraOffsetY % imgH
+
+      -- Get current animation frame
+      local currentQuad = parallaxBg.quads[parallaxBg.currentFrame]
+
+      love.graphics.setColor(1, 1, 1, 0.5) -- Draw with some transparency
+      for y = -1, tilesY do
+        for x = -1, tilesX do
+          local drawX = (x * imgW) - totalOffsetX
+          local drawY = (y * imgH) - totalOffsetY
+          love.graphics.draw(parallaxBg.image, currentQuad, drawX, drawY, 0, parallaxBg.scale, parallaxBg.scale)
+        end
+      end
+      love.graphics.setColor(1, 1, 1, 1) -- Reset color
+    end
+
+    local GameScene = require("src.scenes.game")
+
+    local success, err = pcall(function()
+      -- Draw world content
+      GameScene.drawWorld(gameState)
+
+      -- Render darkness map and lighting overlay
+      if GameScene.lightWorld and GameScene.lightWorld.renderDarknessMap then
+        GameScene.lightWorld.renderDarknessMap(gameState.camera)
+      end
+      if GameScene.lightWorld and GameScene.lightWorld.drawOverlay then
+        GameScene.lightWorld.drawOverlay()
+      end
+    end)
+
+    if not success then
+      print("Error in GameScene.drawWorld():", err)
+      error(err)
+    end
+
     love.graphics.setCanvas()
 
-    -- Apply postprocessing effects
-    PostprocessingManager.apply(postprocessCanvas)
-  end
+    -- STEP 3: Apply postprocessing effects to full-resolution world canvas
+    if postprocessCanvas then
+      love.graphics.setCanvas(postprocessCanvas)
+      love.graphics.clear(0, 0, 0, 1)
+      love.graphics.draw(worldCanvas, 0, 0)
+      love.graphics.setCanvas()
 
-  -- Draw screen-space effects AFTER postprocessing (e.g., aim line)
-  if GameScene.drawAimLine then
-    GameScene.drawAimLine(gameState)
-  end
+      -- Apply postprocessing effects
+      PostprocessingManager.apply(postprocessCanvas)
+    end
 
-  -- STEP 4: Draw UI at full resolution (unaffected by pixel scaling)
-  local success2, err2 = pcall(function()
-    GameScene.drawUI(gameState)
-  end)
+    -- Draw screen-space effects AFTER postprocessing (e.g., aim line)
+    if GameScene.drawAimLine then
+      GameScene.drawAimLine(gameState)
+    end
 
-  if not success2 then
-    print("Error in GameScene.drawUI():", err2)
-    error(err2)
+    -- STEP 4: Draw UI at full resolution (unaffected by pixel scaling)
+    local success2, err2 = pcall(function()
+      GameScene.drawUI(gameState)
+    end)
+
+    if not success2 then
+      print("Error in GameScene.drawUI():", err2)
+      error(err2)
+    end
+  else
+    love.graphics.setCanvas()
+    love.graphics.clear(0, 0, 0, 1)
+
+    if currentSceneModule and currentSceneModule.draw then
+      local successSceneDraw, errSceneDraw = pcall(function()
+        currentSceneModule.draw(gameState)
+      end)
+
+      if not successSceneDraw then
+        print(string.format("Error in %s.draw():", currentSceneName), errSceneDraw)
+        error(errSceneDraw)
+      end
+    end
   end
 
   -- Draw overlayStats on top

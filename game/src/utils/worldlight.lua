@@ -1,6 +1,8 @@
 local CustomLightRenderer = require("src.utils.CustomLightRenderer")
 
 local initialized = false
+local lastWidth = nil
+local lastHeight = nil
 
 local M = {}
 
@@ -10,6 +12,7 @@ function M.init(canvasWidth, canvasHeight)
   -- Initialize CustomLightRenderer with pixel canvas dimensions
   canvasWidth = canvasWidth or love.graphics.getWidth()
   canvasHeight = canvasHeight or love.graphics.getHeight()
+  lastWidth, lastHeight = canvasWidth, canvasHeight
   CustomLightRenderer.init(canvasWidth, canvasHeight)
 
   initialized = true
@@ -17,6 +20,9 @@ function M.init(canvasWidth, canvasHeight)
 end
 
 function M.get()
+  if not initialized then
+    M.init(lastWidth, lastHeight)
+  end
   return CustomLightRenderer
 end
 
@@ -36,6 +42,7 @@ function M.cleanup()
   -- Cleanup CustomLightRenderer
   CustomLightRenderer.cleanup()
   initialized = false
+  -- Preserve last known dimensions so we can reinitialize lazily on demand
 end
 
 return M
