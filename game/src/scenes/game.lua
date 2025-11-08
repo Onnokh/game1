@@ -4,10 +4,13 @@ local GameScene = {}
 -- Scene state
 local world = {} -- For pathfinding and collision detection
 local GameConstants = require("src.constants")
+---@type PlayerConfig
+local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
 local MapManager = require("src.core.managers.MapManager")
 local BridgeManager = require("src.core.managers.BridgeManager")
+local CameraManager = require("src.core.managers.CameraManager")
 local GameState = require("src.core.GameState")
 
 -- ECS System
@@ -57,6 +60,16 @@ local playerCollider = nil
 local lightWorld = nil
 local mouseFacingSystemAdded = false -- Track if MouseFacingSystem has been added
 
+---@type LookAheadController
+local cameraLookAheadController
+cameraLookAheadController = CameraManager.createLookAheadController({
+  maxDistance = PlayerConfig.AIM_LINE_MAX_LENGTH or 100,
+  lookAheadDistance = PlayerConfig.CAMERA_LOOK_AHEAD_DISTANCE or PlayerConfig.AIM_LINE_MAX_LENGTH or 100,
+  deadzone = (PlayerConfig.CAMERA_LOOK_AHEAD_DEADZONE_FACTOR or 0.15) * GameConstants.TILE_SIZE,
+  smoothSpeed = PlayerConfig.CAMERA_LOOK_AHEAD_SMOOTH_SPEED or 10
+})
+---@cast cameraLookAheadController LookAheadController
+
 -- Physics
 local physicsWorld = nil
 local borderColliders = {}
@@ -93,6 +106,11 @@ end
 function GameScene.load()
   sprites.load()
   ShaderManager.loadDefaultShaders()
+
+  if cameraLookAheadController then
+    ---@diagnostic disable-next-line:undefined-field
+    cameraLookAheadController:reset()
+  end
 
   -- Initialize physics world (gravity: 0, 0 for top-down game)
   physicsWorld = love.physics.newWorld(0, 0, true)
@@ -345,7 +363,17 @@ function GameScene.update(dt, gameState)
     if position and spriteRenderer then
       local centerX = position.x + spriteRenderer.width / 2
       local centerY = position.y + spriteRenderer.height / 2
-      gameState.camera:setPosition(centerX, centerY)
+      local aimX, aimY = centerX, centerY
+      if gameState and gameState.input then
+        aimX = gameState.input.mouseX or centerX
+        aimY = gameState.input.mouseY or centerY
+      end
+      if cameraLookAheadController then
+        ---@diagnostic disable-next-line:undefined-field
+        cameraLookAheadController:update(gameState.camera, centerX, centerY, aimX, aimY, dt)
+      else
+        gameState.camera:setPosition(centerX, centerY)
+      end
     end
   end
 
