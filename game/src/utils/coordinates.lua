@@ -107,7 +107,7 @@ function CoordinateUtils.clampToGridBounds(gridX, gridY, grid)
     return clampedGridX, clampedGridY
 end
 
----Convert world coordinates to screen coordinates (accounting for PixelRenderer viewport)
+---Convert world coordinates to screen coordinates
 ---@param worldX number World X coordinate
 ---@param worldY number World Y coordinate
 ---@param camera table Gamera camera instance
@@ -117,26 +117,10 @@ function CoordinateUtils.worldToScreen(worldX, worldY, camera)
         return worldX, worldY
     end
 
-    local PixelRenderer = require("src.utils.PixelRenderer")
-
-    -- Camera window is already set to pixel canvas dimensions in setupCamera()
-    -- Convert world to pixel canvas coordinates directly
-    local canvasX, canvasY = camera:toScreen(worldX, worldY)
-
-    -- Scale pixel canvas coordinates to screen coordinates
-    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
-    local scale = PixelRenderer.getScale()
-    local screenW, screenH = love.graphics.getDimensions()
-    local drawX = math.floor((screenW - canvasW * scale) / 2)
-    local drawY = math.floor((screenH - canvasH * scale) / 2)
-
-    local screenX = canvasX * scale + drawX
-    local screenY = canvasY * scale + drawY
-
-    return screenX, screenY
+    return camera:toScreen(worldX, worldY)
 end
 
----Convert screen coordinates to world coordinates (accounting for PixelRenderer viewport)
+---Convert screen coordinates to world coordinates
 ---@param screenX number Screen X coordinate
 ---@param screenY number Screen Y coordinate
 ---@param camera table Gamera camera instance
@@ -146,25 +130,7 @@ function CoordinateUtils.screenToWorld(screenX, screenY, camera)
         return screenX, screenY
     end
 
-    local PixelRenderer = require("src.utils.PixelRenderer")
-
-    -- Get pixel canvas dimensions
-    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
-    local scale = PixelRenderer.getScale()
-
-    -- Convert screen coords to pixel canvas coords (remove offset & scale)
-    local screenW, screenH = love.graphics.getDimensions()
-    local drawX = math.floor((screenW - canvasW * scale) / 2)
-    local drawY = math.floor((screenH - canvasH * scale) / 2)
-
-    local canvasX = (screenX - drawX) / scale
-    local canvasY = (screenY - drawY) / scale
-
-    -- Camera window already matches pixel canvas dimensions from setupCamera()
-    -- Convert pixel canvas coordinates to world coordinates directly
-    local worldX, worldY = camera:toWorld(canvasX, canvasY)
-
-    return worldX, worldY
+    return camera:toWorld(screenX, screenY)
 end
 
 return CoordinateUtils

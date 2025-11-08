@@ -1019,10 +1019,12 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
 
             -- Draw tile border (use actual tile size in screen space)
             love.graphics.setColor(0.5, 0.8, 1, 0.4)
-            -- Note: tiles are now in screen coordinates, need to account for pixel canvas scale
-            local PixelRenderer = require("src.utils.PixelRenderer")
-            local pixelScale = PixelRenderer.getScale()
-            love.graphics.rectangle("line", screenX, screenY, tileSize * pixelScale, tileSize * pixelScale)
+            -- Note: tiles are now in screen coordinates, derive size from camera transform
+            local screenX2 = select(1, CoordinateUtils.worldToScreen(worldX + tileSize, worldY, GameState.camera))
+            local screenY2 = select(2, CoordinateUtils.worldToScreen(worldX, worldY + tileSize, GameState.camera))
+            local tileScreenWidth = screenX2 and math.abs(screenX2 - screenX) or tileSize
+            local tileScreenHeight = screenY2 and math.abs(screenY2 - screenY) or tileSize
+            love.graphics.rectangle("line", screenX, screenY, tileScreenWidth, tileScreenHeight)
 
             -- Draw GID
             love.graphics.setColor(1, 1, 1, 1)
@@ -1030,7 +1032,7 @@ function overlayStats.drawTileDebug(cameraX, cameraY, cameraScale)
 
             -- Show walkable status
             local status = tile.walkable and "W" or "B"
-            love.graphics.print(status, screenX + tileSize * pixelScale - 12, screenY + tileSize * pixelScale - 12)
+            love.graphics.print(status, screenX + tileScreenWidth - 12, screenY + tileScreenHeight - 12)
           end
         end
       end

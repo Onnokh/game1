@@ -69,6 +69,26 @@ GameScene.ecsWorld = ecsWorld
 GameScene.monsters = monsters
 GameScene.lightWorld = nil
 
+local function calculateDefaultCameraScale()
+  local baseWidth = (GameConstants.BASE_RENDER_WIDTH or 160) * (GameConstants.ZOOM_SCALE or 1)
+  local baseHeight = (GameConstants.BASE_RENDER_HEIGHT or 90) * (GameConstants.ZOOM_SCALE or 1)
+  local screenW, screenH = love.graphics.getDimensions()
+
+  if baseWidth <= 0 or baseHeight <= 0 or screenW <= 0 or screenH <= 0 then
+    return 1.0
+  end
+
+  local widthScale = screenW / baseWidth
+  local heightScale = screenH / baseHeight
+  local scale = math.min(widthScale, heightScale)
+
+  if scale <= 0 or scale ~= scale then
+    return 1.0
+  end
+
+  return scale
+end
+
 -- Initialize the game scene
 function GameScene.load()
   sprites.load()
@@ -311,9 +331,10 @@ function GameScene.update(dt, gameState)
 
   end
 
-  -- Use debug camera scale if set, otherwise default to 1.0
+  -- Use debug camera scale if set, otherwise derive from zoom settings
   local overlayStats = require("lib.overlayStats")
-  local targetScale = overlayStats.debugCameraScale or 1.0
+  local defaultScale = calculateDefaultCameraScale()
+  local targetScale = overlayStats.debugCameraScale or defaultScale
   gameState.camera:setScale(targetScale)
 
   -- Set camera position centered on player sprite AFTER scale is set
@@ -515,19 +536,10 @@ function GameScene.drawAimLine(gameState)
     GameScene.aimLineSystem:setWorld(ecsWorld)
   end
 
-  -- Temporarily set camera window to pixel canvas dimensions for correct coordinate conversion
-  local PixelRenderer = require("src.utils.PixelRenderer")
-  local oldX, oldY, oldW, oldH = gameState.camera:getWindow()
-  local canvasW, canvasH = PixelRenderer.getBaseDimensions()
-  gameState.camera:setWindow(0, 0, canvasW, canvasH)
-
   love.graphics.push()
   love.graphics.origin()
   GameScene.aimLineSystem:draw()
   love.graphics.pop()
-
-  -- Restore camera window
-  gameState.camera:setWindow(oldX, oldY, oldW, oldH)
 end
 
 -- Draw everything (for backward compatibility)

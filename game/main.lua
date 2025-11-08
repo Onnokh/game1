@@ -4,7 +4,6 @@ local gameState = require("src.core.GameState")
 local SoundManager = require("src.core.managers.SoundManager")
 local CursorManager = require("src.core.managers.CursorManager")
 local PostprocessingManager = require("src.core.managers.PostprocessingManager")
-local PixelRenderer = require("src.utils.PixelRenderer")
 
 _G.gameController = GameController
 _G.SoundManager = SoundManager -- Make SoundManager globally accessible
@@ -34,6 +33,21 @@ local parallaxBg = {
   parallaxFactorY = 1.5 -- Vertical parallax factor
 }
 
+
+local function createRenderCanvases(screenW, screenH)
+  local newWorldCanvas = love.graphics.newCanvas(screenW, screenH)
+  local newPostprocessCanvas = love.graphics.newCanvas(screenW, screenH)
+
+  if worldCanvas then
+    worldCanvas:release()
+  end
+  if postprocessCanvas then
+    postprocessCanvas:release()
+  end
+
+  worldCanvas = newWorldCanvas
+  postprocessCanvas = newPostprocessCanvas
+end
 
 function love.load()
   -- Load parallax background sprite sheet
@@ -81,23 +95,13 @@ function love.load()
 
   overlayStats.load() -- Should always be called last
 
-  -- Initialize pixel-perfect renderer with zoom-scaled resolution
-  -- Base resolution: 160×90, multiplied by ZOOM_SCALE (1, 2, 3, or 4)
-  local GameConstants = require("src.constants")
-  local baseW, baseH = 160, 90
-  PixelRenderer.init(baseW * GameConstants.ZOOM_SCALE, baseH * GameConstants.ZOOM_SCALE)
-
-  -- Initialize lighting at the same resolution as pixel canvas (160×90)
-  local WorldLight = require("src.utils.worldlight")
-  local canvasW, canvasH = PixelRenderer.getBaseDimensions()
-  WorldLight.init(canvasW, canvasH)
-
   -- Create world canvas for postprocessing
   local screenW, screenH = love.graphics.getDimensions()
-  worldCanvas = love.graphics.newCanvas(screenW, screenH)
+  createRenderCanvases(screenW, screenH)
 
-  -- Create postprocessing canvas
-  postprocessCanvas = love.graphics.newCanvas(screenW, screenH)
+  -- Initialize lighting at full resolution
+  local WorldLight = require("src.utils.worldlight")
+  WorldLight.init(screenW, screenH)
 
   -- Initialize bloom effect
   local BloomEffect = require("src.effects.BloomEffect")
@@ -139,7 +143,16 @@ function love.draw()
 
   local screenW, screenH = love.graphics.getDimensions()
 
-  -- STEP 1: Draw parallax background at full resolution (before pixel rendering)
+  -- Ensure render canvases match current screen size
+  if not postprocessCanvas
+     or worldCanvas:getWidth() ~= screenW
+     or worldCanvas:getHeight() ~= screenH
+     or postprocessCanvas:getWidth() ~= screenW
+     or postprocessCanvas:getHeight() ~= screenH then
+    createRenderCanvases(screenW, screenH)
+  end
+
+  -- STEP 1 & 2: Draw parallax background and world content at full resolution
   love.graphics.setCanvas(worldCanvas)
   love.graphics.clear(0, 0, 0, 1)
 
@@ -173,23 +186,10 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1) -- Reset color
   end
 
-  -- Reset canvas to screen
-  love.graphics.setCanvas()
-
-  -- STEP 2: Draw pixel-perfect world content
-  PixelRenderer.begin()
-
   local GameScene = require("src.scenes.game")
 
   local success, err = pcall(function()
-    -- Save current camera window
-    local oldX, oldY, oldW, oldH = gameState.camera:getWindow()
-
-    -- Temporarily set camera window to pixel canvas dimensions
-    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
-    gameState.camera:setWindow(0, 0, canvasW, canvasH)
-
-    -- Draw world with pixel-perfect camera window
+    -- Draw world content
     GameScene.drawWorld(gameState)
 
     -- Render darkness map and lighting overlay
@@ -199,9 +199,6 @@ function love.draw()
     if GameScene.lightWorld and GameScene.lightWorld.drawOverlay then
       GameScene.lightWorld.drawOverlay()
     end
-
-    -- Restore original camera window for full-res effects
-    gameState.camera:setWindow(oldX, oldY, oldW, oldH)
   end)
 
   if not success then
@@ -209,32 +206,18 @@ function love.draw()
     error(err)
   end
 
-  PixelRenderer.finish()
-
-  -- STEP 3: Apply postprocessing effects to pixel canvas
-  if not postprocessCanvas then
-    postprocessCanvas = love.graphics.newCanvas(screenW, screenH)
-  end
-
-  love.graphics.setCanvas(postprocessCanvas)
-  love.graphics.clear(0, 0, 0, 1)
-
-  -- Draw pixel canvas to full screen resolution for postprocessing
-  local pixelCanvas = PixelRenderer.getCanvas()
-  if pixelCanvas then
-    local canvasW, canvasH = PixelRenderer.getBaseDimensions()
-    local scale = PixelRenderer.getScale()
-    -- Round to integers to ensure pixel-perfect alignment
-    local drawX = math.floor((screenW - canvasW * scale) / 2 + 0.5)
-    local drawY = math.floor((screenH - canvasH * scale) / 2 + 0.5)
-
-    love.graphics.draw(pixelCanvas, drawX, drawY, 0, scale, scale)
-  end
-
   love.graphics.setCanvas()
 
-  -- Apply postprocessing effects
-  PostprocessingManager.apply(postprocessCanvas)
+  -- STEP 3: Apply postprocessing effects to full-resolution world canvas
+  if postprocessCanvas then
+    love.graphics.setCanvas(postprocessCanvas)
+    love.graphics.clear(0, 0, 0, 1)
+    love.graphics.draw(worldCanvas, 0, 0)
+    love.graphics.setCanvas()
+
+    -- Apply postprocessing effects
+    PostprocessingManager.apply(postprocessCanvas)
+  end
 
   -- Draw screen-space effects AFTER postprocessing (e.g., aim line)
   if GameScene.drawAimLine then
