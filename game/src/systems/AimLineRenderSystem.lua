@@ -4,45 +4,28 @@ local GameState = require("src.core.GameState")
 local ShaderManager = require("src.core.managers.ShaderManager")
 local GameController = require("src.core.GameController")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
+local CoordinateUtils = require("src.utils.coordinates")
 
 ---@class AimLineRenderSystem : System
 ---Renders an aiming line for ranged weapons from player to mouse cursor
 local AimLineRenderSystem = System:extend("AimLineRenderSystem", {})
 
+-- Laser styling and behaviour constants
+local MAX_BEAM_LENGTH = 400    -- Maximum reach of the laser regardless of cursor distance
+local MIN_RAY_LENGTH = 2       -- Avoid Box2D raycasts with extremely short segments
+local BEAM_WIDTH = 1           -- Core thickness of the beam in pixels
+local GLOW_WIDTH = 12          -- Total width of the glow area around the beam
+local GLOW_FALLOFF = 2.2       -- Power falloff applied to the outer glow
+local SOFT_EDGE = 3            -- Soft edge thickness applied to the beam core
+
 -- Store the original new function
 local originalNew = AimLineRenderSystem.new
-
--- Crosshair image for the end of the aim line
-local crosshairImage = nil
-
----Load the crosshair image for the aim line
-local function loadCrosshairImage()
-    if not crosshairImage then
-        local crosshairPath = "resources/ui/crosshair161.png"
-        local success, result = pcall(function()
-            local img = love.graphics.newImage(crosshairPath)
-            img:setFilter("nearest", "nearest") -- Pixel-perfect for pixel art
-            return img
-        end)
-
-        if success then
-            crosshairImage = result
-            print("Crosshair image loaded for aim line:", crosshairPath)
-            print("Crosshair image dimensions:", crosshairImage:getWidth(), "x", crosshairImage:getHeight())
-        else
-            print("Failed to load crosshair image for aim line:", result)
-        end
-    end
-end
 
 ---Create a new AimLineRenderSystem instance
 ---@return AimLineRenderSystem
 function AimLineRenderSystem.new()
     local self = originalNew()
     self.isWorldSpace = false -- This system draws in screen space with world-to-screen conversion
-
-    -- Load crosshair image when system is created
-    loadCrosshairImage()
 
     return self
 end
@@ -109,7 +92,6 @@ function AimLineRenderSystem:draw()
         mouseY = GameState.input.mouseY
     else
         -- Use real mouse position
-        local CoordinateUtils = require("src.utils.coordinates")
         local screenMouseX, screenMouseY = love.mouse.getPosition()
         mouseX, mouseY = CoordinateUtils.screenToWorld(screenMouseX, screenMouseY, GameState.camera)
     end
@@ -119,60 +101,53 @@ function AimLineRenderSystem:draw()
     local dy = mouseY - playerY
     local distanceToMouse = math.sqrt(dx * dx + dy * dy)
 
+    if distanceToMouse < 1e-3 then
+        return
+    end
+
+    local normalizedDx = dx / distanceToMouse
+    local normalizedDy = dy / distanceToMouse
+
     -- Apply start offset in the aiming direction
-    if distanceToMouse > 0 then
-        local normalizedDx = dx / distanceToMouse
-        local normalizedDy = dy / distanceToMouse
-        playerX = playerX + normalizedDx * PlayerConfig.START_OFFSET
-        playerY = playerY + normalizedDy * PlayerConfig.START_OFFSET
+    playerX = playerX + normalizedDx * PlayerConfig.START_OFFSET
+    playerY = playerY + normalizedDy * PlayerConfig.START_OFFSET
+
+    -- Base beam extends towards mouse but capped, accounting for start offset
+    local maxReach = math.max(distanceToMouse - PlayerConfig.START_OFFSET, 0)
+    local desiredLength = math.min(maxReach, MAX_BEAM_LENGTH)
+    if desiredLength <= 0 then
+        return
     end
+    local endX = playerX + normalizedDx * desiredLength
+    local endY = playerY + normalizedDy * desiredLength
 
-    -- Limit aim line to maximum 150 pixels
-    local maxLength = 100
-    local endX, endY = mouseX, mouseY
-
-    if distanceToMouse > maxLength then
-        -- Scale the direction vector to maxLength
-        local normalizedDx = dx / distanceToMouse
-        local normalizedDy = dy / distanceToMouse
-        endX = playerX + normalizedDx * maxLength
-        endY = playerY + normalizedDy * maxLength
-    end
-
-    -- Perform raycasting to find collision point (only within the limited range)
+    -- Perform raycasting to find collision point before the desired cursor reach
     local hitSomething = false
-    local closestFraction = 1.0
+    local rayLength = MAX_BEAM_LENGTH
 
     if world.physicsWorld then
-        -- Check if start and end points are different to avoid Box2D assertion error
-        local rayDx = endX - playerX
-        local rayDy = endY - playerY
-        local rayDistance = math.sqrt(rayDx * rayDx + rayDy * rayDy)
+        local rayEndX = playerX + normalizedDx * rayLength
+        local rayEndY = playerY + normalizedDy * rayLength
 
-        if rayDistance > 0.001 then -- Small threshold to avoid zero-length rays
-            -- Raycast from player to limited end position
-            world.physicsWorld:rayCast(playerX, playerY, endX, endY, function(fixture, x, y, xn, yn, fraction)
-            -- Check if this is a static object (walls, obstacles)
-            local body = fixture:getBody()
-            if body:getType() == "static" then
-                -- Only update if this is closer than previous hits
-                if fraction < closestFraction then
-                    endX = x
-                    endY = y
-                    hitSomething = true
-                    closestFraction = fraction
+        if rayLength > MIN_RAY_LENGTH then
+            world.physicsWorld:rayCast(playerX, playerY, rayEndX, rayEndY, function(fixture, x, y, xn, yn, fraction)
+                local body = fixture:getBody()
+                if body:getType() == "static" then
+                    local hitLength = fraction * rayLength
+                    if hitLength < desiredLength then
+                        endX = x
+                        endY = y
+                        hitSomething = true
+                        desiredLength = hitLength
+                    end
+                    return fraction
                 end
-                -- Return the fraction to continue checking for closer hits
-                return fraction
-            end
-            -- Return 1 to continue the raycast (ignore dynamic objects like enemies)
-            return 1
-        end)
+                return 1
+            end)
         end
     end
 
     -- Convert world coordinates to screen coordinates
-    local CoordinateUtils = require("src.utils.coordinates")
     local screenStartX, screenStartY = CoordinateUtils.worldToScreen(playerX, playerY, GameState.camera)
     local screenEndX, screenEndY = CoordinateUtils.worldToScreen(endX, endY, GameState.camera)
 
@@ -195,23 +170,21 @@ function AimLineRenderSystem:draw()
     love.graphics.origin()
 
     -- Set shader uniforms
-    shader:send("startPos", {screenStartX, screenStartY})
-    shader:send("endPos", {screenEndX, screenEndY})
-    shader:send("targetPos", {screenEndX, screenEndY})
-    shader:send("time", love.timer.getTime())
+    ---@type number[]
+    local startVec = {screenStartX, screenStartY}
+    ---@type number[]
+    local endVec = {screenEndX, screenEndY}
+    ---@type number[]
+    local beamColor = {1.0, 0.1, 0.1}
+
+    shader:send("startPos", startVec)
+    shader:send("endPos", endVec)
+    shader:send("beamColor", beamColor)
+    shader:send("beamWidth", BEAM_WIDTH)
+    shader:send("glowWidth", GLOW_WIDTH)
+    shader:send("glowFalloff", GLOW_FALLOFF)
+    shader:send("softEdge", SOFT_EDGE)
     shader:send("isHit", hitSomething)
-
-    -- Animation and style parameters
-    shader:send("animationSpeed", 50.0)
-    shader:send("dotRadius", 5.0)
-    shader:send("dotSpacing", 64.0)
-    shader:send("targetDotRadius", 6.0)
-    shader:send("targetCrossThickness", 15.0)
-
-    -- Send crosshair texture to shader
-    if crosshairImage then
-        shader:send("crosshairTexture", crosshairImage)
-    end
 
     -- Draw rectangle covering the line area with shader
     love.graphics.setShader(shader)

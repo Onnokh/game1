@@ -1,96 +1,67 @@
+// Solid laser beam fragment shader with soft inner core and glow falloff.
 uniform vec2 startPos;
 uniform vec2 endPos;
-uniform vec2 targetPos;
-uniform float time;
+uniform vec3 beamColor;
+uniform float beamWidth;
+uniform float glowWidth;
+uniform float glowFalloff;
+uniform float softEdge;
 uniform bool isHit;
-
-uniform float animationSpeed;
-uniform float dotRadius;
-uniform float dotSpacing;
-uniform float targetDotRadius;
-uniform float targetCrossThickness;
-
-uniform Image crosshairTexture;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
 {
-    // Calculate line direction and length
     vec2 lineDir = endPos - startPos;
     float lineLength = length(lineDir);
+    if (lineLength < 0.001) {
+        discard;
+    }
     vec2 lineNorm = normalize(lineDir);
 
-    // Calculate perpendicular distance from the infinite line passing through startPos
     vec2 toPixel = screen_coords - startPos;
     float distAlongLine = dot(toPixel, lineNorm);
-    vec2 projection = lineNorm * distAlongLine;
-    float distFromLine = length(toPixel - projection);
-
-    // Check distance to target marker
-    vec2 toTarget = screen_coords - targetPos;
-    float distToTarget = length(toTarget);
-    float targetArea = max(targetDotRadius, targetCrossThickness);
-    bool nearTarget = distToTarget < targetArea;
-
-    // Clip at the start and end positions (but allow target marker area and crosshair)
-    if (distAlongLine < 0.0 || (distAlongLine > lineLength && !nearTarget && !(!isHit && distAlongLine < lineLength + 120.0))) {
+    float extendedLength = lineLength + glowWidth;
+    if (distAlongLine < -glowWidth || distAlongLine > extendedLength) {
         discard;
     }
 
-    // Animation offset (continuous flow from player)
-    float animationOffset = time * animationSpeed;
+    float t = clamp(distAlongLine / lineLength, 0.0, 1.0);
+    vec2 closestPoint = startPos + lineDir * t;
+    float distToSegment = length(screen_coords - closestPoint);
 
-    // Calculate position for dot pattern relative to startPos
-    float absolutePos = distAlongLine - animationOffset;
+    float halfWidth = beamWidth * 0.5;
+    float innerEdge = halfWidth - softEdge;
+    float outerEdge = halfWidth + softEdge;
 
-    // Find distance to nearest dot center (dots are at multiples of dotSpacing)
-    float dotIndex = mod(absolutePos, dotSpacing);
-    float nearestDotDist = dotIndex < dotSpacing * 0.5 ? dotIndex : dotSpacing - dotIndex;
+    float beamFactor = 1.0 - smoothstep(innerEdge, outerEdge, distToSegment);
 
-    // Calculate distance from pixel to nearest dot center (combining along-line and perpendicular distances)
-    float distToDotCenter = sqrt(nearestDotDist * nearestDotDist + distFromLine * distFromLine);
-
-    // Check if we're inside a dot (circular)
-    // But don't draw dots too close to the target marker or beyond line length when crosshair is present
-    if (distToDotCenter < dotRadius && !nearTarget && !(!isHit && distAlongLine > lineLength)) {
-        // Inside a dot
-        return vec4(1.0, 1.0, 1.0, .5);
+    float glowFactor = 0.0;
+    if (glowWidth > halfWidth) {
+        float glowRadius = glowWidth - halfWidth;
+        float glowDist = distToSegment - halfWidth;
+        float normalizedGlow = 1.0 - clamp(glowDist / max(glowRadius, 0.0001), 0.0, 1.0);
+        glowFactor = pow(normalizedGlow, glowFalloff);
     }
 
-    // Draw target marker (only when hitting something)
-    if (distToTarget < targetDotRadius && isHit) {
-        // Draw circle at target only when hitting
-        return vec4(1.0, 0.5, 0.5, 1.0);
+    float intensity = max(beamFactor, glowFactor * 0.75);
+
+    if (intensity <= 0.0) {
+        discard;
     }
 
-    // Draw crosshair texture at the end of the line when not hitting anything
-    if (!isHit && distAlongLine >= lineLength - 120.0 && distAlongLine <= lineLength + 120.0) {
-        // Calculate position relative to the end of the line
-        vec2 endPoint = startPos + lineNorm * lineLength;
-        vec2 toEnd = screen_coords - endPoint;
+    vec3 glowColor = mix(beamColor, vec3(1.0, 0.3, 0.3), 0.35);
+    vec3 finalColor = mix(glowColor, beamColor, beamFactor);
 
-        // Calculate distance from end point
-        float distFromEnd = length(toEnd);
+    if (isHit) {
+        float distToEnd = length(screen_coords - endPos);
+        float tipRadius = max(beamWidth * 1.5, 4.0);
+        float innerEdge = max(tipRadius - 0.5, 0.0);
+        float dotFactor = 1.0 - smoothstep(innerEdge, tipRadius, distToEnd);
 
-        // Draw crosshair texture within a larger radius to show the full crosshair
-        if (distFromEnd < 120.0) {
-            // Calculate texture coordinates
-            // Map screen coordinates to texture coordinates (0-1 range)
-            vec2 crosshairSize = vec2(120.0, 120.0); // Scaled down size
-            vec2 textureCoords = (toEnd + crosshairSize * 0.5) / crosshairSize;
-
-            // Clamp texture coordinates to valid range
-            textureCoords = clamp(textureCoords, vec2(0.0, 0.0), vec2(1.0, 1.0));
-
-            // Sample the crosshair texture
-            vec4 crosshairColor = Texel(crosshairTexture, textureCoords);
-
-            // Only draw if the texture has alpha (not transparent)
-            if (crosshairColor.a > 0.1) { // Lower threshold to catch more pixels
-                return crosshairColor;
-            }
-        }
+        vec3 highlightColor = beamColor + vec3(0.4, 0.15, 0.15);
+        finalColor = mix(finalColor, highlightColor, dotFactor);
+        intensity = max(intensity, dotFactor);
     }
 
-    discard;
+    return vec4(finalColor, intensity);
 }
 
