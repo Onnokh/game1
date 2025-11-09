@@ -24,38 +24,12 @@ local PARTICLE_STRENGTH = 0.75   -- Intensity contribution of the particles
 -- Store the original new function
 local originalNew = AimLineRenderSystem.new
 
--- Crosshair image for the end of the aim line
-local crosshairImage = nil
-
----Load the crosshair image for the aim line
-local function loadCrosshairImage()
-    if not crosshairImage then
-        local crosshairPath = "resources/ui/crosshair161.png"
-        local success, result = pcall(function()
-            local img = love.graphics.newImage(crosshairPath)
-            img:setFilter("nearest", "nearest") -- Pixel-perfect for pixel art
-            return img
-        end)
-
-        if success then
-            crosshairImage = result
-            print("Crosshair image loaded for aim line:", crosshairPath)
-            print("Crosshair image dimensions:", crosshairImage:getWidth(), "x", crosshairImage:getHeight())
-        else
-            print("Failed to load crosshair image for aim line:", result)
-        end
-    end
-end
-
 ---Create a new AimLineRenderSystem instance
 ---@return AimLineRenderSystem
 function AimLineRenderSystem.new()
     ---@type AimLineRenderSystem
     local self = originalNew()
     self.isWorldSpace = false -- This system draws in screen space with world-to-screen conversion
-
-    -- Load crosshair image when system is created
-    loadCrosshairImage()
 
     return self
 end
@@ -140,34 +114,24 @@ function AimLineRenderSystem:draw()
         playerY = playerY + normalizedDy * PlayerConfig.START_OFFSET
     end
 
-    -- Limit aim line to maximum 150 pixels
-    local maxLength = 100
-    local endX, endY = mouseX, mouseY
-
-    if distanceToMouse > maxLength then
-        -- Scale the direction vector to maxLength
-        local normalizedDx = dx / distanceToMouse
-        local normalizedDy = dy / distanceToMouse
-        endX = playerX + normalizedDx * maxLength
-        endY = playerY + normalizedDy * maxLength
-    end
-
-    -- Perform raycasting to find collision point (only within the limited range)
+    -- Perform raycasting to find collision point (raycast to actual cursor, not clamped position)
     local hitSomething = false
     local closestFraction = 1.0
+    local endX, endY = mouseX, mouseY -- Start with actual cursor position
 
     if world.physicsWorld then
         -- Check if start and end points are different to avoid Box2D assertion error
-        local rayDx = endX - playerX
-        local rayDy = endY - playerY
+        local rayDx = mouseX - playerX
+        local rayDy = mouseY - playerY
         local rayDistance = math.sqrt(rayDx * rayDx + rayDy * rayDy)
 
         if rayDistance > 0.001 then -- Small threshold to avoid zero-length rays
-            -- Raycast from player to limited end position
-            world.physicsWorld:rayCast(playerX, playerY, endX, endY, function(fixture, x, y, xn, yn, fraction)
-            -- Check if this is a static object (walls, obstacles)
+            -- Raycast from player to actual cursor position to detect all collisions
+            world.physicsWorld:rayCast(playerX, playerY, mouseX, mouseY, function(fixture, x, y, xn, yn, fraction)
+            -- Check if this is a static or kinematic object (walls, obstacles, trees, decorations)
             local body = fixture:getBody()
-            if body:getType() == "static" then
+            local bodyType = body:getType()
+            if bodyType == "static" or bodyType == "kinematic" then
                 -- Only update if this is closer than previous hits
                 if fraction < closestFraction then
                     endX = x
@@ -184,10 +148,27 @@ function AimLineRenderSystem:draw()
         end
     end
 
+    -- Limit aim line to maximum length (only if no collision detected)
+    local maxLength = 100
+    if not hitSomething then
+        local distanceToEnd = math.sqrt((endX - playerX)^2 + (endY - playerY)^2)
+        if distanceToEnd > maxLength then
+            -- Scale the direction vector to maxLength
+            local normalizedDx = dx / distanceToMouse
+            local normalizedDy = dy / distanceToMouse
+            endX = playerX + normalizedDx * maxLength
+            endY = playerY + normalizedDy * maxLength
+        end
+    end
+
     -- Convert world coordinates to screen coordinates
     local CoordinateUtils = require("src.utils.coordinates")
     local screenStartX, screenStartY = CoordinateUtils.worldToScreen(playerX, playerY, GameState.camera)
     local screenEndX, screenEndY = CoordinateUtils.worldToScreen(endX, endY, GameState.camera)
+
+    -- Convert actual mouse/cursor position to screen coordinates for targetPos
+    -- This ensures the crosshair appears at the cursor, not the clamped position
+    local screenTargetX, screenTargetY = CoordinateUtils.worldToScreen(mouseX, mouseY, GameState.camera)
 
     -- Get the shader
     local shader = ShaderManager.getShader("aim_line")
@@ -210,21 +191,15 @@ function AimLineRenderSystem:draw()
     -- Set shader uniforms
     shader:send("startPos", {screenStartX, screenStartY})
     shader:send("endPos", {screenEndX, screenEndY})
-    shader:send("targetPos", {screenEndX, screenEndY})
+    shader:send("targetPos", {screenTargetX, screenTargetY})
     shader:send("time", love.timer.getTime())
     shader:send("isHit", hitSomething)
+    shader:send("particleFrequency", PARTICLE_FREQUENCY)
+    shader:send("particleSpeed", PARTICLE_SPEED)
+    shader:send("particleStrength", PARTICLE_STRENGTH)
 
-    -- Animation and style parameters
-    shader:send("animationSpeed", 50.0)
-    shader:send("dotRadius", 5.0)
-    shader:send("dotSpacing", 64.0)
-    shader:send("targetDotRadius", 6.0)
-    shader:send("targetCrossThickness", 15.0)
-
-    -- Send crosshair texture to shader
-    if crosshairImage then
-        shader:send("crosshairTexture", crosshairImage)
-    end
+    -- Style parameters
+    shader:send("targetDotRadius", 3.0)
 
     -- Draw rectangle covering the line area with shader
     love.graphics.setShader(shader)
