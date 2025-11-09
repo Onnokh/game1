@@ -10,8 +10,6 @@ local PlayerConfig = require("src.entities.Player.PlayerConfig")
 ---Renders an aiming line for ranged weapons from player to mouse cursor
 local AimLineRenderSystem = System:extend("AimLineRenderSystem", {})
 
-<<<<<<< Updated upstream
-=======
 -- Laser styling and behaviour constants
 local MAX_BEAM_LENGTH = 400    -- Maximum reach of the laser regardless of cursor distance
 local MIN_RAY_LENGTH = 2       -- Avoid Box2D raycasts with extremely short segments
@@ -23,7 +21,6 @@ local PARTICLE_FREQUENCY = 0.025 -- Controls density of laser particles along th
 local PARTICLE_SPEED = 0.6       -- Scroll speed of particles
 local PARTICLE_STRENGTH = 0.75   -- Intensity contribution of the particles
 
->>>>>>> Stashed changes
 -- Store the original new function
 local originalNew = AimLineRenderSystem.new
 
@@ -216,10 +213,6 @@ function AimLineRenderSystem:draw()
     shader:send("targetPos", {screenEndX, screenEndY})
     shader:send("time", love.timer.getTime())
     shader:send("isHit", hitSomething)
-    shader:send("time", love.timer.getTime())
-    shader:send("particleFrequency", PARTICLE_FREQUENCY)
-    shader:send("particleSpeed", PARTICLE_SPEED)
-    shader:send("particleStrength", PARTICLE_STRENGTH)
 
     -- Animation and style parameters
     shader:send("animationSpeed", 50.0)
