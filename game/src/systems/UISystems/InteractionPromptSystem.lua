@@ -72,10 +72,8 @@ function InteractionPromptSystem:draw()
     local CoordinateUtils = require("src.utils.coordinates")
     local screenX, screenY = CoordinateUtils.worldToScreen(self.currentPrompt.worldX, self.currentPrompt.worldY, gameState.camera)
 
-    -- Choose a camera-scaled crisp font
-    local cameraScale = (gameState and gameState.camera and gameState.camera.scale) or 1
-    local basePx = 18  -- Scaled up from 6 to account for coordinate conversion scaling
-    local font = select(1, fonts.getCameraScaled(basePx, cameraScale, 8))
+    -- Use fixed-size font for consistent screen-space text (not affected by camera zoom)
+    local font = fonts.getUIFont(18)
     local prevFont = love.graphics.getFont()
 
     love.graphics.push()

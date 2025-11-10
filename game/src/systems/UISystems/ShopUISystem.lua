@@ -331,9 +331,7 @@ function ShopUISystem:draw()
     love.graphics.origin()
 
     -- Get camera scale for font sizing
-    local cameraScale = (gameState and gameState.camera and gameState.camera.scale) or 1
-    local basePx = 6
-    local font = select(1, fonts.getCameraScaled(basePx, cameraScale, 8))
+    local font = fonts.getUIFont(18)
     local prevFont = love.graphics.getFont()
     if font then love.graphics.setFont(font) end
 

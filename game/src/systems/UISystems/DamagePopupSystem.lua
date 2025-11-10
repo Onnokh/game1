@@ -146,7 +146,7 @@ function DamagePopupSystem:draw()
 
     -- Choose an appropriate font size so it appears crisp at current zoom
     local cameraScale = (gameState and gameState.camera and gameState.camera.scale) or 1
-    local basePx = 32
+    local basePx = 10
     local font = nil
     font = select(1, fonts.getCameraScaled(basePx, cameraScale, 8))
 
