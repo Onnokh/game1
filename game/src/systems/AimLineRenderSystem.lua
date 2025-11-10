@@ -128,6 +128,11 @@ function AimLineRenderSystem:draw()
         if rayDistance > 0.001 then -- Small threshold to avoid zero-length rays
             -- Raycast from player to actual cursor position to detect all collisions
             world.physicsWorld:rayCast(playerX, playerY, mouseX, mouseY, function(fixture, x, y, xn, yn, fraction)
+            -- Skip sensors (trigger zones) - they shouldn't block the aim line
+            if fixture:isSensor() then
+                return 1 -- Continue raycast, ignore this fixture
+            end
+            
             -- Check if this is a static or kinematic object (walls, obstacles, trees, decorations)
             local body = fixture:getBody()
             local bodyType = body:getType()
