@@ -14,11 +14,6 @@ local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
 function AttackSystem:update(dt)
     local currentTime = love.timer.getTime()
 
-    -- Initialize active melee attacks tracker if not already initialized
-    if not self.activeMeleeAttacks then
-        self.activeMeleeAttacks = {}
-    end
-
     for _, entity in ipairs(self.entities) do
         local attack = entity:getComponent("Attack")
 
@@ -88,45 +83,13 @@ function AttackSystem:performAttack(entity, currentTime)
         return
     end
 
-    -- Get attack stats from Weapon component if available, otherwise from Attack component
-    local attackType = attack.attackType
-    local weapon = entity:getComponent("Weapon")
-    if weapon then
-        local weaponData = weapon:getCurrentWeapon()
-        if weaponData then
-            attackType = weaponData.type
-        end
-    end
-
     -- Calculate attack direction for player entities
     if EntityUtils.isPlayer(entity) then
         self:calculatePlayerAttackDirection(entity)
     end
 
-    -- Check attack type and perform appropriate attack
-    if attackType == "ranged" then
-        -- Spawn a bullet entity for ranged attacks
-        self:spawnBullet(entity)
-    else
-        -- Spawn a short-lived attack collider sensor for melee attacks
-        self:spawnMeleeAttack(entity)
-
-        -- Register this melee attack for debug visualization
-        -- Store attack parameters to recalculate position each frame
-        local attackDuration = 0.2 -- Show hit area for 0.2 seconds
-        table.insert(self.activeMeleeAttacks, {
-            entity = entity,
-            startTime = currentTime,
-            endTime = currentTime + attackDuration,
-            -- Store attack parameters for recalculation
-            directionX = attack.attackDirectionX,
-            directionY = attack.attackDirectionY,
-            angle = attack.attackAngleRad,
-            width = attack.hitAreaWidth,
-            height = attack.hitAreaHeight,
-            range = attack.range or 15
-        })
-    end
+    -- Spawn a bullet entity for ranged attacks
+    self:spawnBullet(entity)
 end
 
 ---Calculate attack direction for player based on mouse position
@@ -383,110 +346,5 @@ function AttackSystem:spawnBullet(entity)
     end
 end
 
----Spawn a melee attack collider
----@param entity Entity The attacking entity
-function AttackSystem:spawnMeleeAttack(entity)
-    local attack = entity:getComponent("Attack")
-    local attackerPhys = entity:getComponent("PhysicsCollision")
-
-    if not attack then
-        return
-    end
-
-    local physicsWorld = attackerPhys and attackerPhys.physicsWorld or nil
-    if not physicsWorld then return end
-
-    -- Get attack stats from Weapon if available, otherwise from Attack component
-    local damage = attack.damage
-    local knockback = attack.knockback
-
-    local weapon = entity:getComponent("Weapon")
-    if weapon then
-        local weaponData = weapon:getCurrentWeapon()
-        if weaponData then
-            damage = weaponData.damage
-            knockback = weaponData.knockback
-        end
-    end
-
-    -- Spawn a short-lived attack collider sensor for melee attacks
-    local AttackCollider = require("src.components.AttackCollider")
-    local ac = AttackCollider.new(entity, damage, knockback, 0.05)
-    ac:createFixture(physicsWorld, attack.hitAreaX, attack.hitAreaY, attack.hitAreaWidth, attack.hitAreaHeight)
-
-    -- Rotate collider to match attack angle if available
-    if attack.attackAngleRad and ac.setAngle then
-        ac:setAngle(attack.attackAngleRad)
-    end
-
-    entity:addComponent("AttackCollider", ac)
-end
-
----Draw debug visualization for active melee attacks
-function AttackSystem:draw()
-    -- Initialize active melee attacks tracker if not already initialized
-    if not self.activeMeleeAttacks then
-        self.activeMeleeAttacks = {}
-        return
-    end
-
-    local currentTime = love.timer.getTime()
-
-    -- Clean up expired attacks and draw active ones
-    local i = 1
-    while i <= #self.activeMeleeAttacks do
-        local attackData = self.activeMeleeAttacks[i]
-
-        if currentTime > attackData.endTime then
-            -- Remove expired attack
-            table.remove(self.activeMeleeAttacks, i)
-        else
-            -- Draw active attack
-            local entity = attackData.entity
-            local position = entity:getComponent("Position")
-
-            if position then
-                -- Recalculate hit area position based on entity's current position
-                -- This makes the visualization follow the entity as it moves
-                local EntityUtils = require("src.utils.entities")
-                local playerCenterX, playerCenterY = EntityUtils.getEntityVisualCenter(entity, position)
-
-                -- Normalize direction
-                local dirX = attackData.directionX
-                local dirY = attackData.directionY
-                local length = math.sqrt(dirX * dirX + dirY * dirY)
-
-                if length > 0 then
-                    local normalizedX = dirX / length
-                    local normalizedY = dirY / length
-
-                    -- Calculate center of hit area relative to current position
-                    -- Add 8px offset to push the attack further away from player center
-                    local offset = 8
-                    local centerX = playerCenterX + normalizedX * (attackData.width / 2 + offset)
-                    local centerY = playerCenterY + normalizedY * (attackData.width / 2 + offset)
-
-                    love.graphics.push()
-                    love.graphics.translate(centerX, centerY)
-                    love.graphics.rotate(attackData.angle)
-
-                    love.graphics.setColor(1, 0, 0, 0.5) -- Red semi-transparent fill
-                    love.graphics.rectangle("fill", -attackData.width * 0.5, -attackData.height * 0.5, attackData.width, attackData.height)
-
-                    -- Draw outline
-                    love.graphics.setColor(1, 0, 0, 1) -- Red solid outline
-                    love.graphics.rectangle("line", -attackData.width * 0.5, -attackData.height * 0.5, attackData.width, attackData.height)
-
-                    love.graphics.pop()
-
-                    -- Reset color
-                    love.graphics.setColor(1, 1, 1, 1)
-                end
-            end
-
-            i = i + 1
-        end
-    end
-end
 
 return AttackSystem

@@ -177,7 +177,7 @@ function MonsterFactory.create(options)
         config.ATTACK_DAMAGE * damageMultiplier,
         (config.ATTACK_RANGE_TILES or 1.0) * GameConstants.TILE_SIZE,
         config.ATTACK_COOLDOWN,
-        "melee",
+        "ranged",
         config.ATTACK_KNOCKBACK * knockbackMultiplier
     )
 

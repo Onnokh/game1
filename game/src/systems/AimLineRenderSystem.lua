@@ -65,11 +65,6 @@ function AimLineRenderSystem:draw()
         return
     end
 
-    -- Only draw aim line for ranged weapons
-    if currentWeapon.type ~= "ranged" then
-        return
-    end
-
     -- Get player position
     local position = player:getComponent("Position")
     if not position then

@@ -6,7 +6,7 @@ local Component = require("src.core.Component")
 ---@field cooldown number Cooldown time between attacks in seconds
 ---@field lastAttackTime number Time when the last attack was performed
 ---@field enabled boolean Whether the attack is enabled
----@field attackType string Type of attack ("melee", "ranged", etc.)
+---@field attackType string Type of attack ("ranged")
 ---@field knockback number Knockback force applied to targets
 ---@field attackDirectionX number X component of attack direction
 ---@field attackDirectionY number Y component of attack direction
@@ -50,7 +50,7 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.damage = damage or 0
     self.range = range or 0
     self.cooldown = cooldown or 0
-    self.attackType = attackType or "melee"
+    self.attackType = attackType or "ranged"
     self.knockback = knockback or 0
 
     return self

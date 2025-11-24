@@ -10,7 +10,7 @@ Weapon.__index = Weapon
 
 ---@class WeaponData
 ---@field name string Display name
----@field type string Attack type ("melee" or "ranged")
+---@field type string Attack type ("ranged")
 ---@field damage number Damage dealt
 ---@field range number Range (melee range or bullet range)
 ---@field cooldown number Time between attacks
@@ -28,7 +28,7 @@ Weapon.__index = Weapon
 function Weapon.new(currentWeapon, inventory)
     local self = setmetatable(Component.new("Weapon"), Weapon)
 
-    self.currentWeapon = currentWeapon or "melee"
+    self.currentWeapon = currentWeapon or "ranged"
     self.inventory = inventory or {}
     self.weaponOverrides = {} -- Per-weapon stat overrides
     self.canSwitch = true

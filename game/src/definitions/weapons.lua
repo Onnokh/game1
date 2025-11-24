@@ -1,15 +1,6 @@
 ---Table of all weapon definitions
 ---@type table<string, WeaponData>
 local weapons = {
-    melee = {
-        id = "melee",
-        name = "Sword",
-        type = "melee",
-        damage = 12,
-        range = 30,
-        cooldown = 0.5,
-        knockback = 6
-    },
     ranged = {
         id = "ranged",
         name = "Gun",

@@ -35,17 +35,6 @@ local upgrades = {
         spriteSheet = "items",
         spriteFrame = 225
     },
-    melee_damage = {
-        id = "melee_damage",
-        name = "Fister",
-        description = "+25% melee damage",
-        targetPath = "Weapon.inventory.melee.damage",
-        modifierType = "multiply",
-        modifierValue = 1.25, -- 25% increase
-        maxRank = 5,
-        spriteSheet = "items",
-        spriteFrame = 96
-    },
     dash_charges = {
         id = "dash_charges",
         name = "Dash",
