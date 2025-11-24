@@ -26,7 +26,7 @@ GameConstants.PLAYER_SPEED = 80 -- player speed in pixels per second
 
 -- Camera scale (controls how much the game world is scaled up)
 -- 1 = 1:1 pixel size, 2 = 2x pixel size (double), etc.
-GameConstants.CAMERA_SCALE = 3
+GameConstants.CAMERA_SCALE = 4
 
 
 
