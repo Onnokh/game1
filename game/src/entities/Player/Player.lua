@@ -54,7 +54,6 @@ function Player.create(x, y, world, physicsWorld)
 
     local spriteRenderer = SpriteRenderer.new(nil, PlayerConfig.SPRITE_WIDTH, PlayerConfig.SPRITE_HEIGHT)
     spriteRenderer.facingMouse = true -- Enable mouse-facing
-    spriteRenderer:setOutline({r = 0.0, g = 0.0, b = 0.0}) -- White outline
 
     -- PathfindingCollision component (for pathfinding and physics collision)
     -- Collider centered at bottom: width 12, height 8, offsetX centers horizontally, offsetY positions at bottom
@@ -124,7 +123,6 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
-    local groundShadow = GroundShadow.new({ alpha = .5, widthFactor = 1.2, heightFactor = 0.4, offsetY = 0 })
 
     -- Create animator component with idle animation
     local animator = Animator.new(PlayerConfig.IDLE_ANIMATION)
@@ -160,6 +158,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("DashCharges", dashCharges)
     playerEntity:addComponent("UpgradeTracker", upgradeTracker)
     playerEntity:addComponent("Modifier", modifier)
+    playerEntity:addComponent("GroundShadow", GroundShadow.new())
     playerEntity:addComponent("FootprintsEmitter", FootprintsEmitter.new({
         spacing = 15,
         lifetime = 5,

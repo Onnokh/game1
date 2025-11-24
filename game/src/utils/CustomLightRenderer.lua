@@ -28,10 +28,6 @@ local screenHeight = 0
 function CustomLightRenderer.init(canvasWidth, canvasHeight)
     if initialized then return end
 
-    screenWidth = canvasWidth
-    screenHeight = canvasHeight
-
-    -- Create lightmap canvas
     lightMap = love.graphics.newCanvas(canvasWidth, canvasHeight)
     if not lightMap then
         error("Failed to create lightmap canvas")

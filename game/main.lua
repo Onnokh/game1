@@ -16,6 +16,22 @@ local lovebird = require("lovebird")
 local worldCanvas = nil
 local postprocessCanvas = nil
 
+-- Parallax background state
+local parallaxBg = {
+  image = nil,
+  quads = {},
+  frameWidth = 64,
+  frameHeight = 62,
+  frameCount = 4,
+  currentFrame = 1,
+  animationTimer = 0,
+  animationSpeed = 0.25, -- Seconds per frame (4fps = 0.25s)
+  offsetX = 0,
+  speed = 20, -- Pixels per second scrolling to the right
+  scale = 3,  -- Scale factor for the background
+  parallaxFactorX = 0.2, -- Camera movement influence (0.2 = moves 20% of camera speed)
+  parallaxFactorY = 1.5 -- Vertical parallax factor
+}
 
 
 local function createRenderCanvases(screenW, screenH)
@@ -34,6 +50,33 @@ local function createRenderCanvases(screenW, screenH)
 end
 
 function love.load()
+  -- Load parallax background sprite sheet
+  local bgPath = "resources/background/space2_4-frames.png"
+  local success, result = pcall(function()
+    local img = love.graphics.newImage(bgPath)
+    img:setFilter("nearest", "nearest") -- Pixel-perfect for pixel art
+    return img
+  end)
+
+  if success then
+    parallaxBg.image = result
+    -- Create quads for each frame
+    for i = 0, parallaxBg.frameCount - 1 do
+      local quad = love.graphics.newQuad(
+        i * parallaxBg.frameWidth,
+        0,
+        parallaxBg.frameWidth,
+        parallaxBg.frameHeight,
+        parallaxBg.image:getWidth(),
+        parallaxBg.image:getHeight()
+      )
+      table.insert(parallaxBg.quads, quad)
+    end
+    print("Parallax background loaded:", bgPath, "with", parallaxBg.frameCount, "frames")
+  else
+    print("Failed to load parallax background:", result)
+  end
+
   -- Load cursor manager
   CursorManager.load()
 
@@ -87,7 +130,7 @@ function love.load()
       softness = 0.5,
       opacity = .25,
       color = {0.0, 0.0, 0.0, 1.0} -- Black vignette
-    }, true) -- enabled
+    }, false) -- disabled by default
   end
 end
 
@@ -114,7 +157,7 @@ function love.draw()
   local isGameScene = currentSceneName == "game"
 
   if isGameScene then
-    -- STEP 1 & 2: Draw world content at full resolution
+    -- STEP 1 & 2: Draw parallax background and world content at full resolution
     love.graphics.setCanvas(worldCanvas)
     love.graphics.clear(0, 0, 0, 1)
 
@@ -186,8 +229,6 @@ function love.draw()
 end
 
 function love.update(dt)
-  -- lovebird.update()
-
   -- Update via controller
   local success, err = pcall(function()
     GameController.update(dt)

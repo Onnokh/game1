@@ -18,7 +18,7 @@ function Tree.create(x, y, world, physicsWorld)
     local tree = Entity.new()
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new('tree-stump', 36, 36)
-    local pathfindingCollision = PathfindingCollision.new(12, 12, "static", 18, 84, "circle")
+    local pathfindingCollision = PathfindingCollision.new(28, 12, "static", 4, 24, "rectangle")
 
     tree:addComponent("Position", position)
     tree:addComponent("SpriteRenderer", spriteRenderer)

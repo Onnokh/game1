@@ -229,11 +229,16 @@ function overlayStats.drawGridlines(cameraX, cameraY, cameraScale)
   local worldMinX, worldMinY, worldMaxX, worldMaxY
   local success, MapManager = pcall(require, "src.core.managers.MapManager")
   if success and MapManager and MapManager.initialized then
-    -- Use world bounds from MapManager
-    worldMinX = 0
-    worldMinY = 0
-    worldMaxX = MapManager.worldWidth or 600
-    worldMaxY = MapManager.worldHeight or 600
+    -- Use full world bounds from all islands
+    worldMinX, worldMinY = math.huge, math.huge
+    worldMaxX, worldMaxY = -math.huge, -math.huge
+
+    for _, island in ipairs(MapManager.getAllMaps()) do
+      worldMinX = math.min(worldMinX, island.x)
+      worldMinY = math.min(worldMinY, island.y)
+      worldMaxX = math.max(worldMaxX, island.x + island.width)
+      worldMaxY = math.max(worldMaxY, island.y + island.height)
+    end
   else
     -- Fallback to camera-based bounds
     local halfW, halfH = love.graphics.getWidth() / 2, love.graphics.getHeight() / 2
@@ -790,20 +795,33 @@ function overlayStats.drawIslandDebug(cameraX, cameraY, cameraScale)
     love.graphics.setFont(overlayFontMain)
   end
 
-  -- Draw world boundary
-  local success, MapManager = pcall(require, "src.core.managers.MapManager")
-  if success and MapManager and MapManager.initialized then
-    local worldWidth = MapManager.worldWidth or 600
-    local worldHeight = MapManager.worldHeight or 600
-    
-    love.graphics.setColor(0, 1, 0, 0.6)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", 0, 0, worldWidth, worldHeight)
+  -- Draw each island boundary
+  for i, island in ipairs(MapManager.getAllMaps()) do
+    -- Color code: base island = green, others = cyan
+    if island.id == "base" then
+      love.graphics.setColor(0, 1, 0, 0.6)
+    else
+      love.graphics.setColor(0, 1, 1, 0.4)
+    end
 
-    -- Draw world info
+    -- Draw island boundary
+    love.graphics.setLineWidth(2)
+    love.graphics.rectangle("line", island.x, island.y, island.width, island.height)
+
+    -- Draw island info
     love.graphics.setColor(1, 1, 1, 1)
-    local infoText = string.format("World\n%dx%d\n(0, 0)", worldWidth, worldHeight)
-    love.graphics.print(infoText, 10, 10)
+    local infoText = string.format("%s\n%dx%d\n(%.0f, %.0f)",
+      island.definition.name or island.id,
+      island.width,
+      island.height,
+      island.x,
+      island.y
+    )
+    love.graphics.print(infoText, island.x + 10, island.y + 10)
+
+    -- Draw island number
+    love.graphics.setColor(1, 1, 0, 0.8)
+    love.graphics.print("#" .. i, island.x + island.width - 30, island.y + 10)
   end
 
   -- Reset color

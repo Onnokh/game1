@@ -103,7 +103,7 @@ function MonsterFactory.create(options)
     if isElite then
         spriteRenderer:setOutline(ELITE_OUTLINE_COLOR)
     elseif config.OUTLINE_COLOR then
-        spriteRenderer:setOutline(config.OUTLINE_COLOR)
+        -- spriteRenderer:setOutline(config.OUTLINE_COLOR)
     end
 
     -- PathfindingCollision component

@@ -72,7 +72,7 @@ PlayerConfig.SPRITE_HEIGHT = 32
 PlayerConfig.START_OFFSET = 20  -- Additional offset forward from gun position to account for gun sprite width
 PlayerConfig.AIM_LINE_MAX_LENGTH = 100
 -- Camera look-ahead settings
-PlayerConfig.CAMERA_LOOK_AHEAD_DISTANCE = 100
+PlayerConfig.CAMERA_LOOK_AHEAD_DISTANCE = 20
 PlayerConfig.CAMERA_LOOK_AHEAD_DEADZONE_FACTOR = 0.15
 PlayerConfig.CAMERA_LOOK_AHEAD_SMOOTH_SPEED = 10
 -- Walking particle effects

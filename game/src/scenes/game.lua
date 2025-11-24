@@ -63,7 +63,7 @@ local mouseFacingSystemAdded = false -- Track if MouseFacingSystem has been adde
 local cameraLookAheadController
 cameraLookAheadController = CameraManager.createLookAheadController({
   maxDistance = PlayerConfig.AIM_LINE_MAX_LENGTH or 100,
-  lookAheadDistance = PlayerConfig.CAMERA_LOOK_AHEAD_DISTANCE or PlayerConfig.AIM_LINE_MAX_LENGTH or 100,
+  lookAheadDistance = PlayerConfig.CAMERA_LOOK_AHEAD_DISTANCE or 100,
   deadzone = (PlayerConfig.CAMERA_LOOK_AHEAD_DEADZONE_FACTOR or 0.15) * GameConstants.TILE_SIZE,
   smoothSpeed = PlayerConfig.CAMERA_LOOK_AHEAD_SMOOTH_SPEED or 10
 })
@@ -105,7 +105,7 @@ function GameScene.load()
 
   -- Set bright ambient lighting for the world
   -- This allows lights to be visible while keeping the world bright
-  WorldLight.setAmbientColor(200, 200, 200, 255, 0) -- R,G,B values 0-255 (~78% brightness), final argument = duration (0 = instant)
+  WorldLight.setAmbientColor(230, 230, 230, 255, 0) -- R,G,B values 0-255 (~90% brightness), final argument = duration (0 = instant)
 
   -- Initialize ECS world with physics reference
   ecsWorld = World.new(physicsWorld, lightWorld, false)
@@ -261,10 +261,14 @@ function GameScene.load()
   local Tree = require("src.entities.Decoration.Tree")
   local Tree2 = require("src.entities.Decoration.Tree2")
   local TreeStump = require("src.entities.Decoration.TreeStump")
+  local Torch = require("src.entities.Decoration.Torch")
+  local Barrel = require("src.entities.Decoration.Barrel")
 
   Tree.create(330, 320, ecsWorld, physicsWorld)
   Tree2.create(300, 300, ecsWorld, physicsWorld)
   TreeStump.create(360, 420, ecsWorld, physicsWorld)
+  Torch.create(200, 420, ecsWorld, physicsWorld)
+  Barrel.create(230, 380, ecsWorld, physicsWorld)
 
   -- Check if there's pending save data to load
   local SaveSystem = require("src.utils.SaveSystem")
@@ -329,9 +333,7 @@ function GameScene.update(dt, gameState)
 
   -- Update camera to follow player
   if playerEntity then
-    local position = playerEntity:getComponent("Position")
     local collision = playerEntity:getComponent("Collision")
-    local spriteRenderer = playerEntity:getComponent("SpriteRenderer")
 
     -- Track player collider for debug overlay
     if collision and collision:hasCollider() then
