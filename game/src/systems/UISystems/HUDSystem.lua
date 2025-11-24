@@ -2,6 +2,7 @@ local System = require("src.core.System")
 local HealthBarHUD = require("src.ui.HealthBarHUD")
 local DashChargesHUD = require("src.ui.DashChargesHUD")
 local ActiveUpgradesHUD = require("src.ui.ActiveUpgradesHUD")
+local CastBarHUD = require("src.ui.CastBarHUD")
 local GameState = require("src.core.GameState")
 
 ---@class HUDSystem : System
@@ -27,6 +28,8 @@ function HUDSystem:draw()
     -- Draw dash charges below the health bar
     DashChargesHUD.draw(self.ecsWorld)
 
+    -- Draw cast bar (above action bar, if casting)
+    CastBarHUD.draw(self.ecsWorld)
 
     -- Draw active upgrades on the right side
     ActiveUpgradesHUD.draw(self.ecsWorld)

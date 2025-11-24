@@ -54,8 +54,8 @@ function DashChargesHUD.draw(world)
     local barGap = 4
     local totalWidth = (barWidth * 3) + (barGap * 2)
 
-    -- Position below health bar, centered horizontally
-    local x = sw/2 - totalWidth/2 -- Center horizontally like health bar
+    -- Position below health bar, aligned to the left
+    local x = marginX -- Align to left like health bar
     local y = sh - marginY - gapBelowHealthBar - barHeight -- Position above the bottom margin
 
     local r, g, b, a = love.graphics.getColor()

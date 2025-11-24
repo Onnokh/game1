@@ -26,7 +26,7 @@ local GunRotationSystem = require("src.systems.GunRotationSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
 local BulletSystem = require("src.systems.BulletSystem")
-local WeaponSystem = require("src.systems.WeaponSystem")
+local AbilitySystem = require("src.systems.AbilitySystem")
 local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
 local ParticleRenderSystem = require("src.systems.ParticleRenderSystem")
@@ -119,7 +119,7 @@ function GameScene.load()
   ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
-  ecsWorld:addSystem(WeaponSystem.new()) -- Handle weapon switching and syncing
+  ecsWorld:addSystem(AbilitySystem.new()) -- Handle ability switching and syncing
   ecsWorld:addSystem(AutoAimSystem.new()) -- Handle auto-aim targeting (must run before AttackSystem)
   ecsWorld:addSystem(AttackSystem.new()) -- Handle attacks
   ecsWorld:addSystem(BulletSystem.new()) -- Handle bullet movement and collision
@@ -144,7 +144,7 @@ function GameScene.load()
   -- to access player and physics world for raycasting
   local aimLineSystem = AimLineRenderSystem.new()
   aimLineSystem.isWorldSpace = false
-  ecsWorld:addSystem(aimLineSystem) -- Draw aiming line for ranged weapons
+  ecsWorld:addSystem(aimLineSystem) -- Draw aiming line for ranged abilities
   GameScene.aimLineSystem = aimLineSystem
 
   -- Debug: count RenderSystem instances
@@ -161,6 +161,7 @@ function GameScene.load()
   -- Add UI systems to separate world
   local HealthBarSystem = require("src.systems.UISystems.HealthBarSystem")
   local HUDSystem = require("src.systems.UISystems.HUDSystem")
+  local ActionBarSystem = require("src.systems.UISystems.ActionBarSystem")
   local CoinCounterSystem = require("src.systems.UISystems.CoinCounterSystem")
   local InventoryDisplaySystem = require("src.systems.UISystems.InventoryDisplaySystem")
   local DamagePopupSystem = require("src.systems.UISystems.DamagePopupSystem")
@@ -185,6 +186,7 @@ function GameScene.load()
   uiWorld:addSystem(WaveTimerSystem.new(ecsWorld)) -- Display game time at center-top
   uiWorld:addSystem(EliteIndicatorSystem.new(ecsWorld)) -- Draw elite indicators below other UI
   uiWorld:addSystem(HUDSystem.new(ecsWorld, healthBarSystem)) -- Pass healthBarSystem reference (includes dash charges)
+  uiWorld:addSystem(ActionBarSystem.new(ecsWorld)) -- Action bar with ability slots
   uiWorld:addSystem(CoinCounterSystem.new())
   uiWorld:addSystem(InventoryDisplaySystem.new(ecsWorld))
   uiWorld:addSystem(DamagePopupSystem.new(ecsWorld))

@@ -7,7 +7,7 @@ local PlayerConfig = require("src.entities.Player.PlayerConfig")
 
 ---@class AimLineRenderSystem : System
 ---@field isWorldSpace boolean
----Renders an aiming line for ranged weapons from player to mouse cursor
+---Renders an aiming line for ranged abilities from player to mouse cursor
 local AimLineRenderSystem = System:extend("AimLineRenderSystem", {})
 
 -- Laser styling and behaviour constants
@@ -53,15 +53,15 @@ function AimLineRenderSystem:draw()
         return
     end
 
-    -- Check if player has a weapon component
-    local weapon = player:getComponent("Weapon")
-    if not weapon then
+    -- Check if player has an ability component
+    local ability = player:getComponent("Ability")
+    if not ability then
         return
     end
 
-    -- Get current weapon data
-    local currentWeapon = weapon:getCurrentWeapon()
-    if not currentWeapon then
+    -- Get current ability data
+    local currentAbility = ability:getCurrentAbility()
+    if not currentAbility then
         return
     end
 

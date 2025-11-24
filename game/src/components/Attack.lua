@@ -20,9 +20,9 @@ Attack.__index = Attack
 
 ---Create a new Attack component
 ---Used to track attack execution state (timing, direction, hit area)
----For entities with Weapon component: actual attack stats come from Weapon
----For entities without Weapon: attack stats stored here (legacy mode)
----@param damage number|nil Amount of damage this attack deals (optional, for entities without Weapon)
+---For entities with Ability component: actual attack stats come from Ability
+---For entities without Ability: attack stats stored here (legacy mode)
+---@param damage number|nil Amount of damage this attack deals (optional, for entities without Ability)
 ---@param range number|nil Range of the attack (optional)
 ---@param cooldown number|nil Cooldown time between attacks (optional)
 ---@param attackType string|nil Type of attack (optional)
@@ -35,6 +35,12 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.lastAttackTime = 0
     self.enabled = true
 
+    -- Casting state
+    self.isCasting = false
+    self.castStartTime = 0
+    self.castDuration = 0
+    self.castAbilityId = nil
+
     -- Attack direction (calculated when attacking)
     self.attackDirectionX = 0
     self.attackDirectionY = 0
@@ -46,7 +52,7 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.hitAreaWidth = 8
     self.hitAreaHeight = 8
 
-    -- Attack stats (for entities without Weapon component)
+    -- Attack stats (for entities without Ability component)
     self.damage = damage or 0
     self.range = range or 0
     self.cooldown = cooldown or 0
@@ -122,6 +128,64 @@ function Attack:getCooldownPercentage(currentTime)
     return math.min(1.0, self:getRemainingCooldown(currentTime) / self.cooldown)
 end
 
+---Start casting an ability
+---@param abilityId string The ability ID being cast
+---@param castTime number Cast duration in seconds
+---@param currentTime number Current game time
+function Attack:startCast(abilityId, castTime, currentTime)
+    self.isCasting = true
+    self.castStartTime = currentTime
+    self.castDuration = castTime
+    self.castAbilityId = abilityId
+end
+
+---Update cast progress and check if complete
+---@param currentTime number Current game time
+---@return boolean True if cast is complete
+function Attack:updateCast(currentTime)
+    if not self.isCasting then
+        return false
+    end
+
+    local elapsed = currentTime - self.castStartTime
+    if elapsed >= self.castDuration then
+        self.isCasting = false
+        return true
+    end
+
+    return false
+end
+
+---Cancel the current cast
+function Attack:cancelCast()
+    self.isCasting = false
+    self.castStartTime = 0
+    self.castDuration = 0
+    self.castAbilityId = nil
+end
+
+---Check if cast is complete
+---@param currentTime number Current game time
+---@return boolean True if cast is complete
+function Attack:isCastComplete(currentTime)
+    if not self.isCasting then
+        return false
+    end
+    return self:updateCast(currentTime)
+end
+
+---Get cast progress (0-1)
+---@param currentTime number Current game time
+---@return number Cast progress from 0 to 1
+function Attack:getCastProgress(currentTime)
+    if not self.isCasting or self.castDuration <= 0 then
+        return 0
+    end
+
+    local elapsed = currentTime - self.castStartTime
+    return math.min(1.0, math.max(0, elapsed / self.castDuration))
+end
+
 ---Set the attack direction
 ---@param directionX number X component of attack direction
 ---@param directionY number Y component of attack direction
@@ -192,7 +256,11 @@ function Attack:serialize()
         knockback = self.knockback,
         attackDirectionX = self.attackDirectionX,
         attackDirectionY = self.attackDirectionY,
-        attackAngleRad = self.attackAngleRad
+        attackAngleRad = self.attackAngleRad,
+        isCasting = self.isCasting,
+        castStartTime = self.castStartTime,
+        castDuration = self.castDuration,
+        castAbilityId = self.castAbilityId
     }
 end
 
@@ -206,6 +274,10 @@ function Attack.deserialize(data)
     attack.attackDirectionX = data.attackDirectionX or 0
     attack.attackDirectionY = data.attackDirectionY or 0
     attack.attackAngleRad = data.attackAngleRad or 0
+    attack.isCasting = data.isCasting or false
+    attack.castStartTime = data.castStartTime or 0
+    attack.castDuration = data.castDuration or 0
+    attack.castAbilityId = data.castAbilityId or nil
     return attack
 end
 

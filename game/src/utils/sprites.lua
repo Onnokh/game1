@@ -95,7 +95,7 @@ function IffySprites.load()
   loadSpritesheet("Skull Boy", "resources/warhog/Skull Boy.png", 14, 5)
 
   -- Load standalone images (not using iffy)
-  loadImage("menuBackground", "resources/menu/background.jpg")
+  loadImage("menuBackground", "resources/menu/background.png")
 
   -- Load minimap icons
   loadImage("minimapShop", "resources/icons/shop.png")

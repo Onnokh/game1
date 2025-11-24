@@ -21,7 +21,7 @@ function Modifier.new()
 end
 
 ---Parse a target path into component name and stat path
----@param targetPath string Full path like "Movement.maxSpeed" or "Weapon.inventory.ranged.damage"
+---@param targetPath string Full path like "Movement.maxSpeed" or "Ability.inventory.ranged.damage"
 ---@return string componentName
 ---@return string statPath Remaining path after component (e.g., "maxSpeed" or "inventory.ranged.damage")
 function Modifier:_parsePath(targetPath)

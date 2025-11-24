@@ -33,8 +33,9 @@ local GameState = {
     shift = false,
     attack = false,
     interact = false,
-    switchWeapon = false,
+    switchAbility = false,
     autoAim = false,  -- NEW: Auto-aim toggle state
+    actionBarSlot = nil,  -- Action bar slot to trigger (1-4 for Q-E-R-F)
     mouseX = 0,
     mouseY = 0
   },
@@ -99,8 +100,11 @@ function GameState.resetRunState()
   -- Ensure persistent systems are not overwritten and are reset
   GameState.input = GameState.input or {}
   for k in pairs(GameState.input) do
-    GameState.input[k] = false
+    if k ~= "actionBarSlot" and k ~= "mouseX" and k ~= "mouseY" then
+      GameState.input[k] = false
+    end
   end
+  GameState.input.actionBarSlot = nil
 
   -- Reapply constants for player block (spawn position comes from map)
   GameState.player = {
@@ -170,9 +174,15 @@ function GameState.handleKeyPressed(key)
   elseif key == "lshift" or key == "rshift" then
     GameState.input.shift = true
   elseif key == "e" then
-    GameState.input.interact = true
+    -- E is now used for action bar slot 2, but keep interact for compatibility
+    GameState.input.actionBarSlot = 2
   elseif key == "q" then
-    GameState.input.switchWeapon = true
+    -- Q is now used for action bar slot 1
+    GameState.input.actionBarSlot = 1
+  elseif key == "r" then
+    GameState.input.actionBarSlot = 3
+  elseif key == "f" then
+    GameState.input.actionBarSlot = 4
   elseif key == "t" then
     GameState.input.autoAim = not GameState.input.autoAim
   end
@@ -205,9 +215,13 @@ function GameState.handleKeyReleased(key)
   elseif key == "lshift" or key == "rshift" then
     GameState.input.shift = false
   elseif key == "e" then
-    GameState.input.interact = false
+    GameState.input.actionBarSlot = nil
   elseif key == "q" then
-    GameState.input.switchWeapon = false
+    GameState.input.actionBarSlot = nil
+  elseif key == "r" then
+    GameState.input.actionBarSlot = nil
+  elseif key == "f" then
+    GameState.input.actionBarSlot = nil
   end
 end
 

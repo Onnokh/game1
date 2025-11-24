@@ -6,10 +6,10 @@ local PlayerConfig = require("src.entities.Player.PlayerConfig")
 
 ---@class AttackSystem : System
 ---Handles attacks for entities with Attack component
----If entity has Weapon component, uses weapon stats; otherwise uses Attack component stats
+---If entity has Ability component, uses ability stats; otherwise uses Attack component stats
 local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
 
----Update all entities with Position, Attack, and Weapon components
+---Update all entities with Position, Attack, and Ability components
 ---@param dt number Delta time
 function AttackSystem:update(dt)
     local currentTime = love.timer.getTime()
@@ -18,12 +18,51 @@ function AttackSystem:update(dt)
         local attack = entity:getComponent("Attack")
 
         if attack and attack.enabled then
-            -- Check for attack input
-            if self:shouldAttack(entity, currentTime) then
-                self:performAttack(entity, currentTime)
+            -- Handle cast interruption (movement cancels cast if flag is set in ability)
+            if EntityUtils.isPlayer(entity) and attack.isCasting then
+                local ability = entity:getComponent("Ability")
+                if ability then
+                    local abilityData = ability:getCurrentAbility()
+                    -- Check if this ability's movementCancelsCast flag is true
+                    if abilityData and abilityData.movementCancelsCast == true then
+                        if self:shouldCancelCast(entity) then
+                            attack:cancelCast()
+                        end
+                    end
+                end
+            end
+
+            -- Update cast progress and check if complete
+            if attack.isCasting then
+                if attack:isCastComplete(currentTime) then
+                    -- Cast complete, perform the attack
+                    self:executeAttackAfterCast(entity, currentTime)
+                end
+            else
+                -- Check for attack input (only if not casting)
+                if self:shouldAttack(entity, currentTime) then
+                    self:performAttack(entity, currentTime)
+                end
             end
         end
     end
+end
+
+---Check if cast should be cancelled (e.g., player moved)
+---@param entity Entity The entity to check
+---@return boolean True if cast should be cancelled
+function AttackSystem:shouldCancelCast(entity)
+    if not EntityUtils.isPlayer(entity) then
+        return false
+    end
+
+    local GameState = require("src.core.GameState")
+    if not GameState or not GameState.input then
+        return false
+    end
+
+    -- Cancel cast if player is moving
+    return GameState.input.left or GameState.input.right or GameState.input.up or GameState.input.down
 end
 
 ---Check if an entity should attack
@@ -37,13 +76,18 @@ function AttackSystem:shouldAttack(entity, currentTime)
         return false
     end
 
-    -- Get cooldown from Weapon component if available, otherwise from Attack component
+    -- Don't allow new attacks while casting
+    if attack.isCasting then
+        return false
+    end
+
+    -- Get cooldown from Ability component if available, otherwise from Attack component
     local cooldown = attack.cooldown
-    local weapon = entity:getComponent("Weapon")
-    if weapon then
-        local weaponData = weapon:getCurrentWeapon()
-        if weaponData then
-            cooldown = weaponData.cooldown
+    local ability = entity:getComponent("Ability")
+    if ability then
+        local abilityData = ability:getCurrentAbility()
+        if abilityData then
+            cooldown = abilityData.cooldown
         end
     end
 
@@ -79,6 +123,26 @@ function AttackSystem:performAttack(entity, currentTime)
         return
     end
 
+    -- Get ability data to check for cast time
+    local ability = entity:getComponent("Ability")
+    local castTime = 0
+    local abilityId = nil
+    if ability then
+        local abilityData = ability:getCurrentAbility()
+        if abilityData then
+            castTime = abilityData.castTime or 0
+            abilityId = abilityData.id
+        end
+    end
+
+    -- If ability has cast time, start casting instead of attacking immediately
+    if castTime > 0 and not attack.isCasting then
+        -- Start casting (direction will be calculated when cast completes)
+        attack:startCast(abilityId or "unknown", castTime, currentTime)
+        return -- Don't spawn bullet yet, wait for cast to complete
+    end
+
+    -- No cast time or cast already complete, proceed with normal attack
     if not attack:performAttack(currentTime) then
         return
     end
@@ -87,6 +151,34 @@ function AttackSystem:performAttack(entity, currentTime)
     if EntityUtils.isPlayer(entity) then
         self:calculatePlayerAttackDirection(entity)
     end
+
+    -- Spawn a bullet entity for ranged attacks
+    self:spawnBullet(entity)
+end
+
+---Execute attack after cast completes
+---@param entity Entity The attacking entity
+---@param currentTime number Current game time
+function AttackSystem:executeAttackAfterCast(entity, currentTime)
+    local attack = entity:getComponent("Attack")
+    local position = entity:getComponent("Position")
+
+    if not attack or not position then
+        return
+    end
+
+    -- Cast is complete, now perform the attack
+    if not attack:performAttack(currentTime) then
+        return
+    end
+
+    -- Calculate attack direction for player entities (based on current mouse position)
+    if EntityUtils.isPlayer(entity) then
+        self:calculatePlayerAttackDirection(entity)
+    end
+
+    -- Clear cast state
+    attack:cancelCast()
 
     -- Spawn a bullet entity for ranged attacks
     self:spawnBullet(entity)
@@ -106,13 +198,13 @@ function AttackSystem:calculatePlayerAttackDirection(entity)
         return
     end
 
-    -- Get range from Weapon if available, otherwise from Attack
+    -- Get range from Ability if available, otherwise from Attack
     local range = attack.range
-    local weapon = entity:getComponent("Weapon")
-    if weapon then
-        local weaponData = weapon:getCurrentWeapon()
-        if weaponData then
-            range = weaponData.range
+    local ability = entity:getComponent("Ability")
+    if ability then
+        local abilityData = ability:getCurrentAbility()
+        if abilityData then
+            range = abilityData.range
         end
     end
 
@@ -130,7 +222,7 @@ function AttackSystem:calculatePlayerAttackDirection(entity)
     -- Set the attack direction
     attack:setDirection(directionX, directionY)
 
-    -- Calculate hit area position using player center and weapon range
+    -- Calculate hit area position using player center and ability range
     attack:calculateHitArea(playerCenterX, playerCenterY, range)
 end
 
@@ -255,22 +347,22 @@ function AttackSystem:spawnBullet(entity)
     local physicsWorld = attackerPhys and attackerPhys.physicsWorld or nil
     if not physicsWorld then return end
 
-    -- Get attack stats from Weapon if available, otherwise from Attack component
+    -- Get attack stats from Ability if available, otherwise from Attack component
     local damage = attack.damage
     local knockback = attack.knockback
     local bulletSpeed = 300
     local bulletLifetime = 3
     local piercing = false
 
-    local weapon = entity:getComponent("Weapon")
-    if weapon then
-        local weaponData = weapon:getCurrentWeapon()
-        if weaponData then
-            damage = weaponData.damage
-            knockback = weaponData.knockback
-            bulletSpeed = weaponData.bulletSpeed or bulletSpeed
-            bulletLifetime = weaponData.bulletLifetime or bulletLifetime
-            piercing = weaponData.piercing or piercing
+    local ability = entity:getComponent("Ability")
+    if ability then
+        local abilityData = ability:getCurrentAbility()
+        if abilityData then
+            damage = abilityData.damage
+            knockback = abilityData.knockback
+            bulletSpeed = abilityData.bulletSpeed or bulletSpeed
+            bulletLifetime = abilityData.bulletLifetime or bulletLifetime
+            piercing = abilityData.piercing or piercing
         end
     end
 
@@ -332,13 +424,13 @@ function AttackSystem:spawnBullet(entity)
         )
 
         -- Apply recoil to player
-        if EntityUtils.isPlayer(entity) and weapon then
-            local weaponData = weapon:getCurrentWeapon()
-            if weaponData and weaponData.recoilKnockback then
+        if EntityUtils.isPlayer(entity) and ability then
+            local abilityData = ability:getCurrentAbility()
+            if abilityData and abilityData.recoilKnockback then
                 local movement = entity:getComponent("Movement")
                 if movement then
                     -- Apply recoil in opposite direction of shot
-                    local recoilVelocity = weaponData.recoilKnockback * 150
+                    local recoilVelocity = abilityData.recoilKnockback * 150
                     movement:addVelocity(-directionX * recoilVelocity, -directionY * recoilVelocity)
                 end
             end

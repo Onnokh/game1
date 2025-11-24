@@ -41,7 +41,7 @@ function HealthBarHUD.draw(world)
     local marginX, marginY = 32, 64
     local barWidth, barHeight = 640, 64
 
-    local x = sw/2 - barWidth/2
+    local x = marginX
     local y = sh - marginY - barHeight
 
     local pct = math.max(0, math.min(1, health:getHealthPercentage()))

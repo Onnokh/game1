@@ -77,11 +77,9 @@ function MenuScene.draw(gameState)
   love.graphics.push("all")
   love.graphics.setColor(1, 1, 1)
   love.graphics.setFont(fonts.getUIFont(128))
-  love.graphics.printf("Outpost", marginX, titleY, contentWidth, "left")
 
   -- Draw buttons
   local buttonFont = fonts.getUIFont(28)
-  local buttonY = 300
   local buttonSpacing = 20
 
   -- Calculate maximum button width to make all buttons same size
@@ -92,12 +90,28 @@ function MenuScene.draw(gameState)
     maxButtonWidth = math.max(maxButtonWidth, buttonWidth) + 80
   end
 
-  -- Draw all buttons with the same width
+  -- Calculate total height of all buttons (including spacing)
+  local totalButtonHeight = 0
   for i, btn in ipairs(buttons) do
-    btn:updateBounds(marginX, buttonY, buttonFont)
+    local textHeight = buttonFont:getHeight()
+    local buttonHeight = textHeight + btn.paddingY * 2
+    totalButtonHeight = totalButtonHeight + buttonHeight
+    if i < #buttons then
+      totalButtonHeight = totalButtonHeight + buttonSpacing
+    end
+  end
+
+  -- Center buttons horizontally and vertically
+  local buttonX = (width - maxButtonWidth) / 2
+  local buttonY = (height - totalButtonHeight) / 2 + 100
+
+  -- Draw all buttons with the same width
+  local currentY = buttonY
+  for i, btn in ipairs(buttons) do
+    btn:updateBounds(buttonX, currentY, buttonFont)
     btn.width = maxButtonWidth -- Override to use max width
     btn:draw(buttonFont)
-    buttonY = buttonY + btn.height + buttonSpacing
+    currentY = currentY + btn.height + buttonSpacing
   end
 
   -- Draw instructions

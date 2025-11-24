@@ -255,27 +255,27 @@ function UpgradeUISystem:applyUpgrade(player, upgradeId, slotIndex)
     local currentRank = tracker:getRank(upgradeId)
     local source = "upgrade_" .. upgradeId .. "_rank_" .. tostring(currentRank + 1)
 
-    -- Check if this is a weapon upgrade (path starts with "Weapon.inventory.")
-    local isWeaponUpgrade = upgradeDef.targetPath and upgradeDef.targetPath:match("^Weapon%.inventory%.")
+    -- Check if this is an ability upgrade (path starts with "Ability.inventory.")
+    local isAbilityUpgrade = upgradeDef.targetPath and upgradeDef.targetPath:match("^Ability%.inventory%.")
 
-    if isWeaponUpgrade then
-        -- Handle weapon upgrades directly
-        local weapon = player:getComponent("Weapon")
-        if not weapon then
-            print("[UpgradeUI] Player has no Weapon component")
+    if isAbilityUpgrade then
+        -- Handle ability upgrades directly
+        local ability = player:getComponent("Ability")
+        if not ability then
+            print("[UpgradeUI] Player has no Ability component")
             return
         end
 
-        -- Parse the weapon path: "Weapon.inventory.weaponId.statName"
-        local weaponId, statName = upgradeDef.targetPath:match("^Weapon%.inventory%.([^.]+)%.([^.]+)$")
-        if not weaponId or not statName then
-            print("[UpgradeUI] Invalid weapon upgrade path: " .. tostring(upgradeDef.targetPath))
+        -- Parse the ability path: "Ability.inventory.abilityId.statName"
+        local abilityId, statName = upgradeDef.targetPath:match("^Ability%.inventory%.([^.]+)%.([^.]+)$")
+        if not abilityId or not statName then
+            print("[UpgradeUI] Invalid ability upgrade path: " .. tostring(upgradeDef.targetPath))
             return
         end
 
-        -- Apply weapon override directly
-        weapon:setWeaponOverride(weaponId, statName, upgradeDef.modifierValue)
-        print(string.format("[UpgradeUI] Applied weapon override: %s.%s = %s", weaponId, statName, tostring(upgradeDef.modifierValue)))
+        -- Apply ability override directly
+        ability:setAbilityOverride(abilityId, statName, upgradeDef.modifierValue)
+        print(string.format("[UpgradeUI] Applied ability override: %s.%s = %s", abilityId, statName, tostring(upgradeDef.modifierValue)))
     else
         -- Apply regular stat modifier
         modifier:apply(player, upgradeDef.targetPath, upgradeDef.modifierType, upgradeDef.modifierValue, source)

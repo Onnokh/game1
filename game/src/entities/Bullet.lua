@@ -54,16 +54,16 @@ function BulletEntity.create(x, y, velocityX, velocityY, speed, damage, owner, w
     -- Start with small scale for animation
     spriteRenderer:setScale(0.3, 0.3)
 
-    -- Set glow color and sprite color from weapon if available
+    -- Set glow color and sprite color from ability if available
     if owner then
-        local weapon = owner:getComponent("Weapon")
-        if weapon then
-            local weaponData = weapon:getCurrentWeapon()
-            if weaponData and weaponData.glowColor then
+        local ability = owner:getComponent("Ability")
+        if ability then
+            local abilityData = ability:getCurrentAbility()
+            if abilityData and abilityData.glowColor then
                 -- Set glow color for the halo effect
-                spriteRenderer:setGlowColor(weaponData.glowColor[1], weaponData.glowColor[2], weaponData.glowColor[3])
+                spriteRenderer:setGlowColor(abilityData.glowColor[1], abilityData.glowColor[2], abilityData.glowColor[3])
                 -- Tint the sprite itself with the same color (since sprite is now white)
-                spriteRenderer:setColor(weaponData.glowColor[1], weaponData.glowColor[2], weaponData.glowColor[3], 1.0)
+                spriteRenderer:setColor(abilityData.glowColor[1], abilityData.glowColor[2], abilityData.glowColor[3], 1.0)
             end
         end
     end

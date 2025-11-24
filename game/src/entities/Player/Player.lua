@@ -6,7 +6,7 @@ local PathfindingCollision = require("src.components.PathfindingCollision")
 local PhysicsCollision = require("src.components.PhysicsCollision")
 local StateMachine = require("src.components.StateMachine")
 local Attack = require("src.components.Attack")
-local Weapon = require("src.components.Weapon")
+local Ability = require("src.components.Ability")
 local Health = require("src.components.Health")
 local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
@@ -20,7 +20,7 @@ local MinimapIcon = require("src.components.MinimapIcon")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local DepthSorting = require("src.utils.depthSorting")
-local weaponDefinitions = require("src.definitions.weapons")
+local abilityDefinitions = require("src.definitions.abilities")
 local sprites = require("src.utils.sprites")
 
 local Idle = require("src.entities.Player.states.Idle")
@@ -109,12 +109,12 @@ function Player.create(x, y, world, physicsWorld)
     stateMachine:addState("running", Running.new())
     stateMachine:addState("dash", Dash.new())
 
-    -- Create weapon component with weapon inventory
-    local weaponInventory = weaponDefinitions.getAllWeapons()
-    local weapon = Weapon.new("ranged", weaponInventory)
+    -- Create ability component with ability inventory
+    local abilityInventory = abilityDefinitions.getAllAbilities()
+    local ability = Ability.new("ranged", abilityInventory)
 
     -- Create attack component (tracks attack execution state)
-    -- Actual weapon stats come from Weapon component
+    -- Actual ability stats come from Ability component
     local attack = Attack.new()
 
     -- Create health component
@@ -150,7 +150,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("PhysicsCollision", physicsCollision)
     playerEntity:addComponent("StateMachine", stateMachine)
     playerEntity:addComponent("Animator", animator)
-    playerEntity:addComponent("Weapon", weapon)
+    playerEntity:addComponent("Ability", ability)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("ParticleSystem", particleSystem)
