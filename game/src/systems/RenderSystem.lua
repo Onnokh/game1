@@ -137,8 +137,15 @@ function RenderSystem:draw()
 
                 local shadowAlpha = shadowComp.alpha or 0.35
 
-                -- Get shadow shader
-                local shadowShader = ShaderManager.getShader("shadow")
+                -- Get shadow shader - use combined shader if entity has FoliageSway tag
+                local shadowShader
+                local hasFoliageSway = entity:hasTag("FoliageSway")
+                if hasFoliageSway then
+                    shadowShader = ShaderManager.getShader("shadow_foliage_sway")
+                else
+                    shadowShader = ShaderManager.getShader("shadow")
+                end
+                
                 if shadowShader then
                     -- Set shadow color (white for shader - shader will make it black)
                     love.graphics.setColor(1, 1, 1, 1)
@@ -148,6 +155,38 @@ function RenderSystem:draw()
 
                     -- Send shader uniforms
                     shadowShader:send("shadowAlpha", shadowAlpha)
+                    
+                    -- Send foliage sway uniforms if using combined shader
+                    if hasFoliageSway then
+                        local noiseTexture = ShaderManager.getNoiseTexture()
+                        if noiseTexture then
+                            shadowShader:send("Time", love.timer.getTime())
+                            shadowShader:send("NoiseTexture", noiseTexture)
+                            shadowShader:send("WorldPosition", {x, y})
+                            
+                            -- Get texture size for foliage sway
+                            local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
+                            if animator and animator.layers and #animator.layers > 0 then
+                                local iffy = require("lib.iffy")
+                                local current = animator:getCurrentFrame()
+                                for _, sheetName in ipairs(animator.layers) do
+                                    if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                                        local image = iffy.images[sheetName]
+                                        if image then
+                                            textureWidth, textureHeight = image:getDimensions()
+                                            break
+                                        end
+                                    end
+                                end
+                            elseif spriteRenderer.sprite then
+                                local iffy = require("lib.iffy")
+                                if iffy.images[spriteRenderer.sprite] then
+                                    textureWidth, textureHeight = iffy.images[spriteRenderer.sprite]:getDimensions()
+                                end
+                            end
+                            shadowShader:send("TextureSize", {textureWidth, textureHeight})
+                        end
+                    end
 
                     -- Calculate origin point ONCE for all layers (use override if provided, otherwise will calculate per-layer)
                     local globalOriginX, globalOriginY
