@@ -54,6 +54,10 @@ function RenderSystem:draw()
             -- Check if entity has GroundShadow component and render shadow first
             local shadowComp = entity:getComponent("GroundShadow")
             if shadowComp and shadowComp.enabled then
+                -- Temporarily set Z-index to BACKGROUND layer so shadow renders behind entities
+                local originalZ = position.z
+                position:setZ(DepthSorting.LAYERS.BACKGROUND)
+
                 -- Get actual sprite dimensions for shadow calculation
                 local actualSpriteWidth, actualSpriteHeight = GroundShadowSystem.getActualSpriteDimensions(entity, spriteRenderer, animator)
 
@@ -214,8 +218,27 @@ function RenderSystem:draw()
 
                     -- Reset shader
                     love.graphics.setShader()
+
+                    -- Restore original Z-index after drawing shadow
+                    position:setZ(originalZ)
                 end
             end
+        end
+    end
+
+    -- Second pass: Render all sprites normally
+    for _, entity in ipairs(sortedEntities) do
+        local position = entity:getComponent("Position")
+        local spriteRenderer = entity:getComponent("SpriteRenderer")
+
+        if position and spriteRenderer and spriteRenderer.visible then
+            -- Calculate final position with offset, rounded to whole pixels
+            local x = math.floor(position.x + spriteRenderer.offsetX + 0.5)
+            local y = math.floor(position.y + spriteRenderer.offsetY + 0.5)
+
+            -- If Animator exists and sheet is loaded with Iffy, draw that frame
+            local animator = entity:getComponent("Animator")
+            local isBullet = entity:hasTag("Bullet")
 
             -- Set color for normal sprite
             love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)

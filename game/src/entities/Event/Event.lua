@@ -108,9 +108,6 @@ function EventEntity.create(x, y, world, physicsWorld, eventType)
     event:addComponent("Upgrade", upgradeComponent)
     event:addComponent("TriggerZone", triggerZone)
     event:addComponent("Interactable", interactable)
-    -- Shadow origin 30px below sprite bottom (sprite is 128px tall, so originY = 128 + 30 = 158)
-    event:addComponent("GroundShadow", GroundShadow.new({ alpha = .5, widthFactor = 1.3, heightFactor = .5, offsetY = 0, originX = 64, originY = 158 }))
-    -- Add minimap icon with the upgrade icon
     event:addComponent("MinimapIcon", MinimapIcon.new("upgrade", {r = 255, g = 255, b = 255}, 5, sprites.getImage("minimapUpgrade")))
 
     -- Tag for easy querying
