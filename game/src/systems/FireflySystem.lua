@@ -2,31 +2,25 @@ local System = require("src.core.System")
 local FireflyFactory = require("src.entities.Firefly")
 
 ---@class FireflySystem : System
----@field islands table Array of island data for spawn locations
----@field spawnTimers table Spawn timers for each island
+---@field worldBounds table World bounds {x, y, width, height}
+---@field spawnTimer table Spawn timer for fireflies
 local FireflySystem = System:extend("FireflySystem", {"Position", "Firefly", "Light"})
 
 ---Create a new FireflySystem
----@param islands table|nil Array of island data for spawn locations
 ---@return FireflySystem
-function FireflySystem.new(islands)
+function FireflySystem.new()
     local self = System.new()
     setmetatable(self, FireflySystem)
     self.requiredComponents = {"Position", "Firefly", "Light"}
-    self.islands = islands or {}
+    self.worldBounds = { x = 0, y = 0, width = 600, height = 600 }
     self.worldGrid = nil  -- Will be set later when world is loaded
     self.tileSize = 32    -- Default tile size, will be updated from world data
 
-    -- Spawn timers for each island with fireflies property
-    self.spawnTimers = {}
-    for _, island in ipairs(self.islands) do
-        if island.definition and island.definition.properties and island.definition.properties.fireflies then
-            self.spawnTimers[island.id] = {
-                nextSpawn = math.random() * 3,  -- Initial random delay 0-3 seconds
-                interval = 8 + math.random() * 2  -- 8-10 second intervals
-            }
-        end
-    end
+    -- Single spawn timer for the world
+    self.spawnTimer = {
+        nextSpawn = math.random() * 3,  -- Initial random delay 0-3 seconds
+        interval = 8 + math.random() * 2  -- 8-10 second intervals
+    }
 
     return self
 end
@@ -34,14 +28,12 @@ end
 ---Update firefly spawning timers and spawn new fireflies
 ---@param dt number Delta time
 function FireflySystem:update(dt)
-    -- Update spawn timers for each island
-    for islandId, timer in pairs(self.spawnTimers) do
-        timer.nextSpawn = timer.nextSpawn - dt
+    -- Update spawn timer
+    self.spawnTimer.nextSpawn = self.spawnTimer.nextSpawn - dt
 
-        if timer.nextSpawn <= 0 then
-            self:spawnFirefliesForIsland(islandId)
-            timer.nextSpawn = timer.interval
-        end
+    if self.spawnTimer.nextSpawn <= 0 then
+        self:spawnFireflies()
+        self.spawnTimer.nextSpawn = self.spawnTimer.interval
     end
 
     -- Update existing fireflies
@@ -89,26 +81,14 @@ function FireflySystem:update(dt)
     end
 end
 
----Spawn fireflies for a specific island
----@param islandId string Island identifier
-function FireflySystem:spawnFirefliesForIsland(islandId)
-    -- Find the island data
-    local island = nil
-    for _, islandData in ipairs(self.islands) do
-        if islandData.id == islandId then
-            island = islandData
-            break
-        end
-    end
-
-    if not island then return end
-
+---Spawn fireflies in the world
+function FireflySystem:spawnFireflies()
     -- Spawn 0-1 clusters of fireflies
     local clusterCount = math.random(1)
 
     for cluster = 1, clusterCount do
         -- Find a cluster center position
-        local centerX, centerY = self:findWalkablePosition(island)
+        local centerX, centerY = self:findWalkablePosition()
 
         if centerX and centerY then
             -- Spawn 2-4 fireflies in a cluster around the center
@@ -122,32 +102,24 @@ function FireflySystem:spawnFirefliesForIsland(islandId)
                 local x = centerX + math.cos(angle) * distance
                 local y = centerY + math.sin(angle) * distance
 
-                -- Make sure the position is still within island bounds and walkable
-                    if x >= island.x and x <= island.x + island.width and
-                       y >= island.y and y <= island.y + island.height and
-                       self:isWalkable(x, y) then
-                        local firefly = FireflyFactory.create(x, y, self.world)
-                    end
+                -- Make sure the position is still within world bounds and walkable
+                if x >= self.worldBounds.x and x <= self.worldBounds.x + self.worldBounds.width and
+                   y >= self.worldBounds.y and y <= self.worldBounds.y + self.worldBounds.height and
+                   self:isWalkable(x, y) then
+                    local firefly = FireflyFactory.create(x, y, self.world)
+                end
             end
-            end
+        end
     end
 end
 
----Set the islands data (called when islands are loaded)
----@param islands table Array of island data
-function FireflySystem:setIslands(islands)
-    self.islands = islands
-
-    -- Reset spawn timers for new islands
-    self.spawnTimers = {}
-    for _, island in ipairs(self.islands) do
-        if island.definition and island.definition.properties and island.definition.properties.fireflies then
-            self.spawnTimers[island.id] = {
-                nextSpawn = math.random() * 3,  -- Initial random delay 0-3 seconds
-                interval = 8 + math.random() * 2  -- 8-10 second intervals
-            }
-        end
-    end
+---Set the world bounds (called when world is loaded)
+---@param x number World X position
+---@param y number World Y position
+---@param width number World width
+---@param height number World height
+function FireflySystem:setWorldBounds(x, y, width, height)
+    self.worldBounds = { x = x or 0, y = y or 0, width = width or 600, height = height or 600 }
 end
 
 ---Set the world grid data for walkability checking
@@ -177,16 +149,16 @@ function FireflySystem:isWalkable(x, y)
     return false  -- Default to not walkable if tile doesn't exist
 end
 
----Find a walkable position within an island
----@param island table Island data
+---Find a walkable position within the world
 ---@return number|nil, number|nil X and Y coordinates, or nil if no walkable position found
-function FireflySystem:findWalkablePosition(island)
+function FireflySystem:findWalkablePosition()
     local maxAttempts = 50  -- Maximum attempts to find a walkable position
 
     for attempt = 1, maxAttempts do
-        -- Generate random position within island bounds
-        local x = island.x + math.random(island.width)
-        local y = island.y + math.random(island.height)
+        -- Generate random position within world bounds (avoid edges where walls are)
+        local margin = self.tileSize * 2  -- Avoid edge walls
+        local x = self.worldBounds.x + margin + math.random(self.worldBounds.width - margin * 2)
+        local y = self.worldBounds.y + margin + math.random(self.worldBounds.height - margin * 2)
 
         -- Check if position is walkable
         if self:isWalkable(x, y) then

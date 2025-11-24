@@ -9,7 +9,6 @@ local PlayerConfig = require("src.entities.Player.PlayerConfig")
 local sprites = require("src.utils.sprites")
 local WorldLight = require("src.utils.worldlight")
 local MapManager = require("src.core.managers.MapManager")
-local BridgeManager = require("src.core.managers.BridgeManager")
 local CameraManager = require("src.core.managers.CameraManager")
 local GameState = require("src.core.GameState")
 
@@ -83,23 +82,7 @@ GameScene.monsters = monsters
 GameScene.lightWorld = nil
 
 local function calculateDefaultCameraScale()
-  local baseWidth = (GameConstants.BASE_RENDER_WIDTH or 160) * (GameConstants.ZOOM_SCALE or 1)
-  local baseHeight = (GameConstants.BASE_RENDER_HEIGHT or 90) * (GameConstants.ZOOM_SCALE or 1)
-  local screenW, screenH = love.graphics.getDimensions()
-
-  if baseWidth <= 0 or baseHeight <= 0 or screenW <= 0 or screenH <= 0 then
-    return 1.0
-  end
-
-  local widthScale = screenW / baseWidth
-  local heightScale = screenH / baseHeight
-  local scale = math.min(widthScale, heightScale)
-
-  if scale <= 0 or scale ~= scale then
-    return 1.0
-  end
-
-  return scale
+  return GameConstants.CAMERA_SCALE or 1.0
 end
 
 -- Initialize the game scene
@@ -120,9 +103,9 @@ function GameScene.load()
   lightWorld = WorldLight.get()
   GameScene.lightWorld = lightWorld
 
-  -- Set dark ambient but not pitch black (20% brightness = 80% darkness)
-  -- This allows lights to be visible
-  WorldLight.setAmbientColor(120, 120, 120, 255, 0) -- R,G,B values 0-255 (20% brightness), final argument = duration (0 = instant)
+  -- Set bright ambient lighting for the world
+  -- This allows lights to be visible while keeping the world bright
+  WorldLight.setAmbientColor(200, 200, 200, 255, 0) -- R,G,B values 0-255 (~78% brightness), final argument = duration (0 = instant)
 
   -- Initialize ECS world with physics reference
   ecsWorld = World.new(physicsWorld, lightWorld, false)
@@ -215,7 +198,7 @@ function GameScene.load()
   uiWorld:addSystem(DashSpeedLinesSystem.new(ecsWorld)) -- Show speed lines when player is dashing
   uiWorld:addSystem(MinimapSystem.new(ecsWorld)) -- Show minimap with shops and upgrade stations
 
-  -- Load complete world using MapManager (handles everything: islands, pathfinding, collisions, entities, camera)
+  -- Load complete world using MapManager (handles everything: world generation, pathfinding, collisions, entities, camera)
   -- Check if we're loading from a save (which would have a specific seed)
   local SaveSystem = require("src.utils.SaveSystem")
   local savedSeed = SaveSystem.getPendingMapSeed()
@@ -234,11 +217,11 @@ function GameScene.load()
   -- Set camera on ECS world for frustum culling in systems (e.g., LightSystem)
   ecsWorld:setCamera(GameState.camera)
 
-  -- Set islands data and world grid for FireflySystem
+  -- Set world grid for FireflySystem
   if fireflySystem then
-    local allMaps = MapManager.getAllMaps()
-    fireflySystem:setIslands(allMaps)
     fireflySystem:setWorldGrid(world, tileSize)
+    -- Set world bounds for fireflies (600x600)
+    fireflySystem:setWorldBounds(0, 0, worldWidth, worldHeight)
   end
 
   -- Store references for debugging
@@ -273,6 +256,15 @@ function GameScene.load()
 
   -- Add EnemySpawnerSystem after PathfindingSystem so it can access the grid for validation
   ecsWorld:addSystem(EnemySpawnerSystem.new(ecsWorld, physicsWorld))
+
+  -- Spawn a tree
+  local Tree = require("src.entities.Decoration.Tree")
+  local Tree2 = require("src.entities.Decoration.Tree2")
+  local TreeStump = require("src.entities.Decoration.TreeStump")
+
+  Tree.create(330, 320, ecsWorld, physicsWorld)
+  Tree2.create(300, 300, ecsWorld, physicsWorld)
+  TreeStump.create(360, 420, ecsWorld, physicsWorld)
 
   -- Check if there's pending save data to load
   local SaveSystem = require("src.utils.SaveSystem")
@@ -484,13 +476,8 @@ end
 function GameScene.drawWorld(gameState)
   -- Apply camera transform for world rendering
   gameState.camera:draw(function()
-    -- Draw all islands using MapManager (with camera frustum culling)
+    -- Draw simple world using MapManager
     MapManager.draw(gameState.camera)
-
-    -- Draw bridges between islands (pass base island map for tileset access)
-    local baseIsland = MapManager.baseIsland
-    local map = baseIsland and baseIsland.map
-    BridgeManager.draw(map)
 
     -- Draw ECS entities (world-space systems only)
     if ecsWorld then

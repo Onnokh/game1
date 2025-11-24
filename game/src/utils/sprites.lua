@@ -72,8 +72,9 @@ function IffySprites.load()
   loadSpritesheet("bullet", "resources/bullet.png", 1, 1)
 
   -- Load tree spritesheet (1x1 grid, 48x64)
-  loadSpritesheet("tree", "resources/objects/tree.png", 1, 1)
-  loadSpritesheet("tree2", "resources/objects/tree2.png", 1, 1)
+  loadSpritesheet("tree-stump", "resources/dun-morogh/tree-stump.png", 1, 1)
+  loadSpritesheet("tree", "resources/dun-morogh/tree.png", 1, 1)
+  loadSpritesheet("tree2", "resources/dun-morogh/tree2.png", 1, 1)
 
   -- Load shop spritesheet (1x1 grid, 64x64)
   loadSpritesheet("shop", "resources/objects/shop.png", 8, 1)

@@ -1,431 +1,139 @@
 -- MapManager.lua
--- Complete world loading and management system
--- Handles: level loading, island generation, pathfinding, collisions, entities, camera
+-- Simple world loading and management system
+-- Handles: level loading, pathfinding, collisions, entities, camera
 
 local MapManager = {}
 
 -- Dependencies (lazy loaded to avoid circular dependencies)
-local TiledMapLoader = nil
 local Player = nil
 local Tree = nil
 local Shop = nil
 local Crystal = nil
 local Event = nil
-local BridgeManager = nil
 local GameConstants = nil
 local MobManager = nil
-local TileLightSpawner = nil
 
 -- Internal state
-MapManager.maps = {}
-MapManager.baseIsland = nil
 MapManager.levelConfig = nil
 MapManager.initialized = false
-MapManager.lastDrawnCount = 0
-MapManager.lastCulledCount = 0
-MapManager.currentSeed = nil -- Store the seed used for current map generation
-
----=============================================================================
---- ISLAND GENERATION
----=============================================================================
-
-local function setRandomSeed(seed)
-    seed = seed or os.time()
-    MapManager.currentSeed = seed -- Store the seed
-    if os and os.time then
-        math.randomseed(seed)
-    end
-    print(string.format("[MapManager] Using random seed: %d", seed))
-end
-
-local function weightedRandom(pool)
-    if not pool or #pool == 0 then return nil end
-
-    local totalWeight = 0
-    for _, item in ipairs(pool) do
-        totalWeight = totalWeight + (item.weight or 1)
-    end
-
-    local randomValue = math.random() * totalWeight
-    local currentWeight = 0
-
-    for _, item in ipairs(pool) do
-        currentWeight = currentWeight + (item.weight or 1)
-        if randomValue <= currentWeight then
-            return item
-        end
-    end
-
-    return pool[1]
-end
-
-local function islandsOverlap(island1, island2, tolerance)
-    tolerance = tolerance or 0
-    return island1.x < island2.x + island2.width - tolerance and
-           island1.x + island1.width > island2.x + tolerance and
-           island1.y < island2.y + island2.height - tolerance and
-           island1.y + island1.height > island2.y + tolerance
-end
-
----Generate random islands around base island
----@param levelConfig table Level configuration
----@param baseIsland table Base island data
----@param seed number|nil Optional random seed (for save/load consistency)
----@return table Array of generated islands
-local function generateIslands(levelConfig, baseIsland, seed)
-    setRandomSeed(seed)
-
-    local islandPool = levelConfig.generation.islandPool
-    local generation = levelConfig.generation
-
-    local islandCount = math.random(generation.islandCount.min, generation.islandCount.max)
-    local placementMode = generation.placement.distributionMode or "tile-based"
-
-    print(string.format("[MapManager] Generating %d islands (%s placement)", islandCount, placementMode))
-
-    local generated = {}
-    local allIslands = {baseIsland}
-
-    for i = 1, islandCount do
-        local islandDef = weightedRandom(islandPool)
-        if not islandDef then break end
-
-        local islandMap = TiledMapLoader.load(islandDef.mapPath)
-        if not islandMap then
-            print(string.format("[MapManager] ERROR: Failed to load island map: %s", islandDef.mapPath))
-            break
-        end
-
-        local island = {
-            id = string.format("%s_%d", islandDef.id, i), -- Make each instance unique
-            definition = islandDef,
-            map = islandMap,
-            x = 0,
-            y = 0,
-            width = islandMap.width * islandMap.tilewidth,
-            height = islandMap.height * islandMap.tileheight
-        }
-
-        -- Place island adjacent to existing islands
-        local placed = false
-        local maxAttempts = 100
-
-        for attempt = 1, maxAttempts do
-            if placementMode == "tile-based" or placementMode == "scattered" then
-                local targetIsland = allIslands[math.random(#allIslands)]
-                local edges = {"north", "south", "east", "west"}
-                local edge = edges[math.random(#edges)]
-
-                if edge == "north" then
-                    island.x = targetIsland.x
-                    island.y = targetIsland.y - island.height
-                elseif edge == "south" then
-                    island.x = targetIsland.x
-                    island.y = targetIsland.y + targetIsland.height
-                elseif edge == "east" then
-                    island.x = targetIsland.x + targetIsland.width
-                    island.y = targetIsland.y
-                elseif edge == "west" then
-                    island.x = targetIsland.x - island.width
-                    island.y = targetIsland.y
-                end
-
-                -- Check for overlaps
-                local hasOverlap = false
-                for _, existingIsland in ipairs(allIslands) do
-                    if islandsOverlap(island, existingIsland, 0) then
-                        hasOverlap = true
-                        break
-                    end
-                end
-
-                if not hasOverlap then
-                    print(string.format("[MapManager] Placed %s at (%d, %d) [%s edge]",
-                        islandDef.name, island.x, island.y, edge))
-                    placed = true
-                    break
-                end
-            end
-        end
-
-        if placed then
-            table.insert(generated, island)
-            table.insert(allIslands, island)
-        end
-    end
-
-    return generated
-end
+MapManager.worldWidth = 0
+MapManager.worldHeight = 0
+MapManager.tileSize = 32
 
 ---=============================================================================
 --- WORLD BUILDING
 ---=============================================================================
 
----Calculate world bounds and apply grid-aligned offset to all islands
+---Build pathfinding grid for 600x600 world
+---@param worldWidth number World width in pixels
+---@param worldHeight number World height in pixels
 ---@param tileSize number Tile size in pixels
----@return table World bounds with offset, camera bounds
-local function calculateWorldBounds(tileSize)
-    local minX, minY = 0, 0
-    local maxX, maxY = 0, 0
-
-    for _, island in ipairs(MapManager.maps) do
-        minX = math.min(minX, island.x)
-        minY = math.min(minY, island.y)
-        maxX = math.max(maxX, island.x + island.width)
-        maxY = math.max(maxY, island.y + island.height)
-    end
-
-    -- Add padding
-    local padding = 500
-    minX = minX - padding
-    minY = minY - padding
-    maxX = maxX + padding
-    maxY = maxY + padding
-
-    -- Calculate grid-aligned offset
-    local offsetX = math.ceil(-minX / tileSize) * tileSize
-    local offsetY = math.ceil(-minY / tileSize) * tileSize
-
-    -- Adjust all island positions
-    for _, island in ipairs(MapManager.maps) do
-        island.x = island.x + offsetX
-        island.y = island.y + offsetY
-    end
-
-    local camWidth = maxX - minX
-    local camHeight = maxY - minY
-
-    print(string.format("[MapManager] World offset: (%.0f, %.0f)", offsetX, offsetY))
-    print(string.format("[MapManager] Camera bounds: (0, 0) to (%.0f, %.0f)", camWidth, camHeight))
-
-    return {
-        offsetX = offsetX,
-        offsetY = offsetY,
-        cameraWidth = camWidth,
-        cameraHeight = camHeight
-    }
-end
-
----Build pathfinding grid from all islands
----@param tileSize number Tile size in pixels
----@param camWidth number Camera width
----@param camHeight number Camera height
 ---@return table Pathfinding grid data
-local function buildPathfindingGrid(tileSize, camWidth, camHeight)
+local function buildPathfindingGrid(worldWidth, worldHeight, tileSize)
     local gridStart = love.timer.getTime()
 
-    local worldWidth = math.ceil(camWidth / tileSize)
-    local worldHeight = math.ceil(camHeight / tileSize)
+    local gridWidth = math.ceil(worldWidth / tileSize)
+    local gridHeight = math.ceil(worldHeight / tileSize)
 
     -- Pre-allocate grid
     local world = {}
-    local emptyTile = { walkable = false, gid = 0 }
-    for x = 1, worldWidth do
+    for x = 1, gridWidth do
         world[x] = {}
-        for y = 1, worldHeight do
-            world[x][y] = emptyTile
+        for y = 1, gridHeight do
+            -- Walls around edges (non-walkable), everything else walkable
+            local isWall = (x == 1 or x == gridWidth or y == 1 or y == gridHeight)
+            world[x][y] = {
+                walkable = not isWall,
+                gid = isWall and 0 or 1  -- 0 for walls, 1 for walkable tiles
+            }
         end
     end
 
     print(string.format("[MapManager] Pathfinding grid: %dx%d tiles (%.2fs)",
-        worldWidth, worldHeight, love.timer.getTime() - gridStart))
-
-    -- Cache collision grids by map path
-    local collisionGridCache = {}
-
-    -- Mark walkable tiles from each island
-    for _, island in ipairs(MapManager.maps) do
-        local islandMap = island.map
-        local mapPath = island.definition.mapPath
-
-        local islandCollisionGrid = collisionGridCache[mapPath]
-        if not islandCollisionGrid then
-            islandCollisionGrid = TiledMapLoader.parseCollisionGrid(
-                islandMap,
-                islandMap.width,
-                islandMap.height
-            )
-            collisionGridCache[mapPath] = islandCollisionGrid
-        end
-
-        local walkableTileCount = 0
-        for localX = 1, islandMap.width do
-            for localY = 1, islandMap.height do
-                local tileData = islandCollisionGrid[localX][localY]
-
-                if tileData and tileData.gid and tileData.gid > 0 then
-                    local worldTileX = math.floor(island.x / tileSize) + localX
-                    local worldTileY = math.floor(island.y / tileSize) + localY
-
-                    if worldTileX >= 1 and worldTileX <= worldWidth and
-                       worldTileY >= 1 and worldTileY <= worldHeight then
-                        -- Store ALL tiles (walkable and blocked)
-                        world[worldTileX][worldTileY] = {
-                            walkable = tileData.walkable,
-                            gid = tileData.gid
-                        }
-                        if tileData.walkable then
-                            walkableTileCount = walkableTileCount + 1
-                        end
-                    end
-                end
-            end
-        end
-
-        print(string.format("  Island '%s': %d walkable tiles marked (%.0f, %.0f)",
-            island.definition.name, walkableTileCount, island.x, island.y))
-    end
+        gridWidth, gridHeight, love.timer.getTime() - gridStart))
 
     return {
         grid = world,
-        width = worldWidth,
-        height = worldHeight
+        width = gridWidth,
+        height = gridHeight
     }
 end
 
----Create collision bodies from completed world grid (includes islands AND bridges)
----@param worldGrid table The completed world pathfinding grid
----@param gridWidth number Grid width in tiles
----@param gridHeight number Grid height in tiles
+---Create collision bodies for edge walls
+---@param worldWidth number World width in pixels
+---@param worldHeight number World height in pixels
 ---@param tileSize number Tile size in pixels
 ---@param physicsWorld love.World Physics world
 ---@return table Array of collision bodies
-local function createCollisionBodiesFromWorldGrid(worldGrid, gridWidth, gridHeight, tileSize, physicsWorld)
+local function createCollisionBodies(worldWidth, worldHeight, tileSize, physicsWorld)
     local collisionStart = love.timer.getTime()
+    local collisionBodies = {}
 
-    -- Convert world grid to collision grid format for TiledMapLoader
-    local collisionGrid = {}
-    for x = 1, gridWidth do
-        collisionGrid[x] = {}
-        for y = 1, gridHeight do
-            local tile = worldGrid[x] and worldGrid[x][y]
-            if tile then
-                collisionGrid[x][y] = {
-                    gid = tile.gid or 0,
-                    walkable = tile.walkable or false
-                }
-            else
-                collisionGrid[x][y] = {
-                    gid = 0,
-                    walkable = false
-                }
-            end
-        end
+    if not physicsWorld then
+        return collisionBodies
     end
 
-    -- Generate collision bodies from the complete world grid
-    local collisionBodies = TiledMapLoader.createCollisionBodies(
-        {
-            collisionGrid = collisionGrid,
-            width = gridWidth,
-            height = gridHeight,
-            tileSize = tileSize
-        },
-        physicsWorld,
-        0, -- No offset, world grid is already in world coordinates
-        0
-    )
+    -- Create walls around the edges
+    -- Top wall
+    local topBody = love.physics.newBody(physicsWorld, worldWidth / 2, tileSize / 2, "static")
+    local topShape = love.physics.newRectangleShape(worldWidth, tileSize)
+    local topFixture = love.physics.newFixture(topBody, topShape)
+    topFixture:setRestitution(0.1)
+    topFixture:setFriction(0.8)
+    table.insert(collisionBodies, { body = topBody, fixture = topFixture, shape = topShape })
+
+    -- Bottom wall
+    local bottomBody = love.physics.newBody(physicsWorld, worldWidth / 2, worldHeight - tileSize / 2, "static")
+    local bottomShape = love.physics.newRectangleShape(worldWidth, tileSize)
+    local bottomFixture = love.physics.newFixture(bottomBody, bottomShape)
+    bottomFixture:setRestitution(0.1)
+    bottomFixture:setFriction(0.8)
+    table.insert(collisionBodies, { body = bottomBody, fixture = bottomFixture, shape = bottomShape })
+
+    -- Left wall
+    local leftBody = love.physics.newBody(physicsWorld, tileSize / 2, worldHeight / 2, "static")
+    local leftShape = love.physics.newRectangleShape(tileSize, worldHeight)
+    local leftFixture = love.physics.newFixture(leftBody, leftShape)
+    leftFixture:setRestitution(0.1)
+    leftFixture:setFriction(0.8)
+    table.insert(collisionBodies, { body = leftBody, fixture = leftFixture, shape = leftShape })
+
+    -- Right wall
+    local rightBody = love.physics.newBody(physicsWorld, worldWidth - tileSize / 2, worldHeight / 2, "static")
+    local rightShape = love.physics.newRectangleShape(tileSize, worldHeight)
+    local rightFixture = love.physics.newFixture(rightBody, rightShape)
+    rightFixture:setRestitution(0.1)
+    rightFixture:setFriction(0.8)
+    table.insert(collisionBodies, { body = rightBody, fixture = rightFixture, shape = rightShape })
 
     print(string.format("[MapManager] Collision setup took %.2fs", love.timer.getTime() - collisionStart))
-    print(string.format("[MapManager] Total collision bodies: %d (from world grid)", #collisionBodies))
+    print(string.format("[MapManager] Total collision bodies: %d (edge walls)", #collisionBodies))
 
     return collisionBodies
 end
 
----Spawn entities from all islands
+---Spawn entities at fixed coordinates
 ---@param ecsWorld World ECS world
 ---@param physicsWorld love.World Physics world
+---@param spawns table Spawn coordinates from level config
 ---@return Entity|nil Player entity (nil if no spawn point found)
-local function spawnEntities(ecsWorld, physicsWorld)
+local function spawnEntities(ecsWorld, physicsWorld, spawns)
     local spawnStart = love.timer.getTime()
     local playerEntity = nil
 
-    for _, island in ipairs(MapManager.maps) do
-        local islandMap = island.map
-        local islandX = island.x
-        local islandY = island.y
-
-        local objects = TiledMapLoader.parseObjects(islandMap)
-
-        -- Spawn player at base island spawn point
-        if objects.spawn and not playerEntity and island.id == "base" then
-            playerEntity = Player.create(islandX + objects.spawn.x, islandY + objects.spawn.y, ecsWorld, physicsWorld)
-        end
-
-
-        -- Spawn other objects
-        for _, obj in ipairs(objects.other or {}) do
-            if obj.name == "Tree" then
-                Tree.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
-            elseif obj.name == "Tree2" then
-                Tree2.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld)
-            elseif obj.name == "Shop" then
-                -- Shop is bottom-left aligned in Tiled, so subtract height to get top-left position
-                -- Create unique shop ID using island and position for deterministic seed
-                local shopId = string.format("%s_shop_%d_%d", island.id, obj.x, obj.y)
-                Shop.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, nil, MapManager.currentSeed, shopId)
-              elseif obj.name == "Crystal" then
-                -- Crystal is bottom-left aligned in Tiled, so subtract height to get top-left position
-                -- Create unique crystal ID using island and position for deterministic seed
-                local crystalId = string.format("%s_crystal_%d_%d", island.id, obj.x, obj.y)
-                Crystal.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, nil, MapManager.currentSeed, crystalId)
-            elseif obj.name == "Event" then
-                -- Event is bottom-left aligned in Tiled, so subtract height to get top-left position
-                local eventType = "Upgrade" -- TODO: read from obj.properties.type later
-                Event.create(islandX + obj.x, islandY + obj.y - obj.height, ecsWorld, physicsWorld, eventType)
-            elseif obj.name == "MobSpawn" then
-                -- General mob spawn area (can be immediate or phase-based)
-                local amount = 1
-                local phase = nil
-
-                if obj.properties then
-                    if obj.properties.amount then
-                        amount = obj.properties.amount
-                    end
-                    if obj.properties.phase then
-                        phase = obj.properties.phase
-                    end
-                end
-
-                MobManager.registerSpawnArea({
-                    x = islandX + obj.x,
-                    y = islandY + obj.y,
-                    width = obj.width or 160,
-                    height = obj.height or 64,
-                    amount = amount,
-                    phase = phase,
-                    islandDef = island.definition
-                })
-            elseif obj.name == "Siege" then
-                -- Siege-specific spawn area (automatically phase="Siege")
-                local amount = 5 -- Default siege amount
-
-                if obj.properties and obj.properties.amount then
-                    amount = obj.properties.amount
-                end
-
-                MobManager.registerSpawnArea({
-                    x = islandX + obj.x,
-                    y = islandY + obj.y,
-                    width = obj.width or 160,
-                    height = obj.height or 64,
-                    amount = amount,
-                    phase = "Siege", -- Always Siege phase
-                    islandDef = island.definition
-                })
-            end
-        end
+    -- Spawn player
+    if spawns and spawns.player then
+        playerEntity = Player.create(spawns.player.x, spawns.player.y, ecsWorld, physicsWorld)
+        print(string.format("[MapManager] Player spawned at (%.0f, %.0f)", spawns.player.x, spawns.player.y))
+    else
+        -- Fallback: spawn at center
+        playerEntity = Player.create(300, 300, ecsWorld, physicsWorld)
+        print("[MapManager] Player spawned at default center (300, 300)")
     end
 
-    -- Fallback: spawn player at center of base island
-    if not playerEntity and MapManager.baseIsland then
-        local centerX = MapManager.baseIsland.x + MapManager.baseIsland.width / 2
-        local centerY = MapManager.baseIsland.y + MapManager.baseIsland.height / 2
-        playerEntity = Player.create(centerX, centerY, ecsWorld, physicsWorld)
-    end
-
-    -- Spawn immediate enemies from MobSpawn areas
-    MobManager.spawnImmediateEnemies(ecsWorld, physicsWorld)
+    -- Spawn other entities from spawns table
+    -- Example: if spawns.shop then Shop.create(spawns.shop.x, spawns.shop.y, ecsWorld, physicsWorld) end
+    -- Add more entity spawning here as needed
 
     print(string.format("[MapManager] Entity spawning took %.2fs", love.timer.getTime() - spawnStart))
 
@@ -433,14 +141,14 @@ local function spawnEntities(ecsWorld, physicsWorld)
 end
 
 ---Setup camera with proper bounds
----@param camWidth number Camera width
----@param camHeight number Camera height
+---@param worldWidth number World width
+---@param worldHeight number World height
 ---@param playerEntity Entity|nil Player entity (nil when loading from save)
 ---@return table Camera object
-local function setupCamera(camWidth, camHeight, playerEntity)
+local function setupCamera(worldWidth, worldHeight, playerEntity)
     local gamera = require("lib.gamera")
 
-    local camera = gamera.new(0, 0, camWidth, camHeight)
+    local camera = gamera.new(0, 0, worldWidth, worldHeight)
 
     if playerEntity then
         local position = playerEntity:getComponent("Position")
@@ -449,11 +157,11 @@ local function setupCamera(camWidth, camHeight, playerEntity)
         end
     end
 
-    -- Default camera scale is 1.0 (zoom controlled by PixelRenderer resolution via ZOOM_SCALE)
+    -- Default camera scale is 1.0
     camera:setScale(1.0)
 
     print(string.format("[MapManager] Camera positioned at (%.2f, %.2f)", camera:getPosition()))
-    print(string.format("[MapManager] World bounds: %dx%d", camWidth, camHeight))
+    print(string.format("[MapManager] World bounds: %dx%d", worldWidth, worldHeight))
 
     return camera
 end
@@ -462,29 +170,22 @@ end
 --- PUBLIC API
 ---=============================================================================
 
----Load a complete world (base island + generated islands + entities)
+---Load a simple 600x600 world
 ---@param levelPath string Path to level configuration (e.g., "src/levels/level1")
 ---@param physicsWorld love.World Physics world for collision bodies
 ---@param ecsWorld World ECS world for entity spawning
----@param seed number|nil Optional random seed for map generation (used when loading saves for consistency)
+---@param seed number|nil Optional random seed (unused for simple world, kept for API compatibility)
 ---@param skipEntitySpawn boolean|nil If true, skip entity spawning (used when loading from save)
 ---@return table World data containing grid, dimensions, camera bounds, player, etc.
 function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpawn)
     local startTime = love.timer.getTime()
 
     -- Load dependencies FIRST (lazy loading to avoid circular dependencies)
-    -- These must be loaded before any function that uses them is called
-    if not TiledMapLoader then
-        TiledMapLoader = require("src.utils.tiled")
-    end
     if not Player then
         Player = require("src.entities.Player.Player")
     end
     if not Tree then
         Tree = require("src.entities.Decoration.Tree")
-    end
-    if not Tree2 then
-        Tree2 = require("src.entities.Decoration.Tree2")
     end
     if not Shop then
         Shop = require("src.entities.Shop.Shop")
@@ -495,22 +196,14 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpaw
     if not Event then
         Event = require("src.entities.Event.Event")
     end
-    if not BridgeManager then
-        BridgeManager = require("src.core.managers.BridgeManager")
-    end
     if not GameConstants then
         GameConstants = require("src.constants")
     end
     if not MobManager then
         MobManager = require("src.core.managers.MobManager")
     end
-    if not TileLightSpawner then
-        TileLightSpawner = require("src.utils.TileLightSpawner")
-    end
 
     -- Clear previous state
-    MapManager.maps = {}
-    MapManager.baseIsland = nil
     MapManager.levelConfig = nil
     MapManager.initialized = false
     MobManager.clear()
@@ -521,75 +214,34 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpaw
 
     print("[MapManager] Loading level: " .. levelModule.name)
 
-    -- Load base island
-    local baseIslandDef = levelModule.baseIsland
-    print("[MapManager] Loading base island: " .. baseIslandDef.name)
+    -- Get world dimensions from level config
+    local worldWidth = levelModule.worldWidth or 600
+    local worldHeight = levelModule.worldHeight or 600
+    local tileSize = GameConstants.TILE_SIZE
 
-    local baseMap = TiledMapLoader.load(baseIslandDef.mapPath)
-    if not baseMap then
-        error("[MapManager] ERROR: Failed to load base island map")
-    end
+    MapManager.worldWidth = worldWidth
+    MapManager.worldHeight = worldHeight
+    MapManager.tileSize = tileSize
 
-    local baseWidth = baseMap.width * baseMap.tilewidth
-    local baseHeight = baseMap.height * baseMap.tileheight
-    local tileSize = baseMap.tilewidth
-
-    MapManager.baseIsland = {
-        id = "base",
-        definition = baseIslandDef,
-        map = baseMap,
-        x = 0,
-        y = 0,
-        width = baseWidth,
-        height = baseHeight
-    }
-
-    table.insert(MapManager.maps, MapManager.baseIsland)
-    print(string.format("[MapManager] Base island loaded: %dx%d pixels at (0, 0)", baseWidth, baseHeight))
-
-    -- Generate additional islands (use provided seed or generate new one)
-    local generatedIslands = generateIslands(levelModule, MapManager.baseIsland, seed)
-    for _, islandData in ipairs(generatedIslands) do
-        if islandData.map then
-            table.insert(MapManager.maps, islandData)
-        end
-    end
-
-    print(string.format("[MapManager] Loaded %d islands total", #MapManager.maps))
-
-    -- Calculate world bounds and apply offsets
-    local worldBounds = calculateWorldBounds(tileSize)
+    print(string.format("[MapManager] Creating %dx%d world", worldWidth, worldHeight))
 
     -- Build pathfinding grid
-    local pathfindingGrid = buildPathfindingGrid(tileSize, worldBounds.cameraWidth, worldBounds.cameraHeight)
+    local pathfindingGrid = buildPathfindingGrid(worldWidth, worldHeight, tileSize)
 
-    -- Initialize BridgeManager and add bridges to world grid (use same seed for consistency)
-    BridgeManager.initialize(MapManager.maps, tileSize, pathfindingGrid, MapManager.currentSeed)
-    BridgeManager.markBridgeTilesWalkable(pathfindingGrid.grid)
-
-    -- Create collision bodies from the COMPLETED world grid (includes bridges)
-    local collisionBodies = createCollisionBodiesFromWorldGrid(
-        pathfindingGrid.grid,
-        pathfindingGrid.width,
-        pathfindingGrid.height,
-        tileSize,
-        physicsWorld
-    )
+    -- Create collision bodies (edge walls)
+    local collisionBodies = createCollisionBodies(worldWidth, worldHeight, tileSize, physicsWorld)
 
     -- Spawn entities (skip if loading from save - SaveSystem will restore them)
     local playerEntity = nil
     if not skipEntitySpawn then
-        playerEntity = spawnEntities(ecsWorld, physicsWorld)
-        print("[MapManager] Entities spawned from map objects")
+        playerEntity = spawnEntities(ecsWorld, physicsWorld, levelModule.spawns)
+        print("[MapManager] Entities spawned")
     else
         print("[MapManager] Skipping entity spawn (loading from save)")
     end
 
-    -- Always spawn tile lights (deterministic, static decorations)
-    TileLightSpawner.spawnLightsForAllIslands(MapManager.maps, ecsWorld)
-
     -- Setup camera (playerEntity will be nil if loading from save, updated later by SaveSystem)
-    local camera = setupCamera(worldBounds.cameraWidth, worldBounds.cameraHeight, playerEntity)
+    local camera = setupCamera(worldWidth, worldHeight, playerEntity)
 
     MapManager.initialized = true
 
@@ -602,123 +254,83 @@ function MapManager.load(levelPath, physicsWorld, ecsWorld, seed, skipEntitySpaw
         gridHeight = pathfindingGrid.height,
         tileSize = tileSize,
         camera = camera,
-        cameraBounds = worldBounds,
+        cameraBounds = {
+            offsetX = 0,
+            offsetY = 0,
+            cameraWidth = worldWidth,
+            cameraHeight = worldHeight
+        },
         playerEntity = playerEntity,
         collisionBodies = collisionBodies
     }
 end
 
----Update all islands
----@param dt number Delta time
----@param camera table|nil Optional camera for culling
-function MapManager.update(dt, camera)
-    if not MapManager.initialized then return end
-
-    for _, mapData in ipairs(MapManager.maps) do
-        if mapData.map then
-            local shouldUpdate = true
-
-            if camera then
-                local camX, camY = camera:getPosition()
-                local camScale = camera:getScale()
-                local screenW, screenH = love.graphics.getDimensions()
-                local viewWidth = screenW / camScale
-                local viewHeight = screenH / camScale
-
-                local isVisible = not (
-                    mapData.x + mapData.width < camX - viewWidth/2 or
-                    mapData.x > camX + viewWidth/2 or
-                    mapData.y + mapData.height < camY - viewHeight/2 or
-                    mapData.y > camY + viewHeight/2
-                )
-
-                shouldUpdate = isVisible
-            end
-
-            if shouldUpdate then
-                TiledMapLoader.update(mapData.map, dt)
-            end
-        end
-    end
-end
-
----Draw all islands
----@param camera table|nil Optional camera for frustum culling
+---Draw the simple world (colored tiles)
+---@param camera table|nil Optional camera for culling (unused for simple world)
 function MapManager.draw(camera)
     if not MapManager.initialized then return end
 
-    local drawnCount = 0
-    local culledCount = 0
+    local tileSize = MapManager.tileSize
+    local worldWidth = MapManager.worldWidth
+    local worldHeight = MapManager.worldHeight
+    local gridWidth = math.ceil(worldWidth / tileSize)
+    local gridHeight = math.ceil(worldHeight / tileSize)
 
-    for _, mapData in ipairs(MapManager.maps) do
-        if mapData.map then
-            local shouldDraw = true
+    -- Color for walkable tiles: #ccd8db (RGB: 204, 216, 219)
+    local walkableR, walkableG, walkableB = 204/255, 216/255, 219/255
+    -- Color for walls: darker gray
+    local wallR, wallG, wallB = 0.3, 0.3, 0.3
 
-            if camera then
-                local camX, camY = camera:getPosition()
-                local camScale = camera:getScale()
-                local screenW, screenH = love.graphics.getDimensions()
-                local viewWidth = screenW / camScale
-                local viewHeight = screenH / camScale
-                local margin = 10
+    -- Draw tiles, ensuring we only draw within the exact world bounds
+    for x = 1, gridWidth do
+        for y = 1, gridHeight do
+            local isWall = (x == 1 or x == gridWidth or y == 1 or y == gridHeight)
+            local pixelX = (x - 1) * tileSize
+            local pixelY = (y - 1) * tileSize
 
-                local isVisible = not (
-                    mapData.x + mapData.width < camX - viewWidth/2 - margin or
-                    mapData.x > camX + viewWidth/2 + margin or
-                    mapData.y + mapData.height < camY - viewHeight/2 - margin or
-                    mapData.y > camY + viewHeight/2 + margin
-                )
+            -- Calculate actual tile size (may be partial for edge tiles)
+            local tileW = math.min(tileSize, worldWidth - pixelX)
+            local tileH = math.min(tileSize, worldHeight - pixelY)
 
-                shouldDraw = isVisible
-                if not shouldDraw then
-                    culledCount = culledCount + 1
-                end
+            if isWall then
+                love.graphics.setColor(wallR, wallG, wallB, 1)
+            else
+                love.graphics.setColor(walkableR, walkableG, walkableB, 1)
             end
 
-            if shouldDraw then
-                love.graphics.push()
-                love.graphics.translate(mapData.x, mapData.y)
-                TiledMapLoader.draw(mapData.map)
-                love.graphics.pop()
-                drawnCount = drawnCount + 1
-            end
+            love.graphics.rectangle("fill", pixelX, pixelY, tileW, tileH)
         end
     end
 
-    MapManager.lastDrawnCount = drawnCount
-    MapManager.lastCulledCount = culledCount
+    love.graphics.setColor(1, 1, 1, 1) -- Reset color
 end
 
----Get all loaded maps
----@return table List of all maps
+---Update world (no-op for simple world)
+---@param dt number Delta time
+---@param camera table|nil Optional camera for culling
+function MapManager.update(dt, camera)
+    -- Simple world doesn't need updates
+end
+
+---Get all loaded maps (returns empty for simple world)
+---@return table Empty list (for API compatibility)
 function MapManager.getAllMaps()
-    return MapManager.maps
+    return {}
 end
 
----Unload all maps
+---Unload world
 function MapManager.unload()
-    for _, mapData in ipairs(MapManager.maps) do
-        if mapData.map then
-            TiledMapLoader.clearCache(mapData.definition.mapPath)
-        end
-    end
-
-    -- Unload BridgeManager
-    if BridgeManager then
-        BridgeManager.unload()
-    end
-
     -- Clear MobManager
     if MobManager then
         MobManager.clear()
     end
 
-    MapManager.maps = {}
-    MapManager.baseIsland = nil
     MapManager.levelConfig = nil
     MapManager.initialized = false
+    MapManager.worldWidth = 0
+    MapManager.worldHeight = 0
 
-    print("[MapManager] Unloaded all maps")
+    print("[MapManager] Unloaded world")
 end
 
 return MapManager

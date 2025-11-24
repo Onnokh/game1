@@ -2,7 +2,7 @@
 
 extern float radius = 0.8;
 extern float softness = 0.5;
-extern float opacity = 0.5;
+extern float opacity = 0.05;
 extern vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
 
 vec4 effect(vec4 c, Image tex, vec2 tc, vec2 _)
