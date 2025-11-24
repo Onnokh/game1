@@ -152,7 +152,7 @@ function GameScene.load()
   ecsWorld:addSystem(LightSystem.new()) -- Manage dynamic lights
   local fireflySystem = FireflySystem.new() -- Manage firefly spawning and movement
   ecsWorld:addSystem(fireflySystem)
-  ecsWorld:addSystem(GroundShadowSystem.new()) -- Draw ground shadows beneath sprites
+  -- GroundShadowSystem is now a configuration module, shadows rendered in RenderSystem
   ecsWorld:addSystem(FootprintsSystem.new()) -- Draw footprints below sprites
   ecsWorld:addSystem(DashShadowRenderSystem.new()) -- Render dash shadows
   ecsWorld:addSystem(RenderSystem.new()) -- Render sprites and debug visuals

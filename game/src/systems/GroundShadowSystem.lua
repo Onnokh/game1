@@ -1,84 +1,42 @@
-local System = require("src.core.System")
+---@class GroundShadowSystem
+---Configuration module for ground shadow rendering
+---All shadow scale values are defined globally here
+local GroundShadowSystem = {}
 
----@class GroundShadowSystem : System
-local GroundShadowSystem = System:extend("GroundShadowSystem", {"Position", "GroundShadow"})
+-- Global shadow configuration constants
+GroundShadowSystem.SKEW_FACTOR = 0.3  -- Horizontal shear amount (shadow falls to the left)
+GroundShadowSystem.SHADOW_SCALE_X = 1.0  -- Horizontal stretch multiplier
+GroundShadowSystem.SHADOW_SCALE_Y = 0.5  -- Vertical compression multiplier
 
--- Create a simple shadow texture once
-local shadowImage
-local function createShadowTexture()
-	if shadowImage then return shadowImage end
+---Get actual sprite frame dimensions from Iffy based on what sprite is being drawn
+---@param entity Entity The entity to get sprite dimensions for
+---@param spriteRenderer SpriteRenderer The sprite renderer component
+---@param animator Animator|nil The animator component if present
+---@return number width Actual frame width
+---@return number height Actual frame height
+function GroundShadowSystem.getActualSpriteDimensions(entity, spriteRenderer, animator)
+	local iffy = require("lib.iffy")
+	local defaultWidth = spriteRenderer.width
+	local defaultHeight = spriteRenderer.height
 
-	-- Create a pixelated circle manually
-	local size = 16
-	local imageData = love.image.newImageData(size, size)
-	local centerX, centerY = size / 2, size / 2
-	local radius = size / 2
-
-	-- Draw a filled circle pixel by pixel
-	for y = 0, size - 1 do
-		for x = 0, size - 1 do
-			local dx = x - centerX + 0.5
-			local dy = y - centerY + 0.5
-			local distance = math.sqrt(dx * dx + dy * dy)
-
-			if distance <= radius then
-				-- White pixel (will be tinted black when drawn)
-				imageData:setPixel(x, y, 1, 1, 1, 1)
-			else
-				-- Transparent pixel
-				imageData:setPixel(x, y, 0, 0, 0, 0)
-			end
+	-- For animated sprites, get dimensions from the first layer's current frame
+	if animator and animator.layers and #animator.layers > 0 then
+		local sheetName = animator.layers[1]
+		if iffy.tilesets[sheetName] then
+			return iffy.tilesets[sheetName][1] or defaultWidth, iffy.tilesets[sheetName][2] or defaultHeight
 		end
 	end
 
-	-- Create image with nearest filtering for pixel-perfect rendering
-	shadowImage = love.graphics.newImage(imageData)
-	shadowImage:setFilter("nearest", "nearest")
-
-	return shadowImage
-end
-
----Draw semi-transparent ellipse shadows under entities
-function GroundShadowSystem:draw()
-	if not self.entities then return end
-
-	local shadow = createShadowTexture()
-	local imgSize = shadow:getWidth()
-
-	for _, entity in ipairs(self.entities) do
-		local position = entity:getComponent("Position")
-		local shadowComp = entity:getComponent("GroundShadow")
-
-		-- Try PathfindingCollision first, fall back to PhysicsCollision
-		local collider = entity:getComponent("PathfindingCollision") or entity:getComponent("PhysicsCollision")
-
-		if position and collider and shadowComp and shadowComp.enabled then
-			-- Determine ellipse size based on collider dimensions
-			local width = (collider.width or 0) * (shadowComp.widthFactor or 1)
-			local height = (collider.height or 0) * (shadowComp.heightFactor or 1)
-			if width > 0 and height > 0 then
-				-- Center at the collider's lowest position (bottom-center)
-				local x = position.x + (collider.offsetX or 0) + (collider.width * 0.5)
-				local y = position.y + (collider.offsetY or 0) + collider.height + (shadowComp.offsetY or 0)
-
-				-- Set dark color with configured alpha
-				love.graphics.setColor(0, 0, 0, shadowComp.alpha or 0.35)
-				-- Draw scaled shadow image
-				love.graphics.draw(
-					shadow,
-					x,
-					y,
-					0,
-					width / imgSize,
-					height / imgSize,
-					imgSize / 2,
-					imgSize / 2
-				)
-			end
+	-- For static sprites, get dimensions from the sprite's tileset
+	if spriteRenderer.sprite then
+		local spriteSheet = spriteRenderer.sprite
+		if iffy.tilesets[spriteSheet] then
+			return iffy.tilesets[spriteSheet][1] or defaultWidth, iffy.tilesets[spriteSheet][2] or defaultHeight
 		end
 	end
-	-- Reset drawing color
-	love.graphics.setColor(1, 1, 1, 1)
+
+	-- Fallback to SpriteRenderer dimensions
+	return defaultWidth, defaultHeight
 end
 
 return GroundShadowSystem

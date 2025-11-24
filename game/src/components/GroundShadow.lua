@@ -7,11 +7,13 @@ local Component = require("src.core.Component")
 ---@field heightFactor number Multiplier against sprite height for shadow ellipse height
 ---@field offsetY number Extra vertical offset in pixels from the sprite bottom
 ---@field pixelSize number Size of pixelation blocks (higher = more blocky)
+---@field originX number|nil Override origin X in world space (relative to sprite position, nil = auto-calculate bottom-center)
+---@field originY number|nil Override origin Y in world space (relative to sprite position, nil = auto-calculate bottom-center)
 local GroundShadow = {}
 GroundShadow.__index = GroundShadow
 
 ---Create a new GroundShadow component
----@param params table|nil Optional parameters { alpha, widthFactor, heightFactor, offsetY, pixelSize }
+---@param params table|nil Optional parameters { alpha, widthFactor, heightFactor, offsetY, pixelSize, originX, originY }
 ---@return Component|GroundShadow
 function GroundShadow.new(params)
 	local self = setmetatable(Component.new("GroundShadow"), GroundShadow)
@@ -23,6 +25,8 @@ function GroundShadow.new(params)
 	self.heightFactor = params.heightFactor or 0.22
 	self.offsetY = params.offsetY or 0
 	self.pixelSize = params.pixelSize or 2.0 -- Default pixelation size
+	self.originX = params.originX -- Optional override for skew origin X
+	self.originY = params.originY -- Optional override for skew origin Y
 
 	return self
 end
@@ -36,7 +40,9 @@ function GroundShadow:serialize()
         widthFactor = self.widthFactor,
         heightFactor = self.heightFactor,
         offsetY = self.offsetY,
-        pixelSize = self.pixelSize
+        pixelSize = self.pixelSize,
+        originX = self.originX,
+        originY = self.originY
     }
 end
 
@@ -49,7 +55,9 @@ function GroundShadow.deserialize(data)
         widthFactor = data.widthFactor,
         heightFactor = data.heightFactor,
         offsetY = data.offsetY,
-        pixelSize = data.pixelSize
+        pixelSize = data.pixelSize,
+        originX = data.originX,
+        originY = data.originY
     })
 end
 

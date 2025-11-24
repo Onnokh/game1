@@ -1,5 +1,7 @@
 local System = require("src.core.System")
 local DepthSorting = require("src.utils.depthSorting")
+local GroundShadowSystem = require("src.systems.GroundShadowSystem")
+local ShaderManager = require("src.core.managers.ShaderManager")
 
 ---@class RenderSystem : System
 local RenderSystem = System:extend("RenderSystem", {"Position", "SpriteRenderer"})
@@ -41,9 +43,6 @@ function RenderSystem:draw()
         local spriteRenderer = entity:getComponent("SpriteRenderer")
 
         if position and spriteRenderer and spriteRenderer.visible then
-            -- Set color
-            love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
-
             -- Calculate final position with offset, rounded to whole pixels
             local x = math.floor(position.x + spriteRenderer.offsetX + 0.5)
             local y = math.floor(position.y + spriteRenderer.offsetY + 0.5)
@@ -51,6 +50,175 @@ function RenderSystem:draw()
             -- If Animator exists and sheet is loaded with Iffy, draw that frame
             local animator = entity:getComponent("Animator")
             local isBullet = entity:hasTag("Bullet")
+
+            -- Check if entity has GroundShadow component and render shadow first
+            local shadowComp = entity:getComponent("GroundShadow")
+            if shadowComp and shadowComp.enabled then
+                -- Get actual sprite dimensions for shadow calculation
+                local actualSpriteWidth, actualSpriteHeight = GroundShadowSystem.getActualSpriteDimensions(entity, spriteRenderer, animator)
+
+                local shadowAlpha = shadowComp.alpha or 0.35
+
+                -- Get shadow shader
+                local shadowShader = ShaderManager.getShader("shadow")
+                if shadowShader then
+                    -- Set shadow color (white for shader to multiply - shader will make it black)
+                    love.graphics.setColor(1, 1, 1, 1)
+
+                    -- Apply shadow shader
+                    love.graphics.setShader(shadowShader)
+
+                    -- Send shader uniforms
+                    shadowShader:send("shadowAlpha", shadowAlpha)
+
+                    -- Calculate origin point ONCE for all layers (use override if provided, otherwise will calculate per-layer)
+                    local globalOriginX, globalOriginY
+                    if shadowComp.originX ~= nil and shadowComp.originY ~= nil then
+                        -- Use override origin (relative to sprite position)
+                        globalOriginX = x + shadowComp.originX
+                        globalOriginY = y + shadowComp.originY
+                    end
+
+                    -- Render shadow for animated sprites (at exact same position as sprite)
+                    if animator and animator.layers then
+                        local iffy = require("lib.iffy")
+                        local current = animator:getCurrentFrame()
+
+                        for _, sheetName in ipairs(animator.layers) do
+                            if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
+                                local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
+                                local frameHeight = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][2] or actualSpriteHeight
+
+                                local layerRotation = animator:getLayerRotation(sheetName)
+                                local layerOffset = animator:getLayerOffset(sheetName)
+                                local layerPivot = animator:getLayerPivot(sheetName)
+
+                                -- Calculate origin point for skew (use global override if provided, otherwise calculate per-layer)
+                                local originX, originY
+                                if globalOriginX ~= nil and globalOriginY ~= nil then
+                                    -- Use global override origin
+                                    originX = globalOriginX
+                                    originY = globalOriginY
+                                else
+                                    -- Auto-calculate bottom-center point for this layer
+                                    originX = x + (layerOffset.x or 0) + (layerPivot.x or frameWidth / 2)
+                                    originY = y + (layerOffset.y or 0) + frameHeight + (shadowComp.offsetY or 0)
+                                end
+
+                                -- Apply skew transformation using Love2D's transform system
+                                love.graphics.push()
+
+                                -- Translate to origin point, apply skew, translate back
+                                love.graphics.translate(originX, originY)
+
+                                -- Create skew transform (shear horizontally)
+                                local transform = love.math.newTransform()
+                                transform:setTransformation(0, 0, 0, 1, 1, 0, 0, GroundShadowSystem.SKEW_FACTOR, 0)
+                                love.graphics.applyTransform(transform)
+
+                                love.graphics.translate(-originX, -originY)
+
+                                -- Draw shadow at exact same position as sprite (with same scale)
+                                if layerRotation ~= 0 then
+                                    -- Same as normal sprite: draw at x + layerOffset.x, y + layerOffset.y with layerPivot origin
+                                    local layerScale = animator:getLayerScale(sheetName)
+                                    love.graphics.draw(
+                                        iffy.images[sheetName],
+                                        iffy.spritesheets[sheetName][current],
+                                        x + layerOffset.x,
+                                        y + layerOffset.y,
+                                        layerRotation,
+                                        layerScale.x,
+                                        layerScale.y,
+                                        layerPivot.x,
+                                        layerPivot.y
+                                    )
+                                else
+                                    -- Same as normal sprite: draw at x (or x + frameWidth if flipped), y
+                                    local shadowDrawX = x
+                                    if spriteRenderer.scaleX < 0 then
+                                        shadowDrawX = x + frameWidth
+                                    end
+                                    love.graphics.draw(
+                                        iffy.images[sheetName],
+                                        iffy.spritesheets[sheetName][current],
+                                        shadowDrawX,
+                                        y,
+                                        spriteRenderer.rotation,
+                                        spriteRenderer.scaleX,
+                                        spriteRenderer.scaleY
+                                    )
+                                end
+
+                                love.graphics.pop()
+                            end
+                        end
+                    end
+
+                    -- Render shadow for static sprite (at exact same position as sprite)
+                    if spriteRenderer.sprite then
+                        local iffy = require("lib.iffy")
+                        local spriteSheet = spriteRenderer.sprite
+
+                        if iffy.spritesheets[spriteSheet] and iffy.spritesheets[spriteSheet][1] then
+                            local frameWidth = spriteRenderer.width
+                            local frameHeight = spriteRenderer.height
+                            if iffy.tilesets[spriteSheet] then
+                                frameWidth = iffy.tilesets[spriteSheet][1]
+                                frameHeight = iffy.tilesets[spriteSheet][2]
+                            end
+
+                            -- Calculate origin point for skew (use override if provided, otherwise bottom-center)
+                            local ox = frameWidth / 2
+                            local oy = frameHeight / 2
+                            local originX, originY
+                            if shadowComp.originX ~= nil and shadowComp.originY ~= nil then
+                                -- Use override origin (relative to sprite position)
+                                -- Note: override origin already includes desired offset, so don't add offsetY again
+                                originX = x + shadowComp.originX
+                                originY = y + shadowComp.originY
+                            else
+                                -- Auto-calculate bottom-center point
+                                originX = x + ox
+                                originY = y + frameHeight + (shadowComp.offsetY or 0)
+                            end
+
+                            -- Apply skew transformation using Love2D's transform system
+                            love.graphics.push()
+
+                            -- Translate to origin point, apply skew, translate back
+                            love.graphics.translate(originX, originY)
+
+                            -- Create skew transform (shear horizontally)
+                            local transform = love.math.newTransform()
+                            transform:setTransformation(0, 0, 0, 1, 1, 0, 0, GroundShadowSystem.SKEW_FACTOR, 0)
+                            love.graphics.applyTransform(transform)
+
+                            love.graphics.translate(-originX, -originY)
+
+                            love.graphics.draw(
+                                iffy.images[spriteSheet],
+                                iffy.spritesheets[spriteSheet][1],
+                                x + ox,
+                                y + oy,
+                                spriteRenderer.rotation,
+                                spriteRenderer.scaleX,
+                                spriteRenderer.scaleY,
+                                ox,
+                                oy
+                            )
+
+                            love.graphics.pop()
+                        end
+                    end
+
+                    -- Reset shader
+                    love.graphics.setShader()
+                end
+            end
+
+            -- Set color for normal sprite
+            love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
 
             -- Apply outline shader if configured
             if spriteRenderer.outline and spriteRenderer.outline.enabled then
