@@ -3,9 +3,9 @@ return {
       time = 100, -- start after 10 seconds
       duration = 30,
       enemies = {
-          { type = "Skeleton", count = 3 },
+          { type = "Skeleton", count = 2 },
       },
-      spawnRate = 1.0,
+      spawnRate = 5.0,
       shape = {
           type = "circle",
           radius = 150
