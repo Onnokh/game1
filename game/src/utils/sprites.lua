@@ -75,6 +75,7 @@ function IffySprites.load()
   loadSpritesheet("tree-stump", "resources/dun-morogh/tree-stump.png", 1, 1)
   loadSpritesheet("tree", "resources/dun-morogh/tree.png", 1, 1)
   loadSpritesheet("tree2", "resources/dun-morogh/tree2.png", 1, 1)
+  loadSpritesheet("tree3", "resources/dun-morogh/tree3.png", 1, 1)
   loadSpritesheet("torch", "resources/dun-morogh/torch.png", 1, 1)
   loadSpritesheet("barrel", "resources/dun-morogh/barrel.png", 1, 1)
 
