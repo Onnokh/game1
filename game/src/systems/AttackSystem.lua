@@ -134,8 +134,9 @@ function AttackSystem:performAttack(entity, currentTime)
     local ability = entity:getComponent("Ability")
     local castTime = 0
     local abilityId = nil
+    local abilityData = nil
     if ability then
-        local abilityData = ability:getCurrentAbility()
+        abilityData = ability:getCurrentAbility()
         if abilityData then
             castTime = abilityData.castTime or 0
             abilityId = abilityData.id
@@ -144,6 +145,11 @@ function AttackSystem:performAttack(entity, currentTime)
 
     -- If ability has cast time, start casting instead of attacking immediately
     if castTime > 0 and not attack.isCasting then
+        -- Play sound effect when casting starts (use ability sound if available, otherwise default to gunshot)
+        if _G.SoundManager and abilityData then
+            local soundName = abilityData.sound or "gunshot"
+            _G.SoundManager.play(soundName, .75, 1)
+        end
         -- Start casting (direction will be calculated when cast completes)
         attack:startCast(abilityId or "unknown", castTime, currentTime)
         return -- Don't spawn bullet yet, wait for cast to complete
@@ -161,6 +167,12 @@ function AttackSystem:performAttack(entity, currentTime)
         if abilitySystem then
             abilitySystem:markAbilityUsed(abilityId, currentTime)
         end
+    end
+
+    -- Play sound effect for instant attacks (use ability sound if available, otherwise default to gunshot)
+    if _G.SoundManager then
+        local soundName = (abilityData and abilityData.sound) or "gunshot"
+        _G.SoundManager.play(soundName, .75, 1)
     end
 
     -- Calculate attack direction for player entities
@@ -392,12 +404,6 @@ function AttackSystem:spawnBullet(entity)
             bulletLifetime = abilityData.bulletLifetime or bulletLifetime
             piercing = abilityData.piercing or piercing
         end
-    end
-
-    -- Play sound effect (use ability sound if available, otherwise default to gunshot)
-    if _G.SoundManager then
-        local soundName = (abilityData and abilityData.sound) or "gunshot"
-        _G.SoundManager.play(soundName, .75, 1)
     end
 
     -- Get spawn position
