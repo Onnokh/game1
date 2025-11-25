@@ -4,14 +4,8 @@ local panel = require("src.ui.utils.panel")
 local abilities = require("src.definitions.abilities")
 local fonts = require("src.utils.fonts")
 local TooltipSystem = require("src.ui.TooltipSystem")
+local HUDLayout = require("src.ui.utils.HUDLayout")
 
--- Action bar configuration
--- Use 72px slots (3x the 24px sprite size) + padding
-local SLOT_SIZE = 72
-local SLOT_SPACING = 8
-local SLOT_COUNT = 4
-local TOTAL_WIDTH = (SLOT_SIZE * SLOT_COUNT) + (SLOT_SPACING * (SLOT_COUNT - 1))
-local BOTTOM_MARGIN = 32
 local KEYBIND_LABELS = {"Q", "E", "R", "F"}
 local KEYBIND_OFFSET = 4 -- Gap between keybind label and slot
 
@@ -113,17 +107,16 @@ function ActionBarHUD.update(world)
     local sw, sh = love.graphics.getDimensions()
 
     -- Calculate center position for action bar
-    local x = sw / 2 - TOTAL_WIDTH / 2
-    local y = sh - BOTTOM_MARGIN - SLOT_SIZE
+    local x, y = HUDLayout.getActionBarPosition(sw, sh)
 
     -- Check if mouse is hovering over any slot
     local hoveredSlot = nil
-    for i = 1, SLOT_COUNT do
-        local slotX = x + (i - 1) * (SLOT_SIZE + SLOT_SPACING)
+    for i = 1, HUDLayout.ACTION_BAR_SLOT_COUNT do
+        local slotX = x + (i - 1) * (HUDLayout.ACTION_BAR_SLOT_SIZE + HUDLayout.ACTION_BAR_SLOT_SPACING)
         local slotY = y
 
-        if mouseX >= slotX and mouseX <= slotX + SLOT_SIZE and
-           mouseY >= slotY and mouseY <= slotY + SLOT_SIZE then
+        if mouseX >= slotX and mouseX <= slotX + HUDLayout.ACTION_BAR_SLOT_SIZE and
+           mouseY >= slotY and mouseY <= slotY + HUDLayout.ACTION_BAR_SLOT_SIZE then
             hoveredSlot = i
             break
         end
@@ -191,12 +184,11 @@ function ActionBarHUD.draw(world)
     local sw, sh = love.graphics.getDimensions()
 
     -- Calculate center position for action bar
-    local x = sw / 2 - TOTAL_WIDTH / 2
-    local y = sh - BOTTOM_MARGIN - SLOT_SIZE
+    local x, y = HUDLayout.getActionBarPosition(sw, sh)
 
     -- Draw each slot
-    for i = 1, SLOT_COUNT do
-        local slotX = x + (i - 1) * (SLOT_SIZE + SLOT_SPACING)
+    for i = 1, HUDLayout.ACTION_BAR_SLOT_COUNT do
+        local slotX = x + (i - 1) * (HUDLayout.ACTION_BAR_SLOT_SIZE + HUDLayout.ACTION_BAR_SLOT_SPACING)
         local slotY = y
 
         -- Draw keybind label above the slot
@@ -207,7 +199,7 @@ function ActionBarHUD.draw(world)
 
         local textWidth = (font and font:getWidth(keybindLabel)) or 0
         local textHeight = (font and font:getHeight()) or 18
-        local keybindX = slotX + (SLOT_SIZE / 2) - (textWidth / 2)
+        local keybindX = slotX + (HUDLayout.ACTION_BAR_SLOT_SIZE / 2) - (textWidth / 2)
         local keybindY = slotY - textHeight - KEYBIND_OFFSET
 
         -- Shadow for keybind
@@ -220,13 +212,13 @@ function ActionBarHUD.draw(world)
         if prevFont then love.graphics.setFont(prevFont) end
 
         -- Draw slot background using panel
-        panel.draw(slotX, slotY, SLOT_SIZE, SLOT_SIZE, 0.9, {0.2, 0.2, 0.2})
+        panel.draw(slotX, slotY, HUDLayout.ACTION_BAR_SLOT_SIZE, HUDLayout.ACTION_BAR_SLOT_SIZE, 0.9, {0.2, 0.2, 0.2})
 
         -- Draw slot border
         local r, g, b, a = love.graphics.getColor()
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", slotX, slotY, SLOT_SIZE, SLOT_SIZE)
+        love.graphics.rectangle("line", slotX, slotY, HUDLayout.ACTION_BAR_SLOT_SIZE, HUDLayout.ACTION_BAR_SLOT_SIZE)
         love.graphics.setColor(r, g, b, a)
 
         -- Get ability for this slot
@@ -235,8 +227,8 @@ function ActionBarHUD.draw(world)
 
         -- Draw ability icon
         -- 24px sprites displayed at 3x scale = 72px, with padding
-        local iconPadding = (SLOT_SIZE - 72) / 2  -- Center 72px icon in 72px slot = 0px padding (fills slot)
-        local iconSize = 72  -- 3x scale of 24px sprites
+        local iconSize = HUDLayout.ACTION_BAR_SLOT_SIZE  -- 3x scale of 24px sprites
+        local iconPadding = (HUDLayout.ACTION_BAR_SLOT_SIZE - iconSize) / 2  -- Center 72px icon in 72px slot = 0px padding (fills slot)
 
         -- Get icon from ability definition
         local icon = nil
@@ -264,18 +256,18 @@ function ActionBarHUD.draw(world)
             local scaleY = iconSize / iconHeight
             local baseScale = math.min(scaleX, scaleY) -- Maintain aspect ratio
 
-            -- Shrink icon by 2px when key is held
+            -- Shrink icon by 4px when key is held
             local scale = baseScale
             if isKeyHeld then
-                -- Adjust scale to make icon 2px smaller
-                scale = baseScale * ((iconSize - 2) / iconSize)
+                -- Adjust scale to make icon 4px smaller
+                scale = baseScale * ((iconSize - 4) / iconSize)
             end
 
             -- Center the icon (account for size increase)
             local scaledWidth = iconWidth * scale
             local scaledHeight = iconHeight * scale
-            local centeredX = slotX + (SLOT_SIZE / 2) - (scaledWidth / 2)
-            local centeredY = slotY + (SLOT_SIZE / 2) - (scaledHeight / 2)
+            local centeredX = slotX + (HUDLayout.ACTION_BAR_SLOT_SIZE / 2) - (scaledWidth / 2)
+            local centeredY = slotY + (HUDLayout.ACTION_BAR_SLOT_SIZE / 2) - (scaledHeight / 2)
 
             -- Draw icon with natural colors (no tint)
             local r, g, b, a = love.graphics.getColor()
@@ -297,18 +289,18 @@ function ActionBarHUD.draw(world)
             if cooldownProgress > 0 then
                 -- Calculate overlay height based on cooldown progress
                 -- As cooldown progresses (1 -> 0), overlay slides down (revealing icon from bottom to top)
-                local overlayHeight = SLOT_SIZE * cooldownProgress
+                local overlayHeight = HUDLayout.ACTION_BAR_SLOT_SIZE * cooldownProgress
 
                 if overlayHeight > 0 then
                     -- Save current color
                     local prevR, prevG, prevB, prevA = love.graphics.getColor()
 
                     -- Draw dark overlay from bottom, sliding down (position at bottom and grow upward)
-                    local overlayY = slotY + SLOT_SIZE - overlayHeight
+                    local overlayY = slotY + HUDLayout.ACTION_BAR_SLOT_SIZE - overlayHeight
                     local overlayAlpha = 0.7 -- Dark overlay opacity
 
                     love.graphics.setColor(0, 0, 0, overlayAlpha)
-                    love.graphics.rectangle("fill", slotX, overlayY, SLOT_SIZE, overlayHeight)
+                    love.graphics.rectangle("fill", slotX, overlayY, HUDLayout.ACTION_BAR_SLOT_SIZE, overlayHeight)
 
                     -- Restore color
                     love.graphics.setColor(prevR, prevG, prevB, prevA)
@@ -316,9 +308,6 @@ function ActionBarHUD.draw(world)
             end
         end
     end
-
-    -- Draw tooltip after action bar
-    TooltipSystem.draw()
 
     love.graphics.pop()
 end

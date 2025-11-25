@@ -10,17 +10,20 @@ local CoinCounterSystem = System:extend("CoinCounterSystem", {})
 ---@return CoinCounterSystem
 function CoinCounterSystem.new()
     ---@class CoinCounterSystem
-    local self = System.new({})
+    local self = System.new()
     setmetatable(self, CoinCounterSystem)
 
-    -- Create the coin counter UI element anchored bottom-left
+    -- Create the coin counter UI element anchored top-left (below auto-aim text)
     self.coinCounter = CoinCounter.new(32, 32)
     do
         local h = self.coinCounter.font and self.coinCounter.font:getHeight() or 36
         local elemHeight = math.max(h, 36)
         local screenH, screenW = love.graphics.getHeight(), love.graphics.getWidth()
-        self.coinCounter.x = screenW / 2 + 332
-        self.coinCounter.y = screenH - elemHeight - 72
+        local TOP_MARGIN = 32
+        local AUTO_AIM_TEXT_HEIGHT = 18  -- Height of auto-aim text
+        local SPACING = 8  -- Spacing between auto-aim text and coin counter
+        self.coinCounter.x = 32  -- Left margin
+        self.coinCounter.y = TOP_MARGIN + AUTO_AIM_TEXT_HEIGHT + SPACING  -- Below auto-aim text
     end
 
     -- Listen for coin pickup events to update UI immediately

@@ -197,6 +197,10 @@ function GameScene.load()
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
   uiWorld:addSystem(DashSpeedLinesSystem.new(ecsWorld)) -- Show speed lines when player is dashing
   uiWorld:addSystem(MinimapSystem.new(ecsWorld)) -- Show minimap with shops and upgrade stations
+  
+  -- Add tooltip system last so it draws on top of all other UI
+  local TooltipSystemUI = require("src.systems.UISystems.TooltipSystem")
+  uiWorld:addSystem(TooltipSystemUI.new())
 
   -- Load complete world using MapManager (handles everything: world generation, pathfinding, collisions, entities, camera)
   -- Check if we're loading from a save (which would have a specific seed)

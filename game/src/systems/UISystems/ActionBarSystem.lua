@@ -11,6 +11,7 @@ function ActionBarSystem.new(ecsWorld)
 	setmetatable(self, ActionBarSystem)
 	self.ecsWorld = ecsWorld
 	self.isWorldSpace = false -- This UI system draws in screen space
+	self.drawOrder = 100 -- Draw before tooltips
 	return self
 end
 

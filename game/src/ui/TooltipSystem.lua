@@ -49,6 +49,9 @@ function TooltipSystem.draw()
         return
     end
 
+    love.graphics.push()
+    love.graphics.origin()
+
     local fonts = require("src.utils.fonts")
     local panel = require("src.ui.utils.panel")
 
@@ -231,6 +234,8 @@ function TooltipSystem.draw()
     if prevFont then
         love.graphics.setFont(prevFont)
     end
+
+    love.graphics.pop()
 end
 
 return TooltipSystem

@@ -81,6 +81,14 @@ function AbilitySystem:handleActionBarSlotPress(entity, ability)
         return false
     end
 
+    -- Check if player is already casting - if so, ignore the press
+    local attack = entity:getComponent("Attack")
+    if attack and attack.isCasting then
+        -- Player is casting, ignore this ability press
+        GameState.input.actionBarSlot = nil
+        return true
+    end
+
     -- Use slot mapping
     local slotToAbility = AbilitySystem.SLOT_ABILITY_MAP
 

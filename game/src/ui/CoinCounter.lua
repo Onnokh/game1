@@ -23,8 +23,8 @@ function CoinCounter.new(x, y)
     self.y = y
     self.totalCoins = 0
     self.coinsThisSession = 0
-    -- Use the same font size as HealthBarHUD for consistency
-    self.font = fonts.getUIFont(36) -- Same as HealthBarHUD damage numbers
+    -- Use the same font size as UnitframeHUD for consistency
+    self.font = fonts.getUIFont(36) -- Same as UnitframeHUD damage numbers
 
     -- Set up coin sprite properties (using iffy system)
     self.coinSpriteSheet = "coin"

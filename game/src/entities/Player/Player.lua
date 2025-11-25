@@ -136,7 +136,7 @@ function Player.create(x, y, world, physicsWorld)
     local inventory = Inventory.new()
 
     -- Create dash charges component (start with 1 charge, can upgrade to 3)
-    local dashCharges = DashCharges.new(1, PlayerConfig.DASH_CHARGE_REGEN_TIME)
+    local dashCharges = DashCharges.new(0, PlayerConfig.DASH_CHARGE_REGEN_TIME)
 
     -- Create upgrade tracker and modifier components
     local upgradeTracker = UpgradeTracker.new()
@@ -155,7 +155,7 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Health", health)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("Inventory", inventory)
-    playerEntity:addComponent("DashCharges", dashCharges)
+    playerEntity:addComponent("DashCharges", dashCharges) -- This system is not used anymore. Might use later for abilities.
     playerEntity:addComponent("UpgradeTracker", upgradeTracker)
     playerEntity:addComponent("Modifier", modifier)
     playerEntity:addComponent("GroundShadow", GroundShadow.new())
