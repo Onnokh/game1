@@ -3,7 +3,7 @@ local Component = require("src.core.Component")
 ---@class Ability : Component
 ---@field currentAbility string Currently equipped ability ID
 ---@field inventory table<string, AbilityData> Available abilities by ID (immutable base definitions)
----@field abilityOverrides table<string, table> Per-ability stat overrides (e.g., {ranged = {piercing = true}})
+---@field abilityOverrides table<string, table> Per-ability stat overrides (e.g., {lightningbolt = {piercing = true}})
 ---@field canSwitch boolean Whether ability switching is allowed
 local Ability = {}
 Ability.__index = Ability
@@ -28,7 +28,7 @@ Ability.__index = Ability
 function Ability.new(currentAbility, inventory)
     local self = setmetatable(Component.new("Ability"), Ability)
 
-    self.currentAbility = currentAbility or "ranged"
+    self.currentAbility = currentAbility or "lightningbolt"
     self.inventory = inventory or {}
     self.abilityOverrides = {} -- Per-ability stat overrides
     self.canSwitch = true
@@ -148,7 +148,7 @@ function Ability:getAbilityList()
 end
 
 ---Set an override for a specific ability stat
----@param abilityId string The ability ID (e.g., "melee", "ranged")
+---@param abilityId string The ability ID (e.g., "melee", "lightningbolt")
 ---@param statName string The stat to override (e.g., "piercing", "damage")
 ---@param value any The value to set
 function Ability:setAbilityOverride(abilityId, statName, value)

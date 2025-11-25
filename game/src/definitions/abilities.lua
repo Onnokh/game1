@@ -1,8 +1,8 @@
 ---Table of all ability definitions
 ---@type table<string, AbilityData>
 local abilities = {
-    ranged = {
-        id = "ranged",
+    lightningbolt = {
+        id = "lightningbolt",
         name = "Lightning Bolt",
         type = "ranged",
         damage = 16,
@@ -15,7 +15,25 @@ local abilities = {
         bulletSpeed = 350,
         bulletLifetime = 3,
         piercing = false,
-        glowColor = {0.4, 0.6, 1.0}
+        glowColor = {0.4, 0.6, 1.0},
+        icon = "resources/abilities/lightningbolt.png"
+    },
+    flameshock = {
+        id = "flameshock",
+        name = "Flame Shock",
+        type = "ranged",
+        damage = 16,
+        range = 300,
+        cooldown = 6,
+        castTime = 0,
+        movementCancelsCast = false, -- Can cast while moving
+        knockback = 1,
+        recoilKnockback = 0.01,
+        bulletSpeed = 350,
+        bulletLifetime = 3,
+        piercing = false,
+        glowColor = {1.0, 0.4, 0.2},
+        icon = "resources/abilities/flameshock.png"
     }
 }
 

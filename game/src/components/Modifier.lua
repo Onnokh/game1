@@ -21,9 +21,9 @@ function Modifier.new()
 end
 
 ---Parse a target path into component name and stat path
----@param targetPath string Full path like "Movement.maxSpeed" or "Ability.inventory.ranged.damage"
+---@param targetPath string Full path like "Movement.maxSpeed" or "Ability.inventory.lightningbolt.damage"
 ---@return string componentName
----@return string statPath Remaining path after component (e.g., "maxSpeed" or "inventory.ranged.damage")
+---@return string statPath Remaining path after component (e.g., "maxSpeed" or "inventory.lightningbolt.damage")
 function Modifier:_parsePath(targetPath)
     local componentName, statPath = targetPath:match("^([^.]+)%.(.+)$")
     if not componentName or not statPath then
@@ -34,7 +34,7 @@ end
 
 ---Get a nested value from a table using a dot-separated path
 ---@param tbl table The table to traverse
----@param path string Dot-separated path (e.g., "inventory.ranged.damage")
+---@param path string Dot-separated path (e.g., "inventory.lightningbolt.damage")
 ---@return any The value at the path, or nil if not found
 function Modifier:_getNestedValue(tbl, path)
     local keys = {}
@@ -58,7 +58,7 @@ end
 
 ---Set a nested value in a table using a dot-separated path
 ---@param tbl table The table to modify
----@param path string Dot-separated path (e.g., "inventory.ranged.damage")
+---@param path string Dot-separated path (e.g., "inventory.lightningbolt.damage")
 ---@param value any The value to set
 function Modifier:_setNestedValue(tbl, path, value)
     local keys = {}

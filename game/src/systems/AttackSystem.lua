@@ -81,20 +81,27 @@ function AttackSystem:shouldAttack(entity, currentTime)
         return false
     end
 
-    -- Get cooldown from Ability component if available, otherwise from Attack component
-    local cooldown = attack.cooldown
+    -- Check per-ability cooldown if entity has Ability component
     local ability = entity:getComponent("Ability")
     if ability then
         local abilityData = ability:getCurrentAbility()
-        if abilityData then
-            cooldown = abilityData.cooldown
+        if abilityData and abilityData.id then
+            -- Get AbilitySystem to check per-ability cooldown
+            local AbilitySystem = require("src.systems.AbilitySystem")
+            local abilitySystem = AbilitySystem.getInstance(self.world)
+            if abilitySystem then
+                if not abilitySystem:isAbilityReady(abilityData.id, abilityData, currentTime) then
+                    return false -- Ability is on cooldown
+                end
+            end
         end
-    end
-
-    -- Check cooldown
-    local timeSinceLastAttack = currentTime - attack.lastAttackTime
-    if timeSinceLastAttack < cooldown then
-        return false
+    else
+        -- Fallback to Attack component cooldown for entities without Ability component
+        local cooldown = attack.cooldown
+        local timeSinceLastAttack = currentTime - attack.lastAttackTime
+        if timeSinceLastAttack < cooldown then
+            return false
+        end
     end
 
     -- Check if this is the player entity and handle input
@@ -143,8 +150,17 @@ function AttackSystem:performAttack(entity, currentTime)
     end
 
     -- No cast time or cast already complete, proceed with normal attack
-    if not attack:performAttack(currentTime) then
-        return
+    -- Skip cooldown check for entities with Ability component (already validated in shouldAttack)
+    local skipCooldownCheck = ability ~= nil
+    attack:performAttack(currentTime, skipCooldownCheck)
+
+    -- Mark ability as used (start cooldown) if entity has Ability component
+    if ability and abilityId then
+        local AbilitySystem = require("src.systems.AbilitySystem")
+        local abilitySystem = AbilitySystem.getInstance(self.world)
+        if abilitySystem then
+            abilitySystem:markAbilityUsed(abilityId, currentTime)
+        end
     end
 
     -- Calculate attack direction for player entities
@@ -168,8 +184,19 @@ function AttackSystem:executeAttackAfterCast(entity, currentTime)
     end
 
     -- Cast is complete, now perform the attack
-    if not attack:performAttack(currentTime) then
-        return
+    -- Skip cooldown check for entities with Ability component (already validated in shouldAttack)
+    local ability = entity:getComponent("Ability")
+    local skipCooldownCheck = ability ~= nil
+    attack:performAttack(currentTime, skipCooldownCheck)
+
+    -- Mark ability as used (start cooldown) if entity has Ability component
+    local abilityId = attack.castAbilityId
+    if ability and abilityId then
+        local AbilitySystem = require("src.systems.AbilitySystem")
+        local abilitySystem = AbilitySystem.getInstance(self.world)
+        if abilitySystem then
+            abilitySystem:markAbilityUsed(abilityId, currentTime)
+        end
     end
 
     -- Calculate attack direction for player entities (based on current mouse position)

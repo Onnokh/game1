@@ -111,7 +111,7 @@ function Player.create(x, y, world, physicsWorld)
 
     -- Create ability component with ability inventory
     local abilityInventory = abilityDefinitions.getAllAbilities()
-    local ability = Ability.new("ranged", abilityInventory)
+    local ability = Ability.new("lightningbolt", abilityInventory)
 
     -- Create attack component (tracks attack execution state)
     -- Actual ability stats come from Ability component

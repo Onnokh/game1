@@ -1,13 +1,13 @@
 local Component = require("src.core.Component")
 
 ---@class Attack : Component
----@field damage number Amount of damage this attack deals
+---@field damage number Amount of damage this attack deals (only used for entities without Ability component)
 ---@field range number Range of the attack (used to position the attack collider)
----@field cooldown number Cooldown time between attacks in seconds
----@field lastAttackTime number Time when the last attack was performed
+---@field cooldown number Cooldown time between attacks in seconds (only used for entities without Ability component)
+---@field lastAttackTime number Time when the last attack was performed (only used for entities without Ability component)
 ---@field enabled boolean Whether the attack is enabled
 ---@field attackType string Type of attack ("ranged")
----@field knockback number Knockback force applied to targets
+---@field knockback number Knockback force applied to targets (only used for entities without Ability component)
 ---@field attackDirectionX number X component of attack direction
 ---@field attackDirectionY number Y component of attack direction
 ---@field attackAngleRad number Angle of attack in radians (from +X axis)
@@ -20,13 +20,13 @@ Attack.__index = Attack
 
 ---Create a new Attack component
 ---Used to track attack execution state (timing, direction, hit area)
----For entities with Ability component: actual attack stats come from Ability
----For entities without Ability: attack stats stored here (legacy mode)
+---For entities with Ability component: attack stats come from Ability, cooldown tracked per-ability
+---For entities without Ability component: attack stats stored here (monsters)
 ---@param damage number|nil Amount of damage this attack deals (optional, for entities without Ability)
 ---@param range number|nil Range of the attack (optional)
----@param cooldown number|nil Cooldown time between attacks (optional)
+---@param cooldown number|nil Cooldown time between attacks (optional, only used for entities without Ability)
 ---@param attackType string|nil Type of attack (optional)
----@param knockback number|nil Knockback force (optional)
+---@param knockback number|nil Knockback force (optional, for entities without Ability)
 ---@return Component|Attack
 function Attack.new(damage, range, cooldown, attackType, knockback)
     local self = setmetatable(Component.new("Attack"), Attack)
@@ -52,7 +52,7 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.hitAreaWidth = 8
     self.hitAreaHeight = 8
 
-    -- Attack stats (for entities without Ability component)
+    -- Attack stats (only used for entities without Ability component, e.g., monsters)
     self.damage = damage or 0
     self.range = range or 0
     self.cooldown = cooldown or 0
@@ -63,6 +63,7 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
 end
 
 ---Check if the attack is ready (cooldown has passed)
+---Note: Only used for entities without Ability component. Entities with Ability use per-ability cooldowns.
 ---@param currentTime number Current game time
 ---@return boolean True if attack is ready
 function Attack:isReady(currentTime)
@@ -74,9 +75,11 @@ end
 
 ---Perform an attack and update the last attack time
 ---@param currentTime number Current game time
+---@param skipCooldownCheck boolean|nil If true, skip cooldown check (for entities with Ability component that use per-ability cooldowns)
 ---@return boolean True if attack was performed successfully
-function Attack:performAttack(currentTime)
-    if not self:isReady(currentTime) then
+function Attack:performAttack(currentTime, skipCooldownCheck)
+    -- Skip cooldown check for entities with Ability component (they use per-ability cooldowns)
+    if not skipCooldownCheck and not self:isReady(currentTime) then
         return false
     end
 
