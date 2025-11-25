@@ -382,8 +382,9 @@ function AttackSystem:spawnBullet(entity)
     local piercing = false
 
     local ability = entity:getComponent("Ability")
+    local abilityData = nil
     if ability then
-        local abilityData = ability:getCurrentAbility()
+        abilityData = ability:getCurrentAbility()
         if abilityData then
             damage = abilityData.damage
             knockback = abilityData.knockback
@@ -393,9 +394,10 @@ function AttackSystem:spawnBullet(entity)
         end
     end
 
-    -- Play gunshot sound
+    -- Play sound effect (use ability sound if available, otherwise default to gunshot)
     if _G.SoundManager then
-      _G.SoundManager.play("gunshot", .75, 1)
+        local soundName = (abilityData and abilityData.sound) or "gunshot"
+        _G.SoundManager.play(soundName, .75, 1)
     end
 
     -- Get spawn position

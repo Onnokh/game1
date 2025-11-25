@@ -17,7 +17,8 @@ local abilities = {
         bulletLifetime = 3,
         piercing = false,
         glowColor = {0.4, 0.6, 1.0},
-        icon = "resources/abilities/lightningbolt.png"
+        icon = "resources/abilities/lightningbolt.png",
+        sound = "lightningbolt"
     },
     flameshock = {
         id = "flameshock",
@@ -35,7 +36,8 @@ local abilities = {
         bulletLifetime = 3,
         piercing = false,
         glowColor = {1.0, 0.4, 0.2},
-        icon = "resources/abilities/flameshock.png"
+        icon = "resources/abilities/flameshock.png",
+        sound = "flameshock"
     }
 }
 
