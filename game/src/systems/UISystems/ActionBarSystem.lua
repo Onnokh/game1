@@ -14,6 +14,13 @@ function ActionBarSystem.new(ecsWorld)
 	return self
 end
 
+function ActionBarSystem:update(dt)
+    if not self.ecsWorld then return end
+
+    -- Update hover state and tooltips
+    ActionBarHUD.update(self.ecsWorld)
+end
+
 function ActionBarSystem:draw()
     if not self.ecsWorld then return end
 

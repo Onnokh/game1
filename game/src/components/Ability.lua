@@ -9,17 +9,22 @@ local Ability = {}
 Ability.__index = Ability
 
 ---@class AbilityData
+---@field id string Ability ID
 ---@field name string Display name
+---@field description string|nil Description text for tooltips
 ---@field type string Attack type ("ranged")
 ---@field damage number Damage dealt
 ---@field range number Range (melee range or bullet range)
 ---@field cooldown number Time between attacks
+---@field castTime number|nil Cast time in seconds
+---@field movementCancelsCast boolean|nil Whether movement cancels the cast
 ---@field knockback number Knockback force applied to targets
 ---@field recoilKnockback number|nil Knockback force applied to shooter when firing
 ---@field bulletSpeed number|nil Speed of bullets (ranged only)
 ---@field bulletLifetime number|nil Lifetime of bullets in seconds (ranged only)
 ---@field piercing boolean|nil Can bullet pierce through enemies (ranged only)
 ---@field glowColor table|nil RGB color for bullet glow {r, g, b} (0-1 range)
+---@field icon string|nil Path to icon image
 
 ---Create a new Ability component
 ---@param currentAbility string Starting ability ID

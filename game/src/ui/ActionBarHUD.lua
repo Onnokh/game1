@@ -3,9 +3,11 @@ local ActionBarHUD = {}
 local panel = require("src.ui.utils.panel")
 local abilities = require("src.definitions.abilities")
 local fonts = require("src.utils.fonts")
+local TooltipSystem = require("src.ui.TooltipSystem")
 
 -- Action bar configuration
-local SLOT_SIZE = 64
+-- Use 72px slots (3x the 24px sprite size) + padding
+local SLOT_SIZE = 72
 local SLOT_SPACING = 8
 local SLOT_COUNT = 4
 local TOTAL_WIDTH = (SLOT_SIZE * SLOT_COUNT) + (SLOT_SPACING * (SLOT_COUNT - 1))
@@ -61,6 +63,119 @@ local function getCooldownProgress(world, abilityId)
     local abilityData = abilities.getAbility(abilityId)
 
     return abilitySystem:getCooldownProgress(abilityId, abilityData, currentTime)
+end
+
+---Get remaining cooldown time for an ability
+---@param world World
+---@param abilityId string|nil
+---@return number Remaining cooldown in seconds (0 if ready)
+local function getRemainingCooldown(world, abilityId)
+    if not world or not abilityId then
+        return 0
+    end
+
+    -- Get AbilitySystem instance
+    local abilitySystem = AbilitySystem.getInstance(world)
+    if not abilitySystem then
+        return 0
+    end
+
+    local currentTime = love.timer.getTime()
+    local abilityData = abilities.getAbility(abilityId)
+
+    return abilitySystem:getRemainingCooldown(abilityId, abilityData, currentTime)
+end
+
+---Format cooldown time as a string
+---@param cooldown number Cooldown in seconds
+---@return string|nil Formatted cooldown string (e.g., "6s") or nil if no cooldown
+local function formatCooldown(cooldown)
+    if not cooldown or cooldown <= 0 then
+        return nil
+    end
+
+    if cooldown < 1 then
+        return string.format("%.1fs", cooldown)
+    else
+        return string.format("%.0fs", cooldown)
+    end
+end
+
+---Update hover state and show tooltips
+---@param world World
+function ActionBarHUD.update(world)
+    if not world then
+        TooltipSystem.hide()
+        return
+    end
+
+    local mouseX, mouseY = love.mouse.getPosition()
+    local sw, sh = love.graphics.getDimensions()
+
+    -- Calculate center position for action bar
+    local x = sw / 2 - TOTAL_WIDTH / 2
+    local y = sh - BOTTOM_MARGIN - SLOT_SIZE
+
+    -- Check if mouse is hovering over any slot
+    local hoveredSlot = nil
+    for i = 1, SLOT_COUNT do
+        local slotX = x + (i - 1) * (SLOT_SIZE + SLOT_SPACING)
+        local slotY = y
+
+        if mouseX >= slotX and mouseX <= slotX + SLOT_SIZE and
+           mouseY >= slotY and mouseY <= slotY + SLOT_SIZE then
+            hoveredSlot = i
+            break
+        end
+    end
+
+    -- Show tooltip if hovering over a slot with an ability
+    if hoveredSlot then
+        local abilityId = SLOT_ABILITY_MAP[hoveredSlot]
+        local ability = abilityId and abilities.getAbility(abilityId) or nil
+
+        if ability then
+            -- Get icon
+            local icon = nil
+            if ability.icon then
+                icon = getIcon(abilityId, ability.icon)
+            end
+
+            -- Get cooldown info
+            local remainingCooldown = getRemainingCooldown(world, abilityId)
+            local cooldownText = nil
+            if remainingCooldown > 0 then
+                cooldownText = formatCooldown(remainingCooldown)
+            elseif ability.cooldown and ability.cooldown > 0 then
+                cooldownText = string.format("%.0fs", ability.cooldown)
+            end
+
+            -- Get cast time info
+            local castTimeText = nil
+            if ability.castTime and ability.castTime > 0 then
+                if ability.castTime < 1 then
+                    castTimeText = string.format("%.1fs cast", ability.castTime)
+                else
+                    castTimeText = string.format("%.1fs cast", ability.castTime)
+                end
+            end
+
+            -- Show tooltip at mouse position (update position each frame)
+            TooltipSystem.show({
+                icon = icon,
+                title = ability.name,
+                description = ability.description or "",
+                cooldown = cooldownText,
+                castTime = castTimeText,
+                x = mouseX,
+                y = mouseY
+            })
+        else
+            TooltipSystem.hide()
+        end
+    else
+        TooltipSystem.hide()
+    end
 end
 
 ---Draw the action bar in screen space (centered at bottom)
@@ -119,8 +234,9 @@ function ActionBarHUD.draw(world)
         local ability = abilityId and abilities.getAbility(abilityId) or nil
 
         -- Draw ability icon
-        local iconPadding = 2
-        local iconSize = SLOT_SIZE - (iconPadding * 2)
+        -- 24px sprites displayed at 3x scale = 72px, with padding
+        local iconPadding = (SLOT_SIZE - 72) / 2  -- Center 72px icon in 72px slot = 0px padding (fills slot)
+        local iconSize = 72  -- 3x scale of 24px sprites
 
         -- Get icon from ability definition
         local icon = nil
@@ -200,6 +316,9 @@ function ActionBarHUD.draw(world)
             end
         end
     end
+
+    -- Draw tooltip after action bar
+    TooltipSystem.draw()
 
     love.graphics.pop()
 end
