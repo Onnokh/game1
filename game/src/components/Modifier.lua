@@ -3,6 +3,8 @@ local Component = require("src.core.Component")
 ---@class Modifier : Component
 ---@field activeModifiers table<string, ModifierData> Keyed by source identifier
 ---@field baseValues table<string, number> Stored base values for each targetPath
+---@field stats table<string, number> Player stats (e.g., mana_recovery)
+---@field baseStats table<string, number> Base stat values from PlayerStats definition (for level scaling)
 local Modifier = {}
 Modifier.__index = Modifier
 
@@ -17,6 +19,8 @@ function Modifier.new()
     local self = setmetatable(Component.new("Modifier"), Modifier)
     self.activeModifiers = {}
     self.baseValues = {}
+    self.stats = {}
+    self.baseStats = {}
     return self
 end
 
@@ -189,12 +193,28 @@ function Modifier:hasModifier(source)
     return self.activeModifiers[source] ~= nil
 end
 
+---Get a stat value
+---@param statName string Name of the stat
+---@return number|nil The stat value, or nil if not set
+function Modifier:getStat(statName)
+    return self.stats[statName] or 0
+end
+
+---Set a stat value
+---@param statName string Name of the stat
+---@param value number The stat value
+function Modifier:setStat(statName, value)
+    self.stats[statName] = value
+end
+
 ---Serialize the Modifier component for saving
 ---@return table Serialized modifier data
 function Modifier:serialize()
     return {
         activeModifiers = self.activeModifiers,
-        baseValues = self.baseValues
+        baseValues = self.baseValues,
+        stats = self.stats,
+        baseStats = self.baseStats
     }
 end
 
@@ -205,6 +225,8 @@ function Modifier.deserialize(data)
     local modifier = Modifier.new()
     modifier.activeModifiers = data.activeModifiers or {}
     modifier.baseValues = data.baseValues or {}
+    modifier.stats = data.stats or {}
+    modifier.baseStats = data.baseStats or {}
     return modifier
 end
 

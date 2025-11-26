@@ -94,6 +94,15 @@ function AttackSystem:shouldAttack(entity, currentTime)
                     return false -- Ability is on cooldown
                 end
             end
+
+            -- Check mana cost if entity has Mana component
+            local mana = entity:getComponent("Mana")
+            if mana then
+                local manaCost = (abilityData.manaCost or 0)
+                if manaCost > 0 and not mana:hasEnoughMana(manaCost) then
+                    return false -- Not enough mana
+                end
+            end
         end
     else
         -- Fallback to Attack component cooldown for entities without Ability component
@@ -145,6 +154,17 @@ function AttackSystem:performAttack(entity, currentTime)
 
     -- If ability has cast time, start casting instead of attacking immediately
     if castTime > 0 and not attack.isCasting then
+        -- Consume mana when casting starts (for cast-time abilities)
+        if abilityData then
+            local mana = entity:getComponent("Mana")
+            if mana then
+                local manaCost = (abilityData.manaCost or 0)
+                if manaCost > 0 then
+                    mana:consumeMana(manaCost)
+                end
+            end
+        end
+
         -- Play sound effect when casting starts (use ability sound if available, otherwise default to gunshot)
         if _G.SoundManager and abilityData then
             local soundName = abilityData.sound or "gunshot"
@@ -166,6 +186,17 @@ function AttackSystem:performAttack(entity, currentTime)
         local abilitySystem = AbilitySystem.getInstance(self.world)
         if abilitySystem then
             abilitySystem:markAbilityUsed(abilityId, currentTime)
+        end
+
+        -- Consume mana if entity has Mana component
+        if abilityData then
+            local mana = entity:getComponent("Mana")
+            if mana then
+                local manaCost = (abilityData.manaCost or 0)
+                if manaCost > 0 then
+                    mana:consumeMana(manaCost)
+                end
+            end
         end
     end
 
@@ -209,6 +240,10 @@ function AttackSystem:executeAttackAfterCast(entity, currentTime)
         if abilitySystem then
             abilitySystem:markAbilityUsed(abilityId, currentTime)
         end
+
+        -- Note: For cast-time abilities, mana is consumed when casting starts (in performAttack)
+        -- For instant abilities, mana is consumed in performAttack as well
+        -- So we don't consume mana again here in executeAttackAfterCast
     end
 
     -- Calculate attack direction for player entities (based on current mouse position)

@@ -18,7 +18,8 @@ local abilities = {
         piercing = false,
         glowColor = {0.4, 0.6, 1.0},
         icon = "resources/abilities/lightningbolt.png",
-        sound = "lightningbolt"
+        sound = "lightningbolt",
+        manaCost = 0
     },
     flameshock = {
         id = "flameshock",
@@ -27,7 +28,7 @@ local abilities = {
         type = "ranged",
         damage = 24,
         range = 300,
-        cooldown = 6,
+        cooldown = 1,
         castTime = 0,
         movementCancelsCast = false,
         knockback = 1,
@@ -37,7 +38,8 @@ local abilities = {
         piercing = false,
         glowColor = {1.0, 0.4, 0.2},
         icon = "resources/abilities/flameshock.png",
-        sound = "flameshock"
+        sound = "flameshock",
+        manaCost = 15
     }
 }
 

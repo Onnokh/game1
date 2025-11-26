@@ -25,6 +25,7 @@ Ability.__index = Ability
 ---@field piercing boolean|nil Can bullet pierce through enemies (ranged only)
 ---@field glowColor table|nil RGB color for bullet glow {r, g, b} (0-1 range)
 ---@field icon string|nil Path to icon image
+---@field manaCost number|nil Mana cost to use this ability (defaults to 0)
 
 ---Create a new Ability component
 ---@param currentAbility string Starting ability ID

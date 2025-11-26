@@ -10,11 +10,10 @@ PlayerConfig.DASH_SPEED = 4           -- Dash speed multiplier (3x faster)
 -- Extra burst multiplier applied only on dash start
 PlayerConfig.DASH_BURST_MULTIPLIER = 2
 
--- Dash mechanics
-PlayerConfig.DASH_DURATION = .25        -- How long dash lasts (seconds)
+-- Dash mechanics (movement multipliers - actual stats are in PlayerStats definition)
+PlayerConfig.DASH_DURATION = .25        -- How long dash lasts (seconds) - movement animation constant
 PlayerConfig.DASH_COOLDOWN = .1        -- Legacy cooldown (not used with charge system)
-PlayerConfig.DASH_MAX_CHARGES = 3      -- Maximum number of dash charges
-PlayerConfig.DASH_CHARGE_REGEN_TIME = 2.0  -- Time in seconds to regenerate one charge
+-- Note: DASH_MAX_CHARGES and DASH_CHARGE_REGEN_TIME moved to PlayerStats definition
 
 
 -- Animation settings

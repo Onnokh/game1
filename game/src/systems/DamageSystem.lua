@@ -92,6 +92,29 @@ function DamageSystem:handleEntityDeath(entity, damageEvent)
         print("Player died - triggering game over")
     end
 
+    -- Grant experience to player when they kill an enemy
+    if not entity:hasTag("Player") and damageEvent.source then
+        local source = damageEvent.source
+        if source:hasTag("Player") then
+            local playerLevel = source:getComponent("PlayerLevel")
+            if playerLevel then
+                -- Calculate experience based on enemy's max health
+                local health = entity:getComponent("Health")
+                local expAmount = 10 -- Base experience
+                
+                if health then
+                    -- Scale experience based on enemy's max health (more health = more exp)
+                    -- Formula: base exp + (max health / 5)
+                    expAmount = 10 + math.floor((health.max or 10) / 5)
+                end
+                
+                -- Grant experience
+                playerLevel:addExperience(expAmount)
+                print(string.format("Player gained %d experience (total: %d)", expAmount, playerLevel:getExperience()))
+            end
+        end
+    end
+
     -- Check if this is a skeleton that should go into dying state
     local stateMachine = entity:getComponent("StateMachine")
     if stateMachine and stateMachine.states and stateMachine.states["dying"] then

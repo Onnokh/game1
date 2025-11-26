@@ -42,6 +42,8 @@ local AimLineRenderSystem = require("src.systems.AimLineRenderSystem")
 local DashShadowSystem = require("src.systems.DashShadowSystem")
 local DashShadowRenderSystem = require("src.systems.DashShadowRenderSystem")
   local DashChargesSystem = require("src.systems.DashChargesSystem")
+  local ManaRegenerationSystem = require("src.systems.ManaRegenerationSystem")
+  local PlayerStatsSystem = require("src.systems.PlayerStatsSystem")
   local ShaderManager = require("src.core.managers.ShaderManager")
 local FootprintsSystem = require("src.systems.FootprintsSystem")
 local EnemySpawnerSystem = require("src.systems.EnemySpawnerSystem")
@@ -116,7 +118,9 @@ function GameScene.load()
   ecsWorld:addSystem(CollisionSystem.new()) -- Ensure colliders exist
   ecsWorld:addSystem(TriggerZoneSystem.new()) -- Handle trigger zone callbacks
   ecsWorld:addSystem(StateMachineSystem.new()) -- Update state machines
+  ecsWorld:addSystem(PlayerStatsSystem.new()) -- Apply player stats from PlayerStats definition (runs early to set base stats)
   ecsWorld:addSystem(DashChargesSystem.new()) -- Update dash charge regeneration
+  ecsWorld:addSystem(ManaRegenerationSystem.new()) -- Update mana regeneration
   ecsWorld:addSystem(DashShadowSystem.new()) -- Update dash shadows
   ecsWorld:addSystem(MovementSystem.new()) -- Handle movement and collision
   ecsWorld:addSystem(AbilitySystem.new()) -- Handle ability switching and syncing

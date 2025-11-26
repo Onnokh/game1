@@ -8,6 +8,7 @@ local StateMachine = require("src.components.StateMachine")
 local Attack = require("src.components.Attack")
 local Ability = require("src.components.Ability")
 local Health = require("src.components.Health")
+local Mana = require("src.components.Mana")
 local ParticleSystem = require("src.components.ParticleSystem")
 local GroundShadow = require("src.components.GroundShadow")
 local Animator = require("src.components.Animator")
@@ -16,6 +17,7 @@ local FootprintsEmitter = require("src.components.FootprintsEmitter")
 local DashCharges = require("src.components.DashCharges")
 local UpgradeTracker = require("src.components.UpgradeTracker")
 local Modifier = require("src.components.Modifier")
+local PlayerLevel = require("src.components.PlayerLevel")
 local MinimapIcon = require("src.components.MinimapIcon")
 local GameConstants = require("src.constants")
 local PlayerConfig = require("src.entities.Player.PlayerConfig")
@@ -117,9 +119,11 @@ function Player.create(x, y, world, physicsWorld)
     -- Actual ability stats come from Ability component
     local attack = Attack.new()
 
-    -- Create health component
-    local health = Health.new(100) -- 100 max health
+    -- Create health component (max health will be set by PlayerStatsSystem)
+    local health = Health.new(100) -- Will be updated by PlayerStatsSystem
 
+    -- Create mana component (max mana will be set by PlayerStatsSystem)
+    local mana = Mana.new(80) -- Will be updated by PlayerStatsSystem
 
     -- Create particle system for walking effects
     local particleSystem = ParticleSystem.new(50, 0, 0) -- maxParticles, gravity, wind
@@ -135,12 +139,16 @@ function Player.create(x, y, world, physicsWorld)
     -- Create inventory component
     local inventory = Inventory.new()
 
-    -- Create dash charges component (start with 1 charge, can upgrade to 3)
-    local dashCharges = DashCharges.new(0, PlayerConfig.DASH_CHARGE_REGEN_TIME)
+    -- Create dash charges component (stats will be set by PlayerStatsSystem)
+    local dashCharges = DashCharges.new(0, 2.0) -- Will be updated by PlayerStatsSystem
 
     -- Create upgrade tracker and modifier components
     local upgradeTracker = UpgradeTracker.new()
     local modifier = Modifier.new()
+    -- Stats will be initialized by PlayerStatsSystem from PlayerStats definition
+
+    -- Create player level component (starts at level 1)
+    local playerLevel = PlayerLevel.new(1, 90)
 
     -- Add all components to the player
     playerEntity:addComponent("Position", position)
@@ -153,11 +161,13 @@ function Player.create(x, y, world, physicsWorld)
     playerEntity:addComponent("Ability", ability)
     playerEntity:addComponent("Attack", attack)
     playerEntity:addComponent("Health", health)
+    playerEntity:addComponent("Mana", mana)
     playerEntity:addComponent("ParticleSystem", particleSystem)
     playerEntity:addComponent("Inventory", inventory)
     playerEntity:addComponent("DashCharges", dashCharges) -- This system is not used anymore. Might use later for abilities.
     playerEntity:addComponent("UpgradeTracker", upgradeTracker)
     playerEntity:addComponent("Modifier", modifier)
+    playerEntity:addComponent("PlayerLevel", playerLevel)
     playerEntity:addComponent("GroundShadow", GroundShadow.new())
     playerEntity:addComponent("FootprintsEmitter", FootprintsEmitter.new({
         spacing = 15,
