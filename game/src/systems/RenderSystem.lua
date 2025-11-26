@@ -40,13 +40,13 @@ end
 local function ensureShadowCanvas()
     local screenW = love.graphics.getWidth()
     local screenH = love.graphics.getHeight()
-    
+
     -- Create or recreate canvas if size changed
     if not shadowCanvas or shadowCanvasWidth ~= screenW or shadowCanvasHeight ~= screenH then
         if shadowCanvas then
             shadowCanvas:release()
         end
-        
+
         shadowCanvas = love.graphics.newCanvas(screenW, screenH)
         if shadowCanvas then
             shadowCanvas:setFilter("nearest", "nearest")
@@ -54,7 +54,7 @@ local function ensureShadowCanvas()
             shadowCanvasHeight = screenH
         end
     end
-    
+
     return shadowCanvas
 end
 
@@ -69,7 +69,7 @@ function RenderSystem:draw()
 
     -- Store current canvas and render target
     local previousCanvas = love.graphics.getCanvas()
-    
+
     -- Get camera from world if available for coordinate conversion
     local camera = self.world and self.world.camera
     local cameraScale = camera and camera:getScale() or 1
@@ -80,7 +80,7 @@ function RenderSystem:draw()
     love.graphics.origin() -- Reset to screen space for canvas rendering
     -- Clear to white (represents no darkness/no shadow)
     love.graphics.clear(1, 1, 1, 1)
-    
+
     -- Apply full camera transform to match how sprites are rendered
     -- This ensures shadows align perfectly with sprites and eliminates stuttering
     if camera then
@@ -89,7 +89,7 @@ function RenderSystem:draw()
         local camX, camY = camera:getPosition()
         local w2, h2 = camera.w2 or (love.graphics.getWidth() / 2), camera.h2 or (love.graphics.getHeight() / 2)
         local l, t = camera.l or 0, camera.t or 0
-        
+
         love.graphics.scale(scale, scale)
         love.graphics.translate((w2 + l) / scale, (h2 + t) / scale)
         love.graphics.rotate(-angle)
@@ -98,11 +98,11 @@ function RenderSystem:draw()
         -- Fallback: just apply scale if no camera
         love.graphics.scale(cameraScale, cameraScale)
     end
-    
+
     -- Use normal alpha blending - shadows will accumulate additively
     -- We'll prevent excessive darkening in the composite shader
     love.graphics.setBlendMode("alpha")
-    
+
     -- Use the depth sorting utility for proper 2D layering
     local sortedEntities = DepthSorting.sortEntities(self.entities)
 
@@ -116,7 +116,7 @@ function RenderSystem:draw()
             -- Since we're applying the full camera transform, we can use world coordinates directly
             local x = position.x + spriteRenderer.offsetX
             local y = position.y + spriteRenderer.offsetY
-            
+
             -- Round to whole pixels for pixel-perfect rendering
             x = math.floor(x + 0.5)
             y = math.floor(y + 0.5)
@@ -145,7 +145,7 @@ function RenderSystem:draw()
                 else
                     shadowShader = ShaderManager.getShader("shadow")
                 end
-                
+
                 if shadowShader then
                     -- Set shadow color (white for shader - shader will make it black)
                     love.graphics.setColor(1, 1, 1, 1)
@@ -155,7 +155,7 @@ function RenderSystem:draw()
 
                     -- Send shader uniforms
                     shadowShader:send("shadowAlpha", shadowAlpha)
-                    
+
                     -- Send foliage sway uniforms if using combined shader
                     if hasFoliageSway then
                         local noiseTexture = ShaderManager.getNoiseTexture()
@@ -163,7 +163,7 @@ function RenderSystem:draw()
                             shadowShader:send("Time", love.timer.getTime())
                             shadowShader:send("NoiseTexture", noiseTexture)
                             shadowShader:send("WorldPosition", {x, y})
-                            
+
                             -- Get texture size for foliage sway
                             local textureWidth, textureHeight = spriteRenderer.width, spriteRenderer.height
                             if animator and animator.layers and #animator.layers > 0 then
@@ -341,21 +341,21 @@ function RenderSystem:draw()
 
     -- Pop the screen space transform we pushed earlier
     love.graphics.pop()
-    
+
     -- Reset blend mode after rendering shadows to canvas
     love.graphics.setBlendMode("alpha")
-    
+
     -- Restore previous canvas (back to world canvas or screen)
     love.graphics.setCanvas(previousCanvas)
 
     -- Composite shadow canvas onto scene using a shader that prevents excessive darkening
     -- Draw in screen space to match the canvas coordinate system
     local compositeShader = ShaderManager.getShader("shadow_composite")
-    
+
     -- Store current transform
     love.graphics.push()
     love.graphics.origin() -- Reset to screen space for canvas
-    
+
     if compositeShader then
         -- Use composite shader that clamps darkness to prevent additive darkening
         love.graphics.setShader(compositeShader)
@@ -369,7 +369,7 @@ function RenderSystem:draw()
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(canvas, 0, 0)
     end
-    
+
     love.graphics.setBlendMode("alpha")
     love.graphics.pop()
 
