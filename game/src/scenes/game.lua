@@ -272,13 +272,16 @@ function GameScene.load()
   local TreeStump = require("src.entities.Decoration.TreeStump")
   local Torch = require("src.entities.Decoration.Torch")
   local Barrel = require("src.entities.Decoration.Barrel")
+  local Inn = require("src.entities.Decoration.Inn")
 
   Tree.create(330, 320, ecsWorld, physicsWorld)
   Tree2.create(300, 300, ecsWorld, physicsWorld)
-  Tree3.create(220, 220, ecsWorld, physicsWorld)
+  Tree3.create(180, 220, ecsWorld, physicsWorld)
+  Tree3.create(150, 160, ecsWorld, physicsWorld)
   TreeStump.create(360, 420, ecsWorld, physicsWorld)
   Torch.create(200, 420, ecsWorld, physicsWorld)
   Barrel.create(230, 380, ecsWorld, physicsWorld)
+  Inn.create(200, 100, ecsWorld, physicsWorld)
 
   -- Check if there's pending save data to load
   local SaveSystem = require("src.utils.SaveSystem")
