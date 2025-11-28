@@ -197,7 +197,7 @@ function GameScene.load()
   uiWorld:addSystem(AggroVignetteSystem.new(ecsWorld)) -- Show vignette when mobs are chasing player
   uiWorld:addSystem(DashSpeedLinesSystem.new(ecsWorld)) -- Show speed lines when player is dashing
   uiWorld:addSystem(MinimapSystem.new(ecsWorld)) -- Show minimap with shops and upgrade stations
-  
+
   -- Add tooltip system last so it draws on top of all other UI
   local TooltipSystemUI = require("src.systems.UISystems.TooltipSystem")
   uiWorld:addSystem(TooltipSystemUI.new())
