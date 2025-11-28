@@ -254,8 +254,8 @@ function iffy.newTileset(name,url,tw,th,mx,my,sw,sh)
 		for j=1,tiles_w do
 			current=j+(i-1)*tiles_w
 			t[current]=love.graphics.newQuad(
-				(j-1)*th + (current==1 and 0 or mx),
-				(i-1)*tw + (current==1 and 0 or my),
+				(j-1)*tw + (current==1 and 0 or mx),
+				(i-1)*th + (current==1 and 0 or my),
 				tw,th,
 				sw,sh
 			)

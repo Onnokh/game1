@@ -6,34 +6,15 @@ local PlayerConfig = {}
 PlayerConfig.WALKING_SPEED = .8        -- Normal walking speed
 PlayerConfig.RUNNING_SPEED = 1.5        -- Running speed multiplier (50% faster)
 PlayerConfig.DASH_SPEED = 4           -- Dash speed multiplier (3x faster)
-
--- Extra burst multiplier applied only on dash start
 PlayerConfig.DASH_BURST_MULTIPLIER = 2
-
--- Dash mechanics (movement multipliers - actual stats are in PlayerStats definition)
 PlayerConfig.DASH_DURATION = .25        -- How long dash lasts (seconds) - movement animation constant
-PlayerConfig.DASH_COOLDOWN = .1        -- Legacy cooldown (not used with charge system)
--- Note: DASH_MAX_CHARGES and DASH_CHARGE_REGEN_TIME moved to PlayerStats definition
-
-
--- Animation settings
--- PlayerConfig.IDLE_ANIMATION = {
---     sheet = "new",
---     frames = {1, 2, 3, 4},
---     fps = 4,
---     loop = true
--- }
 
 PlayerConfig.WALKING_ANIMATION = {
-  layers = {"player", "gun"},
-  frames = {4, 5, 6, 7, 8, 9, 10, 11},
+  layers = {"shammy"},
+  frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 12,
   loop = true
 }
-
--- TODO: add check for if gun is equipped
--- if equipped, use gun_idle animation
--- if not equipped, use idle animation
 
 PlayerConfig.IDLE_ANIMATION = {
   layers = {"shammy"},
@@ -43,15 +24,15 @@ PlayerConfig.IDLE_ANIMATION = {
 }
 
 PlayerConfig.RUNNING_ANIMATION = {
-  layers = {"player", "gun"},
-  frames = {4, 5, 6, 7, 8, 9, 10, 11},
+  layers = {"shammy"},
+  frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 12,
   loop = true
 }
 
 PlayerConfig.DASH_ANIMATION = {
-  layers = {"player", "gun"},
-  frames = {1, 2, 3},
+  layers = {"shammy"},
+  frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 24,
   loop = false
 }
@@ -65,7 +46,7 @@ PlayerConfig.COLLIDER_FRICTION = 0.3
 PlayerConfig.COLLIDER_DAMPING = 0
 
 -- Sprite settings
-PlayerConfig.SPRITE_WIDTH = 32
+PlayerConfig.SPRITE_WIDTH = 44  -- Matches shammy frame width (352/8 = 44)
 PlayerConfig.SPRITE_HEIGHT = 32
 -- Shooting position offset (relative to player position)
 PlayerConfig.START_OFFSET = 20  -- Additional offset forward from gun position to account for gun sprite width
