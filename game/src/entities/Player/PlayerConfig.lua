@@ -36,8 +36,8 @@ PlayerConfig.WALKING_ANIMATION = {
 -- if not equipped, use idle animation
 
 PlayerConfig.IDLE_ANIMATION = {
-  layers = {"player", "gun"},
-  frames = {12, 13, 14, 15},
+  layers = {"shammy"},
+  frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 8,
   loop = true
 }

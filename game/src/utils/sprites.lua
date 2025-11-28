@@ -53,6 +53,7 @@ function IffySprites.load()
 
   -- Load character spritesheet (8x6 grid)
   loadSpritesheet("player", "resources/character/player.png", 16, 1)
+  loadSpritesheet("shammy", "resources/character/shammy.png", 8, 1)
   loadSpritesheet("gun", "resources/character/player_gun.png", 16, 1)
 
   -- Load skeleton spritesheet (6x10 grid - 6 columns, 10 rows)
