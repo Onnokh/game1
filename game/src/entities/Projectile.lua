@@ -7,6 +7,7 @@ local DepthSorting = require("src.utils.depthSorting")
 local GroundShadow = require("src.components.GroundShadow")
 local PathfindingCollision = require("src.components.PathfindingCollision")
 local Light = require("src.components.Light")
+local Animator = require("src.components.Animator")
 
 ---@class ProjectileEntity
 local ProjectileEntity = {}
@@ -103,6 +104,27 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
     projectile:addComponent("Projectile", projectileComponent)
     projectile:addComponent("PhysicsCollision", physicsCollision)
     projectile:addComponent("GroundShadow", GroundShadow.new())
+
+    -- Add Animator component if sprite has multiple frames
+    if iffy.spritesheets[spriteName] and #iffy.spritesheets[spriteName] > 1 then
+        local frameCount = #iffy.spritesheets[spriteName]
+        local frames = {}
+        for i = 1, frameCount do
+            frames[i] = i
+        end
+
+        local animator = Animator.new({
+            layers = {spriteName},
+            frames = frames,
+            fps = 12, -- 12 fps for smooth projectile animation
+            loop = true
+        })
+        projectile:addComponent("Animator", animator)
+
+        -- Clear sprite name from SpriteRenderer to avoid double rendering
+        -- The Animator will handle rendering the sprite
+        spriteRenderer.sprite = nil
+    end
 
     -- Add to world
     if world then

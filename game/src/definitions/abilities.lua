@@ -15,10 +15,10 @@ local abilities = {
         knockback = 1,
         projectile = {
             type = "moving",
-            sprite = "lightningbolt-projectile",
+            sprite = "lightningbolt-projectile-2",
             speed = 350,
             lifetime_seconds = 3,
-            scale = .5
+            scale = 1
         },
         piercing = false,
         icon = "resources/abilities/lightningbolt.png",
