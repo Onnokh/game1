@@ -17,13 +17,50 @@ local Inn = {}
 function Inn.create(x, y, world, physicsWorld)
 
     local inn = Entity.new()
+    local DepthSorting = require("src.utils.depthSorting")
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new('inn', 280, 240)
-    local pathfindingCollision = PathfindingCollision.new(160, 160, "static", 60, 120, "circle")
+    -- Set depth sort height to use ground contact point
+    -- instead of full sprite height (240px) which includes roof
+    spriteRenderer.depthSortHeight = 60
+
+    -- Create child entities for additional colliders
+    local function createColliderEntity(colliderName, width, height, offsetX, offsetY)
+        local colliderEntity = Entity.new()
+        local colliderPosition = Position.new(x + offsetX, y + offsetY, DepthSorting.getLayerZ("BACKGROUND"))
+        local colliderComponent = PathfindingCollision.new(width, height, "static", 0, 0, "rectangle")
+
+        colliderEntity:addComponent("Position", colliderPosition)
+        colliderEntity:addComponent("PathfindingCollision", colliderComponent)
+        colliderEntity:addTag("InnCollider")
+        colliderEntity:addTag(colliderName)
+
+        if physicsWorld then
+            colliderComponent:createCollider(physicsWorld, x + offsetX, y + offsetY)
+        end
+
+        if world then
+            world:addEntity(colliderEntity)
+        end
+
+        return colliderEntity
+    end
+
+    -- Main body collider (base of building)
+    local mainCollider = PathfindingCollision.new(252, 140, "static", 12, 24, "rectangle")
+
+    -- Front porch/steps (if building has a front entrance area)
+    local frontPorchEntity = createColliderEntity("FrontPorch", 124, 50, 12, 164)
+
+
+    -- Create physics collider for main body if physics world is available
+    if physicsWorld then
+        mainCollider:createCollider(physicsWorld, x, y)
+    end
 
     inn:addComponent("Position", position)
     inn:addComponent("SpriteRenderer", spriteRenderer)
-    inn:addComponent("PathfindingCollision", pathfindingCollision)
+    inn:addComponent("PathfindingCollision", mainCollider)
     inn:addComponent("GroundShadow", GroundShadow.new())
 
     -- Tag for easy querying

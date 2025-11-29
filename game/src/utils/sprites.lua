@@ -80,6 +80,7 @@ function IffySprites.load()
   loadSpritesheet("torch", "resources/dun-morogh/torch.png", 1, 1)
   loadSpritesheet("barrel", "resources/dun-morogh/barrel.png", 1, 1)
   loadSpritesheet("inn", "resources/dun-morogh/inn.png", 1, 1)
+  loadSpritesheet("mailbox", "resources/mailbox.png", 1, 1)
 
   -- Load shop spritesheet (1x1 grid, 64x64)
   loadSpritesheet("shop", "resources/objects/shop.png", 8, 1)

@@ -273,6 +273,7 @@ function GameScene.load()
   local Torch = require("src.entities.Decoration.Torch")
   local Barrel = require("src.entities.Decoration.Barrel")
   local Inn = require("src.entities.Decoration.Inn")
+  local Mailbox = require("src.entities.Decoration.Mailbox")
 
   Tree.create(330, 320, ecsWorld, physicsWorld)
   Tree2.create(300, 300, ecsWorld, physicsWorld)
@@ -282,6 +283,7 @@ function GameScene.load()
   Torch.create(200, 420, ecsWorld, physicsWorld)
   Barrel.create(230, 380, ecsWorld, physicsWorld)
   Inn.create(200, 100, ecsWorld, physicsWorld)
+  Mailbox.create(430, 250, ecsWorld, physicsWorld)
 
   -- Check if there's pending save data to load
   local SaveSystem = require("src.utils.SaveSystem")
