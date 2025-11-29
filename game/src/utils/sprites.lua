@@ -72,6 +72,9 @@ function IffySprites.load()
   -- Load bullet sprite (1x1 grid, 16x16)
   loadSpritesheet("bullet", "resources/bullet.png", 1, 1)
 
+  -- Load projectile sprites
+  loadSpritesheet("lightningbolt-projectile", "resources/abilities/lightningbolt-projectile.png", 1, 1)
+
   -- Load tree spritesheet (1x1 grid, 48x64)
   loadSpritesheet("tree-stump", "resources/dun-morogh/tree-stump.png", 1, 1)
   loadSpritesheet("tree", "resources/dun-morogh/tree.png", 1, 1)

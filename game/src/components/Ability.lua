@@ -8,6 +8,12 @@ local Component = require("src.core.Component")
 local Ability = {}
 Ability.__index = Ability
 
+---@class ProjectileConfig
+---@field type "moving"|"instant" Type of projectile: "moving" for moving projectiles, "instant" for visual indicators at cursor
+---@field sprite string Sprite/animation name for projectile
+---@field speed number|nil Speed of projectile (required for "moving" type)
+---@field lifetime_seconds number|nil Lifetime of projectile in seconds (required for "moving" type)
+
 ---@class AbilityData
 ---@field id string Ability ID
 ---@field name string Display name
@@ -20,10 +26,8 @@ Ability.__index = Ability
 ---@field movementCancelsCast boolean|nil Whether movement cancels the cast
 ---@field knockback number Knockback force applied to targets
 ---@field recoilKnockback number|nil Knockback force applied to shooter when firing
----@field projectileSpeed number|nil Speed of projectiles (ranged only)
----@field projectileLifetime number|nil Lifetime of projectiles in seconds (ranged only)
----@field piercing boolean|nil Can projectile pierce through enemies (ranged only)
----@field projectile string|nil Sprite/animation name for projectile (ranged only, if set spawns projectile)
+---@field projectile ProjectileConfig|nil Projectile configuration (ranged only, if set spawns projectile or visual indicator)
+---@field piercing boolean|nil Can projectile pierce through enemies (ranged only, "targetted" type only)
 ---@field glowColor table|nil RGB color for projectile glow {r, g, b} (0-1 range)
 ---@field icon string|nil Path to icon image
 ---@field manaCost number|nil Mana cost to use this ability (defaults to 0)

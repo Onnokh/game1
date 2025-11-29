@@ -79,6 +79,15 @@ function CollisionSystem:setWorld(world)
                         local otherU = otherFixture:getUserData()
                         if otherU and type(otherU) == "table" and otherU.entity then
                             local otherEntity = otherU.entity
+                            
+                            -- Check if this is a static PathfindingCollision (wall/tree) that should stop projectiles
+                            local pathfindingCollision = otherEntity:getComponent("PathfindingCollision")
+                            if pathfindingCollision and pathfindingCollision.type == "static" then
+                                -- Static PathfindingCollision colliders (walls, trees) stop projectiles
+                                projectileEntity._hitStatic = true
+                                return
+                            end
+                            
                             -- Don't hit owner or already-hit entities
                             if otherEntity.id ~= (projectileComp.owner and projectileComp.owner.id or -1)
                                and not projectileComp:hasHitEntity(otherEntity.id) then

@@ -186,6 +186,10 @@ function ActionBarHUD.draw(world)
     -- Calculate center position for action bar
     local x, y = HUDLayout.getActionBarPosition(sw, sh)
 
+    -- Get player entity and mana component for mana checking
+    local player = world.getPlayer and world:getPlayer() or nil
+    local playerMana = player and player:getComponent("Mana") or nil
+
     -- Draw each slot
     for i = 1, HUDLayout.ACTION_BAR_SLOT_COUNT do
         local slotX = x + (i - 1) * (HUDLayout.ACTION_BAR_SLOT_SIZE + HUDLayout.ACTION_BAR_SLOT_SPACING)
@@ -272,8 +276,19 @@ function ActionBarHUD.draw(world)
             -- Draw icon with natural colors (no tint)
             local r, g, b, a = love.graphics.getColor()
             if ability then
-                -- Full brightness for ability slot
-                love.graphics.setColor(1, 1, 1, 1)
+                -- Check if player has enough mana for this ability
+                local hasEnoughMana = true
+                if ability.manaCost and ability.manaCost > 0 and playerMana then
+                    hasEnoughMana = playerMana:hasEnoughMana(ability.manaCost)
+                end
+
+                if hasEnoughMana then
+                    -- Full brightness for ability slot with enough mana
+                    love.graphics.setColor(1, 1, 1, 1)
+                else
+                    -- Greyed out for ability without enough mana
+                    love.graphics.setColor(0.5, 0.5, 0.5, 0.8)
+                end
             else
                 -- Dimmed for empty slots
                 love.graphics.setColor(0.5, 0.5, 0.5, 0.8)

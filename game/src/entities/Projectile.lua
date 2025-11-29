@@ -34,7 +34,8 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
     projectile:addTag("Projectile")
 
     -- Create components
-    local position = Position.new(x, y, DepthSorting.getLayerZ("FOREGROUND"))
+    -- Use GROUND layer so projectiles sort correctly with other entities based on Y position
+    local position = Position.new(x, y, DepthSorting.getLayerZ("GROUND"))
 
     -- Create projectile component first (so we can get the angle)
     local projectileComponent = Projectile.new(
@@ -50,29 +51,25 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
 
     -- Projectile sprite (use provided sprite name or default to "bullet")
     local spriteName = projectileSprite or "bullet"
-    local spriteRenderer = SpriteRenderer.new(spriteName, 8, 8)
+
+    -- Look up sprite dimensions from iffy tilesets if available
+    local spriteWidth = 8  -- Default fallback
+    local spriteHeight = 8  -- Default fallback
+    local iffy = require("lib.iffy")
+    if iffy.tilesets[spriteName] then
+        spriteWidth = iffy.tilesets[spriteName][1] or 8
+        spriteHeight = iffy.tilesets[spriteName][2] or 8
+    end
+
+    local spriteRenderer = SpriteRenderer.new(spriteName, spriteWidth, spriteHeight)
     -- Rotate sprite to match projectile direction
     spriteRenderer:setRotation(projectileComponent:getAngle())
-    -- Start with small scale for animation
-    spriteRenderer:setScale(0.3, 0.3)
-
-    -- Set glow color and sprite color from ability if available
-    if owner then
-        local ability = owner:getComponent("Ability")
-        if ability then
-            local abilityData = ability:getCurrentAbility()
-            if abilityData and abilityData.glowColor then
-                -- Set glow color for the halo effect
-                spriteRenderer:setGlowColor(abilityData.glowColor[1], abilityData.glowColor[2], abilityData.glowColor[3])
-                -- Tint the sprite itself with the same color (since sprite is now white)
-                spriteRenderer:setColor(abilityData.glowColor[1], abilityData.glowColor[2], abilityData.glowColor[3], 1.0)
-            end
-        end
-    end
 
     -- Circular physics collider for projectile collision detection (sensor)
     -- PhysicsCollision already creates sensors by default (non-blocking)
-    local physicsCollision = PhysicsCollision.new(8, 8, "dynamic",0, 0, "circle")
+    -- Use sprite dimensions for collider size (radius is half the average of width/height)
+    local colliderRadius = math.max(spriteWidth, spriteHeight) / 2
+    local physicsCollision = PhysicsCollision.new(colliderRadius, colliderRadius, "dynamic", colliderRadius /2 , colliderRadius /2, "circle")
 
     -- Create collider if physics world is available
     if physicsWorld then
@@ -95,8 +92,7 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
     projectile:addComponent("SpriteRenderer", spriteRenderer)
     projectile:addComponent("Projectile", projectileComponent)
     projectile:addComponent("PhysicsCollision", physicsCollision)
-    projectile:addComponent("GroundShadow", GroundShadow.new({ alpha = .75, widthFactor = 1, heightFactor = 0.75, offsetY = 8 }))
-    projectile:addComponent("Light", Light.new({ r = 100, g = 150, b = 255, a = 255, radius = 24 }))
+    projectile:addComponent("GroundShadow", GroundShadow.new())
 
     -- Add to world
     if world then

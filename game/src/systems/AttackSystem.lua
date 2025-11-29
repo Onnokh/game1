@@ -14,6 +14,19 @@ local AttackSystem = System:extend("AttackSystem", {"Position", "Attack"})
 function AttackSystem:update(dt)
     local currentTime = love.timer.getTime()
 
+    -- Clean up expired cast indicators
+    if self.world then
+        local castIndicators = self.world:getEntitiesWithTag("CastIndicator")
+        for _, indicator in ipairs(castIndicators) do
+            if indicator._spawnTime and indicator._lifetime then
+                local elapsed = currentTime - indicator._spawnTime
+                if elapsed >= indicator._lifetime then
+                    self.world:removeEntity(indicator)
+                end
+            end
+        end
+    end
+
     for _, entity in ipairs(self.entities) do
         local attack = entity:getComponent("Attack")
 
@@ -404,6 +417,49 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
     end
 end
 
+---Create a temporary visual indicator at a position
+---@param x number X position
+---@param y number Y position
+---@param spriteName string Sprite name for the indicator
+---@param duration number Duration in seconds before removal
+---@param world World The ECS world
+---@return Entity The created indicator entity
+local function createCastIndicator(x, y, spriteName, duration, world)
+    local Entity = require("src.core.Entity")
+    local Position = require("src.components.Position")
+    local SpriteRenderer = require("src.components.SpriteRenderer")
+    local DepthSorting = require("src.utils.depthSorting")
+
+    local indicator = Entity.new()
+    indicator:addTag("CastIndicator")
+
+    -- Get sprite dimensions
+    local spriteWidth = 16
+    local spriteHeight = 16
+    local iffy = require("lib.iffy")
+    if iffy.tilesets[spriteName] then
+        spriteWidth = iffy.tilesets[spriteName][1] or 16
+        spriteHeight = iffy.tilesets[spriteName][2] or 16
+    end
+
+    -- Position at cursor (center the sprite)
+    local position = Position.new(x - spriteWidth / 2, y - spriteHeight / 2, DepthSorting.getLayerZ("GROUND"))
+    local spriteRenderer = SpriteRenderer.new(spriteName, spriteWidth, spriteHeight)
+
+    indicator:addComponent("Position", position)
+    indicator:addComponent("SpriteRenderer", spriteRenderer)
+
+    -- Store lifetime for removal
+    indicator._lifetime = duration
+    indicator._spawnTime = love.timer.getTime()
+
+    if world then
+        world:addEntity(indicator)
+    end
+
+    return indicator
+end
+
 ---Spawn a projectile for ranged attacks (only if ability has projectile attribute)
 ---@param entity Entity The attacking entity
 function AttackSystem:spawnProjectile(entity)
@@ -430,45 +486,192 @@ function AttackSystem:spawnProjectile(entity)
 
     local ability = entity:getComponent("Ability")
     local abilityData = nil
+    local projectileType = nil
     if ability then
         abilityData = ability:getCurrentAbility()
         if abilityData then
-            -- Only spawn projectile if ability has projectile attribute
-            if not abilityData.projectile then
-                return
-            end
             damage = abilityData.damage
             knockback = abilityData.knockback
-            projectileSpeed = abilityData.projectileSpeed or projectileSpeed
-            projectileLifetime = abilityData.projectileLifetime or projectileLifetime
             piercing = abilityData.piercing or piercing
+
+            -- Handle different projectile types
+            projectileType = abilityData.projectile and abilityData.projectile.type or nil
+
+            -- If projectile is "instant" type or nil, handle instant hit at cursor
+            if not abilityData.projectile or projectileType == "instant" then
+                -- Get mouse position in world coordinates
+                local mouseX = GameState.input.mouseX
+                local mouseY = GameState.input.mouseY
+
+                -- Create visual indicator at cursor if projectile is "instant" type
+                if projectileType == "instant" and abilityData.projectile.sprite then
+                    local indicatorDuration = 0.3 -- Show indicator for 0.3 seconds
+                    createCastIndicator(mouseX, mouseY, abilityData.projectile.sprite, indicatorDuration, world)
+                end
+
+                -- Query for entities at cursor position using physics world
+                local hitEntities = {}
+                local hitRadius = 16 -- Small radius around cursor for hit detection
+
+                if physicsWorld then
+                    local fixturesInArea = {}
+                    physicsWorld:queryBoundingBox(
+                        mouseX - hitRadius, mouseY - hitRadius,
+                        mouseX + hitRadius, mouseY + hitRadius,
+                        function(fixture)
+                            fixturesInArea[fixture] = true
+                            return true -- Continue querying
+                        end
+                    )
+
+                    -- Get all entities with Health component and check if they're in the hit area
+                    local allEntities = world:getEntitiesWith({"Health"})
+                    for _, targetEntity in ipairs(allEntities) do
+                        if targetEntity ~= entity
+                           and not targetEntity:hasTag("Projectile")
+                           and not targetEntity.isDead then
+                            -- Check if entity's collider is in the hit area
+                            local targetPhys = targetEntity:getComponent("PhysicsCollision")
+                            local targetPathfinding = targetEntity:getComponent("PathfindingCollision")
+                            local targetPos = targetEntity:getComponent("Position")
+
+                            if targetPos then
+                                -- Check distance from cursor to entity position
+                                local dx = targetPos.x - mouseX
+                                local dy = targetPos.y - mouseY
+                                local distance = math.sqrt(dx * dx + dy * dy)
+
+                                -- Also check if fixture is in the query area
+                                local inArea = false
+                                if targetPhys and targetPhys:hasCollider() and targetPhys.collider.fixture then
+                                    inArea = fixturesInArea[targetPhys.collider.fixture] ~= nil
+                                elseif targetPathfinding and targetPathfinding:hasCollider() and targetPathfinding.collider.fixture then
+                                    inArea = fixturesInArea[targetPathfinding.collider.fixture] ~= nil
+                                end
+
+                                if inArea or distance <= hitRadius then
+                                    -- Check friendly fire prevention
+                                    local attackerIsMonster = entity:hasTag("Monster")
+                                    local targetIsMonster = targetEntity:hasTag("Monster")
+                                    if not (attackerIsMonster and targetIsMonster) then
+                                        table.insert(hitEntities, targetEntity)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- Apply damage to all hit entities
+                local DamageQueue = require("src.DamageQueue")
+                for _, targetEntity in ipairs(hitEntities) do
+                    DamageQueue:push(targetEntity, damage, entity, "physical", knockback, nil)
+                end
+
+                -- Apply recoil to player
+                if EntityUtils.isPlayer(entity) then
+                    local spriteRenderer = entity:getComponent("SpriteRenderer")
+                    local playerCenterX, playerCenterY
+                    if spriteRenderer then
+                        playerCenterX = position.x + (spriteRenderer.width or 24) / 2
+                        playerCenterY = position.y + (spriteRenderer.height or 24) / 2
+                    else
+                        playerCenterX = position.x
+                        playerCenterY = position.y
+                    end
+
+                    local directionX = mouseX - playerCenterX
+                    local directionY = mouseY - playerCenterY
+                    local directionLength = math.sqrt(directionX * directionX + directionY * directionY)
+                    if directionLength > 0 then
+                        directionX = directionX / directionLength
+                        directionY = directionY / directionLength
+
+                        if abilityData.recoilKnockback then
+                            local movement = entity:getComponent("Movement")
+                            if movement then
+                                local recoilVelocity = abilityData.recoilKnockback * 150
+                                movement:addVelocity(-directionX * recoilVelocity, -directionY * recoilVelocity)
+                            end
+                        end
+                    end
+                end
+
+                return -- Instant hit complete, no projectile needed
+            end
+
+            -- Handle "moving" type projectile (moving projectile)
+            if projectileType == "moving" then
+                projectileSpeed = abilityData.projectile.speed or projectileSpeed
+                projectileLifetime = abilityData.projectile.lifetime_seconds or projectileLifetime
+            else
+                -- Backward compatibility: if no type specified, assume "moving"
+                if type(abilityData.projectile) == "table" then
+                    projectileSpeed = abilityData.projectile.speed or projectileSpeed
+                    projectileLifetime = abilityData.projectile.lifetime_seconds or projectileLifetime
+                else
+                    -- Backward compatibility: old flat structure
+                    projectileSpeed = abilityData.projectileSpeed or projectileSpeed
+                    projectileLifetime = abilityData.projectileLifetime or projectileLifetime
+                end
+            end
         end
     else
         -- No ability component, don't spawn projectile
         return
     end
 
-    -- Get spawn position
-    local spawnX, spawnY
-    if EntityUtils.isPlayer(entity) then
-        -- Use gun layer offset for player (this already accounts for direction flipping)
-        local animator = entity:getComponent("Animator")
-        if animator then
-            local gunOffset = animator:getLayerOffset("gun")
-            spawnX = position.x + gunOffset.x
-            spawnY = position.y + gunOffset.y + 3
-        else
-            -- Fallback to visual center if no animator
-            spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
-        end
-    else
-        -- Use visual center for non-player entities
-        spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
+    -- Only spawn projectile if type is "moving" (or undefined for backward compatibility)
+    if projectileType ~= "moving" and projectileType ~= nil then
+        return -- Not a moving projectile, don't spawn
     end
 
-    -- Get projectile direction (normalized attack direction)
-    local directionX = attack.attackDirectionX
-    local directionY = attack.attackDirectionY
+    -- Get projectile sprite dimensions first (needed for spawn position calculation)
+    local projectileSpriteName = "bullet"
+    if type(abilityData.projectile) == "table" then
+        projectileSpriteName = abilityData.projectile.sprite or "bullet"
+    else
+        -- Backward compatibility: old string format
+        projectileSpriteName = abilityData.projectile or "bullet"
+    end
+    local projectileSpriteWidth = 8  -- Default fallback
+    local projectileSpriteHeight = 8  -- Default fallback
+    local iffy = require("lib.iffy")
+    if iffy.tilesets[projectileSpriteName] then
+        projectileSpriteWidth = iffy.tilesets[projectileSpriteName][1] or 8
+        projectileSpriteHeight = iffy.tilesets[projectileSpriteName][2] or 8
+    end
+
+    -- Get player's sprite center (not collision center, which is at feet)
+    -- Use sprite center directly for visual accuracy
+    local spriteRenderer = entity:getComponent("SpriteRenderer")
+    local playerCenterX, playerCenterY
+    if spriteRenderer then
+        -- Sprite center is at position + half sprite dimensions
+        playerCenterX = position.x + (spriteRenderer.width or 24) / 2
+        playerCenterY = position.y + (spriteRenderer.height or 24) / 2
+    else
+        -- Fallback to position if no sprite renderer
+        playerCenterX = position.x
+        playerCenterY = position.y
+    end
+
+    -- Spawn projectile so its center aligns with player sprite center
+    -- Position is top-left, so offset by half sprite dimensions
+    local spawnX = playerCenterX - projectileSpriteWidth / 2
+    local spawnY = playerCenterY - projectileSpriteHeight / 2
+
+    -- The spawn center is now at player sprite center
+    local spawnCenterX = playerCenterX
+    local spawnCenterY = playerCenterY
+
+    -- Get mouse position in world coordinates for precise aiming
+    local mouseX = GameState.input.mouseX
+    local mouseY = GameState.input.mouseY
+
+    -- Calculate direction from spawn center to cursor
+    local directionX = mouseX - spawnCenterX
+    local directionY = mouseY - spawnCenterY
     local directionLength = math.sqrt(directionX * directionX + directionY * directionY)
 
     if directionLength > 0 then
@@ -476,11 +679,23 @@ function AttackSystem:spawnProjectile(entity)
         directionX = directionX / directionLength
         directionY = directionY / directionLength
 
-        -- Apply start offset to account for gun sprite width, then add spawn offset to avoid self-collision
-        local startOffset = PlayerConfig.START_OFFSET or 15
+        -- Apply small spawn offset to avoid self-collision (projectile center moves slightly forward)
         local spawnOffset = 8
-        spawnX = spawnX + directionX * (startOffset / 2 + spawnOffset)
-        spawnY = spawnY + directionY * (startOffset / 2  + spawnOffset)
+        spawnCenterX = spawnCenterX + directionX * spawnOffset
+        spawnCenterY = spawnCenterY + directionY * spawnOffset
+
+        -- Recalculate spawn position (top-left) from new center
+        spawnX = spawnCenterX - projectileSpriteWidth / 2
+        spawnY = spawnCenterY - projectileSpriteHeight / 2
+
+        -- Recalculate direction from new spawn center to cursor to ensure precise aim
+        directionX = mouseX - spawnCenterX
+        directionY = mouseY - spawnCenterY
+        directionLength = math.sqrt(directionX * directionX + directionY * directionY)
+        if directionLength > 0 then
+            directionX = directionX / directionLength
+            directionY = directionY / directionLength
+        end
 
         -- Create projectile entity
         local ProjectileEntity = require("src.entities.Projectile")
@@ -498,7 +713,7 @@ function AttackSystem:spawnProjectile(entity)
             knockback,
             projectileLifetime,
             piercing,
-            abilityData.projectile -- projectile sprite/animation name
+            projectileSpriteName -- projectile sprite/animation name
         )
 
         -- Apply recoil to player
