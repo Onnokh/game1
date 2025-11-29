@@ -501,6 +501,7 @@ function AttackSystem:spawnProjectile(entity)
     local knockback = attack.knockback
     local projectileSpeed = 300
     local projectileLifetime = 3
+    local projectileScale = nil
     local piercing = false
 
     local ability = entity:getComponent("Ability")
@@ -624,11 +625,13 @@ function AttackSystem:spawnProjectile(entity)
             if projectileType == "moving" then
                 projectileSpeed = abilityData.projectile.speed or projectileSpeed
                 projectileLifetime = abilityData.projectile.lifetime_seconds or projectileLifetime
+                projectileScale = abilityData.projectile.scale
             else
                 -- Backward compatibility: if no type specified, assume "moving"
                 if type(abilityData.projectile) == "table" then
                     projectileSpeed = abilityData.projectile.speed or projectileSpeed
                     projectileLifetime = abilityData.projectile.lifetime_seconds or projectileLifetime
+                    projectileScale = abilityData.projectile.scale
                 else
                     -- Backward compatibility: old flat structure
                     projectileSpeed = abilityData.projectileSpeed or projectileSpeed
@@ -735,7 +738,8 @@ function AttackSystem:spawnProjectile(entity)
             projectileLifetime,
             piercing,
             projectileSpriteName, -- projectile sprite/animation name
-            currentAbilityId -- ability ID that created this projectile
+            currentAbilityId, -- ability ID that created this projectile
+            projectileScale -- projectile scale
         )
     end
 end

@@ -26,8 +26,9 @@ local ProjectileEntity = {}
 ---@param piercing boolean|nil Whether projectile can hit multiple targets (default: false)
 ---@param projectileSprite string|nil Sprite/animation name for the projectile (default: "bullet")
 ---@param abilityId string|nil The ability ID that created this projectile
+---@param scale number|nil Projectile scale (default: 1)
 ---@return Entity The created projectile entity
-function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owner, world, physicsWorld, knockback, lifetime, piercing, projectileSprite, abilityId)
+function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owner, world, physicsWorld, knockback, lifetime, piercing, projectileSprite, abilityId, scale)
     -- Create the projectile entity
     local projectile = Entity.new()
 
@@ -39,6 +40,8 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
     local position = Position.new(x, y, DepthSorting.getLayerZ("GROUND"))
 
     -- Create projectile component first (so we can get the angle)
+    -- Use the provided scale as the base scale, defaulting to 1.0 if not provided
+    local baseScale = scale or 1.0
     local projectileComponent = Projectile.new(
         velocityX,
         velocityY,
@@ -48,7 +51,8 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
         owner,
         knockback,
         piercing,
-        abilityId
+        abilityId,
+        baseScale
     )
 
     -- Projectile sprite (use provided sprite name or default to "bullet")
@@ -66,6 +70,10 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
     local spriteRenderer = SpriteRenderer.new(spriteName, spriteWidth, spriteHeight)
     -- Rotate sprite to match projectile direction
     spriteRenderer:setRotation(projectileComponent:getAngle())
+    -- Initial scale will be set by ProjectileSystem based on animation
+    -- Set initial scale to match the animation start (0.1 * baseScale)
+    local initialScale = 0.1 * baseScale
+    spriteRenderer:setScale(initialScale, initialScale)
 
     -- Circular physics collider for projectile collision detection (sensor)
     -- PhysicsCollision already creates sensors by default (non-blocking)

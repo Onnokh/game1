@@ -239,14 +239,17 @@ function RenderSystem:draw()
                                 if layerRotation ~= 0 then
                                     -- Same as normal sprite: draw at x + layerOffset.x, y + layerOffset.y with layerPivot origin
                                     local layerScale = animator:getLayerScale(sheetName)
+                                    -- If layer scale is default (1, 1), use SpriteRenderer scale instead
+                                    local scaleX = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleX or layerScale.x
+                                    local scaleY = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleY or layerScale.y
                                     love.graphics.draw(
                                         iffy.images[sheetName],
                                         iffy.spritesheets[sheetName][current],
                                         x + layerOffset.x,
                                         y + layerOffset.y,
                                         layerRotation,
-                                        layerScale.x,
-                                        layerScale.y,
+                                        scaleX,
+                                        scaleY,
                                         layerPivot.x,
                                         layerPivot.y
                                     )
@@ -425,8 +428,9 @@ function RenderSystem:draw()
 
                                 -- Use layer-specific scale if available, otherwise use sprite scale
                                 local layerScale = animator:getLayerScale(sheetName)
-                                local scaleX = layerScale.x
-                                local scaleY = layerScale.y
+                                -- If layer scale is default (1, 1), use SpriteRenderer scale instead
+                                local scaleX = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleX or layerScale.x
+                                local scaleY = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleY or layerScale.y
 
                                 love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
                             else
@@ -596,8 +600,9 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
 
                     -- Use layer-specific scale if available, otherwise use sprite scale
                     local layerScale = animator:getLayerScale(sheetName)
-                    local scaleX = layerScale.x
-                    local scaleY = layerScale.y
+                    -- If layer scale is default (1, 1), use SpriteRenderer scale instead
+                    local scaleX = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleX or layerScale.x
+                    local scaleY = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleY or layerScale.y
 
                     love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
                 else
@@ -717,8 +722,9 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
 
                     -- Use layer-specific scale if available, otherwise use sprite scale
                     local layerScale = animator:getLayerScale(sheetName)
-                    local scaleX = layerScale.x
-                    local scaleY = layerScale.y
+                    -- If layer scale is default (1, 1), use SpriteRenderer scale instead
+                    local scaleX = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleX or layerScale.x
+                    local scaleY = (layerScale.x == 1 and layerScale.y == 1) and spriteRenderer.scaleY or layerScale.y
 
                     love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
                 else

@@ -14,6 +14,7 @@ local Component = require("src.core.Component")
 ---@field scaleAnimation boolean Whether the projectile is currently scaling up
 ---@field scaleAnimationDuration number Duration of the scale animation in seconds
 ---@field scaleAnimationTime number Current time in the scale animation
+---@field baseScale number Base scale factor for the projectile (default: 1.0)
 ---@field abilityId string|nil The ability ID that created this projectile
 local Projectile = {}
 Projectile.__index = Projectile
@@ -28,8 +29,9 @@ Projectile.__index = Projectile
 ---@param knockback number|nil Knockback force (default: 0)
 ---@param piercing boolean|nil Whether projectile can hit multiple targets (default: false)
 ---@param abilityId string|nil The ability ID that created this projectile
+---@param baseScale number|nil Base scale factor for the projectile (default: 1.0)
 ---@return Component|Projectile
-function Projectile.new(velocityX, velocityY, speed, damage, lifetime, owner, knockback, piercing, abilityId)
+function Projectile.new(velocityX, velocityY, speed, damage, lifetime, owner, knockback, piercing, abilityId, baseScale)
     local self = setmetatable(Component.new("Projectile"), Projectile)
 
     -- Normalize velocity and apply speed
@@ -53,6 +55,7 @@ function Projectile.new(velocityX, velocityY, speed, damage, lifetime, owner, kn
     self.scaleAnimation = true
     self.scaleAnimationDuration = 0.25 -- Quick 0.25 second scale animation
     self.scaleAnimationTime = 0
+    self.baseScale = baseScale or 1.0
     self.abilityId = abilityId
 
     return self
@@ -98,21 +101,21 @@ function Projectile:getAngle()
 end
 
 ---Get the current scale based on animation
----@return number Current scale factor (0.1 to 1.0)
+---@return number Current scale factor (animates from 0.1 * baseScale to baseScale)
 function Projectile:getCurrentScale()
     if not self.scaleAnimation then
-        return 1.0
+        return self.baseScale
     end
 
     -- Use smooth easing function (ease-out)
     local progress = self.scaleAnimationTime / self.scaleAnimationDuration
     if progress >= 1.0 then
-        return 1.0
+        return self.baseScale
     end
 
-    -- Start at 0.1 scale and ease to 1.0
-    local startScale = 0.1
-    local endScale = 1.0
+    -- Start at 0.1 * baseScale and ease to baseScale
+    local startScale = 0.1 * self.baseScale
+    local endScale = self.baseScale
 
     -- Ease-out cubic function for smooth scaling
     local easedProgress = 1 - math.pow(1 - progress, 3)

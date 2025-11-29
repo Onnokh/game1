@@ -74,6 +74,7 @@ function IffySprites.load()
 
   -- Load projectile sprites
   loadSpritesheet("lightningbolt-projectile", "resources/abilities/lightningbolt-projectile.png", 1, 1)
+  loadSpritesheet("flameshock-projectile", "resources/abilities/flameshock-projectile.png", 1, 1)
 
   -- Load tree spritesheet (1x1 grid, 48x64)
   loadSpritesheet("tree-stump", "resources/dun-morogh/tree-stump.png", 1, 1)

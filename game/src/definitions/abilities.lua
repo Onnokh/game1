@@ -17,7 +17,8 @@ local abilities = {
             type = "moving",
             sprite = "lightningbolt-projectile",
             speed = 350,
-            lifetime_seconds = 3
+            lifetime_seconds = 3,
+            scale = .5
         },
         piercing = false,
         icon = "resources/abilities/lightningbolt.png",
@@ -48,7 +49,7 @@ local abilities = {
         knockback = 1,
         projectile = {
             type = "instant",
-            sprite = "bullet"
+            sprite = "flameshock-projectile",
         },
         piercing = false,
         icon = "resources/abilities/flameshock.png",
