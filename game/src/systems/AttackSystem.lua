@@ -111,7 +111,7 @@ function AttackSystem:shouldAttack(entity, currentTime)
             -- Check mana cost if entity has Mana component
             local mana = entity:getComponent("Mana")
             if mana then
-                local manaCost = (abilityData.manaCost or 0)
+                local manaCost = (abilityData.mana or 0)
                 if manaCost > 0 and not mana:hasEnoughMana(manaCost) then
                     return false -- Not enough mana
                 end
@@ -171,7 +171,7 @@ function AttackSystem:performAttack(entity, currentTime)
         if abilityData then
             local mana = entity:getComponent("Mana")
             if mana then
-                local manaCost = (abilityData.manaCost or 0)
+                local manaCost = (abilityData.mana or 0)
                 if manaCost > 0 then
                     mana:consumeMana(manaCost)
                 end
@@ -181,7 +181,9 @@ function AttackSystem:performAttack(entity, currentTime)
         -- Play sound effect when casting starts (use ability sound if available, otherwise default to gunshot)
         if _G.SoundManager and abilityData then
             local soundName = abilityData.sound or "gunshot"
-            _G.SoundManager.play(soundName, .75, 1)
+            local soundInstance = _G.SoundManager.play(soundName, .75, 1)
+            -- Store sound instance so we can stop it if cast is cancelled
+            attack.castSoundInstance = soundInstance
         end
         -- Start casting (direction will be calculated when cast completes)
         attack:startCast(abilityId or "unknown", castTime, currentTime)
@@ -205,9 +207,17 @@ function AttackSystem:performAttack(entity, currentTime)
         if abilityData then
             local mana = entity:getComponent("Mana")
             if mana then
-                local manaCost = (abilityData.manaCost or 0)
+                local manaCost = (abilityData.mana or 0)
                 if manaCost > 0 then
                     mana:consumeMana(manaCost)
+                end
+            end
+
+            -- Call onCast hook if defined
+            if abilityData.onCast and type(abilityData.onCast) == "function" then
+                local success, err = pcall(abilityData.onCast, entity, abilityData)
+                if not success then
+                    print(string.format("[AttackSystem] Error in onCast hook for ability %s: %s", abilityId or "unknown", tostring(err)))
                 end
             end
         end
@@ -254,6 +264,15 @@ function AttackSystem:executeAttackAfterCast(entity, currentTime)
             abilitySystem:markAbilityUsed(abilityId, currentTime)
         end
 
+        -- Get ability data for onCast hook
+        local abilityData = ability:getCurrentAbility()
+        if abilityData and abilityData.onCast and type(abilityData.onCast) == "function" then
+            local success, err = pcall(abilityData.onCast, entity, abilityData)
+            if not success then
+                print(string.format("[AttackSystem] Error in onCast hook for ability %s: %s", abilityId or "unknown", tostring(err)))
+            end
+        end
+
         -- Note: For cast-time abilities, mana is consumed when casting starts (in performAttack)
         -- For instant abilities, mana is consumed in performAttack as well
         -- So we don't consume mana again here in executeAttackAfterCast
@@ -264,8 +283,8 @@ function AttackSystem:executeAttackAfterCast(entity, currentTime)
         self:calculatePlayerAttackDirection(entity)
     end
 
-    -- Clear cast state
-    attack:cancelCast()
+    -- Clear cast state (don't stop sound, let it finish playing)
+    attack:cancelCast(false)
 
     -- Spawn a projectile entity for ranged attacks (if ability has projectile attribute)
     self:spawnProjectile(entity)
@@ -564,7 +583,16 @@ function AttackSystem:spawnProjectile(entity)
 
                 -- Apply damage to all hit entities
                 local DamageQueue = require("src.DamageQueue")
+                local currentAbilityId = abilityData and abilityData.id or nil
                 for _, targetEntity in ipairs(hitEntities) do
+                    -- Call onHit hook if ability has one
+                    if abilityData and abilityData.onHit and type(abilityData.onHit) == "function" then
+                        local success, err = pcall(abilityData.onHit, targetEntity, entity, abilityData)
+                        if not success then
+                            print(string.format("[AttackSystem] Error in onHit hook for ability %s: %s", currentAbilityId or "unknown", tostring(err)))
+                        end
+                    end
+
                     DamageQueue:push(targetEntity, damage, entity, "physical", knockback, nil)
                 end
 
@@ -586,14 +614,6 @@ function AttackSystem:spawnProjectile(entity)
                     if directionLength > 0 then
                         directionX = directionX / directionLength
                         directionY = directionY / directionLength
-
-                        if abilityData.recoilKnockback then
-                            local movement = entity:getComponent("Movement")
-                            if movement then
-                                local recoilVelocity = abilityData.recoilKnockback * 150
-                                movement:addVelocity(-directionX * recoilVelocity, -directionY * recoilVelocity)
-                            end
-                        end
                     end
                 end
 
@@ -699,6 +719,7 @@ function AttackSystem:spawnProjectile(entity)
 
         -- Create projectile entity
         local ProjectileEntity = require("src.entities.Projectile")
+        local currentAbilityId = abilityData and abilityData.id or nil
 
         ProjectileEntity.create(
             spawnX,
@@ -713,21 +734,9 @@ function AttackSystem:spawnProjectile(entity)
             knockback,
             projectileLifetime,
             piercing,
-            projectileSpriteName -- projectile sprite/animation name
+            projectileSpriteName, -- projectile sprite/animation name
+            currentAbilityId -- ability ID that created this projectile
         )
-
-        -- Apply recoil to player
-        if EntityUtils.isPlayer(entity) and ability then
-            local abilityData = ability:getCurrentAbility()
-            if abilityData and abilityData.recoilKnockback then
-                local movement = entity:getComponent("Movement")
-                if movement then
-                    -- Apply recoil in opposite direction of shot
-                    local recoilVelocity = abilityData.recoilKnockback * 150
-                    movement:addVelocity(-directionX * recoilVelocity, -directionY * recoilVelocity)
-                end
-            end
-        end
     end
 end
 

@@ -14,6 +14,7 @@ local Component = require("src.core.Component")
 ---@field scaleAnimation boolean Whether the projectile is currently scaling up
 ---@field scaleAnimationDuration number Duration of the scale animation in seconds
 ---@field scaleAnimationTime number Current time in the scale animation
+---@field abilityId string|nil The ability ID that created this projectile
 local Projectile = {}
 Projectile.__index = Projectile
 
@@ -26,8 +27,9 @@ Projectile.__index = Projectile
 ---@param owner Entity|nil The entity that fired this projectile
 ---@param knockback number|nil Knockback force (default: 0)
 ---@param piercing boolean|nil Whether projectile can hit multiple targets (default: false)
+---@param abilityId string|nil The ability ID that created this projectile
 ---@return Component|Projectile
-function Projectile.new(velocityX, velocityY, speed, damage, lifetime, owner, knockback, piercing)
+function Projectile.new(velocityX, velocityY, speed, damage, lifetime, owner, knockback, piercing, abilityId)
     local self = setmetatable(Component.new("Projectile"), Projectile)
 
     -- Normalize velocity and apply speed
@@ -51,6 +53,7 @@ function Projectile.new(velocityX, velocityY, speed, damage, lifetime, owner, kn
     self.scaleAnimation = true
     self.scaleAnimationDuration = 0.25 -- Quick 0.25 second scale animation
     self.scaleAnimationTime = 0
+    self.abilityId = abilityId
 
     return self
 end

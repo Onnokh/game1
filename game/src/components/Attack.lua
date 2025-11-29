@@ -40,6 +40,7 @@ function Attack.new(damage, range, cooldown, attackType, knockback)
     self.castStartTime = 0
     self.castDuration = 0
     self.castAbilityId = nil
+    self.castSoundInstance = nil -- Sound instance for the cast, can be stopped if cast is cancelled
 
     -- Attack direction (calculated when attacking)
     self.attackDirectionX = 0
@@ -160,7 +161,17 @@ function Attack:updateCast(currentTime)
 end
 
 ---Cancel the current cast
-function Attack:cancelCast()
+---@param stopSound boolean|nil Whether to stop the cast sound (default: true)
+function Attack:cancelCast(stopSound)
+    -- Stop the cast sound if it's playing (only if stopSound is true or not provided)
+    if (stopSound == nil or stopSound == true) and self.castSoundInstance then
+        self.castSoundInstance:stop()
+        self.castSoundInstance = nil
+    elseif stopSound == false then
+        -- Just clear the reference, let the sound finish playing
+        self.castSoundInstance = nil
+    end
+    
     self.isCasting = false
     self.castStartTime = 0
     self.castDuration = 0

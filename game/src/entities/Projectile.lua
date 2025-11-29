@@ -25,8 +25,9 @@ local ProjectileEntity = {}
 ---@param lifetime number|nil Projectile lifetime in seconds (default: 3)
 ---@param piercing boolean|nil Whether projectile can hit multiple targets (default: false)
 ---@param projectileSprite string|nil Sprite/animation name for the projectile (default: "bullet")
+---@param abilityId string|nil The ability ID that created this projectile
 ---@return Entity The created projectile entity
-function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owner, world, physicsWorld, knockback, lifetime, piercing, projectileSprite)
+function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owner, world, physicsWorld, knockback, lifetime, piercing, projectileSprite, abilityId)
     -- Create the projectile entity
     local projectile = Entity.new()
 
@@ -46,7 +47,8 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
         lifetime,
         owner,
         knockback,
-        piercing
+        piercing,
+        abilityId
     )
 
     -- Projectile sprite (use provided sprite name or default to "bullet")

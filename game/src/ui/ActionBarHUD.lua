@@ -278,8 +278,8 @@ function ActionBarHUD.draw(world)
             if ability then
                 -- Check if player has enough mana for this ability
                 local hasEnoughMana = true
-                if ability.manaCost and ability.manaCost > 0 and playerMana then
-                    hasEnoughMana = playerMana:hasEnoughMana(ability.manaCost)
+                if ability.mana and ability.mana > 0 and playerMana then
+                    hasEnoughMana = playerMana:hasEnoughMana(ability.mana)
                 end
 
                 if hasEnoughMana then

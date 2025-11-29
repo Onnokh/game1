@@ -49,11 +49,12 @@ end
 ---@param name string The name of the sound to play
 ---@param volume number|nil Optional volume override (0.0 to 1.0)
 ---@param pitch number|nil Optional pitch (default 1.0)
+---@return table|nil The sound instance (can be used to stop it later)
 function SoundManager.play(name, volume, pitch)
   local sound = sounds[name]
   if not sound then
     print("SoundManager: Sound '" .. name .. "' not found")
-    return
+    return nil
   end
 
   -- Clone the sound so we can play multiple instances
@@ -70,6 +71,8 @@ function SoundManager.play(name, volume, pitch)
 
   -- Play the sound
   instance:play()
+  
+  return instance
 end
 
 ---Play a looping sound effect

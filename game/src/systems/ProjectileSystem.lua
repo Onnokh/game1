@@ -112,6 +112,20 @@ function ProjectileSystem:hitTarget(projectileEntity, target, projectile, projec
     -- Mark this entity as hit (for piercing projectiles)
     projectile:markEntityAsHit(target.id)
 
+    -- Call onHit hook if ability has one
+    if projectile.abilityId and projectile.owner then
+        local ability = projectile.owner:getComponent("Ability")
+        if ability then
+            local abilityData = ability.inventory and ability.inventory[projectile.abilityId]
+            if abilityData and abilityData.onHit and type(abilityData.onHit) == "function" then
+                local success, err = pcall(abilityData.onHit, target, projectile.owner, abilityData)
+                if not success then
+                    print(string.format("[ProjectileSystem] Error in onHit hook for ability %s: %s", projectile.abilityId, tostring(err)))
+                end
+            end
+        end
+    end
+
     -- Queue damage event (DamageSystem will handle knockback application)
     -- The DamageSystem calculates knockback direction from source to target automatically
     DamageQueue:push(target, projectile.damage, projectile.owner, "physical", projectile.knockback, nil)
