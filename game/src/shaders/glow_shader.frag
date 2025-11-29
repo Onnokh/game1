@@ -1,4 +1,4 @@
-// Glow shader fragment shader for bullets
+// Glow shader fragment shader for projectiles
 uniform float Time;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
@@ -8,7 +8,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
 
     // If pixel is transparent, check surrounding pixels for glow
     float glowIntensity = 0.0;
-    vec2 texelSize = vec2(1.0 / 8.0, 1.0 / 8.0); // Bullet is 8x8 pixels
+    vec2 texelSize = vec2(1.0 / 8.0, 1.0 / 8.0); // Projectile is 8x8 pixels
 
     // Sample surrounding pixels to create outer glow
     for (float y = -2.0; y <= 2.0; y += 1.0) {
@@ -22,10 +22,10 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
     // Create pulsing effect (subtle pulse between 0.8 and 1.2)
     float pulse = 1.0 + sin(Time * 4.0) * 0.2;
 
-    // Glow color (bright cyan/blue to match bullet light)
+    // Glow color (bright cyan/blue to match projectile light)
     vec3 glowColor = vec3(0.4, 0.7, 1.0);
 
-    // Brighten the bullet core
+    // Brighten the projectile core
     vec3 brightenedColor = originalColor.rgb + glowColor * 0.3 * originalColor.a;
 
     // Apply outer glow to transparent areas

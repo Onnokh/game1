@@ -50,7 +50,7 @@ end
 -- or for marking components as transient (persistent = false)
 SaveSystem.componentRegistry = {
     -- Transient components (don't save, don't warn)
-    Bullet = { persistent = false },
+    Projectile = { persistent = false },
     AttackCollider = { persistent = false },
     DamageEvent = { persistent = false },
     FlashEffect = { persistent = false },

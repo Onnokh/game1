@@ -7,7 +7,7 @@ setmetatable(Attacking, {__index = require("src.core.State")})
 
 local SlimeConfig = require("src.entities.Monsters.Slime.SlimeConfig")
 local GameConstants = require("src.constants")
-local BulletEntity = require("src.entities.Bullet")
+local ProjectileEntity = require("src.entities.Projectile")
 
 ---@param jumpController SlimeJumpController Shared jump controller
 ---@return SlimeAttacking The created attacking state
@@ -149,21 +149,22 @@ function Attacking:onUpdate(stateMachine, entity, dt)
 
         if physicsWorld then
             -- Spawn projectile from slime's position
-            local bulletSpeed = SlimeConfig.PROJECTILE_SPEED or 180
-            local bulletLifetime = SlimeConfig.PROJECTILE_LIFETIME or 2.5
+            local projectileSpeed = SlimeConfig.PROJECTILE_SPEED or 180
+            local projectileLifetime = SlimeConfig.PROJECTILE_LIFETIME or 2.5
 
-            -- Create bullet moving towards target
-            BulletEntity.create(
+            -- Create projectile moving towards target
+            ProjectileEntity.create(
                 ex, ey,           -- Start position (slime center)
                 dx, dy,           -- Direction (towards target)
-                bulletSpeed,      -- Speed
+                projectileSpeed,      -- Speed
                 attack.damage,    -- Damage
                 entity,           -- Owner (slime)
                 entity._world,    -- World
                 physicsWorld,     -- Physics world
                 attack.knockback, -- Knockback
-                bulletLifetime,   -- Lifetime
-                false             -- Not piercing
+                projectileLifetime,   -- Lifetime
+                false,            -- Not piercing
+                "bullet"          -- Projectile sprite (default for monsters)
             )
 
             attack:performAttack(now)

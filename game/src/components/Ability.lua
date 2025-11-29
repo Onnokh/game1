@@ -14,16 +14,17 @@ Ability.__index = Ability
 ---@field description string|nil Description text for tooltips
 ---@field type string Attack type ("ranged")
 ---@field damage number Damage dealt
----@field range number Range (melee range or bullet range)
+---@field range number Range (melee range or projectile range)
 ---@field cooldown number Time between attacks
 ---@field castTime number|nil Cast time in seconds
 ---@field movementCancelsCast boolean|nil Whether movement cancels the cast
 ---@field knockback number Knockback force applied to targets
 ---@field recoilKnockback number|nil Knockback force applied to shooter when firing
----@field bulletSpeed number|nil Speed of bullets (ranged only)
----@field bulletLifetime number|nil Lifetime of bullets in seconds (ranged only)
----@field piercing boolean|nil Can bullet pierce through enemies (ranged only)
----@field glowColor table|nil RGB color for bullet glow {r, g, b} (0-1 range)
+---@field projectileSpeed number|nil Speed of projectiles (ranged only)
+---@field projectileLifetime number|nil Lifetime of projectiles in seconds (ranged only)
+---@field piercing boolean|nil Can projectile pierce through enemies (ranged only)
+---@field projectile string|nil Sprite/animation name for projectile (ranged only, if set spawns projectile)
+---@field glowColor table|nil RGB color for projectile glow {r, g, b} (0-1 range)
 ---@field icon string|nil Path to icon image
 ---@field manaCost number|nil Mana cost to use this ability (defaults to 0)
 

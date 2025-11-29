@@ -146,7 +146,7 @@ function World:update(dt)
     end
 
     -- Note: Entities are responsible for calling world:removeEntity() when they need to be removed
-    -- Bullets call it immediately on collision, Skeletons call it after death animation completes
+    -- Projectiles call it immediately on collision, Skeletons call it after death animation completes
 end
 
 ---Draw all systems in the world (sorted by drawOrder if enabled)

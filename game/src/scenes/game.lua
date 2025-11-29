@@ -25,7 +25,7 @@ local MouseFacingSystem = require("src.systems.MouseFacingSystem")
 local GunRotationSystem = require("src.systems.GunRotationSystem")
 local StateMachineSystem = require("src.systems.StateMachineSystem")
 local AttackSystem = require("src.systems.AttackSystem")
-local BulletSystem = require("src.systems.BulletSystem")
+local ProjectileSystem = require("src.systems.ProjectileSystem")
 local AbilitySystem = require("src.systems.AbilitySystem")
 local DamageSystem = require("src.systems.DamageSystem")
 local FlashEffectSystem = require("src.systems.FlashEffectSystem")
@@ -126,7 +126,7 @@ function GameScene.load()
   ecsWorld:addSystem(AbilitySystem.new()) -- Handle ability switching and syncing
   ecsWorld:addSystem(AutoAimSystem.new()) -- Handle auto-aim targeting (must run before AttackSystem)
   ecsWorld:addSystem(AttackSystem.new()) -- Handle attacks
-  ecsWorld:addSystem(BulletSystem.new()) -- Handle bullet movement and collision
+  ecsWorld:addSystem(ProjectileSystem.new()) -- Handle projectile movement and collision
   ecsWorld:addSystem(AttackColliderSystem.new()) -- Manage ephemeral attack colliders
   ecsWorld:addSystem(DamageSystem.new()) -- Process damage events (includes knockback)
   ecsWorld:addSystem(LootSystem.new()) -- Handle loot drops when entities die
@@ -247,7 +247,7 @@ function GameScene.load()
   local Minimap = require("src.ui.Minimap")
   Minimap.generateWorldTerrain()
 
-  -- Create global particle entity for bullet impacts and other effects
+  -- Create global particle entity for projectile impacts and other effects
   do
     local Entity = require("src.core.Entity")
     local ParticleSystem = require("src.components.ParticleSystem")

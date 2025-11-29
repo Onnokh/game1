@@ -6,7 +6,7 @@ setmetatable(Attacking, {__index = require("src.core.State")})
 
 local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
 local GameConstants = require("src.constants")
-local BulletEntity = require("src.entities.Bullet")
+local ProjectileEntity = require("src.entities.Projectile")
 
 ---@return Attacking The created attacking state
 function Attacking.new()
@@ -85,21 +85,22 @@ function Attacking:onUpdate(stateMachine, entity, dt)
 
         if physicsWorld then
             -- Spawn projectile from skeleton's position
-            local bulletSpeed = SkeletonConfig.PROJECTILE_SPEED or 200
-            local bulletLifetime = SkeletonConfig.PROJECTILE_LIFETIME or 2.0
+            local projectileSpeed = SkeletonConfig.PROJECTILE_SPEED or 200
+            local projectileLifetime = SkeletonConfig.PROJECTILE_LIFETIME or 2.0
 
-            -- Create bullet moving towards target
-            BulletEntity.create(
+            -- Create projectile moving towards target
+            ProjectileEntity.create(
                 ex, ey,           -- Start position (skeleton center)
                 dx, dy,           -- Direction (towards target)
-                bulletSpeed,      -- Speed
+                projectileSpeed,      -- Speed
                 attack.damage,    -- Damage
                 entity,           -- Owner (skeleton)
                 entity._world,    -- World
                 physicsWorld,     -- Physics world
                 attack.knockback, -- Knockback
-                bulletLifetime,   -- Lifetime
-                false             -- Not piercing
+                projectileLifetime,   -- Lifetime
+                false,            -- Not piercing
+                "bullet"          -- Projectile sprite (default for monsters)
             )
 
             attack:performAttack(now)

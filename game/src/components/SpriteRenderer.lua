@@ -94,7 +94,7 @@ function SpriteRenderer:clearOutline()
     self.outline = nil
 end
 
----Set glow color for bullet glow effect
+---Set glow color for projectile glow effect
 ---@param r number Red component (0-1)
 ---@param g number Green component (0-1)
 ---@param b number Blue component (0-1)

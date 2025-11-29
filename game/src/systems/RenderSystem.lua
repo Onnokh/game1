@@ -15,8 +15,8 @@ local shadowCanvasHeight = 0
 ---@param x number X position
 ---@param y number Y position
 ---@param spriteRenderer SpriteRenderer The sprite renderer component
----@param isBullet boolean|nil Whether this is a bullet (to add glow effect)
-local function drawRectangle(x, y, spriteRenderer, isBullet)
+---@param isProjectile boolean|nil Whether this is a projectile (to add glow effect)
+local function drawRectangle(x, y, spriteRenderer, isProjectile)
     love.graphics.push()
     love.graphics.translate(x + spriteRenderer.width / 2, y + spriteRenderer.height / 2)
     love.graphics.rotate(spriteRenderer.rotation)
@@ -25,8 +25,8 @@ local function drawRectangle(x, y, spriteRenderer, isBullet)
     -- Draw main body
     love.graphics.rectangle("fill", -spriteRenderer.width / 2, -spriteRenderer.height / 2, spriteRenderer.width, spriteRenderer.height)
 
-    -- Add glowing yellow tail for bullets
-    if isBullet then
+    -- Add glowing yellow tail for projectiles
+    if isProjectile then
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.rectangle("fill", -spriteRenderer.width / 2, -spriteRenderer.height / 2, 1.5, spriteRenderer.height)
         -- Restore the original color
@@ -123,7 +123,7 @@ function RenderSystem:draw()
 
             -- If Animator exists and sheet is loaded with Iffy, draw that frame
             local animator = entity:getComponent("Animator")
-            local isBullet = entity:hasTag("Bullet")
+            local isProjectile = entity:hasTag("Projectile")
 
             -- Check if entity has GroundShadow component and render shadow first
             local shadowComp = entity:getComponent("GroundShadow")
@@ -385,7 +385,7 @@ function RenderSystem:draw()
 
             -- If Animator exists and sheet is loaded with Iffy, draw that frame
             local animator = entity:getComponent("Animator")
-            local isBullet = entity:hasTag("Bullet")
+            local isProjectile = entity:hasTag("Projectile")
 
             -- Set color for normal sprite
             love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)
@@ -393,8 +393,8 @@ function RenderSystem:draw()
             -- Apply outline shader if configured
             if spriteRenderer.outline and spriteRenderer.outline.enabled then
                 self:drawWithOutlineShader(entity, x, y, spriteRenderer, animator)
-            -- Apply glow shader if entity is a bullet
-            elseif isBullet then
+            -- Apply glow shader if entity is a projectile
+            elseif isProjectile then
                 self:drawWithGlowShader(entity, x, y, spriteRenderer, animator)
                 -- Skip normal drawing since shader handles it
                 goto skip_drawing
@@ -479,7 +479,7 @@ function RenderSystem:draw()
 
                 -- Fallback: draw rectangle if nothing was drawn
                 if not hasDrawnSomething then
-                    drawRectangle(x, y, spriteRenderer, isBullet)
+                    drawRectangle(x, y, spriteRenderer, isProjectile)
                 end
 
             end
@@ -572,7 +572,7 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
     outlineShader:send("TextureSize", {textureWidth, textureHeight})
 
     -- Draw the sprite (shader will handle the outline effect)
-    local isBullet = entity:hasTag("Bullet")
+    local isProjectile = entity:hasTag("Projectile")
     local hasDrawnSomething = false
 
     -- Draw all animation layers
@@ -652,7 +652,7 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
 
     -- Fallback: draw rectangle if nothing was drawn
     if not hasDrawnSomething then
-        drawRectangle(x, y, spriteRenderer, isBullet)
+        drawRectangle(x, y, spriteRenderer, isProjectile)
     end
 
     -- Reset shader
@@ -696,7 +696,7 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
     love.graphics.translate(-centerX, -centerY)
 
     -- Draw the sprite normally (shader will handle the flash effect)
-    local isBullet = entity:hasTag("Bullet")
+    local isProjectile = entity:hasTag("Projectile")
     local hasDrawnSomething = false
 
     -- Draw all animation layers
@@ -770,7 +770,7 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
 
     -- Fallback: draw rectangle if nothing was drawn
     if not hasDrawnSomething then
-        drawRectangle(x, y, spriteRenderer, isBullet)
+        drawRectangle(x, y, spriteRenderer, isProjectile)
     end
 
     -- Reset shader
@@ -834,7 +834,7 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
     foliageSwayShader:send("TextureSize", {textureWidth, textureHeight})
 
     -- Draw the sprite (shader will handle the sway effect)
-    local isBullet = entity:hasTag("Bullet")
+    local isProjectile = entity:hasTag("Projectile")
     local hasDrawnSomething = false
 
     -- Draw animation if it exists, otherwise draw static sprite (not both!)
@@ -900,7 +900,7 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
 
     -- Fallback: draw rectangle if nothing was drawn
     if not hasDrawnSomething then
-        drawRectangle(x, y, spriteRenderer, isBullet)
+        drawRectangle(x, y, spriteRenderer, isProjectile)
     end
 
 
@@ -909,7 +909,7 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
     love.graphics.setColor(1, 1, 1, 1)
 end
 
----Draw entity with glow shader (for bullets)
+---Draw entity with glow shader (for projectiles)
 ---@param entity Entity The entity to draw
 ---@param x number X position
 ---@param y number Y position
@@ -934,7 +934,7 @@ function RenderSystem:drawWithGlowShader(entity, x, y, spriteRenderer, animator)
         glowColor = {spriteRenderer.glowColor.r, spriteRenderer.glowColor.g, spriteRenderer.glowColor.b}
     end
 
-    -- Bullets typically use static sprites, not animations
+            -- Projectiles typically use static sprites, not animations
     if spriteRenderer.sprite then
         local iffy = require("lib.iffy")
         local spriteSheet = spriteRenderer.sprite
@@ -975,7 +975,7 @@ function RenderSystem:drawWithGlowShader(entity, x, y, spriteRenderer, animator)
                 end
             end
 
-            -- Draw the core bullet with shader for extra brightness
+            -- Draw the core projectile with shader for extra brightness
             love.graphics.setShader(glowShader)
             glowShader:send("Time", time)
             love.graphics.setColor(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, spriteRenderer.color.a)

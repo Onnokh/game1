@@ -172,7 +172,7 @@ function AttackSystem:performAttack(entity, currentTime)
         end
         -- Start casting (direction will be calculated when cast completes)
         attack:startCast(abilityId or "unknown", castTime, currentTime)
-        return -- Don't spawn bullet yet, wait for cast to complete
+        return -- Don't spawn projectile yet, wait for cast to complete
     end
 
     -- No cast time or cast already complete, proceed with normal attack
@@ -211,8 +211,8 @@ function AttackSystem:performAttack(entity, currentTime)
         self:calculatePlayerAttackDirection(entity)
     end
 
-    -- Spawn a bullet entity for ranged attacks
-    self:spawnBullet(entity)
+    -- Spawn a projectile entity for ranged attacks (if ability has projectile attribute)
+    self:spawnProjectile(entity)
 end
 
 ---Execute attack after cast completes
@@ -254,8 +254,8 @@ function AttackSystem:executeAttackAfterCast(entity, currentTime)
     -- Clear cast state
     attack:cancelCast()
 
-    -- Spawn a bullet entity for ranged attacks
-    self:spawnBullet(entity)
+    -- Spawn a projectile entity for ranged attacks (if ability has projectile attribute)
+    self:spawnProjectile(entity)
 end
 
 ---Calculate attack direction for player based on mouse position
@@ -404,9 +404,9 @@ function AttackSystem:applyKnockback(attacker, targets, attack)
     end
 end
 
----Spawn a bullet for ranged attacks
+---Spawn a projectile for ranged attacks (only if ability has projectile attribute)
 ---@param entity Entity The attacking entity
-function AttackSystem:spawnBullet(entity)
+function AttackSystem:spawnProjectile(entity)
     local world = entity._world
     if not world then return end
 
@@ -424,8 +424,8 @@ function AttackSystem:spawnBullet(entity)
     -- Get attack stats from Ability if available, otherwise from Attack component
     local damage = attack.damage
     local knockback = attack.knockback
-    local bulletSpeed = 300
-    local bulletLifetime = 3
+    local projectileSpeed = 300
+    local projectileLifetime = 3
     local piercing = false
 
     local ability = entity:getComponent("Ability")
@@ -433,12 +433,19 @@ function AttackSystem:spawnBullet(entity)
     if ability then
         abilityData = ability:getCurrentAbility()
         if abilityData then
+            -- Only spawn projectile if ability has projectile attribute
+            if not abilityData.projectile then
+                return
+            end
             damage = abilityData.damage
             knockback = abilityData.knockback
-            bulletSpeed = abilityData.bulletSpeed or bulletSpeed
-            bulletLifetime = abilityData.bulletLifetime or bulletLifetime
+            projectileSpeed = abilityData.projectileSpeed or projectileSpeed
+            projectileLifetime = abilityData.projectileLifetime or projectileLifetime
             piercing = abilityData.piercing or piercing
         end
+    else
+        -- No ability component, don't spawn projectile
+        return
     end
 
     -- Get spawn position
@@ -459,7 +466,7 @@ function AttackSystem:spawnBullet(entity)
         spawnX, spawnY = EntityUtils.getEntityVisualCenter(entity, position)
     end
 
-    -- Get bullet direction (normalized attack direction)
+    -- Get projectile direction (normalized attack direction)
     local directionX = attack.attackDirectionX
     local directionY = attack.attackDirectionY
     local directionLength = math.sqrt(directionX * directionX + directionY * directionY)
@@ -475,22 +482,23 @@ function AttackSystem:spawnBullet(entity)
         spawnX = spawnX + directionX * (startOffset / 2 + spawnOffset)
         spawnY = spawnY + directionY * (startOffset / 2  + spawnOffset)
 
-        -- Create bullet entity
-        local BulletEntity = require("src.entities.Bullet")
+        -- Create projectile entity
+        local ProjectileEntity = require("src.entities.Projectile")
 
-        BulletEntity.create(
+        ProjectileEntity.create(
             spawnX,
             spawnY,
             directionX,
             directionY,
-            bulletSpeed,
+            projectileSpeed,
             damage,
             entity, -- owner
             world,
             physicsWorld,
             knockback,
-            bulletLifetime,
-            piercing
+            projectileLifetime,
+            piercing,
+            abilityData.projectile -- projectile sprite/animation name
         )
 
         -- Apply recoil to player

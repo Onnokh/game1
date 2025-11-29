@@ -66,41 +66,41 @@ function CollisionSystem:setWorld(world)
                 if ua and type(ua) == "table" and ua.kind == "trigger" then handleTrigger(a, b) end
                 if ub and type(ub) == "table" and ub.kind == "trigger" then handleTrigger(b, a) end
 
-                -- Handle bullet collisions
-                local function handleBullet(bulletFixture, otherFixture)
-                    if not bulletFixture then return end
-                    local u = bulletFixture:getUserData()
-                    if u and type(u) == "table" and u.kind == "bullet" and u.entity then
-                        local bulletEntity = u.entity
-                        local bulletComp = bulletEntity:getComponent("Bullet")
-                        if not bulletComp then return end
+                -- Handle projectile collisions
+                local function handleProjectile(projectileFixture, otherFixture)
+                    if not projectileFixture then return end
+                    local u = projectileFixture:getUserData()
+                    if u and type(u) == "table" and u.kind == "projectile" and u.entity then
+                        local projectileEntity = u.entity
+                        local projectileComp = projectileEntity:getComponent("Projectile")
+                        if not projectileComp then return end
 
                         -- Check if hitting an entity first
                         local otherU = otherFixture:getUserData()
                         if otherU and type(otherU) == "table" and otherU.entity then
                             local otherEntity = otherU.entity
                             -- Don't hit owner or already-hit entities
-                            if otherEntity.id ~= (bulletComp.owner and bulletComp.owner.id or -1)
-                               and not bulletComp:hasHitEntity(otherEntity.id) then
-                                -- Mark for damage (will be handled by BulletSystem)
-                                if not bulletEntity._hitEntities then
-                                    bulletEntity._hitEntities = {}
+                            if otherEntity.id ~= (projectileComp.owner and projectileComp.owner.id or -1)
+                               and not projectileComp:hasHitEntity(otherEntity.id) then
+                                -- Mark for damage (will be handled by ProjectileSystem)
+                                if not projectileEntity._hitEntities then
+                                    projectileEntity._hitEntities = {}
                                 end
-                                table.insert(bulletEntity._hitEntities, otherEntity)
+                                table.insert(projectileEntity._hitEntities, otherEntity)
                             end
                         else
                             -- Only treat as static wall if it's NOT an entity
                             local otherBody = otherFixture:getBody()
                             if otherBody and otherBody:getType() == "static" then
-                                -- Mark bullet for removal (will be handled by BulletSystem)
-                                bulletEntity._hitStatic = true
+                                -- Mark projectile for removal (will be handled by ProjectileSystem)
+                                projectileEntity._hitStatic = true
                                 return
                             end
                         end
                     end
                 end
-                if ua and type(ua) == "table" and ua.kind == "bullet" then handleBullet(a, b) end
-                if ub and type(ub) == "table" and ub.kind == "bullet" then handleBullet(b, a) end
+                if ua and type(ua) == "table" and ua.kind == "projectile" then handleProjectile(a, b) end
+                if ub and type(ub) == "table" and ub.kind == "projectile" then handleProjectile(b, a) end
 
             end,
             function(a, b, contact)
@@ -160,7 +160,7 @@ function CollisionSystem:update(dt)
 			if physicsCollision and not physicsCollision:hasCollider() then
 				physicsCollision:createCollider(self.physicsWorld, position.x, position.y)
 				-- Tag fixture with entity reference for contact handlers
-				-- Only set if not already set (e.g., bullets set their own userData)
+                    -- Only set if not already set (e.g., projectiles set their own userData)
 				if physicsCollision.collider and physicsCollision.collider.fixture then
 					local existingData = physicsCollision.collider.fixture:getUserData()
 					if not existingData then
@@ -191,7 +191,7 @@ function CollisionSystem:update(dt)
 				local physicsCollision = entity:getComponent("PhysicsCollision")
 				if physicsCollision and physicsCollision:hasCollider() then
 					physicsCollision:setPosition(position.x, position.y)
-					-- Only set userData if not already set (e.g., bullets set their own)
+                    -- Only set userData if not already set (e.g., projectiles set their own)
 					if physicsCollision.collider and physicsCollision.collider.fixture then
 						local existingData = physicsCollision.collider.fixture:getUserData()
 						if not existingData then
