@@ -51,10 +51,14 @@ function GenericDying:onEnter(stateMachine, entity)
         pathfinding.enabled = false
     end
 
-    -- Disable collision
-    local collision = entity:getComponent("Collision")
-    if collision then
-        collision.enabled = false
+    -- Disable collision components
+    local pathfindingCollision = entity:getComponent("PathfindingCollision")
+    if pathfindingCollision then
+        pathfindingCollision.enabled = false
+    end
+    local physicsCollision = entity:getComponent("PhysicsCollision")
+    if physicsCollision then
+        physicsCollision.enabled = false
     end
 
     -- Set death animation (try both DYING_ANIMATION and DEATH_ANIMATION for compatibility)

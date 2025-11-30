@@ -10,7 +10,7 @@ local DEFAULT_SPRITE_H = 24
 ---@class DamageSystem : System
 local DamageSystem = System:extend("DamageSystem", {"Health"})
 
----Update all entities with Health and DamageEvent components
+---Update all entities with Health components (damage is processed via DamageQueue)
 ---@param dt number Delta time
 function DamageSystem:update(dt)
     -- Process queued damages once per frame

@@ -32,7 +32,6 @@ SaveSystem.componentRegistry = {
     -- Transient components (don't save, don't warn)
     Projectile = { persistent = false },
     AttackCollider = { persistent = false },
-    DamageEvent = { persistent = false },
     FlashEffect = { persistent = false },
     ParticleSystem = { persistent = false },
     Knockback = { persistent = false }, -- Transient state

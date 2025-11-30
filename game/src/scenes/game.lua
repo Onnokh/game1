@@ -348,11 +348,11 @@ function GameScene.update(dt, gameState)
 
   -- Update camera to follow player
   if playerEntity then
-    local collision = playerEntity:getComponent("Collision")
+    local physicsCollision = playerEntity:getComponent("PhysicsCollision")
 
     -- Track player collider for debug overlay
-    if collision and collision:hasCollider() then
-      playerCollider = collision.collider
+    if physicsCollision and physicsCollision:hasCollider() then
+      playerCollider = physicsCollision.collider
       GameScene.playerCollider = playerCollider
     end
 
