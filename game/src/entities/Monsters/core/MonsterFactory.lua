@@ -43,8 +43,8 @@ function MonsterFactory.create(options)
     local y = options.y
     local world = options.world
     local physicsWorld = options.physicsWorld
-    local config = options.config -- Monster config (e.g., SkeletonConfig, WarhogConfig)
-    local tag = options.tag -- e.g., "Skeleton", "Warhog"
+    local config = options.config -- Monster config (e.g., SkeletonConfig)
+    local tag = options.tag -- e.g., "Skeleton"
 
     -- Optional overrides
     local pathfindingOffsetX = options.pathfindingOffsetX
@@ -63,7 +63,7 @@ function MonsterFactory.create(options)
 
     -- Create the monster entity
     local monster = Entity.new()
-    monster:addTag(tag) -- Specific tag (e.g., "Skeleton", "Warhog")
+    monster:addTag(tag) -- Specific tag (e.g., "Skeleton")
     monster:addTag("Monster") -- Generic tag for all monsters
 
     -- Add Elite tag if this is an elite variant

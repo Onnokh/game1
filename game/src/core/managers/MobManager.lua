@@ -1,5 +1,5 @@
 ---@class MobManager
----Handles mob spawning for both initial map load and phase-based spawning
+---Handles mob spawning for initial map load
 local MobManager = {}
 
 -- Internal state
@@ -8,7 +8,6 @@ MobManager.mobSpawnAreas = {} -- Store MobSpawn areas for dynamic spawning
 -- Lazy-loaded monster modules
 local Slime = nil
 local Skeleton = nil
-local Warhog = nil
 
 ---Initialize and lazy-load monster modules
 local function loadMonsterModules()
@@ -18,13 +17,10 @@ local function loadMonsterModules()
     if not Skeleton then
         Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
     end
-    if not Warhog then
-        Warhog = require("src.entities.Monsters.Warhog.Warhog")
-    end
 end
 
 ---Get monster creator function by type
----@param enemyType string Enemy type (e.g., "slime", "skeleton", "warhog")
+---@param enemyType string Enemy type (e.g., "slime", "skeleton")
 ---@return function|nil Creator function or nil if unknown type
 local function getMonsterCreator(enemyType)
     loadMonsterModules()
@@ -32,7 +28,6 @@ local function getMonsterCreator(enemyType)
     local creators = {
         slime = Slime and Slime.create or nil,
         skeleton = Skeleton and Skeleton.create or nil,
-        warhog = Warhog and Warhog.create or nil
     }
 
     return creators[enemyType]
@@ -48,11 +43,10 @@ end
 ---@param ecsWorld World ECS world
 ---@param physicsWorld love.World Physics world
 ---@param tagToAdd string|nil Optional tag to add to spawned enemies
----@param ignoreSpawnFlag boolean|nil If true, bypass enemySpawns safety check (for phases)
 ---@return number Number of enemies spawned
-function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, ecsWorld, physicsWorld, tagToAdd, ignoreSpawnFlag)
-    -- Only check spawn flag for immediate spawns, not phase-based spawns
-    if not ignoreSpawnFlag and (not islandDef.properties or not islandDef.properties.enemySpawns) then
+function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, ecsWorld, physicsWorld, tagToAdd)
+    -- Check spawn flag
+    if not islandDef.properties or not islandDef.properties.enemySpawns then
         print(string.format("[MobManager] Skipping spawn - enemy spawns disabled for island: %s",
             islandDef.name or "unknown"))
         return 0
@@ -99,12 +93,12 @@ function MobManager.spawnEnemiesInArea(x, y, width, height, amount, islandDef, e
 end
 
 ---Register a MobSpawn area for later use
----@param spawnArea table Spawn area data {x, y, width, height, amount, phase, islandDef}
+---@param spawnArea table Spawn area data {x, y, width, height, amount, islandDef}
 function MobManager.registerSpawnArea(spawnArea)
     table.insert(MobManager.mobSpawnAreas, spawnArea)
 end
 
----Spawn enemies from MobSpawn areas that don't have a phase (immediate spawning)
+---Spawn enemies from all registered MobSpawn areas
 ---@param ecsWorld World ECS world
 ---@param physicsWorld love.World Physics world
 ---@return number Number of enemies spawned
@@ -116,55 +110,35 @@ function MobManager.spawnImmediateEnemies(ecsWorld, physicsWorld)
     local totalSpawned = 0
     local areasProcessed = 0
 
-    -- Find all MobSpawn areas without a phase property
+    -- Spawn enemies from all registered MobSpawn areas
     for _, spawnArea in ipairs(MobManager.mobSpawnAreas) do
-        if not spawnArea.phase then
-            areasProcessed = areasProcessed + 1
-            local spawned = MobManager.spawnEnemiesInArea(
-                spawnArea.x,
-                spawnArea.y,
-                spawnArea.width,
-                spawnArea.height,
-                spawnArea.amount,
-                spawnArea.islandDef,
-                ecsWorld,
-                physicsWorld,
-                nil, -- No tag for immediate spawns
-                false -- Respect enemySpawns flag for immediate spawns
-            )
+        areasProcessed = areasProcessed + 1
+        local spawned = MobManager.spawnEnemiesInArea(
+            spawnArea.x,
+            spawnArea.y,
+            spawnArea.width,
+            spawnArea.height,
+            spawnArea.amount,
+            spawnArea.islandDef,
+            ecsWorld,
+            physicsWorld,
+            nil -- No tag for spawns
+        )
 
-            totalSpawned = totalSpawned + spawned
-        end
+        totalSpawned = totalSpawned + spawned
     end
 
     if totalSpawned > 0 then
-        print(string.format("[MobManager] ===== IMMEDIATE SPAWN COMPLETE: %d enemies from %d areas =====",
+        print(string.format("[MobManager] ===== SPAWN COMPLETE: %d enemies from %d areas =====",
             totalSpawned, areasProcessed))
     else
-        print("[MobManager] ===== NO IMMEDIATE SPAWNS (all areas are phase-based) =====")
+        print("[MobManager] ===== NO SPAWNS =====")
     end
 
     return totalSpawned
 end
 
 
-
----Get all MobSpawn areas for a specific phase
----@param phaseName string|nil Phase name (e.g., "Siege"), or nil for all
----@return table Array of spawn areas
-function MobManager.getSpawnAreas(phaseName)
-    if not phaseName then
-        return MobManager.mobSpawnAreas
-    end
-
-    local filtered = {}
-    for _, area in ipairs(MobManager.mobSpawnAreas) do
-        if area.phase == phaseName then
-            table.insert(filtered, area)
-        end
-    end
-    return filtered
-end
 
 ---Clear all registered spawn areas (called on map unload)
 function MobManager.clear()
