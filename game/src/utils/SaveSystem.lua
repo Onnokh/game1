@@ -16,35 +16,14 @@ local PERSISTENT_TAGS = {
     "Shop", "Tree", "Elite", "Crystal"
 }
 
--- Entity type to module path mapping (DRY approach)
-local ENTITY_PATHS = {
-    Player = "src.entities.Player.Player",
-    Skeleton = "src.entities.Monsters.Skeleton.Skeleton",
-    Slime = "src.entities.Monsters.Slime.Slime",
-    CragBoar = "src.entities.Monsters.CragBoar.CragBoar",
-    Bear = "src.entities.Monsters.Bear.Bear",
-    Coin = "src.entities.Coin",
-    Shop = "src.entities.Shop.Shop",
-    Tree = "src.entities.Decoration.Tree",
-    Crystal = "src.entities.Crystal.Crystal"
-}
+-- Entity registry (single source of truth)
+local EntityRegistry = require("src.core.managers.EntityRegistry")
 
 ---Get entity factory function for a given entity type
 ---@param entityType string The entity type
 ---@return function|nil Factory function or nil if not found
 function SaveSystem.getEntityFactory(entityType)
-    local modulePath = ENTITY_PATHS[entityType]
-    if not modulePath then
-        return nil
-    end
-
-    local success, module = pcall(require, modulePath)
-    if success and module and module.create then
-        return module.create
-    end
-
-    print(string.format("[SaveSystem] ERROR: Module '%s' has no create() function", modulePath))
-    return nil
+    return EntityRegistry.getEntityFactory(entityType)
 end
 
 -- Component Registry for components without serialize() methods
@@ -126,8 +105,9 @@ end
 ---@param entity Entity
 ---@return string Entity type name
 function SaveSystem.getEntityType(entity)
-    -- Check each registered entity type (single source of truth: ENTITY_PATHS)
-    for entityType, _ in pairs(ENTITY_PATHS) do
+    -- Check each registered entity type (single source of truth: EntityRegistry)
+    local allTags = EntityRegistry.getAllTags()
+    for _, entityType in ipairs(allTags) do
         if entity:hasTag(entityType) then
             return entityType
         end
@@ -420,8 +400,8 @@ function SaveSystem.deserializeEntity(entityData, ecsWorld, physicsWorld)
     local entityType = entityData.entityType
 
     -- Validate entity type is registered
-    if not ENTITY_PATHS[entityType] then
-        print(string.format("[SaveSystem] ERROR: Unknown entity type '%s' - not in ENTITY_PATHS", entityType or "nil"))
+    if not EntityRegistry.isRegistered(entityType) then
+        print(string.format("[SaveSystem] ERROR: Unknown entity type '%s' - not in EntityRegistry", entityType or "nil"))
         return nil
     end
 

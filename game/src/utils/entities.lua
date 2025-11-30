@@ -2,15 +2,8 @@
 ---Utility functions for working with entities
 local EntityUtils = {}
 
--- Monster requires
-local Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
-local SkeletonConfig = require("src.entities.Monsters.Skeleton.SkeletonConfig")
-local Slime = require("src.entities.Monsters.Slime.Slime")
-local SlimeConfig = require("src.entities.Monsters.Slime.SlimeConfig")
-local CragBoar = require("src.entities.Monsters.CragBoar.CragBoar")
-local CragBoarConfig = require("src.entities.Monsters.CragBoar.CragBoarConfig")
-local Bear = require("src.entities.Monsters.Bear.Bear")
-local BearConfig = require("src.entities.Monsters.Bear.BearConfig")
+-- Entity registry (single source of truth)
+local EntityRegistry = require("src.core.managers.EntityRegistry")
 
 ---Check whether an entity is the Player
 ---@param entity Entity|nil
@@ -209,48 +202,26 @@ function EntityUtils.findValidSpawnPosition(minX, maxX, minY, maxY)
     return CoordinateUtils.gridToWorld(randomTile.x, randomTile.y)
 end
 
--- Monster factory registry
-local monsterFactories = {
-    skeleton = {
-        factory = Skeleton.create,
-        config = SkeletonConfig
-    },
-    slime = {
-        factory = Slime.create,
-        config = SlimeConfig
-    },
-    warhog = {
-        factory = Warhog.create,
-        config = WarhogConfig
-    },
-    cragboar = {
-        factory = CragBoar.create,
-        config = CragBoarConfig
-    },
-    bear = {
-        factory = Bear.create,
-        config = BearConfig
-    }
-}
-
 ---Spawn a monster at the specified position
 ---@param x number PathfindingCollision center X position
 ---@param y number PathfindingCollision center Y position
----@param monsterType string Monster type (e.g., "skeleton", "slime", "warhog")
+---@param monsterType string Monster type (e.g., "skeleton", "slime")
 ---@param world World The ECS world
 ---@param physicsWorld table The physics world
 ---@param isElite boolean|nil Whether this monster should be an elite variant
 ---@return Entity|nil The created monster entity
 function EntityUtils.spawnMonster(x, y, monsterType, world, physicsWorld, isElite)
-    -- Get factory configuration
-    local factoryInfo = monsterFactories[monsterType]
-    if not factoryInfo then
+    -- Get factory and config from registry
+    local factory, config = EntityRegistry.getMonsterFactory(monsterType)
+    if not factory then
         print("ERROR: Unknown monster type:", monsterType)
         return nil
     end
 
-    -- Get config
-    local config = factoryInfo.config
+    if not config then
+        print("ERROR: No config found for monster type:", monsterType)
+        return nil
+    end
 
     -- Calculate sprite position from collision center
     local spriteWidth = config.SPRITE_WIDTH
@@ -267,7 +238,7 @@ function EntityUtils.spawnMonster(x, y, monsterType, world, physicsWorld, isElit
     local spriteY = y - pfOffsetY - colliderHeight / 2
 
     -- Create monster using factory
-    return factoryInfo.factory(spriteX, spriteY, world, physicsWorld, isElite or false)
+    return factory(spriteX, spriteY, world, physicsWorld, isElite or false)
 end
 
 return EntityUtils

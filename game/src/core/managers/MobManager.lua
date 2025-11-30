@@ -5,32 +5,14 @@ local MobManager = {}
 -- Internal state
 MobManager.mobSpawnAreas = {} -- Store MobSpawn areas for dynamic spawning
 
--- Lazy-loaded monster modules
-local Slime = nil
-local Skeleton = nil
-
----Initialize and lazy-load monster modules
-local function loadMonsterModules()
-    if not Slime then
-        Slime = require("src.entities.Monsters.Slime.Slime")
-    end
-    if not Skeleton then
-        Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
-    end
-end
+-- Entity registry (single source of truth)
+local EntityRegistry = require("src.core.managers.EntityRegistry")
 
 ---Get monster creator function by type
 ---@param enemyType string Enemy type (e.g., "slime", "skeleton")
 ---@return function|nil Creator function or nil if unknown type
 local function getMonsterCreator(enemyType)
-    loadMonsterModules()
-
-    local creators = {
-        slime = Slime and Slime.create or nil,
-        skeleton = Skeleton and Skeleton.create or nil,
-    }
-
-    return creators[enemyType]
+    return EntityRegistry.getMonsterCreator(enemyType)
 end
 
 ---Spawn random enemies in a specified area
