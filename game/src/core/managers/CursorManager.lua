@@ -11,8 +11,8 @@ local cursors = {
 function CursorManager.load()
   -- Load crosshair cursors for different scenes
   local cursorPaths = {
-    game = "resources/ui/crosshair001.png",
-    menu = "resources/ui/crosshair003.png"
+    game = "resources/global/ui/crosshair001.png",
+    menu = "resources/global/ui/crosshair003.png"
   }
 
   for sceneName, path in pairs(cursorPaths) do

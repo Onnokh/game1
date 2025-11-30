@@ -23,7 +23,7 @@ end
 ---@param size number
 ---@return love.Font
 function FontManager.getDetermination(size)
-    return FontManager.get("resources/font/determination.ttf", size)
+    return FontManager.get("resources/global/font/determination.ttf", size)
 end
 
 return FontManager

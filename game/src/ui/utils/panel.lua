@@ -11,13 +11,13 @@ function Panel.init()
     Panel.quads = {}
 
     -- Load default panel (panel-000)
-    Panel.loadPanelStyle("000", "resources/ui/panel-000.png")
+    Panel.loadPanelStyle("000", "resources/global/ui/panel-000.png")
 
     -- Load additional panel styles
-    Panel.loadPanelStyle("015", "resources/ui/panel-015.png")
+    Panel.loadPanelStyle("015", "resources/global/ui/panel-015.png")
 
     -- Load border styles
-    Panel.loadPanelStyle("border-000", "resources/ui/border-000.png")
+    Panel.loadPanelStyle("border-000", "resources/global/ui/border-000.png")
 end
 
 ---Load a panel style

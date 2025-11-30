@@ -16,12 +16,11 @@ function SoundManager.load()
 
   -- Load sound effects
   SoundManager.loadSound("coin", "resources/sounds/coin2.mp3", "static")
-  SoundManager.loadSound("gunshot", "resources/sounds/shot1.mp3", "static")
   SoundManager.loadSound("running", "resources/sounds/running.mp3", "static")
   SoundManager.loadSound("dash", "resources/sounds/dash2.mp3", "static")
   SoundManager.loadSound("upgrade_selected", "resources/sounds/upgrade_selected.mp3", "static")
-  SoundManager.loadSound("lightningbolt", "resources/sounds/lightningbolt.mp3", "static")
-  SoundManager.loadSound("flameshock", "resources/sounds/flameshock.mp3", "static")
+  SoundManager.loadSound("lightningbolt", "resources/classes/shaman/abilities/lightning-bolt/lightningbolt.mp3", "static")
+  SoundManager.loadSound("flameshock", "resources/classes/shaman/abilities/flame-shock/flameshock.mp3", "static")
 
   print("SoundManager: Sounds loaded successfully")
 end
@@ -71,7 +70,7 @@ function SoundManager.play(name, volume, pitch)
 
   -- Play the sound
   instance:play()
-  
+
   return instance
 end
 

@@ -71,7 +71,7 @@ function MonsterFactory.create(options)
         monster:addTag("Elite")
     end
 
-    monster.target = nil -- Current target (player or reactor)
+    monster.target = nil -- Current target (player)
 
     -- Create components
     local position = Position.new(x, y, DepthSorting.getLayerZ("GROUND"))

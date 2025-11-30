@@ -15,13 +15,13 @@ local abilities = {
         knockback = 1,
         projectile = {
             type = "moving",
-            sprite = "lightningbolt-projectile-2",
+            sprite = "lightningbolt-projectile",
             speed = 350,
             lifetime_seconds = 3,
             scale = 1
         },
         piercing = false,
-        icon = "resources/abilities/lightningbolt.png",
+        icon = "resources/classes/shaman/abilities/lightning-bolt/lightningbolt.png",
         sound = "lightningbolt",
         -- Example onCast hook: Apply a buff to the player when casting
         -- This demonstrates how to use hooks to modify the caster
@@ -52,7 +52,7 @@ local abilities = {
             sprite = "flameshock-projectile",
         },
         piercing = false,
-        icon = "resources/abilities/flameshock.png",
+        icon = "resources/classes/shaman/abilities/flame-shock/flameshock.png",
         sound = "flameshock",
         -- Example onHit hook: Set all hit targets ablaze
         -- This demonstrates how to use hooks to modify hit targets

@@ -178,9 +178,9 @@ function AttackSystem:performAttack(entity, currentTime)
             end
         end
 
-        -- Play sound effect when casting starts (use ability sound if available, otherwise default to gunshot)
+        -- Play sound effect when casting starts (use ability sound if available)
         if _G.SoundManager and abilityData then
-            local soundName = abilityData.sound or "gunshot"
+            local soundName = abilityData.sound
             local soundInstance = _G.SoundManager.play(soundName, .75, 1)
             -- Store sound instance so we can stop it if cast is cancelled
             attack.castSoundInstance = soundInstance
@@ -223,9 +223,9 @@ function AttackSystem:performAttack(entity, currentTime)
         end
     end
 
-    -- Play sound effect for instant attacks (use ability sound if available, otherwise default to gunshot)
+    -- Play sound effect for instant attacks (use ability sound if available)
     if _G.SoundManager then
-        local soundName = (abilityData and abilityData.sound) or "gunshot"
+        local soundName = (abilityData and abilityData.sound)
         _G.SoundManager.play(soundName, .75, 1)
     end
 

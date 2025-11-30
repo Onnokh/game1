@@ -24,7 +24,7 @@ local portraitImageCache = nil
 -- Load portrait image (cached)
 local function getPortraitImage()
     if not portraitImageCache then
-        local success, img = pcall(love.graphics.newImage, "resources/portrait/shaman.png")
+        local success, img = pcall(love.graphics.newImage, "resources/classes/shaman/portrait/shaman.png")
         if success and img then
             img:setFilter("nearest", "nearest")
             portraitImageCache = img

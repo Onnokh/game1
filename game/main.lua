@@ -50,33 +50,6 @@ local function createRenderCanvases(screenW, screenH)
 end
 
 function love.load()
-  -- Load parallax background sprite sheet
-  local bgPath = "resources/background/space2_4-frames.png"
-  local success, result = pcall(function()
-    local img = love.graphics.newImage(bgPath)
-    img:setFilter("nearest", "nearest") -- Pixel-perfect for pixel art
-    return img
-  end)
-
-  if success then
-    parallaxBg.image = result
-    -- Create quads for each frame
-    for i = 0, parallaxBg.frameCount - 1 do
-      local quad = love.graphics.newQuad(
-        i * parallaxBg.frameWidth,
-        0,
-        parallaxBg.frameWidth,
-        parallaxBg.frameHeight,
-        parallaxBg.image:getWidth(),
-        parallaxBg.image:getHeight()
-      )
-      table.insert(parallaxBg.quads, quad)
-    end
-    print("Parallax background loaded:", bgPath, "with", parallaxBg.frameCount, "frames")
-  else
-    print("Failed to load parallax background:", result)
-  end
-
   -- Load cursor manager
   CursorManager.load()
 

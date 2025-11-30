@@ -46,12 +46,6 @@ function DamagePopupSystem.new(ecsWorld)
 				entityX = bodyX - w * 0.5
 				entityY = bodyY - h * 0.5
 				entityWidth = w
-			else
-				-- Fallback: use Position and SpriteRenderer for entities without PhysicsCollision (like Reactor)
-				entityX = pos.x
-				entityY = pos.y
-				local sr = target:getComponent("SpriteRenderer")
-				entityWidth = (sr and sr.width) or 24
 			end
 
 			-- Get healthbar position and spawn above it

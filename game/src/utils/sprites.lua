@@ -52,16 +52,7 @@ function IffySprites.load()
   -- Note: World tiles are now handled by Cartographer, not Iffy
 
   -- Load character spritesheet (8x6 grid)
-  loadSpritesheet("player", "resources/character/player.png", 16, 1)
-  loadSpritesheet("shammy", "resources/character/shammy.png", 8, 1)
-  loadSpritesheet("gun", "resources/character/player_gun.png", 16, 1)
-
-  -- Load skeleton spritesheet (6x10 grid - 6 columns, 10 rows)
-  loadSpritesheet("skeleton", "resources/skeleton/Skeleton.png", 6, 10)
-
-  -- Load slime spritesheet (8x3 grid - 8 columns, 3 rows)
-  loadSpritesheet("slime", "resources/slime/Slime_Green.png", 8, 3)
-
+  loadSpritesheet("shammy", "resources/classes/shaman/model/shammy.png", 8, 1)
 
   -- Load coin spritesheet (1x9 grid, 9 frames)
   loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)
@@ -70,14 +61,22 @@ function IffySprites.load()
   loadSpritesheet("items", "resources/loot/items.png", 16, 27)
 
   -- Load bullet sprite (1x1 grid, 16x16)
-  loadSpritesheet("bullet", "resources/bullet.png", 1, 1)
+  loadSpritesheet("bullet", "resources/projectile.png", 1, 1)
 
-  -- Load projectile sprites
-  loadSpritesheet("lightningbolt-projectile", "resources/abilities/lightningbolt-projectile.png", 1, 1)
-  loadSpritesheet("lightningbolt-projectile-2", "resources/abilities/lightningbolt-projectile-2.png", 6, 1)
-  loadSpritesheet("flameshock-projectile", "resources/abilities/flameshock-projectile.png", 1, 1)
+  -- Load standalone images (not using iffy)
+  loadImage("menuBackground", "resources/global/menu/background.png")
 
-  -- Load tree spritesheet (1x1 grid, 48x64)
+  -- Load minimap icons
+  loadImage("minimapShop", "resources/icons/shop.png")
+  loadImage("minimapUpgrade", "resources/icons/upgrade.png")
+  loadImage("minimapPlayer", "resources/icons/player.png")
+
+
+  -- Load shaman abilities sprites
+  loadSpritesheet("lightningbolt-projectile", "resources/classes/shaman/abilities/lightning-bolt/lightningbolt-projectile.png", 6, 1)
+  loadSpritesheet("flameshock-projectile", "resources/classes/shaman/abilities/flame-shock/flameshock-projectile.png", 1, 1)
+
+  -- dun morogh - decorations
   loadSpritesheet("tree-stump", "resources/dun-morogh/tree-stump.png", 1, 1)
   loadSpritesheet("tree", "resources/dun-morogh/tree.png", 1, 1)
   loadSpritesheet("tree2", "resources/dun-morogh/tree2.png", 1, 1)
@@ -85,37 +84,22 @@ function IffySprites.load()
   loadSpritesheet("torch", "resources/dun-morogh/torch.png", 1, 1)
   loadSpritesheet("barrel", "resources/dun-morogh/barrel.png", 1, 1)
   loadSpritesheet("inn", "resources/dun-morogh/inn.png", 1, 1)
-  loadSpritesheet("mailbox", "resources/mailbox.png", 1, 1)
+  loadSpritesheet("mailbox", "resources/dun-morogh/mailbox.png", 1, 1)
 
-  -- Load shop spritesheet (1x1 grid, 64x64)
+  -- dun morogh - monsters
+  loadSpritesheet("crag-boar", "resources/monsters/crag-boar/crag-boar.png", 1, 1)
+  loadSpritesheet("bear", "resources/monsters/bear/bear.png", 1, 1)
+
+  -- Load old monsters spritesheets (unused)
+  loadSpritesheet("skeleton", "resources/monsters/skeleton/Skeleton.png", 6, 10)
+  loadSpritesheet("slime", "resources/monsters/slime/Slime_Green.png", 8, 3)
+
+  -- Load old spritesheets (unused)
   loadSpritesheet("shop", "resources/objects/shop.png", 8, 1)
-
-  -- crystal spritesheet (14x1 grid, 112x112)
   loadSpritesheet("crystal", "resources/objects/crystal.png", 14, 1)
-
-  -- event spritesheet (11x3 grid, 128x128 per frame)
   loadSpritesheet("event", "resources/objects/event-area.png", 11, 3)
-
-  -- event gem spritesheet (11x3 grid, 32x32 per frame)
   loadSpritesheet("event-gem", "resources/objects/event-gem.png", 11, 3)
 
-
-  -- load unified Skull Boy spritesheet (14x5 grid, 192x192 per frame)
-  loadSpritesheet("Skull Boy", "resources/warhog/Skull Boy.png", 14, 5)
-
-  -- Load crag-boar spritesheet (1x1 grid, 32x24 per frame)
-  loadSpritesheet("crag-boar", "resources/crag-boar/crag-boar.png", 1, 1)
-
-  -- Load bear spritesheet (1x1 grid, 56x28 per frame)
-  loadSpritesheet("bear", "resources/bear/bear.png", 1, 1)
-
-  -- Load standalone images (not using iffy)
-  loadImage("menuBackground", "resources/menu/background.png")
-
-  -- Load minimap icons
-  loadImage("minimapShop", "resources/icons/shop.png")
-  loadImage("minimapUpgrade", "resources/icons/upgrade.png")
-  loadImage("minimapPlayer", "resources/icons/player.png")
 
   print("Iffy sprites loaded successfully")
 
