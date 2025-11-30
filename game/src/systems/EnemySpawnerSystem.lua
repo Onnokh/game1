@@ -1,11 +1,7 @@
 local System = require("src.core.System")
 local GameTimeManager = require("src.core.managers.GameTimeManager")
 local MonsterFactory = require("src.entities.Monsters.core.MonsterFactory")
-
--- Lazy-loaded monster modules
-local Slime = nil
-local Skeleton = nil
-local Warhog = nil
+local EntityUtils = require("src.utils.entities")
 
 ---@class EnemySpawnerSystem : System
 ---@field ecsWorld World
@@ -31,24 +27,8 @@ function EnemySpawnerSystem.new(ecsWorld, physicsWorld)
     self.spawnTimer = 0
     self.lastSpawnTime = 0
 
-    -- Lazy load monster modules
-    self:loadMonsterModules()
-
     print("[EnemySpawnerSystem] Initialized with", #self.waves, "waves")
     return self
-end
-
----Lazy load monster modules
-function EnemySpawnerSystem:loadMonsterModules()
-    if not Slime then
-        Slime = require("src.entities.Monsters.Slime.Slime")
-    end
-    if not Skeleton then
-        Skeleton = require("src.entities.Monsters.Skeleton.Skeleton")
-    end
-    if not Warhog then
-        Warhog = require("src.entities.Monsters.Warhog.Warhog")
-    end
 end
 
 ---Get the currently active wave based on elapsed time
@@ -172,7 +152,7 @@ function EnemySpawnerSystem:selectEnemyType(wave)
 end
 
 ---Spawn an enemy of the specified type
----@param enemyType string Type of enemy to spawn
+---@param enemyType string Type of enemy to spawn (must be lowercase to match registry)
 ---@param x number X position
 ---@param y number Y position
 ---@return Entity|nil Spawned enemy entity or nil if failed
@@ -186,22 +166,8 @@ function EnemySpawnerSystem:spawnEnemy(enemyType, x, y)
     -- 5% chance to spawn as elite
     local isElite = math.random() <= MonsterFactory.ELITE_CHANCE
 
-    local creator = nil
-
-    if enemyType == "Slime" then
-        creator = Slime and Slime.create
-    elseif enemyType == "Skeleton" then
-        creator = Skeleton and Skeleton.create
-    elseif enemyType == "Warhog" then
-        creator = Warhog and Warhog.create
-    end
-
-    if creator then
-        return creator(x, y, self.ecsWorld, self.physicsWorld, isElite)
-    else
-        print(string.format("[EnemySpawnerSystem] WARNING: Unknown enemy type '%s'", enemyType))
-        return nil
-    end
+    -- Use EntityUtils.spawnMonster which handles the factory lookup via the registry
+    return EntityUtils.spawnMonster(x, y, enemyType, self.ecsWorld, self.physicsWorld, isElite)
 end
 
 ---Check if a spawn position is valid (on solid ground)

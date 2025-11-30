@@ -451,7 +451,7 @@ function GameScene.mousepressed(x, y, button, gameState)
     -- Add a monster at click position (convert screen to world coordinates)
     local CoordinateUtils = require("src.utils.coordinates")
     local worldX, worldY = CoordinateUtils.screenToWorld(x, y, gameState.camera)
-    GameScene.addMonster(worldX, worldY, "warhog")
+    GameScene.addMonster(worldX, worldY, "cragboar")
   end
 
   -- Click was not handled by UI

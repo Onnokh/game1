@@ -9,6 +9,10 @@ local Slime = require("src.entities.Monsters.Slime.Slime")
 local SlimeConfig = require("src.entities.Monsters.Slime.SlimeConfig")
 local Warhog = require("src.entities.Monsters.Warhog.Warhog")
 local WarhogConfig = require("src.entities.Monsters.Warhog.WarhogConfig")
+local CragBoar = require("src.entities.Monsters.CragBoar.CragBoar")
+local CragBoarConfig = require("src.entities.Monsters.CragBoar.CragBoarConfig")
+local Bear = require("src.entities.Monsters.Bear.Bear")
+local BearConfig = require("src.entities.Monsters.Bear.BearConfig")
 
 ---Check whether an entity is the Player
 ---@param entity Entity|nil
@@ -220,6 +224,14 @@ local monsterFactories = {
     warhog = {
         factory = Warhog.create,
         config = WarhogConfig
+    },
+    cragboar = {
+        factory = CragBoar.create,
+        config = CragBoarConfig
+    },
+    bear = {
+        factory = Bear.create,
+        config = BearConfig
     }
 }
 
@@ -229,8 +241,9 @@ local monsterFactories = {
 ---@param monsterType string Monster type (e.g., "skeleton", "slime", "warhog")
 ---@param world World The ECS world
 ---@param physicsWorld table The physics world
+---@param isElite boolean|nil Whether this monster should be an elite variant
 ---@return Entity|nil The created monster entity
-function EntityUtils.spawnMonster(x, y, monsterType, world, physicsWorld)
+function EntityUtils.spawnMonster(x, y, monsterType, world, physicsWorld, isElite)
     -- Get factory configuration
     local factoryInfo = monsterFactories[monsterType]
     if not factoryInfo then
@@ -256,7 +269,7 @@ function EntityUtils.spawnMonster(x, y, monsterType, world, physicsWorld)
     local spriteY = y - pfOffsetY - colliderHeight / 2
 
     -- Create monster using factory
-    return factoryInfo.factory(spriteX, spriteY, world, physicsWorld)
+    return factoryInfo.factory(spriteX, spriteY, world, physicsWorld, isElite or false)
 end
 
 return EntityUtils

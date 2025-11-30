@@ -103,6 +103,12 @@ function IffySprites.load()
   -- load unified Skull Boy spritesheet (14x5 grid, 192x192 per frame)
   loadSpritesheet("Skull Boy", "resources/warhog/Skull Boy.png", 14, 5)
 
+  -- Load crag-boar spritesheet (1x1 grid, 32x24 per frame)
+  loadSpritesheet("crag-boar", "resources/crag-boar/crag-boar.png", 1, 1)
+
+  -- Load bear spritesheet (1x1 grid, 56x28 per frame)
+  loadSpritesheet("bear", "resources/bear/bear.png", 1, 1)
+
   -- Load standalone images (not using iffy)
   loadImage("menuBackground", "resources/menu/background.png")
 
