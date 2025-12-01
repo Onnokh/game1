@@ -10,28 +10,28 @@ PlayerConfig.DASH_BURST_MULTIPLIER = 2
 PlayerConfig.DASH_DURATION = .25        -- How long dash lasts (seconds) - movement animation constant
 
 PlayerConfig.WALKING_ANIMATION = {
-  layers = {"shammy"},
-  frames = {1, 2, 3, 4, 5, 6, 7, 8},
+  layers = {"shaman"},
+  frames = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
   fps = 12,
   loop = true
 }
 
 PlayerConfig.IDLE_ANIMATION = {
-  layers = {"shammy"},
+  layers = {"shaman"},
   frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 8,
   loop = true
 }
 
 PlayerConfig.RUNNING_ANIMATION = {
-  layers = {"shammy"},
+  layers = {"shaman"},
   frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 12,
   loop = true
 }
 
 PlayerConfig.DASH_ANIMATION = {
-  layers = {"shammy"},
+  layers = {"shaman"},
   frames = {1, 2, 3, 4, 5, 6, 7, 8},
   fps = 24,
   loop = false
@@ -46,8 +46,9 @@ PlayerConfig.COLLIDER_FRICTION = 0.3
 PlayerConfig.COLLIDER_DAMPING = 0
 
 -- Sprite settings
-PlayerConfig.SPRITE_WIDTH = 44  -- Matches shammy frame width (352/8 = 44)
+PlayerConfig.SPRITE_WIDTH = 44
 PlayerConfig.SPRITE_HEIGHT = 32
+
 -- Shooting position offset (relative to player position)
 PlayerConfig.START_OFFSET = 20  -- Additional offset forward from gun position to account for gun sprite width
 PlayerConfig.AIM_LINE_MAX_LENGTH = 100

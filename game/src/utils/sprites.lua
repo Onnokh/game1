@@ -52,7 +52,7 @@ function IffySprites.load()
   -- Note: World tiles are now handled by Cartographer, not Iffy
 
   -- Load character spritesheet (8x6 grid)
-  loadSpritesheet("shammy", "resources/classes/shaman/model/shammy.png", 8, 1)
+  loadSpritesheet("shaman", "resources/classes/shaman/model/shaman.png", 10, 2)
 
   -- Load coin spritesheet (1x9 grid, 9 frames)
   loadSpritesheet("coin", "resources/loot/coin.png", 9, 1)
