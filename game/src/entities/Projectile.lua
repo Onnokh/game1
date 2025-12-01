@@ -60,8 +60,8 @@ function ProjectileEntity.create(x, y, velocityX, velocityY, speed, damage, owne
     local spriteName = projectileSprite or "bullet"
 
     -- Look up sprite dimensions from iffy tilesets if available
-    local spriteWidth = 8  -- Default fallback
-    local spriteHeight = 8  -- Default fallback
+    local spriteWidth = 20  -- Default fallback
+    local spriteHeight = 20  -- Default fallback
     local iffy = require("lib.iffy")
     if iffy.tilesets[spriteName] then
         spriteWidth = iffy.tilesets[spriteName][1] or 8

@@ -6,7 +6,7 @@ return {
           { type = "cragboar", count = 2 },
           { type = "bear", count = 1 },
       },
-      spawnRate = 1.0,
+      spawnRate = .5,
       shape = {
           type = "circle",
           radius = 150

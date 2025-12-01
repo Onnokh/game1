@@ -413,6 +413,7 @@ function RenderSystem:draw()
                         if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
                             -- Get the actual sprite frame dimensions from Iffy tileset
                             local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
+                            local frameHeight = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][2] or 24
 
                             -- Check if this layer has a specific rotation
                             local layerRotation = animator:getLayerRotation(sheetName)
@@ -434,13 +435,13 @@ function RenderSystem:draw()
 
                                 love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
                             else
-                                -- Use normal drawing logic
-                                local drawX = x
-                                if spriteRenderer.scaleX < 0 then
-                                    drawX = x + frameWidth
-                                end
+                                -- Use center-based rotation for proper rotation around center
+                                local ox = frameWidth / 2
+                                local oy = frameHeight / 2
+                                local drawX = x + ox
+                                local drawY = y + oy
 
-                                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
                             end
                             hasDrawnSomething = true
                         end
@@ -585,6 +586,7 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
                 end
                 -- Get the actual sprite frame dimensions from Iffy tileset
                 local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
+                local frameHeight = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][2] or 24
 
                 -- Check if this layer has a specific rotation
                 local layerRotation = animator:getLayerRotation(sheetName)
@@ -606,13 +608,13 @@ function RenderSystem:drawWithOutlineShader(entity, x, y, spriteRenderer, animat
 
                     love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
                 else
-                    -- Use normal drawing logic
-                    local drawX = x
-                    if spriteRenderer.scaleX < 0 then
-                        drawX = x + frameWidth
-                    end
+                    -- Use center-based rotation for proper rotation around center
+                    local ox = frameWidth / 2
+                    local oy = frameHeight / 2
+                    local drawX = x + ox
+                    local drawY = y + oy
 
-                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
                 end
                 hasDrawnSomething = true
             end
@@ -707,6 +709,7 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
             if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
                 -- Get the actual sprite frame dimensions from Iffy tileset
                 local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
+                local frameHeight = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][2] or 24
 
                 -- Check if this layer has a specific rotation
                 local layerRotation = animator:getLayerRotation(sheetName)
@@ -728,13 +731,13 @@ function RenderSystem:drawWithFlashShader(entity, x, y, spriteRenderer, animator
 
                     love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, scaleX, scaleY, ox, oy)
                 else
-                    -- Use normal drawing logic
-                    local drawX = x
-                    if spriteRenderer.scaleX < 0 then
-                        drawX = x + frameWidth
-                    end
+                    -- Use center-based rotation for proper rotation around center
+                    local ox = frameWidth / 2
+                    local oy = frameHeight / 2
+                    local drawX = x + ox
+                    local drawY = y + oy
 
-                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                    love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
                 end
                 hasDrawnSomething = true
             end
@@ -846,6 +849,7 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
             if sheetName and sheetName ~= "" and iffy.spritesheets[sheetName] and iffy.spritesheets[sheetName][current] then
             -- Get the actual sprite frame dimensions from Iffy tileset
             local frameWidth = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][1] or 24
+            local frameHeight = iffy.tilesets[sheetName] and iffy.tilesets[sheetName][2] or 24
 
             -- Check if this layer has a specific rotation
             local layerRotation = animator:getLayerRotation(sheetName)
@@ -861,13 +865,13 @@ function RenderSystem:drawWithFoliageSwayShader(entity, x, y, spriteRenderer, an
 
                 love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, layerRotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
             else
-                -- Use normal drawing logic
-                local drawX = x
-                if spriteRenderer.scaleX < 0 then
-                    drawX = x + frameWidth
-                end
+                -- Use center-based rotation for proper rotation around center
+                local ox = frameWidth / 2
+                local oy = frameHeight / 2
+                local drawX = x + ox
+                local drawY = y + oy
 
-                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, y, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY)
+                love.graphics.draw(iffy.images[sheetName], iffy.spritesheets[sheetName][current], drawX, drawY, spriteRenderer.rotation, spriteRenderer.scaleX, spriteRenderer.scaleY, ox, oy)
             end
             hasDrawnSomething = true
             end

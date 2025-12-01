@@ -16,7 +16,7 @@ local abilities = {
         projectile = {
             type = "moving",
             sprite = "lightningbolt-projectile",
-            speed = 350,
+            speed = 150,
             lifetime_seconds = 3,
             scale = 1
         },
