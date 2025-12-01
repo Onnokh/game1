@@ -85,6 +85,9 @@ function IffySprites.load()
   loadSpritesheet("barrel", "resources/dun-morogh/barrel.png", 1, 1)
   loadSpritesheet("inn", "resources/dun-morogh/inn.png", 1, 1)
   loadSpritesheet("mailbox", "resources/dun-morogh/mailbox.png", 1, 1)
+  loadSpritesheet("tent1", "resources/dun-morogh/tent1.png", 1, 1)
+  loadSpritesheet("tent2", "resources/dun-morogh/tent2.png", 1, 1)
+  loadSpritesheet("firepit", "resources/dun-morogh/firepit.png", 1, 1)
 
   -- dun morogh - monsters
   loadSpritesheet("crag-boar", "resources/monsters/crag-boar/crag-boar.png", 1, 1)
