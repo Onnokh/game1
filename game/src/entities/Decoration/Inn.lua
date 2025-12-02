@@ -19,7 +19,7 @@ function Inn.create(x, y, world, physicsWorld)
     local inn = Entity.new()
     local position = Position.new(x, y, 0)
     local spriteRenderer = SpriteRenderer.new('inn', 280, 240)
-    local pathfindingCollision = PathfindingCollision.new(160, 160, "static", 60, 120, "circle")
+    local pathfindingCollision = PathfindingCollision.new(240, 140, "static", 24, 24, "rectangle")
 
     inn:addComponent("Position", position)
     inn:addComponent("SpriteRenderer", spriteRenderer)
